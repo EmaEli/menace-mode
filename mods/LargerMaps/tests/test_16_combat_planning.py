@@ -49,8 +49,8 @@ class TestCombatPlanning(unittest.TestCase):
         self.assertEqual(data[to_offset(0x7aea69):to_offset(0x7aea69)+4], bytes.fromhex('80781400'))
 
     def test_versions_and_native_backend_unchanged(self):
-        self.assertIn('private const string Version = "1.6.1"', PLUGIN)
-        self.assertEqual(json.loads((ROOT/'modpack/LargerMaps/modpack.json').read_text())['version'],'1.6.1')
+        self.assertIn('private const string Version = "1.8"', PLUGIN)
+        self.assertEqual(json.loads((ROOT/'modpack/LargerMaps/modpack.json').read_text())['version'],'1.8')
         reference=Path('/mnt/data/local_routing_work/LargerMaps-1.5-local-tactical-routing-authoring/src/LargerMaps/ExtendedPathfinding.cs')
         if reference.exists(): self.assertEqual(NATIVE,reference.read_text())
 

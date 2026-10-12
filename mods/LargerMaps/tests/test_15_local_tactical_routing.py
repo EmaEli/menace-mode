@@ -37,7 +37,7 @@ class TestNativeAiCandidateLimits(unittest.TestCase):
             self.assertEqual(NATIVE,REFERENCE.read_text())
         self.assertIn('new(0x69C9AE, 2, "C1E106", 0x07, 0x07',NATIVE)
     def test_version(self):
-        self.assertIn('private const string Version = "1.6.1";', PLUGIN)
-        self.assertEqual(json.loads((ROOT/'modpack/LargerMaps/modpack.json').read_text())['version'],'1.6.1')
+        self.assertIn('private const string Version = "1.8";', PLUGIN)
+        self.assertEqual(json.loads((ROOT/'modpack/LargerMaps/modpack.json').read_text())['version'],'1.8')
 
 if __name__=='__main__': unittest.main()
