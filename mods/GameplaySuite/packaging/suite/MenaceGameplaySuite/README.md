@@ -1,4 +1,9 @@
-# MENACE Gameplay Suite 0.32
+# MENACE Gameplay Suite 0.32.2
+
+### 0.32.2 MEN-004 debug-only ammo trace
+
+Weapon Mechanics Rebalanced **0.4.5** adds one `[MEN-004 AMMO]` log entry per Sustained/Spray Fire activation **only when its Debug logging option is ON**.
+The line records ammo before native `Skill.Use`, after native processing and after WMR's extra use, alongside unit/weapon and per-call consumption. To reproduce, enable that module's Debug logging in Mod Options, use ability 2, and compare the UI ammo before/after with `MelonLoader/Latest.log`. Turn Debug logging back OFF afterward. No ammo-cost changes; MEN-004 is still open.
 
 ## 0.32 Starting Options
 
