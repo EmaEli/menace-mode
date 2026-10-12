@@ -2,6 +2,16 @@
 
 This repository (`EmaEli/menace-mode`, https://github.com/EmaEli/menace-mode) is the **canonical issue tracker** for the user's MENACE game-modding project.
 
+## Mandatory installer standard (ALL mods / ALL future chats)
+
+**Do not reinvent Windows build/deploy installers.** Before authoring, changing or delivering **any** MENACE installer, READ [docs/INSTALLER_STANDARD.md](docs/INSTALLER_STANDARD.md) and inspect the reusable one-click MEN-006 example linked there. This is a project rule, not an optional preference or conversation-specific suggestion.
+
+- Ship **one double-click installer** that downloads pinned/verifiable public sources (or uses bundled sources), builds every required component, stages and verifies files/assembly+manifest versions, **backs up** affected installed versions and **installs automatically**. Include integrated companion mods (e.g. Third Person Camera) in the Suite's **single logical distribution** rather than handing the user multiple build ZIPs.
+- Do not change live game files before all builds and version checks succeed; keep backups outside `Mods`, prevent duplicates and implement rollback. Do not touch unrelated mods, save files or user data.
+- **Keep the console open even after error or keypress** (persistent `cmd /k`; `pause` alone is not sufficient). Always save a complete log at a stable, advertised path **from the first download step**; **open it automatically in Notepad on any failure**.
+- Verify **real DLL assembly metadata**, the manifest, output files, the published source commit, bootstrap checksum and installed versions. A successful build is not evidence of successful deployment or an in-game fix. Explicitly disclose Windows/game tests not run.
+- Reuse and update the existing launcher/PowerShell pattern; do not create another bespoke kit per issue/chat. Any installer regression discovered must be fixed in the shared pattern AND captured in the standard document.
+
 ## Workflow
 
 - Before investigating, planning or fixing a MENACE issue, review existing GitHub Issues here and link the relevant one.
