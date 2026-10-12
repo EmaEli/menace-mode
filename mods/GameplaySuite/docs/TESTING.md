@@ -1,3 +1,18 @@
+# MEN-006: Third Person Camera cinematic HUD regression (NOT YET RUN IN GAME)
+
+1. Install **Third Person Camera 0.3.3+**, **Overwatch 0.32.3.2** and **Coordinated Fire 1.6.8** (from this patch branch). Do not simultaneously load standalone DLLs alongside their Gameplay Suite equivalents.
+2. In a tactical mission, select an infantry squad where both mod buttons are normally visible.
+3. Toggle Third Person Camera manually (F6), and test automatic F7 camera activation while moving and firing. Check that the native HUD and both mod panels disappear **at the same time** and no hidden button captures clicks.
+4. Return to the overhead tactical camera: both panels should be recomputed using normal selection/turn/AP eligibility. Repeat with another unit, with an unavailable action and during an AI turn.
+5. Interrupt a camera transition, enter/leave a menu, restart a mission and re-enter cinematic mode several times. Confirm no ghost/duplicate panels or stuck hidden state.
+6. Repeat with only Overwatch, only Coordinated Fire, and neither camera mod nor the other combat mod; no hard dependency may be introduced.
+7. Test actual Overwatch reactions and Coordinated Fire volleys after returning to tactical view (AP/uses/targeting remain unchanged). Check logs for no recurrent new warnings or errors with both mods' Debug options OFF.
+8. Build the two DLLs and package each standalone plus the suite; **do not close #7 until Windows build and in-game tests pass**.
+
+Mechanism: both mod panels follow `UITactical.SetUIVisibility(bool)` with an isolated Harmony postfix; the camera mod already sends this signal. Mod-specific drawing rules remain authoritative after the HUD becomes visible.
+
+---
+
 # Mortar renderer Unity component hotfix 0.4.4 / Suite 0.31.6
 
 1. Confirm Suite 0.31.6 and Weapon Mechanics Rebalanced 0.4.4 are loaded once (not alongside standalone duplicates); keep normal Debug OFF.
