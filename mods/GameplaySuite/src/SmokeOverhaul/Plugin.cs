@@ -169,6 +169,13 @@ public sealed class Plugin : IModpackPlugin
 
         hooks += TryPatch(
             harmony,
+            AccessTools.Method(typeof(Il2CppMenace.Tactical.AI.Behaviors.CreateLOSBlocker),
+                "GetTargetValue", new[] { typeof(bool), typeof(Skill), typeof(Tile) }),
+            prefix: null, postfix: nameof(Patches.CreateLOSBlocker_GetTargetValue_Postfix),
+            label: "CreateLOSBlocker.GetTargetValue");
+
+        hooks += TryPatch(
+            harmony,
             AccessTools.Method(
                 typeof(Skill),
                 nameof(Skill.GetHitchance),
@@ -201,12 +208,13 @@ public sealed class Plugin : IModpackPlugin
         ApplySmokeDeliveryProfiles();
 
         DevConsole.RegisterPanel(ModName, DrawDebug);
-        DebugMsg($"{ModName} {Version}: initialized with {hooks}/8 hooks.");
+        DebugMsg($"{ModName} {Version}: initialized with {hooks}/10 hooks.");
     }
 
     public void OnSceneLoaded(int buildIndex, string sceneName)
     {
         Patches.ResetCounters();
+        FlameSkillCache.Clear();
 
         if (RuntimeSettings.Enabled)
             ApplyThrownGrenadeActionPointCosts();
@@ -1218,6 +1226,79 @@ public sealed class Plugin : IModpackPlugin
         }
     }
 
+    private static readonly Dictionary<IntPtr, bool> FlameSkillCache = new();
+
+    internal static void BoostAiSmoke(Il2CppMenace.Tactical.AI.Behaviors.CreateLOSBlocker? behavior,
+        bool immediate, Skill? skill, Tile? target, ref float score)
+    {
+        if (!RuntimeSettings.Enabled || !RuntimeSettings.EnableAISmokeUsage ||
+            !RuntimeSettings.FastAISmokeSelection || !RuntimeSettings.SimpleAISmokeRules ||
+            !immediate || behavior == null || skill == null || target == null ||
+            float.IsNaN(score) || float.IsInfinity(score) || score < 0f)
+            return;
+
+        try
+        {
+            if (!IsHandThrownSmokeSkillId(skill.GetID()))
+                return;
+
+            var agent = behavior.GetAgent();
+            if (agent == null || agent.IsSleeping()) return;
+            Actor? actor = agent.GetActor();
+            Tile? origin = actor?.GetTile();
+            if (actor == null || !actor.IsInfantry() || origin == null) return;
+
+            int dx = target.GetX() - origin.GetX();
+            int dz = target.GetZ() - origin.GetZ();
+            int range = global::System.Math.Max(global::System.Math.Abs(dx), global::System.Math.Abs(dz));
+            if (range < 1 || range > 2 || !target.IsEmpty() ||
+                TileHasSmoke(origin) || TileHasSmoke(target)) return;
+
+            var state = actor.GetSuppressionState();
+            if (state == SuppressionState.PinnedDown)
+            {
+                if (range == 1) score = global::System.Math.Max(score, 1.5f);
+                return;
+            }
+            if (state == SuppressionState.Suppressed)
+            {
+                if (range == 1) score = global::System.Math.Max(score, 0.9f);
+                return;
+            }
+
+            // No hidden-opponent coordinates, map sweep or speculative path finding.
+            if (origin.GetCoverMask() != 0 ||
+                (agent.GetNumThreatsFaced() <= 0 && agent.GetFaction()?.HasKnownOpponent() != true))
+                return;
+            var forward = DirectionExtensions.AsDifferenceBetweenTiles(actor.GetDirection());
+            if (dx * forward.x + dz * forward.y <= 0) return;
+
+            IntPtr key = actor.Pointer;
+            if (key == IntPtr.Zero) return;
+            if (!FlameSkillCache.TryGetValue(key, out bool flamethrower))
+            {
+                flamethrower = false;
+                var skills = actor.GetSkills()?.GetAllSkills();
+                if (skills != null)
+                    for (int i = 0; i < skills.Count; i++)
+                    {
+                        BaseSkill? candidate = skills[i];
+                        string id = candidate?.GetID() ?? string.Empty;
+                        if (id.IndexOf("flamethrower", StringComparison.OrdinalIgnoreCase) < 0) continue;
+                        flamethrower = true;
+                        break;
+                    }
+                FlameSkillCache[key] = flamethrower;
+            }
+            if (flamethrower)
+                score = global::System.Math.Max(score, 0.65f);
+        }
+        catch
+        {
+            // Fail closed in this AI hot path: no per-candidate logs.
+        }
+    }
+
     private static void ApplyNativeSmokeAiToMortars()
     {
         SkillTemplate? infantrySmoke = null;
@@ -1722,6 +1803,13 @@ internal static class Patches
         Il2CppSystem.Collections.Generic.List<Tile> __2)
     {
         Plugin.FilterSmokeAoeTiles(__instance, __1, __2);
+    }
+
+    public static void CreateLOSBlocker_GetTargetValue_Postfix(
+        Il2CppMenace.Tactical.AI.Behaviors.CreateLOSBlocker __instance,
+        bool _forImmediateUse, Skill _skill, Tile _target, ref float __result)
+    {
+        Plugin.BoostAiSmoke(__instance, _forImmediateUse, _skill, _target, ref __result);
     }
 
     public static void Skill_GetActionPointCost_Postfix(Skill __instance, ref int __result)
