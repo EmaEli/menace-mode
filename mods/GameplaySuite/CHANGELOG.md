@@ -1,3 +1,10 @@
+## Repository / Suite 0.32.2 — MEN-004 alternate-fire ammo diagnostic
+
+- **Weapon Mechanics Rebalanced 0.4.4 -> 0.4.5:** added opt-in, per-activation `[MEN-004 AMMO]` snapshots of sustained/spray fire, distinguishing native skill consumption from WMR's own extra-ammo cost.
+- Logs actor/weapon, `UsageParameter`, success/guard, `GetUses`, `GetMaxUses`, `GetCharges`, `GetUsesConsumed` and `GetChargesPerUse` (before/native/final where available), plus extra `ConsumeUse()` calls.
+- Entire trace is enabled only by **Weapon Mechanics Rebalanced -> Debug logging**. Normal logging remains quiet; no changes to ammo economy, AP, mortar mechanics or other modules.
+- Build and in-game test pending. **MEN-004 remains open** until actual ammo-counter behavior is verified.
+
 ## Repository / Suite 0.32.1 — MEN-005 Assault aim-cache fix
 
 - **Infantry Assault 0.5.2 → 0.5.3**: validates native cached executing-soldier indices during player Assault hover/preview. If squad casualties invalidate the cached list, rebuild it from MENACE's current executing-element selection before the native `Actor.AimAt(Vector3)` path.
