@@ -1,3 +1,18 @@
+# MEN-006 — Suite 0.32.3 / Camera 0.3.4 managed-state integration (unverified)
+
+1. **Install BOTH new outputs:** Gameplay Suite 0.32.3 (Overwatch 0.32.3.3, Coordinated Fire 1.6.9) and standalone Third Person Camera 0.3.4 + its matching Mod Settings companion. Do not keep duplicate older standalone Overwatch/Coordinated Fire DLLs when using the Suite.
+2. In a mission with both tactical IMGUI buttons normally visible, enable F7 automatic camera. Set movement probability 100%, order infantry movement. Confirm both custom buttons **disappear as soon as third person is active**, do not absorb mouse clicks, and return after overhead view resumes. Repeat for a player vehicle.
+3. Repeat with firing cinematics (probability 100%). While the camera is active, no Coordinated Fire or Overwatch HUD panel may be visible, even when the native tactical UI-hide method fails to reach another mod's Harmony postfix.
+4. Try manual **F6** entry and exit with a selected squad/vehicle. Also test switching units, scene transitions, menu interruptions, repeated cinematic transitions, AI turns and camera disable (F7). No ghost panel or latched hidden-state is allowed.
+5. Test the Suite with Third Person Camera fully absent. Both HUD panels must behave normally; no missing-DLL exception or repeated logging is acceptable.
+6. Test Overwatch/Coordinated Fire independently with Camera 0.3.4 installed (standalone modpack mode), and no redundant duplicate plugin DLLs in Mods.
+7. After cinematics, actually arm Overwatch and fire a Coordinated Fire volley; AP, ammo, eligibility, targeting and AI behavior should match previous versions.
+8. Confirm Cam 0.3.4 and both patched modules in MelonLoader logs. Both camera and tactical Debug options default OFF. No new per-frame diagnostic logging or exceptions. Report game test results to issue #7; keep PR #8 draft until validated.
+
+Why 0.32.3 exists: the old 0.32.2 native `UITactical.SetUIVisibility`-only workaround compiled successfully but still **failed** a movement-camera gameplay test. Camera 0.3.4 now exports its own public `IsCinematicViewActive` state. The modules query a cached managed delegate, independent of the native Harmony patch, without per-frame reflection.
+
+---
+
 # MEN-006: Third Person Camera cinematic HUD regression (NOT YET RUN IN GAME)
 
 1. Install **Third Person Camera 0.3.3+**, **Overwatch 0.32.3.2** and **Coordinated Fire 1.6.8** (from this patch branch). Do not simultaneously load standalone DLLs alongside their Gameplay Suite equivalents.
