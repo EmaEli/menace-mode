@@ -1,5 +1,7 @@
 # MENACE Third Person Camera 0.3.4
 
+**MEN-006 integrated distribution:** Third Person Camera 0.3.4 is now also built and installed by Gameplay Suite's `tools/Install-IntegratedSuite.ps1`. Its main DLL remains a MelonLoader `MelonMod` for camera lifecycle events, but it is included in the same downloadable installer/package as Gameplay Suite 0.32.3. The Mod Settings companion is copied into the Gameplay Suite modpack's `dlls` directory, so the old separate `Mods/ThirdPersonCamera` modpack is not required. Standalone camera authoring/build files remain available for developers. Integrated installation remains to be verified in game.
+
 **0.3.4 compatibility API:** A read-only static `MenaceThirdPersonCamera.ThirdPersonCameraMod.IsCinematicViewActive` boolean now indicates whether the third-person camera is active. The state is common to F6 manual and automatic movement/fire modes, and is reset on camera exit. Other mods can consume this API using a cached managed delegate without referencing the camera DLL at build time. This fixes the inter-mod signal, without changing camera controls, behavior, gameplay or logging. See [MEN-006](https://github.com/EmaEli/menace-mode/issues/7). The new behavior still requires in-game verification.
 
 A **camera-only** MelonLoader mod. Watch infantry and vehicles from a chase/orbit camera while MENACE still handles orders, movement, combat, AI and action points. The camera does not change combat outcomes or reveal currently hidden enemies.
