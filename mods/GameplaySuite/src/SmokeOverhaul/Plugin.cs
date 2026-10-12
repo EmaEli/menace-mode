@@ -231,6 +231,7 @@ public sealed class Plugin : IModpackPlugin
         if (string.Equals(sceneName, "Tactical", StringComparison.OrdinalIgnoreCase))
         {
             _aiSmokeExecutions = _aiSmokeEligible = _aiSmokeSkillsAvailable = _aiSmokeValidTargets = _aiSmokeUsesSucceeded = 0;
+            _aiSmokeDirectionDebugLines = 0;
         }
 
         if (RuntimeSettings.Enabled)
@@ -1258,6 +1259,7 @@ public sealed class Plugin : IModpackPlugin
     private static int _aiSmokeSkillsAvailable;
     private static int _aiSmokeValidTargets;
     private static int _aiSmokeUsesSucceeded;
+    private static int _aiSmokeDirectionDebugLines;
 
     internal static void ResetAiSmokeTurn(Agent? agent)
     {
@@ -1406,6 +1408,16 @@ public sealed class Plugin : IModpackPlugin
                         return false;
 
                     _aiSmokeUsesSucceeded++;
+                    // One line per actual forced smoke grenade, DEBUG ON only.
+                    // Coordinates prove whether a reported bad throw was caused
+                    // by this mod or MENACE's normal smoke AI. Cap per mission.
+                    if (RuntimeSettings.DebugLogging && _aiSmokeDirectionDebugLines < 24)
+                    {
+                        _aiSmokeDirectionDebugLines++;
+                        DebugMsg($"AI smoke thrown: origin=({origin.GetX()},{origin.GetZ()}) " +
+                            $"threat=({origin.GetX() + threatX},{origin.GetZ() + threatZ}) " +
+                            $"target=({x},{z}) mode={(flamethrowerAdvance ? "advance" : "defensive")}");
+                    }
                     return true;
                 }
             }
