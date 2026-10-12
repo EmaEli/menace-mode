@@ -1,3 +1,13 @@
+## 1.8 - Up to 5x terrain stamp density (MEN-003 experiment)
+
+In **Mod Settings > Larger Maps** choose `IncreaseTerrainStampDensity=ON` and set `TerrainStampDensityMultiplier` from **1x to 5x** (default **1.5x**, feature toggle OFF for new installs). Restart the game to apply. On an existing install the saved toggle and multiplier remain as set by the user.
+
+Suggested progression for a **96x96** map: **3x**, then **4x-5x** if there is still enough room for vehicles and objectives. Vanilla 4 large + 10 medium stamp attempts become 12 + 30 at 3x, or 20 + 50 at 5x, with a safety ceiling of 200 attempts per group (never below native counts). Placement validation can reject attempts; visible density is not guaranteed to scale linearly.
+
+64x64 maps remain unchanged, and 72/80/88 interpolate smoothly. This only adjusts **terrain stamp attempt counts**, not per-tile grass, foliage, buildings, or mission-authored setpieces. `DiagnoseTerrainStampDensity` enables up to 10 generation summaries and remains OFF by default. Test visuals, generated roads/cover and FPS; revert by turning the toggle OFF and restarting if needed.
+
+---
+
 ## 1.7.1 compile fix
 
 Fixes CS0118 (`Harmony` namespace/type ambiguity) in the 1.7 stamp-density integration. No behavior changes. Re-download the source branch before building. Build and game tests remain outstanding.
