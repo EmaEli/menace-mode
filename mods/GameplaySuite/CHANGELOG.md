@@ -1,3 +1,10 @@
+## Repository / Suite 0.33.1 — MEN-001 proactive smoke regression fix (unverified)
+- Enemy AI threw zero smoke grenades with 0.6. Native GetTargetValue score floors alone were not sufficient.
+- Smoke Overhaul 0.6.1 uses one native Agent.Execute opportunity per AI infantry unit/turn for Pinned Down, Suppressed, or exposed flamethrowers with known opponents. Checks at most 6 local tiles (2 forward for flamethrowers), no pathfinding or hidden-enemy query.
+- Native smoke skill IsUsable, IsAffordable, IsUsableOn, limited uses and AI-only cooldown are checked before invoking Skill.Use. Pinned smoke retains zero-AP exception only for two smoke IDs.
+- Late-priority Agent.Execute Harmony prefix honors earlier mods such as Infantry Assault. Aggregated in-memory diagnostics, only one unexpected exception logged; default debug OFF.
+- Windows build, gameplay smoke activation and 96x96 turn-performance validation still pending. PR #12 remains draft, issue #1 open.
+
 ## Repository / Suite 0.33 — MEN-001 tactical smoke (source-only, unverified)
 
 - Smoke Overhaul 0.6: allow pinned smoke grenades with 0 AP exclusively in Pinned Down; native normal/Suppressed AP unchanged.
