@@ -13,7 +13,7 @@ public sealed partial class Plugin
 {
     private const int StampDensityReferenceSize = 64;
     private const int StampDensityFullSize = 96;
-    private const int MaximumStampAttemptsPerGroup = 40;
+    private const int MaximumStampAttemptsPerGroup = 200;
     private const int MaximumStampDensityDiagnosticLines = 10;
 
     private static bool _increaseTerrainStamps;
@@ -28,10 +28,10 @@ public sealed partial class Plugin
         _increaseTerrainStamps = TargetSize > StampDensityReferenceSize &&
                                  ReadBool("IncreaseTerrainStampDensity", false);
         _diagnoseTerrainStamps = ReadBool("DiagnoseTerrainStampDensity", false);
-        float configured = ReadFloat("TerrainStampDensityMultiplier", 1.25f);
+        float configured = ReadFloat("TerrainStampDensityMultiplier", 1.5f);
         _terrainStampMultiplier = float.IsNaN(configured) || float.IsInfinity(configured)
             ? 1f
-            : Math.Clamp(configured, 1f, 1.5f);
+            : Math.Clamp(configured, 1f, 5f);
 
         if (!_increaseTerrainStamps && !_diagnoseTerrainStamps) return;
 
@@ -111,6 +111,7 @@ public sealed partial class Plugin
 
     // Pure, deterministic scaling; keep the 64x64 baseline unmodified.
     // 72/80/88 interpolate smoothly instead of jumping straight to the 96x96 factor.
+    // Restrict additional attempts to 200 per stamp group (never reduce vanilla counts).
     private static int ScaleStampAttempts(int original, int mapSize, float configuredMultiplier)
     {
         if (original <= 0 || mapSize <= StampDensityReferenceSize ||
@@ -120,7 +121,7 @@ public sealed partial class Plugin
         float ramp = Math.Clamp(
             (mapSize - StampDensityReferenceSize) / (float)(StampDensityFullSize - StampDensityReferenceSize),
             0f, 1f);
-        float effectiveMultiplier = 1f + (Math.Clamp(configuredMultiplier, 1f, 1.5f) - 1f) * ramp;
+        float effectiveMultiplier = 1f + (Math.Clamp(configuredMultiplier, 1f, 5f) - 1f) * ramp;
         int scaled = (int)Math.Round(original * effectiveMultiplier, MidpointRounding.AwayFromZero);
         return Math.Max(original, Math.Min(MaximumStampAttemptsPerGroup, scaled));
     }
