@@ -1,4 +1,8 @@
-# MENACE Mods Unified Repository 0.32.2
+# MENACE Mods Unified Repository 0.32.3
+
+### 0.32.3 Third Person Camera state bridge (MEN-006)
+
+The earlier 0.32.2 fix did not hide the custom buttons during automatic movement cinematics in-game. Overwatch 0.32.3.3 and Coordinated Fire 1.6.9 now use an optional cached delegate to Third Person Camera **0.3.4**'s explicit `IsCinematicViewActive` state (F6 and automatic). The native tactical-HUD Harmony hook remains as fallback. No per-frame reflection scans or new default logs. Full Windows build/gameplay checks remain pending.
 
 ### 0.32.2 Cinematic HUD compatibility (MEN-006)
 
