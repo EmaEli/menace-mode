@@ -5,7 +5,10 @@
     <Nullable>disable</Nullable>
     <ImplicitUsings>disable</ImplicitUsings>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <!-- The integrated installer validates the compiled DLL's AssemblyVersion.
+         With this disabled and no AssemblyVersion attribute in our source,
+         .NET emits 0.0.0.0 even though MelonInfo advertises 0.3.4. -->
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
     <AssemblyName>MenaceThirdPersonCamera</AssemblyName>
     <Version>0.3.4</Version>
     <AssemblyVersion>0.3.4.0</AssemblyVersion>
