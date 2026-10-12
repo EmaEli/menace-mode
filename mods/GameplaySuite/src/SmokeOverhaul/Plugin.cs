@@ -1267,7 +1267,7 @@ public sealed class Plugin : IModpackPlugin
             }
 
             // No hidden-opponent coordinates, map sweep or speculative path finding.
-            if (origin.GetCoverMask() != 0 ||
+            if (origin.GetCoverMask() != 0 || !target.IsValidMovementDestination() ||
                 (agent.GetNumThreatsFaced() <= 0 && agent.GetFaction()?.HasKnownOpponent() != true))
                 return;
             var forward = DirectionExtensions.AsDifferenceBetweenTiles(actor.GetDirection());
