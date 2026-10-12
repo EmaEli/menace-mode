@@ -8,7 +8,7 @@ param(
     [string]$SourceCommit,
     [ValidateSet('SmokeOverhaul')]
     [string]$Component = 'SmokeOverhaul',
-    [string]$ExpectedVersion = '0.6',
+    [string]$ExpectedVersion = '0.6.1',
     [string]$GamePath = '',
     [switch]$BuildOnly
 )
@@ -80,12 +80,12 @@ function Assert-CorrectSource([string]$RepoPath, [string]$Version) {
     Assert-File $project 'Smoke Overhaul project'
     Assert-File $plugin 'Smoke Overhaul source'
     Assert-File $builder 'Shared build script'
-    if ((Get-Content -LiteralPath $project -Raw) -notmatch '<Version>0\.6</Version>') {
+    if ((Get-Content -LiteralPath $project -Raw) -notmatch '<Version>0\.6\.1</Version>') {
         throw 'Unexpected Smoke Overhaul project version; refusing to build.'
     }
     $code = Get-Content -LiteralPath $plugin -Raw
-    if (-not $code.Contains('internal const string Version = "0.6"') -or
-        -not $code.Contains('AssemblyVersion("0.6.0.0")') -or
+    if (-not $code.Contains('internal const string Version = "0.6.1"') -or
+        -not $code.Contains('AssemblyVersion("0.6.1.0")') -or
         -not $code.Contains('AllowSmokeWhilePinnedDown') -or
         -not $code.Contains('SimpleAISmokeRules')) {
         throw 'MEN-001 smoke implementation or explicit assembly metadata is missing.'
@@ -100,7 +100,7 @@ try {
     Start-Transcript -LiteralPath $Log -Append -ErrorAction Stop | Out-Null
     $StartedTranscript = $true
     Write-Host ''
-    Write-Host 'MEN-001: SMOKE OVERHAUL 0.6 - ONE-CLICK INSTALLER' -ForegroundColor Cyan
+    Write-Host 'MEN-001: SMOKE OVERHAUL 0.6.1 - ONE-CLICK INSTALLER' -ForegroundColor Cyan
     Write-Host "Persistent installer log: $Log"
     Write-Host "Pinned source commit: $SourceCommit"
     Write-Host 'Only Smoke Overhaul will be replaced; other Gameplay Suite DLLs and camera will be kept.'
@@ -156,7 +156,7 @@ try {
     $BuiltDll = Join-Path $Built 'dlls\SmokeOverhaul.dll'
     $BuiltSource = Join-Path $Built 'source\src\SmokeOverhaul'
     Assert-ManifestVersion (Join-Path $Built 'modpack.json') $ExpectedVersion
-    Assert-DllVersion $BuiltDll '0.6.0.0'
+    Assert-DllVersion $BuiltDll '0.6.1.0'
     Assert-Directory $BuiltSource 'Built Smoke Overhaul authoring source'
     if ((Get-FileHash -LiteralPath $BuiltDll -Algorithm SHA256).Hash -eq '') {
         throw 'Compiled DLL hash is unexpectedly empty.'
@@ -167,7 +167,7 @@ try {
     Copy-Item -LiteralPath $Built -Destination (Join-Path $Stage 'SmokeOverhaul') -Recurse -Force
     $Staged = Join-Path $Stage 'SmokeOverhaul'
     Assert-ManifestVersion (Join-Path $Staged 'modpack.json') $ExpectedVersion
-    Assert-DllVersion (Join-Path $Staged 'dlls\SmokeOverhaul.dll') '0.6.0.0'
+    Assert-DllVersion (Join-Path $Staged 'dlls\SmokeOverhaul.dll') '0.6.1.0'
     $ExpectedDllHash = (Get-FileHash -LiteralPath (Join-Path $Staged 'dlls\SmokeOverhaul.dll') -Algorithm SHA256).Hash
     Write-Host "Staged DLL SHA256: $ExpectedDllHash"
     Write-Host 'All build and stage checks passed. No game files have been changed.' -ForegroundColor Green
@@ -234,7 +234,7 @@ try {
                 $InstalledDll = Join-Path $Mods 'SmokeOverhaul\dlls\SmokeOverhaul.dll'
                 Assert-ManifestVersion (Join-Path $Mods 'SmokeOverhaul\modpack.json') $ExpectedVersion
             }
-            Assert-DllVersion $InstalledDll '0.6.0.0'
+            Assert-DllVersion $InstalledDll '0.6.1.0'
             $diskHash = (Get-FileHash -LiteralPath $InstalledDll -Algorithm SHA256).Hash
             if ($diskHash -ne $ExpectedDllHash) { throw 'Installed DLL bytes differ from verified staged build.' }
             foreach ($conflict in $RemoveConflicts) {
@@ -276,10 +276,10 @@ try {
         }
         if (-not $TransactionCompleted) { throw 'Installation ended before transaction verification.' }
         Write-Host ''
-        Write-Host 'SUCCESS: Smoke Overhaul 0.6 was installed and verified.' -ForegroundColor Green
+        Write-Host 'SUCCESS: Smoke Overhaul 0.6.1 was installed and verified.' -ForegroundColor Green
         Write-Host ('Install target: ' + $(if ($InsideSuite) { 'Existing Gameplay Suite (Smoke DLL only)' } else { 'Standalone Smoke Overhaul modpack' }))
         Write-Host "Backup: $Backup"
-        Write-Host "Installed assembly version: 0.6.0.0; SHA256: $ExpectedDllHash"
+        Write-Host "Installed assembly version: 0.6.1.0; SHA256: $ExpectedDllHash"
         Write-Host 'Other Gameplay Suite modules, Third Person Camera and saves were not replaced.'
         Write-Host 'In-game smoke use and AI performance remain to be tested.'
     }
