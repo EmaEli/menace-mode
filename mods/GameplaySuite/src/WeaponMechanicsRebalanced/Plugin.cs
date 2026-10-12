@@ -4,16 +4,16 @@ using Menace.ModpackLoader;
 using Menace.SDK;
 using UnityEngine;
 
-[assembly: AssemblyVersion("0.4.4.0")]
-[assembly: AssemblyFileVersion("0.4.4.0")]
-[assembly: AssemblyInformationalVersion("0.4.4")]
+[assembly: AssemblyVersion("0.4.5.0")]
+[assembly: AssemblyFileVersion("0.4.5.0")]
+[assembly: AssemblyInformationalVersion("0.4.5")]
 
 namespace MenaceWeaponMechanicsRebalanced;
 
 public sealed class Plugin : IModpackPlugin
 {
     private const string SettingsGroup = "Weapon Mechanics Rebalanced";
-    private const string Version = "0.4.4";
+    private const string Version = "0.4.5";
 
     private sealed class MortarSkillSpec
     {
@@ -349,12 +349,75 @@ public sealed class Plugin : IModpackPlugin
         }
     }
 
+    // One debug-only snapshot per high-volume Skill.Use activation (never per projectile/frame).
+    // Kept separate from gameplay values so enabling diagnostics cannot change ammo costs.
+    private struct HighVolumeAmmoState
+    {
+        public int BeforeUses;
+        public int BeforeMaxUses;
+        public int BeforeUsesConsumed;
+        public int BeforeCharges;
+        public int BeforeChargesPerUse;
+        public int UsageFlags;
+        public bool BlockedByGuard;
+        public string? ActorName;
+        public string? ActorTemplateId;
+        public string? ItemTemplateId;
+        public long ActorKey;
+        public long ItemKey;
+    }
+
+    private static void CaptureHighVolumeAmmoBefore(
+        Il2CppMenace.Tactical.Skills.Skill skill,
+        Il2CppMenace.Tactical.Skills.UsageParameter usage,
+        ref HighVolumeAmmoState state)
+    {
+        // Diagnostics are strictly optional: errors reading metadata must not affect fire.
+        state.UsageFlags = (int)usage;
+        state.BeforeMaxUses = -1;
+        state.BeforeUsesConsumed = -1;
+        state.BeforeCharges = -1;
+        state.BeforeChargesPerUse = -1;
+        try
+        {
+            state.BeforeMaxUses = skill.GetMaxUses();
+            state.BeforeUsesConsumed = skill.GetUsesConsumed();
+            state.BeforeCharges = skill.GetCharges();
+            state.BeforeChargesPerUse = skill.GetChargesPerUse();
+        }
+        catch { }
+
+        try
+        {
+            Il2CppMenace.Tactical.Actor? actor = skill.GetActor();
+            if (actor != null)
+            {
+                state.ActorKey = NativeKey(actor);
+                state.ActorName = actor.DebugName;
+                state.ActorTemplateId = actor.GetTemplate()?.GetID();
+            }
+        }
+        catch { }
+
+        try
+        {
+            Il2CppMenace.Items.Item? item = skill.GetItem();
+            if (item != null)
+            {
+                state.ItemKey = NativeKey(item);
+                state.ItemTemplateId = item.GetTemplate()?.GetID();
+            }
+        }
+        catch { }
+    }
+
     private static bool HighVolumeFireUsePrefix(
         Il2CppMenace.Tactical.Skills.Skill __instance,
+        Il2CppMenace.Tactical.Skills.UsageParameter __1,
         ref bool __result,
-        ref int __state)
+        ref HighVolumeAmmoState __state)
     {
-        __state = -1;
+        __state = new HighVolumeAmmoState { BeforeUses = -1 };
         if (!_enabled || __instance == null) return true;
 
         try
@@ -364,12 +427,16 @@ public sealed class Plugin : IModpackPlugin
             if (!__instance.HasLimitedUses()) return true;
 
             int before = __instance.GetUses();
-            __state = before;
+            __state.BeforeUses = before;
+            if (_debugLogging)
+                CaptureHighVolumeAmmoBefore(__instance, __1, ref __state);
+
             if (before >= 2) return true;
 
             // The UI/AI usability hook normally prevents this path. Keep this hard
             // guard as well because other mods can call Skill.Use with usability checks
             // explicitly bypassed.
+            __state.BlockedByGuard = true;
             __result = false;
             return false;
         }
@@ -384,9 +451,10 @@ public sealed class Plugin : IModpackPlugin
     private static void HighVolumeFireUsePostfix(
         Il2CppMenace.Tactical.Skills.Skill __instance,
         bool __result,
-        int __state)
+        HighVolumeAmmoState __state)
     {
-        if (!_enabled || !__result || __instance == null || __state < 0) return;
+        if (!_enabled || __instance == null || __state.BeforeUses < 0) return;
+        if (!__result && !_debugLogging) return;
 
         try
         {
@@ -394,21 +462,60 @@ public sealed class Plugin : IModpackPlugin
             if (!HighVolumeFireSkillIds.Contains(skillId) || !__instance.HasLimitedUses()) return;
 
             int afterNative = __instance.GetUses();
-            int alreadyConsumed = Math.Max(0, __state - afterNative);
-            int extraToConsume = Math.Max(0, 2 - alreadyConsumed);
+            int nativeDelta = __state.BeforeUses - afterNative;
+            int extraToConsume = __result ? Math.Max(0, 2 - Math.Max(0, nativeDelta)) : 0;
+            int afterNativeCharges = -1;
+            int afterNativeUsesConsumed = -1;
+            if (_debugLogging)
+            {
+                try
+                {
+                    afterNativeCharges = __instance.GetCharges();
+                    afterNativeUsesConsumed = __instance.GetUsesConsumed();
+                }
+                catch { }
+            }
 
-            for (int i = 0; i < extraToConsume && __instance.GetUses() > 0; i++)
-                __instance.ConsumeUse();
+            int extraCalls = 0;
+            if (__result)
+            {
+                for (int i = 0; i < extraToConsume && __instance.GetUses() > 0; i++)
+                {
+                    __instance.ConsumeUse();
+                    extraCalls++;
+                }
 
-            if (extraToConsume > 0)
-                __instance.SynchronizeUses();
+                if (extraToConsume > 0)
+                    __instance.SynchronizeUses();
+            }
 
-            DebugLog($"Alternate fire ammo: {skillId} uses {__state}->{__instance.GetUses()} (native consumed {alreadyConsumed}, target 2).");
+            if (_debugLogging)
+            {
+                int afterMod = __instance.GetUses();
+                int afterModMax = -1;
+                int afterModCharges = -1;
+                int afterModUsesConsumed = -1;
+                try
+                {
+                    afterModMax = __instance.GetMaxUses();
+                    afterModCharges = __instance.GetCharges();
+                    afterModUsesConsumed = __instance.GetUsesConsumed();
+                }
+                catch { }
+
+                DebugLog(
+                    $"[MEN-004 AMMO] actor='{__state.ActorName ?? "?"}' actorTemplate={__state.ActorTemplateId ?? "?"} actorPtr=0x{__state.ActorKey:X} " +
+                    $"item={__state.ItemTemplateId ?? "?"} itemPtr=0x{__state.ItemKey:X} skill={skillId} flags={(Il2CppMenace.Tactical.Skills.UsageParameter)__state.UsageFlags} " +
+                    $"success={__result} blocked={__state.BlockedByGuard} uses={__state.BeforeUses}->{afterNative}->{afterMod} " +
+                    $"maxUses={__state.BeforeMaxUses}->{afterModMax} charges={__state.BeforeCharges}->{afterNativeCharges}->{afterModCharges} " +
+                    $"consumedPerUse={__state.BeforeUsesConsumed}->{afterNativeUsesConsumed}->{afterModUsesConsumed} " +
+                    $"chargesPerUse={__state.BeforeChargesPerUse} nativeDelta={nativeDelta} extraRequested={extraToConsume} extraCalls={extraCalls}.");
+            }
         }
         catch (Exception ex)
         {
             if (_debugLogging)
-                Warn($"Alternate-fire extra ammo consumption failed: {ex.GetType().Name}: {ex.Message}");
+                Warn($"Alternate-fire extra ammo consumption/diagnostics failed: {ex.GetType().Name}: {ex.Message}");
         }
     }
 

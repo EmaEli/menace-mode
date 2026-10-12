@@ -1,6 +1,15 @@
 # MENACE Mods Unified Repository 0.33
 
-### 0.33 MEN-001 tactical smoke (unverified)\n\nSmoke Overhaul 0.6 permits Pinned Down emergency smoke and lightly boosts native AI usage under suppression and for exposed flamethrowers. Fast smoke selection stays enabled; no path scans or frame polling. Source-only change awaiting Windows build/in-game verification.\n\n### 0.32.1 Infantry Assault stale aim cache fix (MEN-005)
+### 0.33 MEN-001 tactical smoke (unverified)
+
+Smoke Overhaul 0.6 permits Pinned Down emergency smoke and lightly boosts native AI usage under suppression and for exposed flamethrowers. Fast smoke selection stays enabled; no path scans or frame polling. Source-only change awaiting Windows build/in-game verification.
+
+### 0.32.2 MEN-004 debug-only ammo trace
+
+Weapon Mechanics Rebalanced **0.4.5** adds one `[MEN-004 AMMO]` log entry per Sustained/Spray Fire activation **only when its Debug logging option is ON**.
+The line records ammo before native `Skill.Use`, after native processing and after WMR's extra use, alongside unit/weapon and per-call consumption. To reproduce, enable that module's Debug logging in Mod Options, use ability 2, and compare the UI ammo before/after with `MelonLoader/Latest.log`. Turn Debug logging back OFF afterward. No ammo-cost changes; MEN-004 is still open.
+
+### 0.32.1 Infantry Assault stale aim cache fix (MEN-005)
 
 Infantry Assault 0.5.3 refreshes MENACE's cached executing-soldier index list if squad casualties make it invalid during Assault targeting preview. This prevents native `Actor.AimAt(Vector3)` index errors without changing regular weapon aiming, Mount Up, CQB combat rules, or AI assaults. Checks are cached per squad size; debug remains OFF by default. Runtime gameplay verification is still required.
 

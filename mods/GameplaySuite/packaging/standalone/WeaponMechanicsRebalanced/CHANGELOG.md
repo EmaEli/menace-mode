@@ -1,3 +1,9 @@
+## 0.4.5 — MEN-004 opt-in ammunition tracing
+
+- Added **one debug-only `[MEN-004 AMMO]` entry per high-volume alternate-fire `Skill.Use`** (never per projectile, frame, or turn), including unit/weapon identity, usage flags, success/guard result, and ammo/use/charge counters at **before -> native -> after WMR** stages.
+- Records `GetUsesConsumed()`, `GetChargesPerUse()`, native ammo delta, requested extra consumption and actual `ConsumeUse()` calls to distinguish native use cost from WMR's extra synchronization.
+- No gameplay, AP, ammunition-cost or suppression changes. `DebugLogging` remains **OFF** by default. Diagnosis requires rebuilding and in-game testing; GitHub issue #4 remains OPEN.
+
 ## 0.4.4
 
 - Fixed the missing mortar ranging squares caused by attaching two `LineRenderer` components to a single Unity `GameObject`. The dark and colored border strokes now have separate child GameObjects.

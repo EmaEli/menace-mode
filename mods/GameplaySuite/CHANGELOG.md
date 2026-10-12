@@ -1,4 +1,17 @@
-## Repository / Suite 0.33 — MEN-001 tactical smoke (source-only, unverified)\n\n- Smoke Overhaul 0.6: allow pinned smoke grenades with 0 AP exclusively in Pinned Down; native normal/Suppressed AP unchanged.\n- Lightweight native immediate-target score floors for Pinned Down, Suppressed and exposed flamethrower infantry. No speculative search, no new map scan, no force-moving AI and no default logs.\n- Settings AllowSmokeWhilePinnedDown and SimpleAISmokeRules default ON, no game verification yet.\n\n## Repository / Suite 0.32.1 — MEN-005 Assault aim-cache fix
+## Repository / Suite 0.33 — MEN-001 tactical smoke (source-only, unverified)
+
+- Smoke Overhaul 0.6: allow pinned smoke grenades with 0 AP exclusively in Pinned Down; native normal/Suppressed AP unchanged.
+- Lightweight native immediate-target score floors for Pinned Down, Suppressed and exposed flamethrower infantry. No speculative search, no new map scan, no force-moving AI and no default logs.
+- Settings AllowSmokeWhilePinnedDown and SimpleAISmokeRules default ON, no game verification yet.
+
+## Repository / Suite 0.32.2 — MEN-004 alternate-fire ammo diagnostic
+
+- **Weapon Mechanics Rebalanced 0.4.4 -> 0.4.5:** added opt-in, per-activation `[MEN-004 AMMO]` snapshots of sustained/spray fire, distinguishing native skill consumption from WMR's own extra-ammo cost.
+- Logs actor/weapon, `UsageParameter`, success/guard, `GetUses`, `GetMaxUses`, `GetCharges`, `GetUsesConsumed` and `GetChargesPerUse` (before/native/final where available), plus extra `ConsumeUse()` calls.
+- Entire trace is enabled only by **Weapon Mechanics Rebalanced -> Debug logging**. Normal logging remains quiet; no changes to ammo economy, AP, mortar mechanics or other modules.
+- Build and in-game test pending. **MEN-004 remains open** until actual ammo-counter behavior is verified.
+
+## Repository / Suite 0.32.1 — MEN-005 Assault aim-cache fix
 
 - **Infantry Assault 0.5.2 → 0.5.3**: validates native cached executing-soldier indices during player Assault hover/preview. If squad casualties invalidate the cached list, rebuild it from MENACE's current executing-element selection before the native `Actor.AimAt(Vector3)` path.
 - Covers the 110 repeated `ArgumentOutOfRangeException` entries reported in the October 12 log (three bursts immediately before Assault confirmation). No global exception suppression or blanket `Actor.AimAt` patch; Mount Up and ordinary weapon targeting remain untouched.

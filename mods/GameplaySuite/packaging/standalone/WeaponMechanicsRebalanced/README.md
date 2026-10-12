@@ -1,4 +1,6 @@
-# Weapon Mechanics Rebalanced 0.4.4
+# Weapon Mechanics Rebalanced 0.4.5
+
+**0.4.5 MEN-004 diagnostic build:** In **Mod Options -> Weapon Mechanics Rebalanced -> Debug logging**, enable debug before firing the assault rifle's **Sustained Fire (ability 2)**. In `MelonLoader/Latest.log`, search for `[MEN-004 AMMO]`. Each high-volume activation logs ammo uses/charges **before -> after native MENACE -> after WMR**, `consumedPerUse` and extra `ConsumeUse()` calls, together with actor/weapon and flags. Compare the values with the UI counter before/after a shot, then switch debug OFF. This version contains **diagnostics only**, not an ammo fix; MEN-004 remains open.  
 
 Weapon Mechanics Rebalanced (WMR) contains non-range weapon gameplay changes separated from Weapon Ranges Rebalanced. It deliberately does **not** own weapon ranges or the long-range indirect-fire AI positioning policy.
 
