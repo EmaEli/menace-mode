@@ -8,7 +8,7 @@ if not exist "%ROOT%artifacts" mkdir "%ROOT%artifacts"
 if "%MENACE_GAME%"=="" set "MENACE_GAME=M:\SteamLibrary\steamapps\common\Menace"
 set "GAME=%MENACE_GAME%"
 set "DEST=%GAME%\Mods\LargerMaps"
-> "%LOG%" echo Larger Maps 1.6.1 build/deploy
+> "%LOG%" echo Larger Maps 1.7 build/deploy
 >>"%LOG%" echo Started: %date% %time%
 >>"%LOG%" echo Working directory: %ROOT%
 >>"%LOG%" echo GAME=%GAME%
@@ -51,24 +51,24 @@ if errorlevel 1 (
 if not exist "%DEST%" mkdir "%DEST%"
 if not exist "%DEST%\dlls" mkdir "%DEST%\dlls"
 rem Back up previous build ONCE for easy rollback.
-if exist "%DEST%\dlls\LargerMaps.dll" if not exist "%ROOT%artifacts\LargerMaps-before-1.6.1.dll" copy /Y "%DEST%\dlls\LargerMaps.dll" "%ROOT%artifacts\LargerMaps-before-1.6.1.dll" >>"%LOG%" 2>&1
-if exist "%DEST%\modpack.json" if not exist "%ROOT%artifacts\modpack-before-1.6.1.json" copy /Y "%DEST%\modpack.json" "%ROOT%artifacts\modpack-before-1.6.1.json" >>"%LOG%" 2>&1
+if exist "%DEST%\dlls\LargerMaps.dll" if not exist "%ROOT%artifacts\LargerMaps-before-1.7.dll" copy /Y "%DEST%\dlls\LargerMaps.dll" "%ROOT%artifacts\LargerMaps-before-1.7.dll" >>"%LOG%" 2>&1
+if exist "%DEST%\modpack.json" if not exist "%ROOT%artifacts\modpack-before-1.7.json" copy /Y "%DEST%\modpack.json" "%ROOT%artifacts\modpack-before-1.7.json" >>"%LOG%" 2>&1
 copy /Y "%ROOT%src\LargerMaps\bin\Release\net6.0\LargerMaps.dll" "%DEST%\dlls\LargerMaps.dll" >>"%LOG%" 2>&1
 if errorlevel 1 goto DEPLOY_FAILED
 copy /Y "%MODSRC%\modpack.json" "%DEST%\modpack.json" >>"%LOG%" 2>&1
 if errorlevel 1 goto DEPLOY_FAILED
-echo SUCCESS: Larger Maps 1.6.1 (SIMPLIFIED COMBAT AI EXPERIMENT) deployed to "%DEST%"
+echo SUCCESS: Larger Maps 1.7 (SIMPLIFIED COMBAT AI EXPERIMENT) deployed to "%DEST%"
 echo Before playing, back up your save. Look for "simplified large-map combat planning" in Latest.log.
 echo AI attack positioning is simplified; the native pathfinder and player movement are unchanged.
 echo If the exact native build is incompatible, the mod will use a 64x64 fallback instead.
-echo For rollback, quit MENACE and restore DLL + modpack from artifacts\*before-1.6.1*.
+echo For rollback, quit MENACE and restore DLL + modpack from artifacts\*before-1.7*.
 pause
 exit /b 0
 
 :DEPLOY_FAILED
 echo DEPLOY FAILED - see "%LOG%". Restoring original files when backup exists.
-if exist "%ROOT%artifacts\LargerMaps-before-1.6.1.dll" copy /Y "%ROOT%artifacts\LargerMaps-before-1.6.1.dll" "%DEST%\dlls\LargerMaps.dll" >>"%LOG%" 2>&1
-if exist "%ROOT%artifacts\modpack-before-1.6.1.json" copy /Y "%ROOT%artifacts\modpack-before-1.6.1.json" "%DEST%\modpack.json" >>"%LOG%" 2>&1
+if exist "%ROOT%artifacts\LargerMaps-before-1.7.dll" copy /Y "%ROOT%artifacts\LargerMaps-before-1.7.dll" "%DEST%\dlls\LargerMaps.dll" >>"%LOG%" 2>&1
+if exist "%ROOT%artifacts\modpack-before-1.7.json" copy /Y "%ROOT%artifacts\modpack-before-1.7.json" "%DEST%\modpack.json" >>"%LOG%" 2>&1
 type "%LOG%"
 pause
 exit /b 6
