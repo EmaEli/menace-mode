@@ -1,4 +1,8 @@
-# MENACE Mods Unified Repository 0.32
+# MENACE Mods Unified Repository 0.32.1
+
+### 0.32.1 Cinematic HUD compatibility (MEN-006)
+
+Overwatch 0.32.3.2 and Coordinated Fire 1.6.8 follow the native tactical UI visibility signal used by Third Person Camera 0.3.3. Both custom buttons disappear during cinematic view and recover using their normal eligibility checks afterward; no combat mechanic or default logging changes. Windows build and gameplay verification remain pending.
 
 ### 0.32 Starting Options
 
