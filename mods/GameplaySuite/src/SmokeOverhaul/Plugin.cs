@@ -1302,7 +1302,7 @@ public sealed class Plugin : IModpackPlugin
                 return false;
 
             bool flamethrowerAdvance = !pinned && !suppressed &&
-                actor.GetCoverMask() == 0 &&
+                origin.GetCoverMask() == 0 &&
                 (agent.GetNumThreatsFaced() > 0 || agent.GetFaction()?.HasKnownOpponent() == true);
             if (!pinned && !suppressed && !flamethrowerAdvance)
                 return false;
