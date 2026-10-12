@@ -1,3 +1,10 @@
+## 0.5.3
+
+- MEN-005: repair stale cached native executing-element indices before Infantry Assault mouse-hover aiming, preventing `Actor.AimAt(Vector3)` out-of-range spam after squad casualties.
+- Rebuild indices through MENACE `Skill.GetExecutingElements` only after a changed squad size or invalid cached index; keep the same native cached list instance and preserve normal preview/cursor behavior.
+- When safe validation is unavailable, skip only that Assault hover-preview callback; never suppress native exceptions globally or touch other skills, Mount Up, CQB balance, AI, AP, or ammo.
+- One optional debug-only warning per tactical scene on guard failure; default diagnostics remain OFF. Windows compilation and in-game verification pending.
+
 ## 0.5.2
 
 - Fixed runtime Assault skill discovery through `BaseSkill` wrappers, avoiding false missing-skill diagnostics and duplicate injection attempts.
