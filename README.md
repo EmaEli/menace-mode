@@ -6,8 +6,9 @@ Source snapshots of MENACE mods maintained for issue tracking and ongoing develo
 
 | Directory | Imported version | Files | Notes |
 |---|---|---:|---|
-| [`mods/GameplaySuite`](mods/GameplaySuite) | **0.32** | 145 | Unified authoring repository with C# sources, build/deploy scripts, packaging, tests and documentation |
+| [`mods/GameplaySuite`](mods/GameplaySuite) | **0.32.1** | 145 | Unified authoring repository with C# sources, build/deploy scripts, packaging, tests and documentation |
 | [`mods/LargerMaps`](mods/LargerMaps) | **1.6.1** | 57 | Map scaling, AI planning/performance code, build/deploy scripts, regression tests and technical notes |
+| [`mods/ThirdPersonCamera`](mods/ThirdPersonCamera) | **0.3.3** | 14 | Source-only camera mod with automatic and manual cinematic views, Mod Settings bridge, Windows build scripts and static regression tests |
 
 **Baseline imported:** October 12, 2026, from the latest source ZIP archives provided in this ChatGPT MENACE project. These are source snapshots, not independently verified upstream releases.
 
@@ -17,6 +18,7 @@ Follow each project's own instructions:
 
 - Gameplay Suite: [README](mods/GameplaySuite/README.md), [Build script](mods/GameplaySuite/Build-and-Deploy-Suite.cmd), [Testing](mods/GameplaySuite/docs/TESTING.md).
 - Larger Maps: [README](mods/LargerMaps/README.md), [Build script](mods/LargerMaps/build-and-deploy.bat), [Tests](mods/LargerMaps/run-tests.bat).
+- Third Person Camera: [README](mods/ThirdPersonCamera/README.md), [Build script](mods/ThirdPersonCamera/build-and-deploy.bat), [Test plan](mods/ThirdPersonCamera/TEST-PLAN.md).
 
 Compiling requires local game dependencies and the intended MENACE/MelonLoader environment; game assemblies and extracted game assets are **not** included in this repository.
 
