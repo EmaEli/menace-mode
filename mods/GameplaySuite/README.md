@@ -1,5 +1,11 @@
 # MENACE Mods Unified Repository 0.32.3
 
+### MEN-006: single integrated install (pending game verification)
+
+Run `tools/Install-IntegratedSuite.ps1 -SourceCommit <pinned-commit>` (or the downloadable one-click Windows launcher). It downloads public sources and compiles **Gameplay Suite 0.32.3 plus Third Person Camera 0.3.4** using the game's local interop assemblies. After all builds pass, it builds one distributable `MenaceGameplaySuite-0.32.3-INTEGRATED.zip` and, unless `-BuildOnly` is passed, backs up the old Suite, standalone camera, camera companion modpack and conflicting standalone combat mods **outside the Mods folder**, then installs the integrated package. Compilation failures leave Mods untouched; installation failures attempt rollback. MENACE must be closed.
+
+The camera uses MelonLoader `OnLateUpdate`, while Suite gameplay modules are ModpackLoader `IModpackPlugin`s. Therefore its runtime is still `Mods/MenaceThirdPersonCamera.dll` **inside the same integrated distribution**, but `ThirdPersonCameraSettings.dll` lives in the Suite's `dlls` and there is only **one active ModpackLoader modpack** for the camera and Suite. The old `Mods/ThirdPersonCamera` modpack is archived rather than loaded. No second manual ZIP installation is required. This packaging has not yet been verified on Windows or in game.
+
 ### 0.32.3 Third Person Camera state bridge (MEN-006)
 
 The earlier 0.32.2 fix did not hide the custom buttons during automatic movement cinematics in-game. Overwatch 0.32.3.3 and Coordinated Fire 1.6.9 now use an optional cached delegate to Third Person Camera **0.3.4**'s explicit `IsCinematicViewActive` state (F6 and automatic). The native tactical-HUD Harmony hook remains as fallback. No per-frame reflection scans or new default logs. Full Windows build/gameplay checks remain pending.
