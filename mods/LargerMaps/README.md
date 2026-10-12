@@ -1,3 +1,9 @@
+## 1.7.1 compile fix
+
+Fixes CS0118 (`Harmony` namespace/type ambiguity) in the 1.7 stamp-density integration. No behavior changes. Re-download the source branch before building. Build and game tests remain outstanding.
+
+---
+
 ## 1.7 experimental MEN-003: terrain stamp density
 
 Set `IncreaseTerrainStampDensity=ON` and `TerrainStampDensityMultiplier=1.25` (restart required). The effect gradually ramps from zero at 64x64 to full strength at 96x96. It changes **terrain-landform stamp attempt budgets**, not per-tile vegetation, grass or mission setpieces. Default OFF for safe A/B testing. `DiagnoseTerrainStampDensity` optionally logs up to 10 generation summaries. Native placement may reject attempts, and no gameplay validation has yet been performed. See `TEST-PLAN-1.7.md`.
