@@ -475,6 +475,8 @@ public sealed class Plugin : IModpackPlugin
         Line("Infantry templates granted frag: " + FreeFragGrenadeTemplates.Count);
         Line("Caliber smoke footprints: " + (RuntimeSettings.CaliberBasedSmokeFootprints ? "yes" : "no"));
         Line("AI smoke usage: " + (RuntimeSettings.EnableAISmokeUsage ? "yes" : "no"));
+        Line("AI smoke direct rules: " + (RuntimeSettings.SimpleAISmokeRules ? "yes" : "no"));
+        Line($"AI actions / eligible / smoke skill / valid target / smoke thrown: {_aiSmokeExecutions} / {_aiSmokeEligible} / {_aiSmokeSkillsAvailable} / {_aiSmokeValidTargets} / {_aiSmokeUsesSucceeded}");
         Line("Fast AI smoke selection: " + (RuntimeSettings.FastAISmokeSelection ? "yes" : "no"));
         Line("Optimized native smoke AI profiles: " + OriginalSmokeAiPositioning.Count);
         Line("80mm mortar smoke granted: " + (_mediumMortarSmokeGrantedByUs ? "yes" : "no/already present"));
@@ -1249,6 +1251,8 @@ public sealed class Plugin : IModpackPlugin
     // One emergency smoke decision per actor per turn, with a constant upper bound
     // on candidate tiles. Agent.Execute is an AI action transition, not a frame hook.
     private static readonly HashSet<IntPtr> _smokeActedThisTurn = new();
+    private static readonly int[] DefensiveSmokeOffsets = { 0, -1, 1, -2, 2, 4 };
+    private static readonly int[] FlamethrowerSmokeOffsets = { 0, 0 };
     private static int _aiSmokeExecutions;
     private static int _aiSmokeEligible;
     private static int _aiSmokeSkillsAvailable;
@@ -1342,12 +1346,12 @@ public sealed class Plugin : IModpackPlugin
             // At most 6 tiles for defensive smoke or 2 for flamethrower smoke.
             // Deterministic ordering, no per-enemy scans, pathfinder, or FOW access.
             int[] offsets = flamethrowerAdvance
-                ? new[] { 0, 0 }
-                : new[] { 0, -1, 1, -2, 2, 4 };
+                ? FlamethrowerSmokeOffsets
+                : DefensiveSmokeOffsets;
             for (int i = 0; i < offsets.Length; i++)
             {
-                Direction direction = facing.Rotate(offsets[i]);
-                var step = direction.AsDifferenceBetweenTiles();
+                Direction direction = DirectionExtensions.Rotate(facing, offsets[i]);
+                var step = DirectionExtensions.AsDifferenceBetweenTiles(direction);
                 int distance = flamethrowerAdvance && i == 0 ? 2 : 1;
                 int x = origin.GetX() + step.x * distance;
                 int z = origin.GetZ() + step.y * distance;
@@ -1373,7 +1377,7 @@ public sealed class Plugin : IModpackPlugin
         catch (Exception ex)
         {
             // Never flood the log from a repeated agent evaluation. Fail closed.
-            if (RuntimeSettings.DebugLogging && !_aiSmokeActionErrorLogged)
+            if (!_aiSmokeActionErrorLogged)
             {
                 _aiSmokeActionErrorLogged = true;
                 Error($"AI emergency smoke decision failed: {ex.GetType().Name}: {ex.Message}");
