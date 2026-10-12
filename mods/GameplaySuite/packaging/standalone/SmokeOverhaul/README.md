@@ -1,6 +1,8 @@
-# Smoke Overhaul 0.6.1
+# Smoke Overhaul 0.6.2
 
 Smoke Overhaul changes MENACE smoke from a hard line-of-sight wall into a longer-lasting soft obstruction and gives smoke-delivery systems distinct tactical footprints.
+
+**0.6.2 smoke direction fix (pending in-game verification):** Enemy smoke no longer follows the unit's facing. For suppressed/pinned infantry, choose the last detected shooter if reasonably close, otherwise the nearest currently detected known opponent; flamethrower infantry use the nearest currently detected known opponent. Search at most 24 opponents and 6 locally valid smoke tiles, all nearer to the known enemy than the throwing unit. If no opponent is currently detected, do not force a guess (normal MENACE AI remains free to act). Does not look up invisible enemy locations; no pathfinding, global map scan or normal gameplay logs.
 
 **0.6.1 native smoke AI action (unverified):** The first in-game test observed ZERO enemy smoke grenades with 0.6. Native scoring alone was insufficient. The new version hooks the same Agent.Execute transition as Infantry Assault and makes one bounded, native-validated smoke attempt for eligible suppressed/pinned squads and exposed flamethrowers. At most 6 adjacent tiles, or 2 forward tiles for flamethrowers, are inspected. Native skill affordability, range, cooldown and ammo are honored; no pathfinding or global map search. Debug logging is OFF; an aggregate diagnostic is available in Dev Console. The fix still needs a Windows build and in-game acceptance test.
 
