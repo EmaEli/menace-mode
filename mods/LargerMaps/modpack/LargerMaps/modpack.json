@@ -2,7 +2,7 @@
   "manifestVersion": 2,
   "id": "luca.largermaps",
   "name": "Larger Maps",
-  "version": "1.7",
+  "version": "1.7.1",
   "author": "Luca / OpenAI",
   "description": "Selectable 64/72/80/88/96 tactical maps. Optional (OFF by default) terrain-landform stamp density scaling on maps above 64x64; no changes to per-tile foliage, props, mission setpieces or existing AI/pathfinding.",
   "loadOrder": 520,
