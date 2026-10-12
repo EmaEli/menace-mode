@@ -23,7 +23,7 @@ class SmokeRegression(unittest.TestCase):
         x=between("internal static bool TryAiSmokeAction(","private static bool _aiSmokeActionErrorLogged;")
         for required in ("agent.IsSleeping()","agent.IsDeploymentPhase()","TacticalManager.IsSkillBusy()",
                          "_smokeActedThisTurn.Contains(actorKey)","actor.GetSuppressionState()",
-                         "actor.GetCoverMask() == 0","HasKnownOpponent()","GetAllSkills()",
+                         "origin.GetCoverMask() == 0","HasKnownOpponent()","GetAllSkills()",
                          "TryCast<Skill>()","cast.IsUsable()","cast.IsAffordable()",
                          "smoke.IsUsableOn(target, origin)","smoke.Use(target, UsageParameter.AutoAudioVolume)",
                          "TileHasSmoke(origin)","TileHasSmoke(target)"):
