@@ -1,10 +1,10 @@
 {
   "manifestVersion": 2,
   "id": "luca.thirdpersoncamera.settings",
-  "name": "Third Person Camera",
-  "version": "0.3.3",
+  "name": "Cinematic Action Camera",
+  "version": "1.0",
   "author": "MENACE Community",
-  "description": "In-game settings for Third Person Camera. The cinematic camera itself is the standalone MelonLoader mod.",
+  "description": "In-game settings for Cinematic Action Camera. The cinematic camera itself is the standalone MelonLoader mod.",
   "loadOrder": 230,
   "patches": {},
   "assets": {},
