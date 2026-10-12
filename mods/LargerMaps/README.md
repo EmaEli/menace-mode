@@ -1,3 +1,9 @@
+## 1.7 experimental MEN-003: terrain stamp density
+
+Set `IncreaseTerrainStampDensity=ON` and `TerrainStampDensityMultiplier=1.25` (restart required). The effect gradually ramps from zero at 64x64 to full strength at 96x96. It changes **terrain-landform stamp attempt budgets**, not per-tile vegetation, grass or mission setpieces. Default OFF for safe A/B testing. `DiagnoseTerrainStampDensity` optionally logs up to 10 generation summaries. Native placement may reject attempts, and no gameplay validation has yet been performed. See `TEST-PLAN-1.7.md`.
+
+---
+
 ## 1.6.1 note
 
 The 1.6 startup log proved the simplified AI feature was **not activated** (`no eligible skill templates updated`). 1.6.1 adds a direct game-template-ID fallback, without changing the native pathfinder. Before spending time testing gameplay, verify the startup line `simplified large-map combat planning: N attack / M buff skills adjusted` has **N > 0**. If it does not, stop and share the startup log. Live speedup is not yet established.
