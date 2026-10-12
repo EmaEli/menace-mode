@@ -1,3 +1,11 @@
+## 1.7.1 - Fix Harmony namespace compilation error (patch)
+
+- Fix CS0118 in `TerrainStampDensity.cs`: fully qualify the Harmony patch argument as `HarmonyLib.Harmony` to avoid namespace/type ambiguity.
+- No change to stamp scaling, generation logic, settings, AI, pathfinding, or logging. Prior 1.7 behavior remains experimental.
+- Build and live testing on the user's Windows install still required; do not merge PR #10 until verified.
+
+---
+
 ## 1.7 - Optional terrain landmark density (experimental)
 
 - MEN-003: opt-in scaled *attempt* counts for terrain landform stamps on maps above 64x64, capped at 1.5x for 96x96. Default is OFF; 64x64 stays unchanged. Scales the integer argument to `ScatterStamps.SpawnStampsFromList` rather than modifying shared `StampCollection` assets.
