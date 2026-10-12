@@ -1,4 +1,4 @@
-"""Offline regression checks for Smoke Overhaul 0.6.
+"""Offline regression checks for Smoke Overhaul 0.6.1.
 
 These tests verify that the performance optimization is scoped to smoke AI
 profiles and uses MENACE's existing `InfluencesPositioning` guard. They are
@@ -23,9 +23,9 @@ def block(start: str, end: str) -> str:
 
 class FastSmokeSelectionTests(unittest.TestCase):
     def test_versions_and_manifests(self):
-        self.assertIn('internal const string Version = "0.6"', PLUGIN)
-        self.assertIn('<Version>0.6</Version>', CONFIG)
-        self.assertEqual(SMOKE_MANIFEST['version'], '0.6')
+        self.assertIn('internal const string Version = "0.6.1"', PLUGIN)
+        self.assertIn('<Version>0.6.1</Version>', CONFIG)
+        self.assertEqual(SMOKE_MANIFEST['version'], '0.6.1')
         self.assertGreaterEqual(tuple(map(int, SUITE_MANIFEST['version'].split('.'))), (0, 31, 8))
 
     def test_disabled_performance_search_by_default(self):
@@ -91,7 +91,7 @@ class FastSmokeSelectionTests(unittest.TestCase):
 
     def test_no_new_performance_hooks(self):
         init = block('public void OnInitialize(', 'public void OnSceneLoaded(')
-        self.assertEqual(init.count('hooks += TryPatch('), 10)
+        self.assertEqual(init.count('hooks += TryPatch('), 11)
         self.assertNotIn('Agent.Evaluate', init)
         self.assertNotIn('CreateLOSBlocker.Collect', init)
 
