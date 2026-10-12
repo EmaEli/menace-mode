@@ -80,15 +80,28 @@ function Assert-CorrectSource([string]$RepoPath, [string]$Version) {
     Assert-File $project 'Smoke Overhaul project'
     Assert-File $plugin 'Smoke Overhaul source'
     Assert-File $builder 'Shared build script'
-    if ((Get-Content -LiteralPath $project -Raw) -notmatch '<Version>0\.6\.1</Version>') {
-        throw 'Unexpected Smoke Overhaul project version; refusing to build.'
+    # Read the .csproj as XML and compare to the requested *manifest* version.
+    # NEVER hard-code an older release's <Version> into this source check.
+    [xml]$projectXml = Get-Content -LiteralPath $project -Raw
+    $projectVersionNode = $projectXml.SelectSingleNode('/Project/PropertyGroup/Version')
+    if ($null -eq $projectVersionNode) {
+        throw "Smoke Overhaul project XML has no /Project/PropertyGroup/Version: $project"
     }
+    $projectVersion = $projectVersionNode.InnerText.Trim()
+    if ($projectVersion -ne $Version) {
+        throw "Smoke Overhaul project version mismatch: project=$projectVersion, manifest/expected=$Version ($project)"
+    }
+    Write-Host "Smoke Overhaul project version verified: $projectVersion"
+
+    # Keep source/assembly checks coupled to the *same* expected version.
+    $expectedCodeVersion = 'internal const string Version = "' + $Version + '";'
+    $expectedAssemblyAttribute = 'AssemblyVersion("' + $Version + '.0")'
     $code = Get-Content -LiteralPath $plugin -Raw
-    if (-not $code.Contains('internal const string Version = "0.6.2"') -or
-        -not $code.Contains('AssemblyVersion("0.6.2.0")') -or
+    if (-not $code.Contains($expectedCodeVersion) -or
+        -not $code.Contains($expectedAssemblyAttribute) -or
         -not $code.Contains('AllowSmokeWhilePinnedDown') -or
         -not $code.Contains('SimpleAISmokeRules')) {
-        throw 'MEN-001 smoke implementation or explicit assembly metadata is missing.'
+        throw "MEN-001 expected source version/assembly metadata or smoke implementation is missing ($Version)."
     }
     if ((Get-Content -LiteralPath $builder -Raw) -notmatch '\[string\]\$Only') {
         throw 'Shared builder does not support safe single-component builds.'
@@ -99,6 +112,7 @@ function Assert-CorrectSource([string]$RepoPath, [string]$Version) {
 try {
     Start-Transcript -LiteralPath $Log -Append -ErrorAction Stop | Out-Null
     $StartedTranscript = $true
+    $ExpectedAssemblyVersion = $ExpectedVersion + '.0'
     Write-Host ''
     Write-Host 'MEN-001: SMOKE OVERHAUL 0.6.2 - ONE-CLICK INSTALLER' -ForegroundColor Cyan
     Write-Host "Persistent installer log: $Log"
@@ -156,7 +170,7 @@ try {
     $BuiltDll = Join-Path $Built 'dlls\SmokeOverhaul.dll'
     $BuiltSource = Join-Path $Built 'source\src\SmokeOverhaul'
     Assert-ManifestVersion (Join-Path $Built 'modpack.json') $ExpectedVersion
-    Assert-DllVersion $BuiltDll '0.6.2.0'
+    Assert-DllVersion $BuiltDll $ExpectedAssemblyVersion
     Assert-Directory $BuiltSource 'Built Smoke Overhaul authoring source'
     if ((Get-FileHash -LiteralPath $BuiltDll -Algorithm SHA256).Hash -eq '') {
         throw 'Compiled DLL hash is unexpectedly empty.'
@@ -167,7 +181,7 @@ try {
     Copy-Item -LiteralPath $Built -Destination (Join-Path $Stage 'SmokeOverhaul') -Recurse -Force
     $Staged = Join-Path $Stage 'SmokeOverhaul'
     Assert-ManifestVersion (Join-Path $Staged 'modpack.json') $ExpectedVersion
-    Assert-DllVersion (Join-Path $Staged 'dlls\SmokeOverhaul.dll') '0.6.2.0'
+    Assert-DllVersion (Join-Path $Staged 'dlls\SmokeOverhaul.dll') $ExpectedAssemblyVersion
     $ExpectedDllHash = (Get-FileHash -LiteralPath (Join-Path $Staged 'dlls\SmokeOverhaul.dll') -Algorithm SHA256).Hash
     Write-Host "Staged DLL SHA256: $ExpectedDllHash"
     Write-Host 'All build and stage checks passed. No game files have been changed.' -ForegroundColor Green
@@ -234,7 +248,7 @@ try {
                 $InstalledDll = Join-Path $Mods 'SmokeOverhaul\dlls\SmokeOverhaul.dll'
                 Assert-ManifestVersion (Join-Path $Mods 'SmokeOverhaul\modpack.json') $ExpectedVersion
             }
-            Assert-DllVersion $InstalledDll '0.6.2.0'
+            Assert-DllVersion $InstalledDll $ExpectedAssemblyVersion
             $diskHash = (Get-FileHash -LiteralPath $InstalledDll -Algorithm SHA256).Hash
             if ($diskHash -ne $ExpectedDllHash) { throw 'Installed DLL bytes differ from verified staged build.' }
             foreach ($conflict in $RemoveConflicts) {
@@ -279,7 +293,7 @@ try {
         Write-Host 'SUCCESS: Smoke Overhaul 0.6.2 was installed and verified.' -ForegroundColor Green
         Write-Host ('Install target: ' + $(if ($InsideSuite) { 'Existing Gameplay Suite (Smoke DLL only)' } else { 'Standalone Smoke Overhaul modpack' }))
         Write-Host "Backup: $Backup"
-        Write-Host "Installed assembly version: 0.6.2.0; SHA256: $ExpectedDllHash"
+        Write-Host "Installed assembly version: $ExpectedAssemblyVersion; SHA256: $ExpectedDllHash"
         Write-Host 'Other Gameplay Suite modules, Third Person Camera and saves were not replaced.'
         Write-Host 'In-game smoke use and AI performance remain to be tested.'
     }
