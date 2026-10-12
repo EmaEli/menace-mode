@@ -16,15 +16,15 @@ using Menace.ModpackLoader;
 using Menace.SDK;
 using UnityEngine;
 
-[assembly: AssemblyVersion("0.6.1.0")]
-[assembly: AssemblyFileVersion("0.6.1.0")]
+[assembly: AssemblyVersion("0.6.2.0")]
+[assembly: AssemblyFileVersion("0.6.2.0")]
 
 namespace SmokeOverhaul;
 
 public sealed class Plugin : IModpackPlugin
 {
     internal const string ModName = "Smoke Overhaul";
-    internal const string Version = "0.6.1";
+    internal const string Version = "0.6.2";
 
     private static MelonLogger.Instance? _log;
     private static readonly Dictionary<string, PatchedTemplate> PatchedTemplates = new(StringComparer.OrdinalIgnoreCase);
@@ -1251,8 +1251,8 @@ public sealed class Plugin : IModpackPlugin
     // One emergency smoke decision per actor per turn, with a constant upper bound
     // on candidate tiles. Agent.Execute is an AI action transition, not a frame hook.
     private static readonly HashSet<IntPtr> _smokeActedThisTurn = new();
-    private static readonly int[] DefensiveSmokeOffsets = { 0, -1, 1, -2, 2, 4 };
-    private static readonly int[] FlamethrowerSmokeOffsets = { 0, 0 };
+    // Max known-opponent checks per eligible unit per turn. Avoid map-wide searches.
+    private const int MaxSmokeThreatChecks = 24;
     private static int _aiSmokeExecutions;
     private static int _aiSmokeEligible;
     private static int _aiSmokeSkillsAvailable;
@@ -1338,40 +1338,76 @@ public sealed class Plugin : IModpackPlugin
                 return false;
 
             _aiSmokeSkillsAvailable++;
+
+            // Don't guess where the enemy is from actor facing. The unit may be
+            // turned away from incoming fire, or still facing its last movement.
+            // Only use opponents already detected by MENACE's own faction AI.
+            if (!TryGetDetectedSmokeThreat(agent, actor, origin, pinned || suppressed,
+                out int threatX, out int threatZ))
+                return false;
+
             Map? map = TacticalManager.Get()?.GetMap();
             if (map == null)
                 return false;
 
-            Direction facing = actor.GetDirection();
-            // At most 6 tiles for defensive smoke or 2 for flamethrower smoke.
-            // Deterministic ordering, no per-enemy scans, pathfinder, or FOW access.
-            int[] offsets = flamethrowerAdvance
-                ? FlamethrowerSmokeOffsets
-                : DefensiveSmokeOffsets;
-            for (int i = 0; i < offsets.Length; i++)
+            // Aim at the known threat, NEVER at unit facing. Three narrow
+            // forward candidates on each of two distances: six tiles maximum.
+            // Always move closer to the threat; reject side/rear or beyond-enemy smoke.
+            int stepX = global::System.Math.Sign(threatX);
+            int stepZ = global::System.Math.Sign(threatZ);
+            int threatDistanceSquared = threatX * threatX + threatZ * threatZ;
+            for (int reachIndex = 0; reachIndex < 2; reachIndex++)
             {
-                Direction direction = DirectionExtensions.Rotate(facing, offsets[i]);
-                var step = DirectionExtensions.AsDifferenceBetweenTiles(direction);
-                int distance = flamethrowerAdvance && i == 0 ? 2 : 1;
-                int x = origin.GetX() + step.x * distance;
-                int z = origin.GetZ() + step.y * distance;
-                if (!map.IsInBounds(x, z))
-                    continue;
+                int reach = flamethrowerAdvance ? 2 - reachIndex : 1 + reachIndex;
+                for (int candidate = 0; candidate < 3; candidate++)
+                {
+                    int dirX, dirZ;
+                    if (candidate == 0)
+                    {
+                        dirX = stepX;
+                        dirZ = stepZ;
+                    }
+                    else if (stepX != 0 && stepZ != 0)
+                    {
+                        dirX = candidate == 1 ? stepX : 0;
+                        dirZ = candidate == 1 ? 0 : stepZ;
+                    }
+                    else if (stepX != 0)
+                    {
+                        dirX = stepX;
+                        dirZ = candidate == 1 ? 1 : -1;
+                    }
+                    else
+                    {
+                        dirX = candidate == 1 ? 1 : -1;
+                        dirZ = stepZ;
+                    }
 
-                Tile? target = map.GetTile(x, z);
-                if (target == null || !target.IsEmpty() || TileHasSmoke(target) ||
-                    (flamethrowerAdvance && !target.IsValidMovementDestination()))
-                    continue;
+                    int remainingX = threatX - dirX * reach;
+                    int remainingZ = threatZ - dirZ * reach;
+                    if (remainingX * remainingX + remainingZ * remainingZ >= threatDistanceSquared)
+                        continue;
 
-                if (!smoke.IsUsableOn(target, origin))
-                    continue;
+                    int x = origin.GetX() + dirX * reach;
+                    int z = origin.GetZ() + dirZ * reach;
+                    if (!map.IsInBounds(x, z))
+                        continue;
 
-                _aiSmokeValidTargets++;
-                if (!smoke.Use(target, UsageParameter.AutoAudioVolume))
-                    return false;
+                    Tile? target = map.GetTile(x, z);
+                    if (target == null || !target.IsEmpty() || TileHasSmoke(target) ||
+                        (flamethrowerAdvance && !target.IsValidMovementDestination()))
+                        continue;
 
-                _aiSmokeUsesSucceeded++;
-                return true;
+                    if (!smoke.IsUsableOn(target, origin))
+                        continue;
+
+                    _aiSmokeValidTargets++;
+                    if (!smoke.Use(target, UsageParameter.AutoAudioVolume))
+                        return false;
+
+                    _aiSmokeUsesSucceeded++;
+                    return true;
+                }
             }
         }
         catch (Exception ex)
@@ -1384,6 +1420,77 @@ public sealed class Plugin : IModpackPlugin
             }
         }
         return false;
+    }
+
+    private static bool TryGetDetectedSmokeThreat(
+        Agent agent, Actor actor, Tile origin, bool defensive,
+        out int dx, out int dz)
+    {
+        dx = dz = 0;
+        AIFaction? faction = agent.GetFaction();
+        var opponents = faction?.GetOpponents();
+        if (faction == null || opponents == null)
+            return false;
+
+        // A recent attacker is tactically useful but must STILL be known and
+        // presently detected. Do not query the true position of a hidden enemy.
+        Actor? recentAttacker = defensive ? actor.GetLastAttacker()?.ToActor() : null;
+        IntPtr attackerPointer = recentAttacker?.Pointer ?? IntPtr.Zero;
+        int nearDist2 = int.MaxValue, attackerDist2 = int.MaxValue;
+        int nearX = 0, nearZ = 0, attackerX = 0, attackerZ = 0;
+        int count = global::System.Math.Min(opponents.Count, MaxSmokeThreatChecks);
+
+        for (int i = 0; i < count; i++)
+        {
+            Opponent? opponent = opponents[i];
+            if (opponent == null || !opponent.IsKnown())
+                continue;
+            Actor? enemy = opponent.Actor;
+            if (enemy == null || enemy.Pointer == actor.Pointer ||
+                enemy.IsDying() || !enemy.IsAlive() ||
+                !enemy.IsDetectedByFaction(faction.GetIndex()))
+                continue;
+
+            Tile? enemyTile = enemy.GetTile();
+            if (enemyTile == null)
+                continue;
+            int ex = enemyTile.GetX() - origin.GetX();
+            int ez = enemyTile.GetZ() - origin.GetZ();
+            int d2 = ex * ex + ez * ez;
+            if (d2 == 0)
+                continue;
+
+            if (d2 < nearDist2)
+            {
+                nearDist2 = d2;
+                nearX = ex;
+                nearZ = ez;
+            }
+            if (attackerPointer != IntPtr.Zero && enemy.Pointer == attackerPointer)
+            {
+                attackerDist2 = d2;
+                attackerX = ex;
+                attackerZ = ez;
+            }
+        }
+
+        if (nearDist2 == int.MaxValue)
+            return false;
+
+        // Prefer the recent shooter only if reasonably close to the nearest
+        // threat; avoid looking away toward a distant previous attacker.
+        if (defensive && attackerDist2 != int.MaxValue &&
+            attackerDist2 <= nearDist2 * 4)
+        {
+            dx = attackerX;
+            dz = attackerZ;
+        }
+        else
+        {
+            dx = nearX;
+            dz = nearZ;
+        }
+        return true;
     }
 
     private static bool _aiSmokeActionErrorLogged;
