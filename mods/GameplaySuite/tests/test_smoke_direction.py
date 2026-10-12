@@ -36,6 +36,8 @@ class SmokeDirectionTests(unittest.TestCase):
         self.assertIn("enemy.IsDetectedByFaction(faction.GetIndex())", SRC)
         self.assertIn("private const int MaxSmokeThreatChecks = 24;", SRC)
         self.assertIn("actor.GetLastAttacker()?.ToActor()", SRC)
+        self.assertIn("_aiSmokeDirectionDebugLines < 24", SRC)
+        self.assertIn("AI smoke thrown: origin=", SRC)
         self.assertIn("attackerDist2 <= nearDist2 * 4", SRC)
         self.assertIn("for (int reachIndex = 0; reachIndex < 2; reachIndex++)", SRC)
         self.assertIn("for (int candidate = 0; candidate < 3; candidate++)", SRC)
