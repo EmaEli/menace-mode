@@ -659,6 +659,9 @@ public sealed class Plugin : IModpackPlugin
             Key(__instance) == _blockedPlayerAssaultActionKey.Value)
             return false;
 
+        // Leave native previews untouched when the feature is disabled.
+        if (!_enabled) return true;
+
         // The native mouse-move path passes Skill.GetExecutingElementsCached()
         // to Actor.AimAt(Vector3). That list can retain soldier indices after
         // casualties have shrunk the actor's current element list.
