@@ -1,3 +1,9 @@
+## 1.6.8
+
+- MEN-006: Hide the Coordinated Fire IMGUI panel during native tactical UI suppression (including Third Person Camera cinematics), then allow normal eligibility checks to restore it.
+- Ignore pointer-over-panel interception while hidden; no gameplay/AP/aiming/ammo changes and no normal-mode logging.
+- Pending in-game verification; retain the issue open until verified.
+
 ## 1.6.7
 
 - Fixed Coordinated Fire disabling itself when a long-running/setup child weapon (observed with `active.medium_mg_suppressive_fire_tripod`) asynchronously zeroes the actor's AP after `Skill.Use` already returned with `NoApConsumed`.
