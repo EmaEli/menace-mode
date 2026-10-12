@@ -36,7 +36,7 @@ assert not re.search(r'\bModSettings\.Register\s*\(', re.sub(r'//[^\n]*', '', ca
 assert 'TryAttachInGameSettings();' in cam
 assert '_menuRegistered = true' in cam and '_menuGet = candidate' in cam
 assert 'private object ReadMenuValue(string key)' in cam
-assert manifest['name']=='Third Person Camera' and manifest['version']=='0.3.3'
+assert manifest['name']=='Third Person Camera' and manifest['version']=='0.3.4'
 assert manifest['code']['prebuiltDlls']==['ThirdPersonCameraSettings.dll']
 assert 'Menace.ModpackLoader' in manifest['code']['references']
 assert 'Menace.ModpackLoader.dll' in p
@@ -59,4 +59,4 @@ for name, s in [('camera',cam),('settings',ui)]:
             if c==end:count-=1
             assert count>=0,(name,start,end)
         assert count==0,(name,start,end)
-print('PASS: v0.3.3 settings bridge, both sliders, ModpackLoader manifest/build integration, fallback & static C# syntax')
+print('PASS: v0.3.4 settings bridge, both sliders, ModpackLoader manifest/build integration, fallback & static C# syntax')
