@@ -15,7 +15,10 @@ internal static class TacticalHudVisibility
     private static global::HarmonyLib.Harmony? _patchHarmony;
     private static bool _nativeHudVisible = true;
 
-    internal static bool IsVisible => _nativeHudVisible;
+    // The camera's explicit managed state is authoritative whenever available.
+    // Keep the existing native-HUD hook for vanilla/other hiding paths and
+    // for installations without Third Person Camera.
+    internal static bool IsVisible => _nativeHudVisible && !ThirdPersonCameraBridge.IsActive;
 
     internal static bool TryInstall(string patchOwnerId, Action<string> warning)
     {
