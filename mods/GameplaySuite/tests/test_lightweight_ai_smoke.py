@@ -9,10 +9,10 @@ def between(a,b):
     return SRC.split(a,1)[1].split(b,1)[0]
 class SmokeRegression(unittest.TestCase):
     def test_versions(self):
-        self.assertIn('internal const string Version = "0.6.1"',SRC)
-        self.assertIn('AssemblyVersion("0.6.1.0")',SRC)
-        self.assertEqual(json.loads((ROOT/"packaging/standalone/SmokeOverhaul/modpack.json").read_text())["version"],"0.6.1")
-        self.assertEqual(json.loads((ROOT/"packaging/suite/MenaceGameplaySuite/modpack.json").read_text())["version"],"0.33.1")
+        self.assertIn('internal const string Version = "0.6.2"',SRC)
+        self.assertIn('AssemblyVersion("0.6.2.0")',SRC)
+        self.assertEqual(json.loads((ROOT/"packaging/standalone/SmokeOverhaul/modpack.json").read_text())["version"],"0.6.2")
+        self.assertEqual(json.loads((ROOT/"packaging/suite/MenaceGameplaySuite/modpack.json").read_text())["version"],"0.33.2")
     def test_pinned_ap_only_smoke(self):
         x=between("internal static void ApplyPinnedSmokeApCost(","// One emergency smoke decision")
         self.assertIn("GetSuppressionState() != SuppressionState.PinnedDown",x)
@@ -39,8 +39,14 @@ class SmokeRegression(unittest.TestCase):
         self.assertNotIn("Agent.Evaluate",init)
         self.assertIn("global::HarmonyLib.Priority.Last",SRC)
         self.assertIn("bool __runOriginal",SRC)
-        self.assertIn("DefensiveSmokeOffsets = { 0, -1, 1, -2, 2, 4 };",SRC)
-        self.assertIn("FlamethrowerSmokeOffsets = { 0, 0 };",SRC)
+        self.assertIn("private const int MaxSmokeThreatChecks = 24;",SRC)
+        self.assertIn("TryGetDetectedSmokeThreat(agent, actor, origin, pinned || suppressed,",SRC)
+        self.assertIn("Opponent? opponent = opponents[i];",SRC)
+        self.assertIn("opponent.IsKnown()",SRC)
+        self.assertIn("enemy.IsDetectedByFaction(faction.GetIndex())",SRC)
+        self.assertIn("for (int candidate = 0; candidate < 3; candidate++)",SRC)
+        self.assertIn("remainingX * remainingX + remainingZ * remainingZ >= threatDistanceSquared",SRC)
+        self.assertNotIn("actor.GetDirection()",SRC)
         self.assertIn("_smokeActedThisTurn.Remove(actor.Pointer)",SRC)
         self.assertIn('s.AddToggle("DebugLogging", "Debug logging", false)',SRC)
     def test_cleanup(self):
