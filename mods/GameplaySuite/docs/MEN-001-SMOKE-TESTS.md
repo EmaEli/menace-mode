@@ -10,5 +10,6 @@ Status: source patch only. No Windows build or gameplay verification yet.
 6. Ensure no forced smoke for asleep AI, units without smoke, already smoked tiles, covered flamethrowers or occupied targets.
 7. Test normal and pinned player grenade AP; frag and weapons must not become free.
 8. Compare AI turns against 0.5.2 on 64x64 and 96x96; no major regression or per-event logging.
-9. If no enemy smoke: enable Smoke Overhaul Debug for ONE battle, read aggregate counters in Dev Console and Latest.log. Debug OFF afterward.
-10. Do not close issue until real smoke launch and performance verified.
+9. If enemy smoke still lands in a strange direction, enable Smoke Overhaul Debug for ONE battle and compare the optional, capped `AI smoke thrown: origin=... threat=... target=...` lines with what you saw. If a smoke throw has no such line, it may be native MENACE AI instead of the forced action.
+10. If no enemy smoke: enable Smoke Overhaul Debug for ONE battle, read aggregate counters in Dev Console and Latest.log. Debug OFF afterward.
+11. Do not close issue until real smoke launch and performance verified.
