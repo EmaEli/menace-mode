@@ -1,9 +1,9 @@
-# Larger Maps 1.7 — MEN-003 terrain-density A/B test
+# Larger Maps 1.7.1 — MEN-003 terrain-density A/B test
 
 **Not runtime verified.** Requires MENACE v0.7.15+21883 and working Larger Maps 1.6.1 baseline.
 
 1. Back up save and LargerMaps DLL + modpack.json before any build/deploy. Close MENACE.
-2. Build and deploy the `feature/men-003-stamp-density` branch on the Windows machine with the installed game's .NET 6 dependencies.
+2. Build and deploy the `feature/men-003-stamp-density` branch (1.7.1 compilation hotfix) on the Windows machine with the installed game's .NET 6 dependencies.
 3. Use 96x96. Keep `UseLocalTacticalRouting=OFF`, other mod settings unchanged, and compare the **same mission seed and biome**.
 4. Run A: `IncreaseTerrainStampDensity=OFF`; record screenshot, generation duration, FPS, and number/spacing of landforms.
 5. Run B: `IncreaseTerrainStampDensity=ON`, `TerrainStampDensityMultiplier=1.25`; restart, same seed. Set `DiagnoseTerrainStampDensity=ON` only for a one-off diagnostic if needed.
