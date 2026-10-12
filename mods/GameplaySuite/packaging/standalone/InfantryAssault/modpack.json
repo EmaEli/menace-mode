@@ -2,7 +2,7 @@
   "manifestVersion": 2,
   "id": "luca.infantryassault",
   "name": "InfantryAssault",
-  "version": "0.5.2",
+  "version": "0.5.3",
   "author": "Luca / ChatGPT",
   "description": "Adds lethal 40 AP adjacent infantry assaults with symmetric CQB bonuses, suppression-aware defensive fire, garrison capture, AI use, and stance/suppression initiation restrictions.",
   "loadOrder": 190,

@@ -5,15 +5,15 @@ using Menace.ModpackLoader;
 using Menace.SDK;
 using UnityEngine;
 
-[assembly: AssemblyVersion("0.5.2.0")]
-[assembly: AssemblyFileVersion("0.5.2.0")]
+[assembly: AssemblyVersion("0.5.3.0")]
+[assembly: AssemblyFileVersion("0.5.3.0")]
 
 namespace MenaceInfantryAssault;
 
 public sealed class Plugin : IModpackPlugin
 {
     private const string SettingsGroup = "Infantry Assault";
-    private const string Version = "0.5.2";
+    private const string Version = "0.5.3";
     private const int AssaultApCost = 40;
     private const string AssaultSkillId = "mod.infantry_assault";
 
@@ -25,6 +25,7 @@ public sealed class Plugin : IModpackPlugin
     private static bool _templatePrepared;
     private static bool _assaultBusy;
     private static int? _blockedPlayerAssaultActionKey;
+    private static bool _assaultAimGuardWarned;
     private static bool _verbose;
     private static bool _enabled = true;
     private static bool _enableAi = true;
@@ -52,6 +53,8 @@ public sealed class Plugin : IModpackPlugin
     private static MethodInfo? _skillGetApConsumer;
     private static MethodInfo? _skillGetItem;
     private static MethodInfo? _skillGetTemplate;
+    private static MethodInfo? _skillGetExecutingElementsCached;
+    private static MethodInfo? _skillGetExecutingElements;
     private static MethodInfo? _skillIsAttack;
     private static MethodInfo? _skillIsOutOfUses;
     private static MethodInfo? _skillGetActionPointCost;
@@ -114,6 +117,8 @@ public sealed class Plugin : IModpackPlugin
     // a new managed wrapper for the same native Skill every time. Cache native
     // identity only; RuntimeHelpers.GetHashCode(wrapper) is not stable across casts.
     private static readonly HashSet<IntPtr> AssaultSkillPointers = new();
+    // The native actor and survivor count allow us to avoid work on every hover frame.
+    private static readonly Dictionary<IntPtr, (IntPtr Actor, int Count)> ValidatedAssaultAimCounts = new();
     private static readonly Dictionary<int, object> LastTargetBySkill = new();
 
     private enum AssaultPhase
@@ -162,6 +167,8 @@ public sealed class Plugin : IModpackPlugin
         _inTacticalScene = string.Equals(sceneName, "Tactical", StringComparison.Ordinal);
         _assaultBusy = false;
         _blockedPlayerAssaultActionKey = null;
+        _assaultAimGuardWarned = false;
+        ValidatedAssaultAimCounts.Clear();
         _phase = AssaultPhase.None;
         _phaseCqbBonusScale = 1f;
         _phaseWeaponKey = 0;
@@ -186,6 +193,8 @@ public sealed class Plugin : IModpackPlugin
         LastTargetBySkill.Clear();
         _assaultBusy = false;
         _blockedPlayerAssaultActionKey = null;
+        _assaultAimGuardWarned = false;
+        ValidatedAssaultAimCounts.Clear();
         _phase = AssaultPhase.None;
         _phaseCqbBonusScale = 1f;
         _phaseWeaponKey = 0;
@@ -250,6 +259,8 @@ public sealed class Plugin : IModpackPlugin
         _skillGetApConsumer = Method(_skillType, "GetAPConsumer", 0);
         _skillGetItem = Method(_skillType, "GetItem", 0);
         _skillGetTemplate = Method(_skillType, "GetTemplate", 0);
+        _skillGetExecutingElementsCached = Method(_skillType, "GetExecutingElementsCached", 1);
+        _skillGetExecutingElements = Method(_skillType, "GetExecutingElements", 1);
         _skillIsAttack = Method(_skillType, "IsAttack", 0);
         _skillIsOutOfUses = Method(_skillType, "IsOutOfUses", 0);
         _skillGetActionPointCost = Method(_skillType, "GetActionPointCost", 0);
@@ -639,18 +650,113 @@ public sealed class Plugin : IModpackPlugin
 
     public static bool SkillActionHandleMouseMovePrefix(object __instance)
     {
-        // Assault confirmation is fully handled by our click prefix and custom coroutine.
-        // If MENACE later invokes mouse-move on that already-committed SkillAction, the
-        // native path can call Actor.AimAt with an element list captured before CQB
-        // casualties changed the squad size, causing ArgumentOutOfRangeException spam.
-        // Block only the exact SkillAction instance that already launched an Assault;
-        // fresh Assault targeting actions and every non-Assault skill remain native.
-        if (!_blockedPlayerAssaultActionKey.HasValue || Key(__instance) != _blockedPlayerAssaultActionKey.Value)
-            return true;
-
         object? skill = null;
-        try { skill = _skillActionGetSkill?.Invoke(__instance, null); } catch { }
-        return !IsAssaultSkill(skill);
+        try { skill = _skillActionGetSkill?.Invoke(__instance, null); } catch { return true; }
+        if (!IsAssaultSkill(skill)) return true;
+
+        // The native SkillAction must not resume aiming once Assault was committed.
+        if (_blockedPlayerAssaultActionKey.HasValue &&
+            Key(__instance) == _blockedPlayerAssaultActionKey.Value)
+            return false;
+
+        // Leave native previews untouched when the feature is disabled.
+        if (!_enabled) return true;
+
+        // The native mouse-move path passes Skill.GetExecutingElementsCached()
+        // to Actor.AimAt(Vector3). That list can retain soldier indices after
+        // casualties have shrunk the actor's current element list.
+        // Validate/rebuild the cache ONLY for an active Infantry Assault.
+        return PrepareAssaultAimElements(skill!);
+    }
+
+    private static bool PrepareAssaultAimElements(object skill)
+    {
+        try
+        {
+            if (_entityGetElements == null || _skillGetTemplate == null ||
+                _skillGetExecutingElementsCached == null || _skillGetExecutingElements == null)
+                return false;
+
+            object? actor = GetSkillActor(skill);
+            if (actor == null) return false;
+            object? elements = _entityGetElements.Invoke(actor, null);
+            object? countValue = elements != null ? GetMember(elements, "Count") : null;
+            if (countValue == null) return false;
+            int liveCount = Int(countValue, -1);
+            if (liveCount <= 0) return false;
+
+            IntPtr skillPtr = skill is Il2CppObjectBase nativeSkill ? nativeSkill.Pointer : IntPtr.Zero;
+            IntPtr actorPtr = actor is Il2CppObjectBase nativeActor ? nativeActor.Pointer : IntPtr.Zero;
+            if (skillPtr != IntPtr.Zero && actorPtr != IntPtr.Zero &&
+                ValidatedAssaultAimCounts.TryGetValue(skillPtr, out var validated) &&
+                validated.Actor == actorPtr && validated.Count == liveCount)
+                return true;
+
+            object? template = _skillGetTemplate.Invoke(skill, null);
+            object? executingType = template != null ? GetMember(template, "ExecutingElement") : null;
+            if (executingType == null) return false;
+
+            object? cached = _skillGetExecutingElementsCached.Invoke(skill, new[] { executingType });
+            object? cacheSize = cached != null ? GetMember(cached, "Count") : null;
+            if (cached == null || cacheSize == null) return false;
+
+            int cacheCount = Int(cacheSize, -1);
+            MethodInfo? getCached = Method(cached.GetType(), "get_Item", 1);
+            if (cacheCount < 0 || getCached == null) return false;
+
+            // Infantry Assault clones Charge's 'All' (0) executing-element policy.
+            // Refresh a mismatched-sized cache even when each old index is in range.
+            bool stale = Int(executingType, -1) == 0 && cacheCount != liveCount;
+            for (int i = 0; i < cacheCount && !stale; i++)
+            {
+                int index = Int(getCached.Invoke(cached, new object[] { i }), -1);
+                if (index < 0 || index >= liveCount) stale = true;
+            }
+
+            if (stale)
+            {
+                // Recompute using MENACE's own selection rules rather than
+                // inventing squad indices; validate BEFORE changing native data.
+                object? fresh = _skillGetExecutingElements.Invoke(skill, new[] { executingType });
+                object? freshSize = fresh != null ? GetMember(fresh, "Count") : null;
+                if (fresh == null || freshSize == null) return false;
+                int freshCount = Int(freshSize, -1);
+                MethodInfo? getFresh = Method(fresh.GetType(), "get_Item", 1);
+                MethodInfo? clear = Method(cached.GetType(), "Clear", 0);
+                MethodInfo? add = Method(cached.GetType(), "Add", 1);
+                if (freshCount < 0 || getFresh == null || clear == null || add == null)
+                    return false;
+
+                var replacement = new List<int>(freshCount);
+                for (int i = 0; i < freshCount; i++)
+                {
+                    int index = Int(getFresh.Invoke(fresh, new object[] { i }), -1);
+                    if (index < 0 || index >= liveCount) return false;
+                    replacement.Add(index);
+                }
+
+                // Keep the original native List<int> object: another caller
+                // may already hold a pointer to that cached instance.
+                clear.Invoke(cached, null);
+                foreach (int index in replacement)
+                    add.Invoke(cached, new object[] { index });
+            }
+
+            if (skillPtr != IntPtr.Zero && actorPtr != IntPtr.Zero)
+                ValidatedAssaultAimCounts[skillPtr] = (actorPtr, liveCount);
+            return true;
+        }
+        catch (Exception e)
+        {
+            // Fail closed for this Assault hover ONLY: never suppress native
+            // exceptions globally and never change non-Assault targeting.
+            if (_verbose && !_assaultAimGuardWarned)
+            {
+                _assaultAimGuardWarned = true;
+                Warn("Assault aim-cache guard failed: " + (e.InnerException?.Message ?? e.Message));
+            }
+            return false;
+        }
     }
 
     public static bool SkillActionHandleLeftClickPrefix(object __instance, object[] __args)
