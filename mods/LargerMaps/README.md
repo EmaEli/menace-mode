@@ -4,7 +4,7 @@ In **Mod Settings > Larger Maps** choose `IncreaseTerrainStampDensity=ON` and se
 
 Suggested progression for a **96x96** map: **3x**, then **4x-5x** if there is still enough room for vehicles and objectives. Vanilla 4 large + 10 medium stamp attempts become 12 + 30 at 3x, or 20 + 50 at 5x, with a safety ceiling of 200 attempts per group (never below native counts). Placement validation can reject attempts; visible density is not guaranteed to scale linearly.
 
-64x64 maps remain unchanged, and 72/80/88 interpolate smoothly. This only adjusts **terrain stamp attempt counts**, not per-tile grass, foliage, buildings, or mission-authored setpieces. `DiagnoseTerrainStampDensity` enables up to 10 generation summaries and remains OFF by default. Test visuals, generated roads/cover and FPS; revert by turning the toggle OFF and restarting if needed.
+64x64 maps remain unchanged, and 72/80/88 interpolate smoothly. This only adjusts **terrain stamp attempt counts**, not per-tile grass, foliage, buildings, or mission-authored setpieces. `DiagnoseTerrainStampDensity` enables up to 10 generation summaries and remains OFF by default. Test visuals, generated roads/cover and FPS; revert by turning the toggle OFF and restarting if needed. Follow the version-specific [1.8 A/B test plan](TEST-PLAN-1.8.md).
 
 ---
 
