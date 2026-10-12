@@ -1,6 +1,6 @@
-# MENACE Mods Unified Repository 0.32.1
+# MENACE Mods Unified Repository 0.33
 
-### 0.32.1 Infantry Assault stale aim cache fix (MEN-005)
+### 0.33 MEN-001 tactical smoke (unverified)\n\nSmoke Overhaul 0.6 permits Pinned Down emergency smoke and lightly boosts native AI usage under suppression and for exposed flamethrowers. Fast smoke selection stays enabled; no path scans or frame polling. Source-only change awaiting Windows build/in-game verification.\n\n### 0.32.1 Infantry Assault stale aim cache fix (MEN-005)
 
 Infantry Assault 0.5.3 refreshes MENACE's cached executing-soldier index list if squad casualties make it invalid during Assault targeting preview. This prevents native `Actor.AimAt(Vector3)` index errors without changing regular weapon aiming, Mount Up, CQB combat rules, or AI assaults. Checks are cached per squad size; debug remains OFF by default. Runtime gameplay verification is still required.
 
