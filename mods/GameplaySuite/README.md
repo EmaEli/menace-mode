@@ -1,4 +1,8 @@
-# MENACE Mods Unified Repository 0.33
+# MENACE Mods Unified Repository 0.33.1
+
+### 0.33.1 MEN-001 bounded native AI smoke (unverified)
+
+Smoke Overhaul 0.6.1 replaces score-only smoke weights with a bounded native Agent.Execute smoke action. At most 6 local target tiles are checked (2 for exposed flamethrowers), preserving native ammo, AP, cooldown, fog of war and movement. Windows compilation and gameplay verification still required.
 
 ### 0.33 MEN-001 tactical smoke (unverified)
 
