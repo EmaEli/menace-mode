@@ -40,6 +40,24 @@ Before writing new installer code:
 4. Keep configurable values (repo, pinned commit, manifest/DLL versions, mod directories) centralized and update the launcher and bootstrap hash when the PowerShell source changes. Verify the published GitHub commit, hash and packaged/downloadable launcher match.
 5. When a bug is fixed in the installer workflow, **update this standard and the canonical example**, so later sessions inherit the correction.
 
+## Version-preflight regression guard (MEN-001, 12 October 2026)
+
+A smoke installer rejected valid Smoke Overhaul 0.6.2 **before compilation** because an old literal `<Version>0.6.1</Version>` remained in `Install-Component.ps1`. The standalone manifest and real project both declared 0.6.2. This is an **installer-only** error, and no live game files should have changed.
+
+For **every** installer, validate source C# project versions by parsing the `.csproj` XML and comparing the **actual value** against the requested/manifest version. Do not embed a second hard-coded project version in a PowerShell regex: it can be left behind on release bumps. For example, following the updated shared component installer:
+
+```powershell
+[xml]$projectXml = Get-Content -LiteralPath $project -Raw
+$versionNode = $projectXml.SelectSingleNode('/Project/PropertyGroup/Version')
+if ($null -eq $versionNode) { throw "Missing project Version: $project" }
+$actualProjectVersion = $versionNode.InnerText.Trim()
+if ($actualProjectVersion -ne $ExpectedVersion) {
+    throw "Project version mismatch: $actualProjectVersion != $ExpectedVersion"
+}
+```
+
+The assembly check must separately verify real compiled DLL metadata, not project text. Derive the expected assembly version from a centrally defined expected version (or explicitly scoped metadata convention) instead of duplicating a stale release literal. **Run regression assertions that parse actual manifests and project files and inspect the installer preflight before pinning a release.** The reusable reference now includes `mods/GameplaySuite/tools/Install-Component.ps1` and a regression test (`mods/GameplaySuite/tests/test_installer_versions.py`) in the MEN-001 branch. Preserve the MEN-006 example for integrated Suite+Camera packaging.
+
 ## Acceptance checklist (required before delivery)
 
 - [ ] Launcher is one double-click action, not a sequence of ZIPs and commands.
