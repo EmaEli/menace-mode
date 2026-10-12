@@ -1,3 +1,18 @@
+## Repository / Suite 0.32.3 — MEN-006 cinematic-camera state bridge (unverified)
+
+- Overwatch **0.32.3.3** and Coordinated Fire **1.6.9** now read a **cached, managed boolean delegate** exported by Third Person Camera **0.3.4+** (`IsCinematicViewActive`). This covers automatic movement/firing and F6 manual third-person views without depending on the native `UITactical.SetUIVisibility` Harmony postfix.
+- Each DLL independently compiles the optional bridge. When the camera is absent, normal tactical HUD behavior is unchanged; detection is retried at most once every five seconds until available, then only a lightweight delegate runs during IMGUI.
+- The prior native HUD-visibility hook remains as an additional guard. Coordinated Fire also excludes invisible HUD rectangles from its mouse-capture test.
+- Gameplay, attack/reaction AP, AI, ammo and saved states are unchanged. No new default logs and no reflection scans per frame.
+- The earlier Suite **0.32.2** native-HUD-only patch compiled but **failed** the user's in-game automatic-movement camera test. This revision must be built and tested before #7 is closed.
+
+## Repository / Suite 0.32.2 — MEN-006 — Third Person Camera HUD compatibility
+
+- **Overwatch 0.32.3.2** and **Coordinated Fire 1.6.8** honor native `UITactical.SetUIVisibility(false/true)` calls, which Third Person Camera uses when entering/leaving cinematic mode.
+- Their IMGUI buttons no longer draw or receive input while the native tactical HUD is hidden. Coordinated Fire also disables its invisible pointer hitbox.
+- A shared, event-driven Harmony postfix is compiled independently into each mod DLL, so either mod can be installed alone or in the suite. Hooks are isolated from the gameplay runtime's Harmony lifecycle.
+- No changes to attack, reaction, AP, ammo, AI or normal logging. Gameplay acceptance testing is still pending (GitHub MEN-006).
+
 ## Repository / Suite 0.32.1 — MEN-005 Assault aim-cache fix
 
 - **Infantry Assault 0.5.2 → 0.5.3**: validates native cached executing-soldier indices during player Assault hover/preview. If squad casualties invalidate the cached list, rebuild it from MENACE's current executing-element selection before the native `Actor.AimAt(Vector3)` path.

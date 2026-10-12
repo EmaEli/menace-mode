@@ -1,4 +1,18 @@
-# Overwatch 0.32.3.1
+# Overwatch 0.32.3.3
+
+## 0.32.3.3 managed camera-state compatibility fix
+
+- Third Person Camera **0.3.4** publishes `IsCinematicViewActive`. Overwatch reads it through an optional, cached function delegate and hides its IMGUI panel on automatic movement/firing and manual F6 third-person views.
+- Retains native HUD visibility fallback; no camera hard dependency or recurring reflection/logging. Combat and reaction mechanics unchanged.
+- Suite and standalone variants share this source. Windows build and in-game verification pending; **0.32.3.2 was not effective during automatic movement**.
+
+## 0.32.3.2 cinematic HUD compatibility fix
+
+- The Overwatch IMGUI panel now follows MENACE's native `UITactical.SetUIVisibility` signal, including Third Person Camera cinematic movement and firing shots.
+- The panel is hidden and non-interactive for the entire cinematic interval, and its ordinary unit/turn/availability checks still decide whether to show it again afterward.
+- Gameplay logic, AI reactions, AP, targeting, world markers, and settings are unchanged; no normal-mode logging has been added.
+- Integrates independently with standalone and Gameplay Suite builds. Requires an in-game verification before release.
+
 
 ## Alpha 32.1 changes
 

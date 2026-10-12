@@ -1,3 +1,15 @@
+## 1.6.9
+
+- MEN-006: Follow Third Person Camera 0.3.4's explicit `IsCinematicViewActive` state through a cached managed function delegate; cover automatic camera entry and F6 manual view without relying solely on the native HUD Harmony hook.
+- The Coordinated Fire button is hidden and its pointer-capture region inactive for as long as the camera reports an active cinematic view. Optional camera integration, no combat/AP changes, logging silent by default.
+- Prior 1.6.8 compiled but did not hide the button during actual automatic third-person movement. Await Windows build and in-game verification before closing #7.
+
+## 1.6.8
+
+- MEN-006: Hide the Coordinated Fire IMGUI panel during native tactical UI suppression (including Third Person Camera cinematics), then allow normal eligibility checks to restore it.
+- Ignore pointer-over-panel interception while hidden; no gameplay/AP/aiming/ammo changes and no normal-mode logging.
+- Pending in-game verification; retain the issue open until verified.
+
 ## 1.6.7
 
 - Fixed Coordinated Fire disabling itself when a long-running/setup child weapon (observed with `active.medium_mg_suppressive_fire_tripod`) asynchronously zeroes the actor's AP after `Skill.Use` already returned with `NoApConsumed`.

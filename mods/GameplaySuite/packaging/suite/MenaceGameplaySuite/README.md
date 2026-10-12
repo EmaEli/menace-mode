@@ -1,4 +1,16 @@
-# MENACE Gameplay Suite 0.32
+# MENACE Gameplay Suite 0.32.3
+
+## 0.32.3 Cinematic camera compatibility correction (MEN-006)
+
+Includes Overwatch **0.32.3.3** and Coordinated Fire **1.6.9**. Their tactical buttons now follow Third Person Camera **0.3.4**'s explicit live managed cinematic-state signal for both automatic and manual views, not just the unreliable native HUD Harmony observation used in Suite 0.32.2. They still restore normally and do not intercept pointer clicks while hidden. No combat or default logging changes. The earlier 0.32.2 patch **failed** the actual automatic camera test. Runtime validation for this fix is still pending.
+
+## 0.32.2 Cinematic HUD fix (MEN-006)
+
+Overwatch 0.32.3.2 and Coordinated Fire 1.6.8 hide their tactical IMGUI buttons when Third Person Camera's cinematic view disables the native tactical UI. Coordinated Fire's invisible pointer hitbox is also disabled while hidden. Both panels return to normal visibility rules when the camera returns. No combat or logging changes. In-game compatibility validation pending.
+
+## 0.32.1 Infantry Assault targeting fix (MEN-005)
+
+Includes Infantry Assault 0.5.3 from main: safeguards the cached active-soldier indices when casualties affect Assault targeting preview. Gameplay verification remains pending.
 
 ## 0.32 Starting Options
 

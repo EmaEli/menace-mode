@@ -6,9 +6,9 @@ Source snapshots of MENACE mods maintained for issue tracking and ongoing develo
 
 | Directory | Imported version | Files | Notes |
 |---|---|---:|---|
-| [`mods/GameplaySuite`](mods/GameplaySuite) | **0.32.1** | 145 | Unified authoring repository with C# sources, build/deploy scripts, packaging, tests and documentation |
+| [`mods/GameplaySuite`](mods/GameplaySuite) | **0.32.3** | 145 | Unified authoring repository with C# sources, build/deploy scripts, packaging, tests and documentation |
 | [`mods/LargerMaps`](mods/LargerMaps) | **1.6.1** | 57 | Map scaling, AI planning/performance code, build/deploy scripts, regression tests and technical notes |
-| [`mods/ThirdPersonCamera`](mods/ThirdPersonCamera) | **0.3.3** | 14 | Source-only camera mod with automatic and manual cinematic views, Mod Settings bridge, Windows build scripts and static regression tests |
+| [`mods/ThirdPersonCamera`](mods/ThirdPersonCamera) | **0.3.4** | 14 | Source-only camera mod with automatic and manual cinematic views, Mod Settings bridge, Windows build scripts and static regression tests |
 
 **Baseline imported:** October 12, 2026, from the latest source ZIP archives provided in this ChatGPT MENACE project. These are source snapshots, not independently verified upstream releases.
 

@@ -7,16 +7,16 @@ using MenaceModSuite.Shared;
 using UnityEngine;
 using Path = global::System.IO.Path;
 
-[assembly: AssemblyVersion("0.32.3.1")]
-[assembly: AssemblyFileVersion("0.32.3.1")]
-[assembly: AssemblyInformationalVersion("0.32.3.1")]
+[assembly: AssemblyVersion("0.32.3.3")]
+[assembly: AssemblyFileVersion("0.32.3.3")]
+[assembly: AssemblyInformationalVersion("0.32.3.3")]
 
 namespace MenaceOverwatch;
 
 public sealed class Plugin : IModpackPlugin
 {
     private const string SettingsGroup = "Overwatch";
-    private const string Version = "0.32.3.1";
+    private const string Version = "0.32.3.3";
     private Runtime? _runtime;
     private global::HarmonyLib.Harmony? _harmony;
     private MelonLogger.Instance? _logger;
@@ -31,6 +31,8 @@ public sealed class Plugin : IModpackPlugin
     {
         _logger = logger;
         _harmony = harmony;
+        TacticalHudVisibility.TryInstall("menace.overwatch.cinematic-hud",
+            message => _logger?.Msg("WARNING: " + message));
         Directory.CreateDirectory(Path.Combine(Directory.GetCurrentDirectory(), "UserData", "Overwatch"));
         ModSettings.Register(SettingsGroup, s =>
         {
@@ -63,6 +65,7 @@ public sealed class Plugin : IModpackPlugin
 
     public void OnSceneLoaded(int buildIndex, string sceneName)
     {
+        TacticalHudVisibility.OnSceneLoaded();
         _updateErrorLogged = false;
         _guiErrorLogged = false;
         _runtime?.SceneChanged();
@@ -115,7 +118,7 @@ public sealed class Plugin : IModpackPlugin
 
     private void DrawGUI()
     {
-        if (_runtime == null || !_runtime.InMission || !Setting("ShowHUD", true)) return;
+        if (!TacticalHudVisibility.IsVisible || _runtime == null || !_runtime.InMission || !Setting("ShowHUD", true)) return;
         var manager = TacticalManager.Get();
         if (!Native.Valid(manager) || !manager.IsPlayerTurn() || manager.IsPaused()) return;
 
@@ -265,6 +268,7 @@ public sealed class Plugin : IModpackPlugin
     public void OnUnload()
     {
         DevConsole.RemovePanel("Overwatch");
+        TacticalHudVisibility.Uninstall();
         _runtime?.Dispose();
         _runtime = null;
     }

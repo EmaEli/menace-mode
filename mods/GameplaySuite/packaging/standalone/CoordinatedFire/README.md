@@ -1,6 +1,12 @@
 # Coordinated Fire
 
-**Version 1.6.7** for MENACE.
+**Version 1.6.9** for MENACE.
+
+Version 1.6.9 (MEN-006) hides the IMGUI button and disables its pointer hitbox when Third Person Camera 0.3.4 reports a manual or automatic cinematic view. A cached optional managed getter avoids per-frame reflection; native HUD visibility still applies as a fallback. No changes to AP/volley mechanics, and no new normal-mode logs. The previous 1.6.8 build failed the automatic-movement UI test; this patch still requires Windows build and in-game verification.
+
+**Version 1.6.8** for MENACE.
+
+Version 1.6.8 fixes the tactical button remaining onscreen when Third Person Camera enters its cinematic view. Coordinated Fire now follows the native `UITactical.SetUIVisibility` signal; its pointer hit test is also disabled while the HUD is hidden. After returning to the tactical camera, the existing availability checks decide when the button reappears. Combat mechanics and AP accounting are unchanged. In-game validation is pending.
 
 Version 1.6.7 additionally recovers the verified asynchronous AP-zero side effect from long-running/setup child attacks while Coordinated Fire exclusively owns the action, preventing a valid salvo from permanently disabling the feature. Version 1.6.6 fixed the AP-accounting shutdown reported with Lim's **Run & Gun / Full Send**. Coordinated Fire now lets MENACE execute each child attack without a native AP debit, while keeping normal ammo/limited-use consumption and settling the single combined AP fee once after the volley. The existing synchronized-volley cleanup hardening remains unchanged.
 
