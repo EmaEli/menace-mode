@@ -18,7 +18,7 @@ namespace LargerMaps;
 public sealed partial class Plugin : IModpackPlugin
 {
     private const string ModName = "Larger Maps";
-    private const string Version = "1.6.1";
+    private const string Version = "1.7";
     private const int VanillaSize = 42;
     // The active map size is fixed once at startup, after the native backend is verified.
     // If fingerprint/instruction validation fails we deliberately retain safe 64x64.
@@ -224,6 +224,10 @@ public sealed partial class Plugin : IModpackPlugin
         {
             settings.AddHeader("Experimental maps (restart required)");
             settings.AddSlider("TacticalMapSize", "Tactical map size: 64 / 72 / 80 / 88 / 96 (restart required)", 64f, 96f, 80f);
+            settings.AddHeader("Terrain landmarks (experimental, restart required)");
+            settings.AddToggle("IncreaseTerrainStampDensity", "Increase fixed terrain stamp counts on maps above 64x64 (OFF by default)", false);
+            settings.AddSlider("TerrainStampDensityMultiplier", "Maximum stamp attempts multiplier at 96x96", 1f, 1.5f, 1.25f);
+            settings.AddToggle("DiagnoseTerrainStampDensity", "Log capped terrain-stamp generation counts (OFF by default)", false);
             settings.AddHeader("Mission area investigation (preview only, optional)");
             settings.AddToggle("DiagnoseMissionAreas", "Log mission area coordinates before/after transformations (restart required)", false);
             settings.AddHeader("Simplified combat AI (large maps only; restart required)");
@@ -368,6 +372,7 @@ public sealed partial class Plugin : IModpackPlugin
             PatchMethod(harmony, _mapType, "Generate", 2, nameof(MapGeneratePrefix));
             PatchTerrainHoleIndexing(harmony);
             PatchTerrainGenerateStateMachine(harmony);
+            PatchTerrainStampDensity(harmony);
             PatchWorldHeightBilinearSafety(harmony);
             PatchGameplayPointReprojection(harmony);
             PatchTerrainPointSpawnerHeightFix(harmony);
