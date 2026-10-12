@@ -21,7 +21,7 @@ public sealed partial class Plugin
     private static float _terrainStampMultiplier = 1f;
     private static int _terrainStampDiagnosticLines;
 
-    private static void PatchTerrainStampDensity(Harmony harmony)
+    private static void PatchTerrainStampDensity(HarmonyLib.Harmony harmony)
     {
         // Read once at startup. Neither generation hooks nor IL2CPP settings are
         // changed in the middle of a mission.
