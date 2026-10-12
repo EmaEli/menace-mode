@@ -12,7 +12,7 @@ $log = Join-Path $artifactsDir 'build-and-deploy.log'
 
 function RunBuild {
     Write-Host '=========================================='
-    Write-Host ' MENACE Third Person Camera 0.3.3'
+    Write-Host ' Cinematic Action Camera 1.0'
     Write-Host '=========================================='
 
     if (-not (Get-Command dotnet -ErrorAction SilentlyContinue)) {
