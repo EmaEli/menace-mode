@@ -1,14 +1,13 @@
-# MEN-001 smoke test plan (not yet verified in-game)
+# MEN-001 Smoke Overhaul 0.6.1 — targeted smoke in-game verification
 
-Build standalone SmokeOverhaul 0.6 or Gameplay Suite 0.33 on Windows using the repository's standard Build.ps1 with MENACE game references. Do NOT combine duplicate suite and standalone SmokeOverhaul DLLs.
+Status: source patch only. No Windows build or gameplay verification yet.
 
-1. With Mod Settings enabled, check FastAISmokeSelection / EnableAISmokeUsage / AllowSmokeWhilePinnedDown / SimpleAISmokeRules ON; DebugLogging OFF.
-2. Regular smoke throw has configured grenade AP cost (default 20). Suppressed throw still costs 20.
-3. Pinned Down infantry at 0 AP can target a valid empty tile and throw smoke at 0 AP, consuming an actual smoke use. Regular frag, weapons and other actions must not become free. Check native cooldown and 0 uses.
-4. Enemy AI under fire with smoke: compare pinned vs suppressed use on empty adjacent squares; repeat with blocked/already-smoked tiles.
-5. Enemy flamethrower in exposed open area, aware of player: check preference for smoke 1-2 tiles in front. Native AI alone decides whether to advance into smoke later; no scripted move.
-6. Compare median and worst AI turn times over five turns in identical 64x64 and 96x96 missions with v0.5.2; reject major regression, loop or log spam.
-7. Toggle AllowSmokeWhilePinnedDown OFF between missions and verify original permission restored. Toggle SimpleAISmokeRules OFF and verify normal native smoke selection.
-8. Regression-test mortars, smoke footprints, AI cooldown, regular grenade economy and with third-person camera mod omitted.
-
-This is a draft. Require clean Windows build and observed in-game validation before merging or closing #1.
+1. Install with the single MEN-001 one-click CMD while MENACE is closed; confirm compiled DLL AssemblyVersion 0.6.1.0 and rollback/backup paths.
+2. Keep EnableAISmokeUsage, SimpleAISmokeRules, AllowSmokeWhilePinnedDown enabled. DebugLogging OFF for normal play.
+3. Test pirate infantry visibly Suppressed and Pinned Down with smoke equipment on free adjacent tiles. Watch actual smoke throw, remaining grenade charges and two-round AI cooldown.
+4. Test exposed AI flamethrower with known opponents: smoke 1–2 tiles ahead; subsequent movement remains vanilla.
+5. Ensure no forced smoke for asleep AI, units without smoke, already smoked tiles, covered flamethrowers or occupied targets.
+6. Test normal and pinned player grenade AP; frag and weapons must not become free.
+7. Compare AI turns against 0.5.2 on 64x64 and 96x96; no major regression or per-event logging.
+8. If no enemy smoke: enable Smoke Overhaul Debug for ONE battle, read aggregate counters in Dev Console and Latest.log. Debug OFF afterward.
+9. Do not close issue until real smoke launch and performance verified.
