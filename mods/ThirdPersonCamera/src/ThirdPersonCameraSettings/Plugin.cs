@@ -8,7 +8,7 @@ namespace MenaceThirdPersonCamera.Settings
     // MenaceThirdPersonCamera.dll so it works without ModpackLoader too.
     public sealed class Plugin : IModpackPlugin
     {
-        private const string MenuName = "Third Person Camera";
+        private const string MenuName = "Cinematic Action Camera";
 
         public void OnInitialize(MelonLogger.Instance logger, HarmonyLib.Harmony harmony)
         {
