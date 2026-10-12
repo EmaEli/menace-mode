@@ -1,4 +1,10 @@
-# Overwatch 0.32.3.2
+# Overwatch 0.32.3.3
+
+## 0.32.3.3 managed camera-state compatibility fix
+
+- Third Person Camera **0.3.4** publishes `IsCinematicViewActive`. Overwatch reads it through an optional, cached function delegate and hides its IMGUI panel on automatic movement/firing and manual F6 third-person views.
+- Retains native HUD visibility fallback; no camera hard dependency or recurring reflection/logging. Combat and reaction mechanics unchanged.
+- Suite and standalone variants share this source. Windows build and in-game verification pending; **0.32.3.2 was not effective during automatic movement**.
 
 ## 0.32.3.2 cinematic HUD compatibility fix
 
