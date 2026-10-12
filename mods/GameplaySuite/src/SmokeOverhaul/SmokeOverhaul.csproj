@@ -4,6 +4,6 @@
     <RootNamespace>SmokeOverhaul</RootNamespace>
     <Nullable>enable</Nullable>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-    <Version>0.6</Version>
+    <Version>0.6.1</Version>
   </PropertyGroup>
 </Project>
