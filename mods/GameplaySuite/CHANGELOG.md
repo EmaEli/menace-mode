@@ -1,3 +1,10 @@
+## Unreleased: MEN-006 — Third Person Camera HUD compatibility
+
+- **Overwatch 0.32.3.2** and **Coordinated Fire 1.6.8** honor native `UITactical.SetUIVisibility(false/true)` calls, which Third Person Camera uses when entering/leaving cinematic mode.
+- Their IMGUI buttons no longer draw or receive input while the native tactical HUD is hidden. Coordinated Fire also disables its invisible pointer hitbox.
+- A shared, event-driven Harmony postfix is compiled independently into each mod DLL, so either mod can be installed alone or in the suite. Hooks are isolated from the gameplay runtime's Harmony lifecycle.
+- No changes to attack, reaction, AP, ammo, AI or normal logging. Gameplay acceptance testing is still pending (GitHub MEN-006).
+
 ## Repository / Suite 0.32 Starting Options
 
 - New standalone/suite module **Starting Options 0.1**. In Mod Options, `InitialLeaderMaximum` extends the native New Game / Customize Difficulty Initial Leaders slider maximum from 6 to 12 by default (configurable 6-12). The limit is reduced to the available pickable leader pool if fewer than requested exist.
