@@ -1,0 +1,45 @@
+<Project>
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <LangVersion>10.0</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <Deterministic>true</Deterministic>
+    <PlatformTarget>x64</PlatformTarget>
+    <UseMenaceGameReferences Condition="'$(UseMenaceGameReferences)' == ''">true</UseMenaceGameReferences>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(UseMenaceGameReferences)' == 'true'">
+    <GameInterop Include="$(GamePath)/MelonLoader/Il2CppAssemblies/*.dll" />
+    <Reference Include="@(GameInterop)">
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="0Harmony">
+      <HintPath>$(GamePath)/MelonLoader/net6/0Harmony.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="MelonLoader">
+      <HintPath>$(GamePath)/MelonLoader/net6/MelonLoader.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Il2CppInterop.Runtime">
+      <HintPath>$(GamePath)/MelonLoader/net6/Il2CppInterop.Runtime.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Il2CppInterop.Common">
+      <HintPath>$(GamePath)/MelonLoader/net6/Il2CppInterop.Common.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Menace.ModpackLoader">
+      <HintPath>$(GamePath)/Mods/Menace.ModpackLoader.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+  <Target Name="MenaceGameRequired" BeforeTargets="ResolveReferences" Condition="'$(UseMenaceGameReferences)' == 'true'">
+    <Error Condition="'$(GamePath)' == ''" Text="Pass -p:GamePath=YOUR_MENACE_FOLDER." />
+    <Error Condition="!Exists('$(GamePath)/MelonLoader/Il2CppAssemblies/Assembly-CSharp.dll')" Text="MelonLoader Il2CppAssemblies are missing under GamePath." />
+    <Error Condition="!Exists('$(GamePath)/Mods/Menace.ModpackLoader.dll')" Text="Menace Modpack Loader is required in MENACE/Mods." />
+  </Target>
+</Project>

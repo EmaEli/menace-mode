@@ -1,0 +1,222 @@
+{
+  "expected_sha256": "877622dd02ed79f6a3a37580b5cd9be12e29012bbd6f15a9c80cf917af1373db",
+  "game_version": "v0.7.15+21883",
+  "internal_stride": 128,
+  "supported_map_sizes": [
+    64,
+    72,
+    80,
+    88,
+    96
+  ],
+  "sites": [
+    {
+      "purpose": "mission-bound-width",
+      "rva": "0x5f61c2",
+      "expected_instruction_hex": "C741082A000000",
+      "immediate_offset": 3,
+      "replacement_80": "0x50",
+      "replacement_96": "0x60"
+    },
+    {
+      "purpose": "mission-bound-height",
+      "rva": "0x5f61cf",
+      "expected_instruction_hex": "C7410C2A000000",
+      "immediate_offset": 3,
+      "replacement_80": "0x50",
+      "replacement_96": "0x60"
+    },
+    {
+      "purpose": "queue-capacity",
+      "rva": "0x69ef4e",
+      "expected_instruction_hex": "BA00080000",
+      "immediate_offset": 2,
+      "replacement_80": "0x40",
+      "replacement_96": "0x40"
+    },
+    {
+      "purpose": "closed-buffer-allocation",
+      "rva": "0x69efe3",
+      "expected_instruction_hex": "B900100000",
+      "immediate_offset": 2,
+      "replacement_80": "0x40",
+      "replacement_96": "0x40"
+    },
+    {
+      "purpose": "node-grid-dim-x",
+      "rva": "0x69f003",
+      "expected_instruction_hex": "48C744242040000000",
+      "immediate_offset": 5,
+      "replacement_80": "0x80",
+      "replacement_96": "0x80"
+    },
+    {
+      "purpose": "node-grid-dim-z",
+      "rva": "0x69f00c",
+      "expected_instruction_hex": "48C744242840000000",
+      "immediate_offset": 5,
+      "replacement_80": "0x80",
+      "replacement_96": "0x80"
+    },
+    {
+      "purpose": "ctor-inner-loop",
+      "rva": "0x69f074",
+      "expected_instruction_hex": "83FB40",
+      "immediate_offset": 2,
+      "replacement_80": "0x50",
+      "replacement_96": "0x60"
+    },
+    {
+      "purpose": "ctor-outer-loop",
+      "rva": "0x69f07b",
+      "expected_instruction_hex": "83FD40",
+      "immediate_offset": 2,
+      "replacement_80": "0x50",
+      "replacement_96": "0x60"
+    },
+    {
+      "purpose": "process-init-inner-loop",
+      "rva": "0x69e2da",
+      "expected_instruction_hex": "83FB40",
+      "immediate_offset": 2,
+      "replacement_80": "0x50",
+      "replacement_96": "0x60"
+    },
+    {
+      "purpose": "process-init-outer-loop",
+      "rva": "0x69e2e5",
+      "expected_instruction_hex": "83FF40",
+      "immediate_offset": 2,
+      "replacement_80": "0x50",
+      "replacement_96": "0x60"
+    },
+    {
+      "purpose": "manager-init-inner-loop",
+      "rva": "0x69bf2a",
+      "expected_instruction_hex": "83FB40",
+      "immediate_offset": 2,
+      "replacement_80": "0x50",
+      "replacement_96": "0x60"
+    },
+    {
+      "purpose": "manager-init-outer-loop",
+      "rva": "0x69bf35",
+      "expected_instruction_hex": "83FE40",
+      "immediate_offset": 2,
+      "replacement_80": "0x50",
+      "replacement_96": "0x60"
+    },
+    {
+      "purpose": "closed-buffer-clear",
+      "rva": "0x69c341",
+      "expected_instruction_hex": "BA00100000",
+      "immediate_offset": 2,
+      "replacement_80": "0x40",
+      "replacement_96": "0x40"
+    },
+    {
+      "purpose": "findpath-buffer-clear",
+      "rva": "0x69c7ad",
+      "expected_instruction_hex": "BA00100000",
+      "immediate_offset": 2,
+      "replacement_80": "0x40",
+      "replacement_96": "0x40"
+    },
+    {
+      "purpose": "stride-disasm_findpath",
+      "rva": "0x69c9ae",
+      "expected_instruction_hex": "C1E106",
+      "immediate_offset": 2,
+      "replacement_80": "0x7",
+      "replacement_96": "0x7"
+    },
+    {
+      "purpose": "stride-disasm_findpath",
+      "rva": "0x69ca35",
+      "expected_instruction_hex": "C1E006",
+      "immediate_offset": 2,
+      "replacement_80": "0x7",
+      "replacement_96": "0x7"
+    },
+    {
+      "purpose": "stride-disasm_findpath",
+      "rva": "0x69cc4e",
+      "expected_instruction_hex": "C1E006",
+      "immediate_offset": 2,
+      "replacement_80": "0x7",
+      "replacement_96": "0x7"
+    },
+    {
+      "purpose": "stride-disasm_findpath",
+      "rva": "0x69d1df",
+      "expected_instruction_hex": "C1E006",
+      "immediate_offset": 2,
+      "replacement_80": "0x7",
+      "replacement_96": "0x7"
+    },
+    {
+      "purpose": "stride-disasm_findpath",
+      "rva": "0x69d618",
+      "expected_instruction_hex": "C1E006",
+      "immediate_offset": 2,
+      "replacement_80": "0x7",
+      "replacement_96": "0x7"
+    },
+    {
+      "purpose": "stride-disasm_findpath",
+      "rva": "0x69d7a3",
+      "expected_instruction_hex": "C1E006",
+      "immediate_offset": 2,
+      "replacement_80": "0x7",
+      "replacement_96": "0x7"
+    },
+    {
+      "purpose": "stride-disasm_findpath",
+      "rva": "0x69dbd7",
+      "expected_instruction_hex": "C1E006",
+      "immediate_offset": 2,
+      "replacement_80": "0x7",
+      "replacement_96": "0x7"
+    },
+    {
+      "purpose": "stride-disasm_findpath",
+      "rva": "0x69dc5e",
+      "expected_instruction_hex": "C1E006",
+      "immediate_offset": 2,
+      "replacement_80": "0x7",
+      "replacement_96": "0x7"
+    },
+    {
+      "purpose": "stride-disasm_findpath",
+      "rva": "0x69dce7",
+      "expected_instruction_hex": "C1E006",
+      "immediate_offset": 2,
+      "replacement_80": "0x7",
+      "replacement_96": "0x7"
+    },
+    {
+      "purpose": "stride-disasm_findpath",
+      "rva": "0x69dd6d",
+      "expected_instruction_hex": "C1E006",
+      "immediate_offset": 2,
+      "replacement_80": "0x7",
+      "replacement_96": "0x7"
+    },
+    {
+      "purpose": "stride-disasm_findpath",
+      "rva": "0x69ddf6",
+      "expected_instruction_hex": "C1E006",
+      "immediate_offset": 2,
+      "replacement_80": "0x7",
+      "replacement_96": "0x7"
+    },
+    {
+      "purpose": "stride-disasm_processnode",
+      "rva": "0x69eea5",
+      "expected_instruction_hex": "C1E006",
+      "immediate_offset": 2,
+      "replacement_80": "0x7",
+      "replacement_96": "0x7"
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>SmokeOverhaul</AssemblyName>
+    <RootNamespace>SmokeOverhaul</RootNamespace>
+    <Nullable>enable</Nullable>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <Version>0.5.2</Version>
+  </PropertyGroup>
+</Project>

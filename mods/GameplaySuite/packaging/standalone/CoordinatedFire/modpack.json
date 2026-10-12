@@ -1,0 +1,16 @@
+{
+  "manifestVersion": 2,
+  "name": "Coordinated Fire",
+  "version": "1.6.7",
+  "author": "EmaEli",
+  "description": "Fire two compatible weapons as one coordinated action, paying the higher AP cost once. Infantry by default; optional vehicle and AI support.",
+  "loadOrder": 100,
+  "patches": {},
+  "assets": {},
+  "code": {
+    "sources": [],
+    "references": [],
+    "prebuiltDlls": []
+  },
+  "securityStatus": "SourceVerified"
+}

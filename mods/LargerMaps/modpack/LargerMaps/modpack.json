@@ -1,0 +1,26 @@
+{
+  "manifestVersion": 2,
+  "id": "luca.largermaps",
+  "name": "Larger Maps",
+  "version": "1.6.1",
+  "author": "Luca / OpenAI",
+  "description": "Selectable 64/72/80/88/96 tactical maps. 1.6.1 combat AI template lookup bugfix: uses supported Get<SkillTemplate>(ID,false) fallback when generic collection enumeration exposes no eligible abilities. No change to AI scoring, movement or native pathfinding beyond the opt-in 1.6 flag; speed improvement unverified.",
+  "loadOrder": 520,
+  "patches": {},
+  "assets": {},
+  "code": {
+    "sources": [],
+    "references": [
+      "MelonLoader",
+      "0Harmony",
+      "Il2CppInterop.Runtime",
+      "Il2Cppmscorlib",
+      "Assembly-CSharp",
+      "Menace.ModpackLoader"
+    ],
+    "prebuiltDlls": [
+      "LargerMaps.dll"
+    ]
+  },
+  "securityStatus": "SourceVerified"
+}

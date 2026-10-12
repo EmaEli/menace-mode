@@ -1,0 +1,38 @@
+Cover Destruction Rebalance v0.1.4
+================================
+
+Purpose
+-------
+Makes MENACE half-cover harder to erase by reducing the vanilla
+DestroyHalfCover class of destructive attacks by one tier.
+
+Rules
+-----
+- Vanilla 1 stays 1.
+- Vanilla 2 becomes 1.
+- Vanilla 3 becomes 2.
+- Exception: active.laser_rifle_gunslinger becomes 1.
+
+This changes ONLY the half-cover destruction class.
+It does not change weapon damage, armor penetration, AoE, accuracy,
+suppression, range, or cover bonuses.
+
+Current-patch compatibility
+---------------------------
+Version 0.1.4 no longer relies on a hardcoded skill/handler manifest.
+At startup it reads the game's current SkillTemplate collection and applies
+the rules above to every event handler that exposes DestroyHalfCover.
+This automatically includes newly added weapons/skills and avoids stale
+"skill not found" entries after game updates.
+
+Build / deploy
+--------------
+1. Run build-and-deploy.bat.
+2. The script first tries M:\SteamLibrary\steamapps\common\Menace.
+3. If MENACE is elsewhere, enter the game folder when prompted.
+   You can also pass the game folder as the first argument.
+4. Start MENACE with MelonLoader.
+5. In Latest.log look for the single summary line beginning with:
+   "Cover rebalance applied dynamically..."
+
+PATCHES.md describes the dynamic patch rule.

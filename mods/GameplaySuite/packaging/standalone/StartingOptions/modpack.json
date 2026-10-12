@@ -1,0 +1,26 @@
+{
+  "manifestVersion": 2,
+  "id": "luca.startingoptions",
+  "name": "Starting Options",
+  "version": "0.1",
+  "author": "Luca / OpenAI",
+  "description": "Configurable starting leader slider cap (up to 12) and Black Market Headstart Spare Parts count (up to 1000). No changes to existing campaigns.",
+  "loadOrder": 185,
+  "patches": {},
+  "assets": {},
+  "code": {
+    "sources": [],
+    "references": [
+      "MelonLoader",
+      "0Harmony",
+      "Il2CppInterop.Runtime",
+      "Il2Cppmscorlib",
+      "Assembly-CSharp",
+      "Menace.ModpackLoader"
+    ],
+    "prebuiltDlls": [
+      "StartingOptions.dll"
+    ]
+  },
+  "securityStatus": "SourceVerified"
+}

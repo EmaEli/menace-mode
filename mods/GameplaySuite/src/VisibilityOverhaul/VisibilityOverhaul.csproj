@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>VisibilityOverhaul</AssemblyName>
+    <RootNamespace>VisibilityOverhaul</RootNamespace>
+    <Nullable>enable</Nullable>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <Version>3.1.9</Version>
+  </PropertyGroup>
+</Project>

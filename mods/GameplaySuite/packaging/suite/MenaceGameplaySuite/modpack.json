@@ -1,0 +1,638 @@
+{
+  "manifestVersion": 2,
+  "name": "MENACE Gameplay Suite",
+  "version": "0.32",
+  "author": "Luca",
+  "description": "Unified modular gameplay suite with caliber-based smoke footprints and native AI smoke use, scatter-based mortar ranging, Coordinated Fire AP recovery, and lethal suppression-aware Infantry Assault CQB, with faster native AI smoke target selection. Configurable initial leader cap and Black Market Headstart Spare Parts count.",
+  "loadOrder": 190,
+  "clones": {
+    "SkillTemplate": {
+      "mod.infantry_assault": "player.close_combat_charge",
+      "active.fieldlogistics_vehicle_resupply": "active.rogue_ammo_runner_refill_ammo",
+      "active.fieldlogistics_redistribute_ammo": "active.rogue_ammo_runner_refill_ammo"
+    },
+    "AccessoryTemplate": {
+      "accessory.fieldlogistics_vehicle_ammo_supply": "accessory.vehicle_smoke_launchers"
+    }
+  },
+  "patches": {
+    "SkillTemplate": {
+      "mod.infantry_assault": {
+        "Order": 50010,
+        "ActionPointCost": 40,
+        "IsLimitedUses": false,
+        "Uses": 1,
+        "IsActive": true,
+        "IsTargeted": true,
+        "TargetingCursor": 6,
+        "TargetsAllowed": 1049600,
+        "KeepSelectedIfStillUsable": false,
+        "IsLineOfFireNeeded": false,
+        "IsAttack": false,
+        "IsAlwaysHitting": true,
+        "CanHitAnotherTile": true,
+        "IsIgnoringCover": true,
+        "IsSilent": true,
+        "UsabilityWhileContained": 1,
+        "MarkAsActed": true,
+        "IsHidden": false,
+        "IsOverridingRanges": true,
+        "MinRange": 1,
+        "IdealRange": 1,
+        "MaxRange": 1,
+        "ApplyToEntityInsideStructure": true,
+        "Title": "Assault",
+        "Description": "Spend 40 AP to assault adjacent enemy infantry. Cannot be used while deployed/kneeling, Suppressed, or Pinned Down. The defender fires first if able; Pinned Down defenders react with half CQB bonuses, while Suppressed defenders cannot react. Surviving assaulters then fire; if the defender is destroyed, the assaulters occupy the target position.",
+        "EventHandlers": [],
+        "AIConfig": null
+      },
+      "active.fieldlogistics_vehicle_resupply": {
+        "ActionPointCost": 60,
+        "IsLimitedUses": true,
+        "Uses": 1,
+        "IsTargeted": true,
+        "IsOverridingRanges": true,
+        "MinRange": 1,
+        "IdealRange": 1,
+        "MaxRange": 1,
+        "Title": "Resupply Infantry",
+        "Description": "Fully refills the ammunition of an adjacent infantry unit. Player vehicles have one use by default; the Field Ammunition Supply module adds extra uses."
+      },
+      "active.fieldlogistics_redistribute_ammo": {
+        "Order": 70010,
+        "ActionPointCost": 40,
+        "IsLimitedUses": false,
+        "Uses": 1,
+        "IsActive": true,
+        "IsTargeted": true,
+        "TargetingCursor": 6,
+        "TargetsAllowed": 2099200,
+        "KeepSelectedIfStillUsable": false,
+        "IsLineOfFireNeeded": false,
+        "IsAttack": false,
+        "IsAlwaysHitting": true,
+        "CanHitAnotherTile": true,
+        "IsIgnoringCover": true,
+        "IsSilent": true,
+        "UsabilityWhileContained": 0,
+        "MarkAsActed": true,
+        "IsHidden": false,
+        "IsOverridingRanges": true,
+        "MinRange": 1,
+        "IdealRange": 1,
+        "MaxRange": 1,
+        "Title": "Redistribute Ammo",
+        "Description": "Redistributes remaining squad-weapon ammunition between this infantry unit and an adjacent friendly infantry unit carrying a weapon of the same category. Total ammunition is conserved; special weapons and grenades are ignored.",
+        "Tags": [
+          "infantry"
+        ],
+        "EventHandlers": [
+          {
+            "_type": "DisplayText",
+            "Event": 2,
+            "LocaKey": "Ammo Redistributed",
+            "DefaultText": "Ammo Redistributed",
+            "Icon": null
+          }
+        ],
+        "AIConfig": null
+      }
+    },
+    "EntityTemplate": {
+      "allied.local_forces_basic_infantry": {
+        "Skills": {
+          "$append": [
+            "mod.infantry_assault"
+          ]
+        }
+      },
+      "allied.local_forces_medium_machinegun_weapon_team": {
+        "Skills": {
+          "$append": [
+            "mod.infantry_assault"
+          ]
+        }
+      },
+      "allied.local_forces_mortar_weapon_team": {
+        "Skills": {
+          "$append": [
+            "mod.infantry_assault"
+          ]
+        }
+      },
+      "allied.pirate_scavengers": {
+        "Skills": {
+          "$append": [
+            "mod.infantry_assault"
+          ]
+        }
+      },
+      "allied.player_local_forces_conscripts": {
+        "Skills": {
+          "$append": [
+            "mod.infantry_assault"
+          ]
+        }
+      },
+      "allied.player_local_forces_regular_infantry": {
+        "Skills": {
+          "$append": [
+            "mod.infantry_assault"
+          ]
+        }
+      },
+      "allied_civilian_militia_buyout": {
+        "Skills": {
+          "$append": [
+            "mod.infantry_assault"
+          ]
+        }
+      },
+      "allied_local_forces.hunters": {
+        "Skills": {
+          "$append": [
+            "mod.infantry_assault"
+          ]
+        }
+      },
+      "allied_local_forces.militia": {
+        "Skills": {
+          "$append": [
+            "mod.infantry_assault"
+          ]
+        }
+      },
+      "enemy.construct_boomer_shambler": {
+        "Skills": {
+          "$append": [
+            "mod.infantry_assault"
+          ]
+        }
+      },
+      "enemy.construct_gunslinger": {
+        "Skills": {
+          "$append": [
+            "mod.infantry_assault"
+          ]
+        }
+      },
+      "enemy.construct_skirmisher": {
+        "Skills": {
+          "$append": [
+            "mod.infantry_assault"
+          ]
+        }
+      },
+      "enemy.construct_soldier_tier1": {
+        "Skills": {
+          "$append": [
+            "mod.infantry_assault"
+          ]
+        }
+      },
+      "enemy.construct_soldier_tier1_phantom": {
+        "Skills": {
+          "$append": [
+            "mod.infantry_assault"
+          ]
+        }
+      },
+      "enemy.construct_soldier_tier1_samples": {
+        "Skills": {
+          "$append": [
+            "mod.infantry_assault"
+          ]
+        }
+      },
+      "enemy.construct_stalker": {
+        "Skills": {
+          "$append": [
+            "mod.infantry_assault"
+          ]
+        }
+      },
+      "enemy.construct_worker_drone": {
+        "Skills": {
+          "$append": [
+            "mod.infantry_assault"
+          ]
+        }
+      },
+      "enemy.construct_worker_drone_low_acc": {
+        "Skills": {
+          "$append": [
+            "mod.infantry_assault"
+          ]
+        }
+      },
+      "enemy.pirate_boarding_commandos": {
+        "Skills": {
+          "$append": [
+            "mod.infantry_assault"
+          ]
+        }
+      },
+      "enemy.pirate_boarding_commandos_bodyguard": {
+        "Skills": {
+          "$append": [
+            "mod.infantry_assault"
+          ]
+        }
+      },
+      "enemy.pirate_boarding_commandos_first_mate": {
+        "Skills": {
+          "$append": [
+            "mod.infantry_assault"
+          ]
+        }
+      },
+      "enemy.pirate_bombmaker": {
+        "Skills": {
+          "$append": [
+            "mod.infantry_assault"
+          ]
+        }
+      },
+      "enemy.pirate_bullet_sponge": {
+        "Skills": {
+          "$append": [
+            "mod.infantry_assault"
+          ]
+        }
+      },
+      "enemy.pirate_captain": {
+        "Skills": {
+          "$append": [
+            "mod.infantry_assault"
+          ]
+        }
+      },
+      "enemy.pirate_chaingun_team": {
+        "Skills": {
+          "$append": [
+            "mod.infantry_assault"
+          ]
+        }
+      },
+      "enemy.pirate_emp_team": {
+        "Skills": {
+          "$append": [
+            "mod.infantry_assault"
+          ]
+        }
+      },
+      "enemy.pirate_emp_team_engineer": {
+        "Skills": {
+          "$append": [
+            "mod.infantry_assault"
+          ]
+        }
+      },
+      "enemy.pirate_flamethrower_team": {
+        "Skills": {
+          "$append": [
+            "mod.infantry_assault"
+          ]
+        }
+      },
+      "enemy.pirate_outcasts": {
+        "Skills": {
+          "$append": [
+            "mod.infantry_assault"
+          ]
+        }
+      },
+      "enemy.pirate_outcasts_with_shotguns": {
+        "Skills": {
+          "$append": [
+            "mod.infantry_assault"
+          ]
+        }
+      },
+      "enemy.pirate_saboteur_chaingun_team": {
+        "Skills": {
+          "$append": [
+            "mod.infantry_assault"
+          ]
+        }
+      },
+      "enemy.pirate_saboteurs_scavenger_ringleader": {
+        "Skills": {
+          "$append": [
+            "mod.infantry_assault"
+          ]
+        }
+      },
+      "enemy.pirate_saboteurs_scavengers": {
+        "Skills": {
+          "$append": [
+            "mod.infantry_assault"
+          ]
+        }
+      },
+      "enemy.pirate_scavengers": {
+        "Skills": {
+          "$append": [
+            "mod.infantry_assault"
+          ]
+        }
+      },
+      "enemy.pirate_scavengers_tutorial_weak": {
+        "Skills": {
+          "$append": [
+            "mod.infantry_assault"
+          ]
+        }
+      },
+      "enemy.pirate_veteran_scavengers_t2": {
+        "Skills": {
+          "$append": [
+            "mod.infantry_assault"
+          ]
+        }
+      },
+      "enemy.rogue_army_ammo_runner": {
+        "Skills": {
+          "$append": [
+            "mod.infantry_assault"
+          ]
+        }
+      },
+      "enemy.rogue_army_atgm_weapon_team": {
+        "Skills": {
+          "$append": [
+            "mod.infantry_assault"
+          ]
+        }
+      },
+      "enemy.rogue_army_autocannon_weapon_team": {
+        "Skills": {
+          "$append": [
+            "mod.infantry_assault"
+          ]
+        }
+      },
+      "enemy.rogue_army_conscripts": {
+        "Skills": {
+          "$append": [
+            "mod.infantry_assault"
+          ]
+        }
+      },
+      "enemy.rogue_army_heavy_infantry": {
+        "Skills": {
+          "$append": [
+            "mod.infantry_assault"
+          ]
+        }
+      },
+      "enemy.rogue_army_infantry": {
+        "Skills": {
+          "$append": [
+            "mod.infantry_assault"
+          ]
+        }
+      },
+      "enemy.rogue_army_infantry_with_battle_rifles": {
+        "Skills": {
+          "$append": [
+            "mod.infantry_assault"
+          ]
+        }
+      },
+      "enemy.rogue_army_medium_machinegun_weapon_team": {
+        "Skills": {
+          "$append": [
+            "mod.infantry_assault"
+          ]
+        }
+      },
+      "enemy.rogue_army_mortar_weapon_team": {
+        "Skills": {
+          "$append": [
+            "mod.infantry_assault"
+          ]
+        }
+      },
+      "enemy.rogue_army_officer_squad": {
+        "Skills": {
+          "$append": [
+            "mod.infantry_assault"
+          ]
+        }
+      },
+      "enemy.rogue_army_sniper_team_jaeger": {
+        "Skills": {
+          "$append": [
+            "mod.infantry_assault"
+          ]
+        }
+      },
+      "enemy.rogue_army_storm_troopers": {
+        "Skills": {
+          "$append": [
+            "mod.infantry_assault"
+          ]
+        }
+      },
+      "enemy.shadow_forces": {
+        "Skills": {
+          "$append": [
+            "mod.infantry_assault"
+          ]
+        }
+      },
+      "player_squad.carda": {
+        "Skills": [
+          "active.fieldlogistics_redistribute_ammo",
+          "mod.infantry_assault"
+        ]
+      },
+      "player_squad.corlain": {
+        "Skills": [
+          "active.fieldlogistics_redistribute_ammo",
+          "mod.infantry_assault"
+        ]
+      },
+      "player_squad.darby": {
+        "Skills": [
+          "active.fieldlogistics_redistribute_ammo",
+          "mod.infantry_assault"
+        ]
+      },
+      "player_squad.greifinger": {
+        "Skills": [
+          "active.fieldlogistics_redistribute_ammo",
+          "mod.infantry_assault"
+        ]
+      },
+      "player_squad.kubra": {
+        "Skills": [
+          "active.fieldlogistics_redistribute_ammo",
+          "mod.infantry_assault"
+        ]
+      },
+      "player_squad.lim": {
+        "Skills": [
+          "active.fieldlogistics_redistribute_ammo",
+          "mod.infantry_assault"
+        ]
+      },
+      "player_squad.pike": {
+        "Skills": [
+          "active.fieldlogistics_redistribute_ammo",
+          "mod.infantry_assault"
+        ]
+      },
+      "player_squad.pike_tutorial": {
+        "Skills": [
+          "active.fieldlogistics_redistribute_ammo",
+          "mod.infantry_assault"
+        ]
+      },
+      "player_squad.sachin": {
+        "Skills": [
+          "active.fieldlogistics_redistribute_ammo",
+          "mod.infantry_assault"
+        ]
+      },
+      "player_squad.sy": {
+        "Skills": [
+          "active.fieldlogistics_redistribute_ammo",
+          "mod.infantry_assault"
+        ]
+      },
+      "player_squad.tech": {
+        "Skills": [
+          "active.fieldlogistics_redistribute_ammo",
+          "mod.infantry_assault"
+        ]
+      },
+      "player_squad.test": {
+        "Skills": [
+          "active.fieldlogistics_redistribute_ammo",
+          "mod.infantry_assault"
+        ]
+      },
+      "player_squad.vamplew": {
+        "Skills": [
+          "active.fieldlogistics_redistribute_ammo",
+          "mod.infantry_assault"
+        ]
+      },
+      "player_squad.weiwu": {
+        "Skills": [
+          "active.fieldlogistics_redistribute_ammo",
+          "mod.infantry_assault"
+        ]
+      },
+      "player_squad.wetteroth": {
+        "Skills": [
+          "active.fieldlogistics_redistribute_ammo",
+          "mod.infantry_assault"
+        ]
+      },
+      "player_squad.yaz": {
+        "Skills": [
+          "active.fieldlogistics_redistribute_ammo",
+          "mod.infantry_assault"
+        ]
+      },
+      "player_vehicle.cveh_heavy_tank": {
+        "Skills": [
+          "active.destroy_wreckage",
+          "active.fieldlogistics_vehicle_resupply"
+        ]
+      },
+      "player_vehicle.generic_heavy_attack_walker": {
+        "Skills": [
+          "active.fieldlogistics_vehicle_resupply"
+        ]
+      },
+      "player_vehicle.modular_atv": {
+        "Skills": [
+          "active.destroy_wreckage",
+          "active.fieldlogistics_vehicle_resupply"
+        ]
+      },
+      "player_vehicle.modular_ifv": {
+        "Skills": [
+          "active.destroy_wreckage",
+          "active.fieldlogistics_vehicle_resupply"
+        ]
+      },
+      "player_vehicle.modular_light_troop_carrier": {
+        "Skills": [
+          "active.destroy_wreckage",
+          "active.fieldlogistics_vehicle_resupply"
+        ]
+      },
+      "player_vehicle.modular_mbt_battle_tank": {
+        "Skills": [
+          "active.destroy_wreckage",
+          "active.fieldlogistics_vehicle_resupply"
+        ]
+      },
+      "player_vehicle.modular_piratetruck": {
+        "Skills": [
+          "active.destroy_wreckage",
+          "active.fieldlogistics_vehicle_resupply"
+        ]
+      },
+      "player_vehicle.modular_walker_light": {
+        "Skills": [
+          "perk.deploy_vehicle",
+          "active.destroy_wreckage",
+          "active.fieldlogistics_vehicle_resupply"
+        ]
+      },
+      "player_vehicle.modular_walker_medium": {
+        "Skills": [
+          "perk.deploy_vehicle",
+          "active.stance.walker.get_up",
+          "active.destroy_wreckage",
+          "active.fieldlogistics_vehicle_resupply"
+        ]
+      },
+      "environment_backbone_forestdense": {
+        "IsTraversableByInfantry": true,
+        "ContainerType": 3
+      }
+    },
+    "AccessoryTemplate": {
+      "accessory.fieldlogistics_vehicle_ammo_supply": {
+        "DeployCosts": {
+          "m_Supplies": 20
+        },
+        "Rarity": 20,
+        "MinCampaignProgress": 0,
+        "TradeValue": 40,
+        "BlackMarketMaxQuantity": 1,
+        "SkillsGranted": [],
+        "Title": "Field Ammunition Supply",
+        "ShortName": "Ammo Supply",
+        "Description": "Carries additional small-arms ammunition for nearby infantry, adding extra uses to the vehicle's Resupply Infantry ability.",
+        "VisualAlterationSlot": -1,
+        "VisualAlterationSlotSecondary": -1,
+        "IconEquipment": "accessory_vehicle_ammo_cases_186x186",
+        "IconEquipmentDisabled": "accessory_vehicle_ammo_cases_inactive_186x186",
+        "IconAssetName": "accessory_vehicle_ammo_cases_186x186",
+        "DisplayTitle": "Field Ammunition Supply",
+        "DisplayShortName": "Ammo Supply",
+        "DisplayDescription": "Carries additional small-arms ammunition for nearby infantry, adding extra uses to the vehicle's Resupply Infantry ability.",
+        "IconSkillBar": null,
+        "IconSkillBarDisabled": null,
+        "IconSkillBarAlternative": null,
+        "IconSkillBarAlternativeDisabled": null
+      }
+    }
+  },
+  "assets": {},
+  "code": {
+    "sources": [],
+    "references": [],
+    "prebuiltDlls": []
+  },
+  "securityStatus": "SourceVerified",
+  "id": "luca.menacegameplaysuite"
+}

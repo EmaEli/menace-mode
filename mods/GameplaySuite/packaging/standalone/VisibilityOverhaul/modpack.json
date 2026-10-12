@@ -1,0 +1,17 @@
+{
+  "manifestVersion": 2,
+  "id": "luca.visibilityoverhaul",
+  "name": "Visibility Overhaul",
+  "version": "3.1.9",
+  "author": "Luca / ChatGPT",
+  "description": "Configurable tactical visibility overhaul using MENACE native EntityProperties vision rebuilds plus movement-based infantry concealment.",
+  "loadOrder": 20,
+  "patches": {},
+  "assets": {},
+  "code": {
+    "sources": [],
+    "references": [],
+    "prebuiltDlls": []
+  },
+  "securityStatus": "SourceVerified"
+}

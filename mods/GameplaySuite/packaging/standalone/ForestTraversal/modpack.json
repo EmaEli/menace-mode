@@ -1,0 +1,33 @@
+{
+  "manifestVersion": 2,
+  "id": "luca.foresttraversal",
+  "name": "Forest Traversal",
+  "version": "0.1.2",
+  "author": "Luca / OpenAI",
+  "description": "Lets infantry cross Dense Forest while retaining MENACE's native forest and structure movement penalties. Vehicles remain blocked.",
+  "loadOrder": 165,
+  "patches": {
+    "EntityTemplate": {
+      "environment_backbone_forestdense": {
+        "IsTraversableByInfantry": true,
+        "ContainerType": 3
+      }
+    }
+  },
+  "assets": {},
+  "code": {
+    "sources": [],
+    "references": [
+      "MelonLoader",
+      "0Harmony",
+      "Il2CppInterop.Runtime",
+      "Il2Cppmscorlib",
+      "Assembly-CSharp",
+      "Menace.ModpackLoader"
+    ],
+    "prebuiltDlls": [
+      "ForestTraversal.dll"
+    ]
+  },
+  "securityStatus": "SourceVerified"
+}

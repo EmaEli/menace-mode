@@ -1,0 +1,8 @@
+artifacts/*
+!artifacts/.gitkeep
+**/bin/
+**/obj/
+.vs/
+.idea/
+*.user
+*.suo

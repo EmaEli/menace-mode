@@ -1,0 +1,17 @@
+{
+  "manifestVersion": 2,
+  "id": "luca.buildingcombatrules",
+  "name": "Building Combat Rules",
+  "version": "0.1.4",
+  "author": "Luca / OpenAI",
+  "description": "Prevents direct-fire small arms from damaging buildings and defers occupied multi-tile collapse until native ejection movement has finished.",
+  "loadOrder": 185,
+  "patches": {},
+  "assets": {},
+  "code": {
+    "sources": [],
+    "references": [],
+    "prebuiltDlls": []
+  },
+  "securityStatus": "SourceVerified"
+}

@@ -1,0 +1,35 @@
+# Local build outputs
+**/bin/
+**/obj/
+**/.vs/
+**/.idea/
+**/TestResults/
+**/__pycache__/
+**/.pytest_cache/
+**/*.pyc
+**/*.pdb
+
+# Game binaries / generated dependencies
+*.dll
+*.exe
+*.dylib
+*.so
+GameAssembly.dll
+global-metadata.dat
+Il2CppAssemblies/
+ExtractedData/
+
+# Runtime logs and packaged releases
+*.log
+artifacts/*
+**/artifacts/*
+!**/artifacts/.gitkeep
+*.zip
+*.7z
+*.rar
+
+# Local IDE / environment
+.DS_Store
+Thumbs.db
+*.user
+*.suo

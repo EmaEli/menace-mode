@@ -1,0 +1,304 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+using MelonLoader;
+
+[assembly: MelonInfo(typeof(CoverDestructionRebalance.CoverDestructionRebalanceMod), "Cover Destruction Rebalance", "0.1.4", "Luca / OpenAI")]
+
+namespace CoverDestructionRebalance
+{
+    public sealed class CoverDestructionRebalanceMod : MelonMod
+    {
+        private const string SpecialHeavyToLightSkill = "active.laser_rifle_gunslinger";
+
+        private bool _applied;
+        private int _attempts;
+
+        public override void OnInitializeMelon()
+        {
+            LoggerInstance.Msg("Cover Destruction Rebalance v0.1.4 loaded.");
+            TryApplyPatches("initialization");
+        }
+
+        public override void OnSceneWasLoaded(int buildIndex, string sceneName)
+        {
+            if (!_applied)
+                TryApplyPatches($"scene {buildIndex} ({sceneName})");
+        }
+
+        private void TryApplyPatches(string trigger)
+        {
+            if (_applied)
+                return;
+
+            _attempts++;
+
+            try
+            {
+                Type loaderType = FindRuntimeType(
+                    "Il2CppMenace.Tools.DataTemplateLoader",
+                    "Menace.Tools.DataTemplateLoader");
+                Type skillType = FindRuntimeType(
+                    "Il2CppMenace.Tactical.Skills.SkillTemplate",
+                    "Menace.Tactical.Skills.SkillTemplate");
+
+                if (loaderType == null || skillType == null)
+                {
+                    if (_attempts >= 3)
+                    {
+                        LoggerInstance.Error(
+                            $"Required MENACE template types were not found after {_attempts} attempt(s). " +
+                            $"loader={(loaderType == null ? "missing" : loaderType.FullName)}, " +
+                            $"skill={(skillType == null ? "missing" : skillType.FullName)}.");
+                    }
+                    return;
+                }
+
+                MethodInfo getAllDefinition = loaderType
+                    .GetMethods(BindingFlags.Public | BindingFlags.Static)
+                    .FirstOrDefault(m =>
+                        m.Name == "GetAll" &&
+                        m.IsGenericMethodDefinition &&
+                        m.GetGenericArguments().Length == 1 &&
+                        m.GetParameters().Length == 0);
+
+                if (getAllDefinition == null)
+                {
+                    LoggerInstance.Error("DataTemplateLoader.GetAll<T>() was not found.");
+                    return;
+                }
+
+                MemberInfo eventHandlersMember = FindReadableMember(skillType, "EventHandlers");
+                if (eventHandlersMember == null)
+                {
+                    LoggerInstance.Error("SkillTemplate.EventHandlers was not exposed as a readable field/property/getter.");
+                    return;
+                }
+
+                MethodInfo getId = skillType.GetMethod(
+                    "GetID",
+                    BindingFlags.Public | BindingFlags.Instance);
+
+                object skills = getAllDefinition.MakeGenericMethod(skillType).Invoke(null, null);
+                if (skills == null)
+                    return;
+
+                int skillCount = 0;
+                int attackHandlerCount = 0;
+                int changed = 0;
+                int mediumToLight = 0;
+                int heavyToMedium = 0;
+                int specialHeavyToLight = 0;
+
+                foreach (object skill in EnumerateItems(skills))
+                {
+                    if (skill == null)
+                        continue;
+
+                    skillCount++;
+                    string skillId = "<unknown>";
+                    try
+                    {
+                        skillId = Convert.ToString(getId?.Invoke(skill, null)) ?? "<unknown>";
+                    }
+                    catch
+                    {
+                        // The rebalance itself does not depend on an ID except for one special case.
+                    }
+
+                    object handlers = ReadMember(eventHandlersMember, skill);
+                    foreach (object handler in EnumerateItems(handlers))
+                    {
+                        if (handler == null)
+                            continue;
+
+                        MemberInfo destroyMember = FindWritableMember(handler.GetType(), "DestroyHalfCover");
+                        if (destroyMember == null)
+                            continue;
+
+                        attackHandlerCount++;
+                        object currentValue = ReadMember(destroyMember, handler);
+                        int current = Convert.ToInt32(currentValue);
+                        int target = current;
+
+                        if (current == 2)
+                        {
+                            target = 1;
+                            mediumToLight++;
+                        }
+                        else if (current == 3)
+                        {
+                            if (string.Equals(skillId, SpecialHeavyToLightSkill, StringComparison.Ordinal))
+                            {
+                                target = 1;
+                                specialHeavyToLight++;
+                            }
+                            else
+                            {
+                                target = 2;
+                                heavyToMedium++;
+                            }
+                        }
+
+                        if (target == current)
+                            continue;
+
+                        Type valueType = GetMemberValueType(destroyMember);
+                        object replacement = valueType.IsEnum
+                            ? Enum.ToObject(valueType, target)
+                            : Convert.ChangeType(target, valueType);
+                        WriteMember(destroyMember, handler, replacement);
+                        changed++;
+                    }
+                }
+
+                if (skillCount <= 0)
+                    return;
+
+                _applied = true;
+                LoggerInstance.Msg(
+                    $"Cover rebalance applied dynamically to current templates: " +
+                    $"skills={skillCount}, attackHandlers={attackHandlerCount}, changed={changed} " +
+                    $"(Medium->Light={mediumToLight}, Heavy->Medium={heavyToMedium}, " +
+                    $"gunslinger Heavy->Light={specialHeavyToLight}).");
+            }
+            catch (Exception ex)
+            {
+                LoggerInstance.Error($"Failed to apply cover-destruction rebalance during {trigger}: {ex}");
+            }
+        }
+
+
+        private static MemberInfo FindReadableMember(Type type, string name)
+        {
+            const BindingFlags flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
+            FieldInfo field = type.GetField(name, flags);
+            if (field != null)
+                return field;
+
+            PropertyInfo property = type.GetProperty(name, flags);
+            if (property != null && property.GetGetMethod(true) != null)
+                return property;
+
+            MethodInfo getter = type.GetMethod("get_" + name, flags, null, Type.EmptyTypes, null);
+            return getter;
+        }
+
+        private static MemberInfo FindWritableMember(Type type, string name)
+        {
+            const BindingFlags flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
+            FieldInfo field = type.GetField(name, flags);
+            if (field != null && !field.IsInitOnly)
+                return field;
+
+            PropertyInfo property = type.GetProperty(name, flags);
+            if (property != null && property.GetSetMethod(true) != null)
+                return property;
+
+            return null;
+        }
+
+        private static object ReadMember(MemberInfo member, object instance)
+        {
+            if (member is FieldInfo field)
+                return field.GetValue(instance);
+            if (member is PropertyInfo property)
+                return property.GetValue(instance, null);
+            if (member is MethodInfo method)
+                return method.Invoke(instance, null);
+            throw new NotSupportedException("Unsupported member type: " + member.MemberType);
+        }
+
+        private static void WriteMember(MemberInfo member, object instance, object value)
+        {
+            if (member is FieldInfo field)
+            {
+                field.SetValue(instance, value);
+                return;
+            }
+            if (member is PropertyInfo property)
+            {
+                property.SetValue(instance, value, null);
+                return;
+            }
+            throw new NotSupportedException("Member is not writable: " + member.Name);
+        }
+
+        private static Type GetMemberValueType(MemberInfo member)
+        {
+            if (member is FieldInfo field)
+                return field.FieldType;
+            if (member is PropertyInfo property)
+                return property.PropertyType;
+            if (member is MethodInfo method)
+                return method.ReturnType;
+            throw new NotSupportedException("Unsupported member type: " + member.MemberType);
+        }
+
+        private static Type FindRuntimeType(params string[] fullNames)
+        {
+            Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
+
+            foreach (string fullName in fullNames)
+            {
+                foreach (Assembly assembly in assemblies)
+                {
+                    try
+                    {
+                        Type type = assembly.GetType(fullName, false);
+                        if (type != null)
+                            return type;
+                    }
+                    catch
+                    {
+                        // Some dynamic/interop assemblies may reject type lookup while still loading.
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        private static IEnumerable<object> EnumerateItems(object collection)
+        {
+            if (collection == null)
+                yield break;
+
+            if (collection is IEnumerable enumerable)
+            {
+                foreach (object item in enumerable)
+                    yield return item;
+                yield break;
+            }
+
+            MethodInfo getEnumerator = collection.GetType().GetMethod(
+                "GetEnumerator",
+                BindingFlags.Public | BindingFlags.Instance,
+                null,
+                Type.EmptyTypes,
+                null);
+            object enumerator = getEnumerator?.Invoke(collection, null);
+            if (enumerator == null)
+                yield break;
+
+            Type enumeratorType = enumerator.GetType();
+            MethodInfo moveNext = enumeratorType.GetMethod(
+                "MoveNext",
+                BindingFlags.Public | BindingFlags.Instance,
+                null,
+                Type.EmptyTypes,
+                null);
+            PropertyInfo current = enumeratorType.GetProperty(
+                "Current",
+                BindingFlags.Public | BindingFlags.Instance);
+
+            if (moveNext == null || current == null)
+                yield break;
+
+            while (Convert.ToBoolean(moveNext.Invoke(enumerator, null)))
+                yield return current.GetValue(enumerator, null);
+        }
+    }
+}

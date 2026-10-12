@@ -1,0 +1,253 @@
+{
+  "manifestVersion": 2,
+  "name": "Field Logistics",
+  "version": "1.0.6",
+  "author": "Luca / OpenAI",
+  "description": "Adds vehicle-based infantry ammunition resupply, an optional Field Ammunition Supply module for extra uses, and experimental adjacent squad ammo redistribution.",
+  "loadOrder": 180,
+  "clones": {
+    "AccessoryTemplate": {
+      "accessory.fieldlogistics_vehicle_ammo_supply": "accessory.vehicle_smoke_launchers"
+    },
+    "SkillTemplate": {
+      "active.fieldlogistics_vehicle_resupply": "active.rogue_ammo_runner_refill_ammo",
+      "active.fieldlogistics_redistribute_ammo": "active.rogue_ammo_runner_refill_ammo"
+    }
+  },
+  "patches": {
+    "AccessoryTemplate": {
+      "accessory.fieldlogistics_vehicle_ammo_supply": {
+        "DeployCosts": {
+          "m_Supplies": 20
+        },
+        "Rarity": 20,
+        "MinCampaignProgress": 0,
+        "TradeValue": 40,
+        "BlackMarketMaxQuantity": 1,
+        "SkillsGranted": [],
+        "Title": "Field Ammunition Supply",
+        "ShortName": "Ammo Supply",
+        "Description": "Carries additional small-arms ammunition for nearby infantry, adding extra uses to the vehicle's Resupply Infantry ability.",
+        "VisualAlterationSlot": -1,
+        "VisualAlterationSlotSecondary": -1,
+        "IconEquipment": "accessory_vehicle_ammo_cases_186x186",
+        "IconEquipmentDisabled": "accessory_vehicle_ammo_cases_inactive_186x186",
+        "IconAssetName": "accessory_vehicle_ammo_cases_186x186",
+        "DisplayTitle": "Field Ammunition Supply",
+        "DisplayShortName": "Ammo Supply",
+        "DisplayDescription": "Carries additional small-arms ammunition for nearby infantry, adding extra uses to the vehicle's Resupply Infantry ability.",
+        "IconSkillBar": null,
+        "IconSkillBarDisabled": null,
+        "IconSkillBarAlternative": null,
+        "IconSkillBarAlternativeDisabled": null
+      }
+    },
+    "SkillTemplate": {
+      "active.fieldlogistics_vehicle_resupply": {
+        "ActionPointCost": 60,
+        "IsLimitedUses": true,
+        "Uses": 1,
+        "IsTargeted": true,
+        "IsOverridingRanges": true,
+        "MinRange": 1,
+        "IdealRange": 1,
+        "MaxRange": 1,
+        "Title": "Resupply Infantry",
+        "Description": "Fully refills the ammunition of an adjacent infantry unit. Player vehicles have one use by default; the Field Ammunition Supply module adds extra uses."
+      },
+      "active.fieldlogistics_redistribute_ammo": {
+        "Order": 70010,
+        "ActionPointCost": 40,
+        "IsLimitedUses": false,
+        "Uses": 1,
+        "IsActive": true,
+        "IsTargeted": true,
+        "TargetingCursor": 6,
+        "TargetsAllowed": 2099200,
+        "KeepSelectedIfStillUsable": false,
+        "IsLineOfFireNeeded": false,
+        "IsAttack": false,
+        "IsAlwaysHitting": true,
+        "CanHitAnotherTile": true,
+        "IsIgnoringCover": true,
+        "IsSilent": true,
+        "UsabilityWhileContained": 0,
+        "MarkAsActed": true,
+        "IsHidden": false,
+        "IsOverridingRanges": true,
+        "MinRange": 1,
+        "IdealRange": 1,
+        "MaxRange": 1,
+        "Title": "Redistribute Ammo",
+        "Description": "Redistributes remaining squad-weapon ammunition between this infantry unit and an adjacent friendly infantry unit carrying a weapon of the same category. Total ammunition is conserved; special weapons and grenades are ignored.",
+        "Tags": [
+          "infantry"
+        ],
+        "EventHandlers": [
+          {
+            "_type": "DisplayText",
+            "Event": 2,
+            "LocaKey": "Ammo Redistributed",
+            "DefaultText": "Ammo Redistributed",
+            "Icon": null
+          }
+        ],
+        "AIConfig": null
+      }
+    },
+    "EntityTemplate": {
+      "player_squad.carda": {
+        "Skills": [
+          "active.fieldlogistics_redistribute_ammo"
+        ]
+      },
+      "player_squad.corlain": {
+        "Skills": [
+          "active.fieldlogistics_redistribute_ammo"
+        ]
+      },
+      "player_squad.darby": {
+        "Skills": [
+          "active.fieldlogistics_redistribute_ammo"
+        ]
+      },
+      "player_squad.greifinger": {
+        "Skills": [
+          "active.fieldlogistics_redistribute_ammo"
+        ]
+      },
+      "player_squad.kubra": {
+        "Skills": [
+          "active.fieldlogistics_redistribute_ammo"
+        ]
+      },
+      "player_squad.lim": {
+        "Skills": [
+          "active.fieldlogistics_redistribute_ammo"
+        ]
+      },
+      "player_squad.pike": {
+        "Skills": [
+          "active.fieldlogistics_redistribute_ammo"
+        ]
+      },
+      "player_squad.pike_tutorial": {
+        "Skills": [
+          "active.fieldlogistics_redistribute_ammo"
+        ]
+      },
+      "player_squad.sachin": {
+        "Skills": [
+          "active.fieldlogistics_redistribute_ammo"
+        ]
+      },
+      "player_squad.sy": {
+        "Skills": [
+          "active.fieldlogistics_redistribute_ammo"
+        ]
+      },
+      "player_squad.tech": {
+        "Skills": [
+          "active.fieldlogistics_redistribute_ammo"
+        ]
+      },
+      "player_squad.test": {
+        "Skills": [
+          "active.fieldlogistics_redistribute_ammo"
+        ]
+      },
+      "player_squad.vamplew": {
+        "Skills": [
+          "active.fieldlogistics_redistribute_ammo"
+        ]
+      },
+      "player_squad.weiwu": {
+        "Skills": [
+          "active.fieldlogistics_redistribute_ammo"
+        ]
+      },
+      "player_squad.wetteroth": {
+        "Skills": [
+          "active.fieldlogistics_redistribute_ammo"
+        ]
+      },
+      "player_squad.yaz": {
+        "Skills": [
+          "active.fieldlogistics_redistribute_ammo"
+        ]
+      },
+      "player_vehicle.cveh_heavy_tank": {
+        "Skills": [
+          "active.destroy_wreckage",
+          "active.fieldlogistics_vehicle_resupply"
+        ]
+      },
+      "player_vehicle.generic_heavy_attack_walker": {
+        "Skills": [
+          "active.fieldlogistics_vehicle_resupply"
+        ]
+      },
+      "player_vehicle.modular_atv": {
+        "Skills": [
+          "active.destroy_wreckage",
+          "active.fieldlogistics_vehicle_resupply"
+        ]
+      },
+      "player_vehicle.modular_ifv": {
+        "Skills": [
+          "active.destroy_wreckage",
+          "active.fieldlogistics_vehicle_resupply"
+        ]
+      },
+      "player_vehicle.modular_light_troop_carrier": {
+        "Skills": [
+          "active.destroy_wreckage",
+          "active.fieldlogistics_vehicle_resupply"
+        ]
+      },
+      "player_vehicle.modular_mbt_battle_tank": {
+        "Skills": [
+          "active.destroy_wreckage",
+          "active.fieldlogistics_vehicle_resupply"
+        ]
+      },
+      "player_vehicle.modular_piratetruck": {
+        "Skills": [
+          "active.destroy_wreckage",
+          "active.fieldlogistics_vehicle_resupply"
+        ]
+      },
+      "player_vehicle.modular_walker_light": {
+        "Skills": [
+          "perk.deploy_vehicle",
+          "active.destroy_wreckage",
+          "active.fieldlogistics_vehicle_resupply"
+        ]
+      },
+      "player_vehicle.modular_walker_medium": {
+        "Skills": [
+          "perk.deploy_vehicle",
+          "active.stance.walker.get_up",
+          "active.destroy_wreckage",
+          "active.fieldlogistics_vehicle_resupply"
+        ]
+      }
+    }
+  },
+  "assets": {},
+  "code": {
+    "sources": [],
+    "references": [
+      "MelonLoader",
+      "0Harmony",
+      "Il2CppInterop.Runtime",
+      "Il2Cppmscorlib",
+      "Assembly-CSharp",
+      "Menace.ModpackLoader"
+    ],
+    "prebuiltDlls": [
+      "FieldLogistics.dll"
+    ]
+  },
+  "securityStatus": "SourceVerified"
+}
