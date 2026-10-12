@@ -1,5 +1,9 @@
 # Coordinated Fire
 
+**Version 1.6.9** for MENACE.
+
+Version 1.6.9 (MEN-006) hides the IMGUI button and disables its pointer hitbox when Third Person Camera 0.3.4 reports a manual or automatic cinematic view. A cached optional managed getter avoids per-frame reflection; native HUD visibility still applies as a fallback. No changes to AP/volley mechanics, and no new normal-mode logs. The previous 1.6.8 build failed the automatic-movement UI test; this patch still requires Windows build and in-game verification.
+
 **Version 1.6.8** for MENACE.
 
 Version 1.6.8 fixes the tactical button remaining onscreen when Third Person Camera enters its cinematic view. Coordinated Fire now follows the native `UITactical.SetUIVisibility` signal; its pointer hit test is also disabled while the HUD is hidden. After returning to the tactical camera, the existing availability checks decide when the button reappears. Combat mechanics and AP accounting are unchanged. In-game validation is pending.
