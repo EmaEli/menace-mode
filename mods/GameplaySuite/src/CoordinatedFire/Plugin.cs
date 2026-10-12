@@ -10,16 +10,16 @@ using MenaceModSuite.Shared;
 using UnityEngine;
 using Path = global::System.IO.Path;
 
-[assembly: AssemblyVersion("1.6.7.0")]
-[assembly: AssemblyFileVersion("1.6.7.0")]
-[assembly: AssemblyInformationalVersion("1.6.7")]
+[assembly: AssemblyVersion("1.6.8.0")]
+[assembly: AssemblyFileVersion("1.6.8.0")]
+[assembly: AssemblyInformationalVersion("1.6.8")]
 
 namespace CoordinatedFire;
 
 public sealed class Plugin : IModpackPlugin
 {
     private const string SettingsGroup = "Coordinated Fire";
-    private const string Version = "1.6.7";
+    private const string Version = "1.6.8";
     private MelonLogger.Instance? _logger;
     private global::HarmonyLib.Harmony? _harmony;
     private Runtime? _runtime;
@@ -36,6 +36,8 @@ public sealed class Plugin : IModpackPlugin
     {
         _logger = logger;
         _harmony = harmony;
+        TacticalHudVisibility.TryInstall("menace.coordinated-fire.cinematic-hud",
+            message => _logger?.Msg("WARNING: " + message));
         _data = Path.Combine(Directory.GetCurrentDirectory(), "UserData", "CoordinatedFire");
         Directory.CreateDirectory(_data);
 
@@ -71,6 +73,7 @@ public sealed class Plugin : IModpackPlugin
 
     public void OnSceneLoaded(int buildIndex, string sceneName)
     {
+        TacticalHudVisibility.OnSceneLoaded();
         _runtime?.SceneChanged();
         if (_runtime == null)
         {
@@ -100,7 +103,7 @@ public sealed class Plugin : IModpackPlugin
             {
                 if (_harmony == null) throw new InvalidOperationException("Modpack Loader Harmony instance is unavailable.");
                 _runtime = new Runtime(45, Setting("EnableAICombinedFire", true), Setting("EnableVehicleCombinedFire", false), Setting("SynchronizedPlayerFire", false), Log, Error, _harmony);
-                _runtime.PointerOverPanel = () => Setting("ShowHUD", true) && _runtime.InMission &&
+                _runtime.PointerOverPanel = () => TacticalHudVisibility.IsVisible && Setting("ShowHUD", true) && _runtime.InMission &&
                     _hudRect.Contains(new Vector2(Input.mousePosition.x, Screen.height - Input.mousePosition.y));
                 _status = "Ready";
             }
@@ -129,7 +132,7 @@ public sealed class Plugin : IModpackPlugin
 
     public void OnGUI()
     {
-        if (_runtime == null || !_runtime.InMission || !Setting("ShowHUD", true)) return;
+        if (!TacticalHudVisibility.IsVisible || _runtime == null || !_runtime.InMission || !Setting("ShowHUD", true)) return;
         var manager = TacticalManager.Get();
         if (!Native.Valid(manager) || !manager.IsPlayerTurn() || manager.IsPaused()) return;
 
@@ -231,6 +234,7 @@ public sealed class Plugin : IModpackPlugin
     {
         ModSettings.OnSettingChanged -= OnSettingChanged;
         DevConsole.RemovePanel("Coordinated Fire");
+        TacticalHudVisibility.Uninstall();
         _runtime?.Dispose();
         _runtime = null;
     }
