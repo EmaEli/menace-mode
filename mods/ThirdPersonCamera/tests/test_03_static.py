@@ -13,6 +13,7 @@ builder = (root/'tools/build-and-deploy.ps1').read_text(encoding='utf-8')
 
 checks = {
     'patch version 0.3.4': '"MENACE Third Person Camera", "0.3.4"' in src and '<Version>0.3.4</Version>' in project,
+    'assembly version explicitly emitted (integrated installer)': '<GenerateAssemblyInfo>true</GenerateAssemblyInfo>' in project and '<AssemblyVersion>0.3.4.0</AssemblyVersion>' in project,
     'explicit cinematic active property': 'public static bool IsCinematicViewActive => s_instance != null && s_instance._active;' in src,
     'native tactical UI visibility used': 'UITactical.SetUIVisibility(false)' in src and 'UITactical.SetUIVisibility(true)' in src,
     'UI restored by exit even when camera fails': re.search(r'private void ExitThirdPerson\(.*?finally\s*\{.*?RestoreTacticalUi\(\);', src, re.S) is not None,
