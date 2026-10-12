@@ -11,7 +11,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 
 [assembly: MelonInfo(typeof(MenaceThirdPersonCamera.ThirdPersonCameraMod),
-    "MENACE Third Person Camera", "0.3.3", "MENACE Community")]
+    "Cinematic Action Camera", "1.0", "MENACE Community")]
 
 namespace MenaceThirdPersonCamera
 {
@@ -19,7 +19,7 @@ namespace MenaceThirdPersonCamera
     public sealed class ThirdPersonCameraMod : MelonMod
     {
         private const string SettingsCategory = "MenaceThirdPersonCamera";
-        private const string MenuName = "Third Person Camera";
+        private const string MenuName = "Cinematic Action Camera";
         private const float TransitionSpeed = 8f;
 
         private enum EventKind { Movement = 0, Firing = 1 }
@@ -28,6 +28,14 @@ namespace MenaceThirdPersonCamera
         private enum AutoHook { Movement, MovementFinished, AttackStarted }
 
         private static ThirdPersonCameraMod s_instance;
+
+        // Public, read-only compatibility contract for optional tactical HUD mods.
+        // Both automatic movement/fire and manual F6 enter via TryEnterThirdPerson,
+        // where _active becomes true before the native UI-hide request. Readers
+        // can therefore hide their IMGUI panels even if the native Harmony hook
+        // on UITactical.SetUIVisibility is not invoked by their loader.
+        // This accessor never changes gameplay/camera state or emits logs.
+        public static bool IsCinematicViewActive => s_instance != null && s_instance._active;
         private HarmonyLib.Harmony _harmony;
         private bool _movementHookInstalled;
         private bool _shotHookInstalled;
@@ -107,7 +115,7 @@ namespace MenaceThirdPersonCamera
         {
             s_instance = this;
             var category = MelonPreferences.CreateCategory(SettingsCategory,
-                "MENACE Third Person Camera");
+                "Cinematic Action Camera");
             _toggleKey = category.CreateEntry("ToggleKey", "F6");
             _autoToggleKey = category.CreateEntry("AutoToggleKey", "F7");
             _automaticMode = category.CreateEntry("AutomaticMode", false);
