@@ -19,7 +19,8 @@ class StartingOptionsAuthoringTests(unittest.TestCase):
         self.suite = json.loads((ROOT / 'packaging/suite/MenaceGameplaySuite/modpack.json').read_text(encoding='utf8'))
 
     def test_new_module_packaging(self):
-        self.assertEqual(self.suite['version'], '0.32')
+        # Suite patch releases must not invalidate unchanged Starting Options tests.
+        self.assertGreaterEqual(tuple(map(int, self.suite['version'].split('.'))), (0, 32))
         self.assertEqual(self.manifest['version'], '0.1')
         self.assertEqual(self.manifest['code']['prebuiltDlls'], ['StartingOptions.dll'])
         self.assertEqual(self.manifest['patches'], {})

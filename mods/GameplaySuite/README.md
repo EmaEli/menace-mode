@@ -1,8 +1,12 @@
-# MENACE Mods Unified Repository 0.32.1
+# MENACE Mods Unified Repository 0.32.2
 
-### 0.32.1 Cinematic HUD compatibility (MEN-006)
+### 0.32.2 Cinematic HUD compatibility (MEN-006)
 
 Overwatch 0.32.3.2 and Coordinated Fire 1.6.8 follow the native tactical UI visibility signal used by Third Person Camera 0.3.3. Both custom buttons disappear during cinematic view and recover using their normal eligibility checks afterward; no combat mechanic or default logging changes. Windows build and gameplay verification remain pending.
+
+### 0.32.1 Infantry Assault stale aim cache fix (MEN-005)
+
+Infantry Assault 0.5.3 refreshes MENACE's cached executing-soldier index list if squad casualties make it invalid during Assault targeting preview. This prevents native `Actor.AimAt(Vector3)` index errors without changing regular weapon aiming, Mount Up, CQB combat rules, or AI assaults. Checks are cached per squad size; debug remains OFF by default. Runtime gameplay verification is still required.
 
 ### 0.32 Starting Options
 

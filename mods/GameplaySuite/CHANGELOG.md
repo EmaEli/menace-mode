@@ -1,9 +1,16 @@
-## Unreleased: MEN-006 — Third Person Camera HUD compatibility
+## Repository / Suite 0.32.2 — MEN-006 — Third Person Camera HUD compatibility
 
 - **Overwatch 0.32.3.2** and **Coordinated Fire 1.6.8** honor native `UITactical.SetUIVisibility(false/true)` calls, which Third Person Camera uses when entering/leaving cinematic mode.
 - Their IMGUI buttons no longer draw or receive input while the native tactical HUD is hidden. Coordinated Fire also disables its invisible pointer hitbox.
 - A shared, event-driven Harmony postfix is compiled independently into each mod DLL, so either mod can be installed alone or in the suite. Hooks are isolated from the gameplay runtime's Harmony lifecycle.
 - No changes to attack, reaction, AP, ammo, AI or normal logging. Gameplay acceptance testing is still pending (GitHub MEN-006).
+
+## Repository / Suite 0.32.1 — MEN-005 Assault aim-cache fix
+
+- **Infantry Assault 0.5.2 → 0.5.3**: validates native cached executing-soldier indices during player Assault hover/preview. If squad casualties invalidate the cached list, rebuild it from MENACE's current executing-element selection before the native `Actor.AimAt(Vector3)` path.
+- Covers the 110 repeated `ArgumentOutOfRangeException` entries reported in the October 12 log (three bursts immediately before Assault confirmation). No global exception suppression or blanket `Actor.AimAt` patch; Mount Up and ordinary weapon targeting remain untouched.
+- Per-skill/squad-size caching prevents repetitive checks on every mouse-move. Fail-closed behavior affects only an unsafe Assault preview frame, with at most one debug-only warning per tactical scene. Default debug logging stays OFF.
+- No change to AP, movement, CQB, garrison combat, AI, ammo, or other suite modules. Windows build and actual in-game acceptance tests pending; MEN-005 stays open.
 
 ## Repository / Suite 0.32 Starting Options
 

@@ -7,11 +7,23 @@
 5. Interrupt a camera transition, enter/leave a menu, restart a mission and re-enter cinematic mode several times. Confirm no ghost/duplicate panels or stuck hidden state.
 6. Repeat with only Overwatch, only Coordinated Fire, and neither camera mod nor the other combat mod; no hard dependency may be introduced.
 7. Test actual Overwatch reactions and Coordinated Fire volleys after returning to tactical view (AP/uses/targeting remain unchanged). Check logs for no recurrent new warnings or errors with both mods' Debug options OFF.
-8. Build the two DLLs and package each standalone plus the suite; **do not close #7 until Windows build and in-game tests pass**.
+8. Build the updated Gameplay Suite (including Infantry Assault 0.5.3), or package both standalones; **do not close #7 until Windows build and in-game tests pass**.
 
 Mechanism: both mod panels follow `UITactical.SetUIVisibility(bool)` with an isolated Harmony postfix; the camera mod already sends this signal. Mod-specific drawing rules remain authoritative after the HUD becomes visible.
 
 ---
+
+# MEN-005 — Infantry Assault 0.5.3 / Gameplay Suite 0.32.1 (in-game verification pending)
+
+1. Build and deploy the 0.32.1 suite once using `Build-and-Deploy-Suite.cmd` (or deploy standalone Infantry Assault 0.5.3). Avoid duplicate standalone + suite DLLs. Default Debug logging OFF.
+2. Use a mission with a player infantry squad and pirate infantry. Select Assault; move the mouse over several adjacent enemy tiles for several seconds **before clicking**. Cursor, targeting visuals and ordinary selection should remain usable; `Actor.AimAt(Vector3)` must not throw.
+3. Cause casualties to the attacking squad (e.g. let a defender fire during CQB). **With remaining squad members**, select Assault again and hover before clicking. Repeat with partially depleted squads and after target or unit changes. The exact three historical 33/39/38-error bursts must not recur.
+4. Validate target confirmation, defensive fire, assault shot, ammo consumption, suppression, failed/repulsed Assault, successful advance into a cleared tile/building/garrison, and the normal 40 AP fee. AI Assault against suppressed/pinned targets must remain usable.
+5. Test ordinary firearm aiming, movement and Mount Up 2.5.1 (if installed) as separate regressions; these must not be affected by the Assault-only guard. Also test cancel/right-click while hovering an Assault target.
+6. Collect full `MelonLoader/Latest.log`. Expected: **zero** `System.ArgumentOutOfRangeException` in `Menace.Tactical.Actor.AimAt` during the exercises. Normal-release output must remain free of new per-frame/per-hover logging.
+7. Temporarily enable Infantry Assault Debug logging only if the preview stops responding. At most one `Assault aim-cache guard failed` warning per tactical scene is expected. Restore Debug OFF. If guard warnings occur, attach the entire build log and runtime log.
+
+Root cause based on IL2CPP inspection, not yet proven by a controlled A/B runtime test. Do not close [MEN-005](https://github.com/EmaEli/menace-mode/issues/5) until Windows build and live regression pass.
 
 # Mortar renderer Unity component hotfix 0.4.4 / Suite 0.31.6
 

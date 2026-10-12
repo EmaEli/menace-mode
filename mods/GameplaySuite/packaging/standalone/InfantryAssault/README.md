@@ -1,4 +1,11 @@
-# Infantry Assault 0.5.2
+# Infantry Assault 0.5.3
+
+## 0.5.3 targeting stability fix (MEN-005)
+
+- During Assault targeting, MENACE can reuse an outdated cached list of executing soldier indices after squad casualties. The mod now checks that list and regenerates it through the game's own selection logic when outdated.
+- Native targeting previews remain active; other skills and Mount Up are not patched. AP/CQB/AI rules are unchanged.
+- If validation cannot be performed safely, only the current Assault hover preview is skipped. Debug is OFF by default (an error can be logged once per scene if enabled).
+- In-game verification: retry Assault previews before and after losses and inspect `MelonLoader/Latest.log` for `Actor.AimAt` errors.
 
 ## 0.5.2 skill detection fix
 
