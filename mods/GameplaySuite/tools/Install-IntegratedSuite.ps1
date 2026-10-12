@@ -12,6 +12,17 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
 
+# Persist the full console transcript even when a build fails before deployment.
+# The one-click launcher opens this exact file in Notepad on failure.
+$Men006Log = Join-Path ([IO.Path]::GetTempPath()) 'MEN006-install.log'
+try {
+    Start-Transcript -LiteralPath $Men006Log -Append -ErrorAction Stop | Out-Null
+    Write-Host ("Full installer diagnostic log: {0}" -f $Men006Log) -ForegroundColor DarkCyan
+}
+catch {
+    Write-Warning ("Unable to start log transcript '{0}': {1}" -f $Men006Log, $_.Exception.Message)
+}
+
 function Assert-Exists([string]$Path, [string]$Label) {
     if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) { throw "$Label not found: $Path" }
 }
@@ -27,7 +38,7 @@ function Assert-Version([string]$Path, [string]$Expected, [string]$Label) {
 function Assert-AssemblyVersion([string]$Path, [string]$Expected, [string]$Label) {
     Assert-Exists $Path $Label
     $got = [Reflection.AssemblyName]::GetAssemblyName($Path).Version.ToString()
-    if ($got -ne $Expected) { throw "$Label DLL version mismatch: $got, expected $Expected" }
+    if ($got -ne $Expected) { throw "$Label DLL version mismatch: $got, expected $Expected. See MEN006-install.log for the exact failing step." }
     Write-Host "Verified DLL $Label $got" -ForegroundColor DarkCyan
 }
 function Run-Child([string]$Script, [string[]]$Arguments) {
