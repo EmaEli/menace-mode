@@ -12,7 +12,7 @@ namespace MenaceModSuite.Shared;
 /// </summary>
 internal static class TacticalHudVisibility
 {
-    private static Harmony? _patchHarmony;
+    private static global::HarmonyLib.Harmony? _patchHarmony;
     private static bool _nativeHudVisible = true;
 
     internal static bool IsVisible => _nativeHudVisible;
@@ -21,7 +21,7 @@ internal static class TacticalHudVisibility
     {
         if (_patchHarmony != null) return true;
 
-        Harmony? harmony = null;
+        global::HarmonyLib.Harmony? harmony = null;
         try
         {
             MethodInfo? target = typeof(UITactical).GetMethod(
@@ -36,7 +36,7 @@ internal static class TacticalHudVisibility
 
             // Keep this hook outside each gameplay runtime's Harmony instance:
             // Runtime.Dispose() may UnpatchSelf() when gameplay is toggled.
-            harmony = new Harmony(patchOwnerId);
+            harmony = new global::HarmonyLib.Harmony(patchOwnerId);
             harmony.Patch(target,
                 postfix: new HarmonyMethod(typeof(TacticalHudVisibility), nameof(VisibilityPostfix)));
             _patchHarmony = harmony;
