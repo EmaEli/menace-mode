@@ -1,4 +1,8 @@
-# MENACE Gameplay Suite 0.32
+# MENACE Gameplay Suite 0.32.1
+
+## 0.32.1 Cinematic HUD fix (MEN-006)
+
+Overwatch 0.32.3.2 and Coordinated Fire 1.6.8 hide their tactical IMGUI buttons when Third Person Camera's cinematic view disables the native tactical UI. Coordinated Fire's invisible pointer hitbox is also disabled while hidden. Both panels return to normal visibility rules when the camera returns. No combat or logging changes. In-game compatibility validation pending.
 
 ## 0.32 Starting Options
 
