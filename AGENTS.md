@@ -14,6 +14,7 @@ This repository (`EmaEli/menace-mode`, https://github.com/EmaEli/menace-mode) is
 
 ## Workflow
 
+- **Sync with latest main before each substantial edit/build/delivery:** fetch current `main`, merge it into the issue branch, preserve unrelated work, and resolve conflicts deliberately. Never silently discard changes or force-reset the branch. Repeat the comparison before packaging a test build, and report if a concurrent update prevents a safe merge.
 - Before investigating, planning or fixing a MENACE issue, review existing GitHub Issues here and link the relevant one.
 - Create a new GitHub Issue for a distinct bug, feature or investigation that is not already tracked. Avoid duplicates.
 - Update the existing Issue with technical findings, reproduction details, affected mod versions, proposed fixes and test results as work progresses.
