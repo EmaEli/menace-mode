@@ -1,3 +1,13 @@
+## 1.8 - Adjustable high terrain stamp density (experimental)
+
+- MEN-003: expand optional terrain-stamp **attempt** multiplier on enlarged maps from 1.0-1.5x to **1.0-5.0x**; new slider default 1.5x, feature toggle remains OFF for new settings.
+- Raise the internal safety cap from 40 to 200 attempts per stamp group; never lower native counts. At 96x96, a native 4/10/0 large/medium/small budget now becomes 12/30/0 at 3x or 20/50/0 at 5x (before native placement rejections).
+- Preserve the gradual 64x64-to-96x96 ramp, unchanged 64x64 maps, unchanged scene objects/per-tile grass and foliage, mission setpieces, AI/pathfinding, and logging policy (diagnostics OFF by default, capped when enabled).
+- Elevated density may increase map generation time or crowd routes/compounds. Compare same-seed OFF, 1.5x, 3x and 5x and inspect visuals, FPS, vehicle access, objectives and AI turns before considering release.
+- Code/static checks only in this revision; Windows build and live tests still required.
+
+---
+
 ## 1.7.1 - Fix Harmony namespace compilation error (patch)
 
 - Fix CS0118 in `TerrainStampDensity.cs`: fully qualify the Harmony patch argument as `HarmonyLib.Harmony` to avoid namespace/type ambiguity.
