@@ -1,3 +1,30 @@
+# Cinematic Action Camera 1.0 — release acceptance checklist
+
+- [ ] Run the single-click release installer with MENACE closed, verify two DLLs have AssemblyVersion `1.0.0.0` and the modpack manifest reads 1.0.
+- [ ] Confirm startup log shows `Cinematic Action Camera v1.0` and Mod Settings shows `Cinematic Action Camera` with 7 options.
+- [ ] With Gameplay Suite 0.32.3+ and Coordinated Fire/Overwatch active, verify F7 movement/firing and manual F6 hide their buttons and restore them afterward. The compatibility fix was tested with the prior camera version; regressions in this rebrand remain to be checked.
+- [ ] Test F6 infantry and vehicle follow/orbit, F7 auto default OFF, HUD restoration, interruptions, and missing optional mods.
+- [ ] Verify installer backup/rollback and no duplicate settings modpack when the Suite already embeds the camera companion.
+- [ ] Confirm no repeated runtime logs with Debug OFF.
+
+Historical test plans are retained below for reference.
+
+---
+
+# Third Person Camera 0.3.4 — MEN-006 compatibility smoke test (unverified)
+
+Build Camera 0.3.4 and the matching Mod Settings companion. Install alongside Gameplay Suite 0.32.3 (Overwatch 0.32.3.3 and Coordinated Fire 1.6.9).
+
+- With F7 automatic cinematics enabled, move an infantry squad, then a vehicle. Verify the native HUD and both custom buttons disappear during third person and return once overhead view resumes.
+- Repeat with automatic firing and with manual F6. F6 and automatic share the public `IsCinematicViewActive` state.
+- Interrupt via scene/menu change, change selected unit, disable automatic mode and exit F6. No button should remain stuck hidden.
+- Test camera without the two combat mods and combat mods without camera; the camera state API creates **no mandatory loading dependency**.
+- Verify no new repeated logs with Debug OFF. Do not mark MEN-006 resolved until actual game tests pass.
+
+This patch changes only the read-only camera state exposure; movement, firing selection, camera controls, UI restoration and gameplay remain unchanged.
+
+---
+
 # Third Person Camera 0.3.3 - smoke-test plan
 
 Use a tactical mission with player infantry, at least one player vehicle and some enemy infantry/vehicles.
