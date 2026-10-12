@@ -18,7 +18,7 @@ namespace LargerMaps;
 public sealed partial class Plugin : IModpackPlugin
 {
     private const string ModName = "Larger Maps";
-    private const string Version = "1.7";
+    private const string Version = "1.7.1";
     private const int VanillaSize = 42;
     // The active map size is fixed once at startup, after the native backend is verified.
     // If fingerprint/instruction validation fails we deliberately retain safe 64x64.
