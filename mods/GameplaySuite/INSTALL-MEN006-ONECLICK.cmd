@@ -19,7 +19,7 @@ echo Downloading the verified installer from the public GitHub repository...
 echo Full log: "%LOG%"
 echo Source revision %PIN%>"%LOG%"
 powershell.exe -NoProfile -ExecutionPolicy Bypass -Command ^
- "$ErrorActionPreference='Stop'; [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12; Invoke-WebRequest -UseBasicParsing -Uri 'https://raw.githubusercontent.com/EmaEli/menace-mode/%PIN%/mods/GameplaySuite/tools/Install-IntegratedSuite.ps1' -OutFile '%INSTALLER%' -TimeoutSec 120; $digest=(Get-FileHash -LiteralPath '%INSTALLER%' -Algorithm SHA256).Hash; if ($digest -ne '%EXPECTED_HASH%') { throw 'Installer SHA256 mismatch; refusing execution.' }"
+ "$ErrorActionPreference='Stop'; [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12; Invoke-WebRequest -UseBasicParsing -Uri 'https://raw.githubusercontent.com/EmaEli/menace-mode/%PIN%/mods/GameplaySuite/tools/Install-IntegratedSuite.ps1' -OutFile '%INSTALLER%' -TimeoutSec 120; $digest=(Get-FileHash -LiteralPath '%INSTALLER%' -Algorithm SHA256).Hash; if ($digest -ne '%EXPECTED_HASH%') { throw 'Installer SHA256 mismatch; refusing execution.' }" >>"%LOG%" 2>&1
 if errorlevel 1 goto download_fail
 
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%INSTALLER%" -SourceCommit "%PIN%"
