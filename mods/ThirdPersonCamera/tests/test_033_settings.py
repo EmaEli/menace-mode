@@ -1,4 +1,4 @@
-"""Validate the 0.3.3 ModpackLoader companion without pretending it is a full .NET build."""
+"""Validate the 1.0 ModpackLoader companion without pretending it is a full .NET build."""
 from pathlib import Path
 import json
 import re
@@ -13,7 +13,7 @@ assert all('"'+k+'"' in ui for k in keys)
 assert all('"'+k+'"' in cam for k in keys)
 assert ui.count('settings.AddSlider(')==5
 assert ui.count('settings.AddToggle(')==2
-assert 'ModSettings.Register(MenuName, settings =>' in ui
+assert 'ModSettings.Register(MenuName, settings =>' in ui and 'private const string MenuName = "Cinematic Action Camera";' in ui
 # Working Larger Maps uses 'using Menace.SDK;' for ModSettings, even though
 # its plugin interface itself comes from Menace.ModpackLoader.
 assert 'using Menace.SDK;' in ui
@@ -36,7 +36,7 @@ assert not re.search(r'\bModSettings\.Register\s*\(', re.sub(r'//[^\n]*', '', ca
 assert 'TryAttachInGameSettings();' in cam
 assert '_menuRegistered = true' in cam and '_menuGet = candidate' in cam
 assert 'private object ReadMenuValue(string key)' in cam
-assert manifest['name']=='Third Person Camera' and manifest['version']=='0.3.3'
+assert manifest['name']=='Cinematic Action Camera' and manifest['version']=='1.0'
 assert manifest['code']['prebuiltDlls']==['ThirdPersonCameraSettings.dll']
 assert 'Menace.ModpackLoader' in manifest['code']['references']
 assert 'Menace.ModpackLoader.dll' in p
@@ -59,4 +59,4 @@ for name, s in [('camera',cam),('settings',ui)]:
             if c==end:count-=1
             assert count>=0,(name,start,end)
         assert count==0,(name,start,end)
-print('PASS: v0.3.3 settings bridge, both sliders, ModpackLoader manifest/build integration, fallback & static C# syntax')
+print('PASS: v1.0 settings bridge, both sliders, ModpackLoader manifest/build integration, fallback & static C# syntax')
