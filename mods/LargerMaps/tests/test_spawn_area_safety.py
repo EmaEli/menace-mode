@@ -151,7 +151,7 @@ class SpawnAreaSafetyTests(unittest.TestCase):
         self.assertIn('PatchAiTaskLifetime(harmony)',PLUGIN)
         self.assertIn('PatchTerrainHoleIndexing(harmony)',PLUGIN)
     def test_archive_version(self):
-        self.assertEqual(CONFIG['version'],'1.7')
+        self.assertEqual(CONFIG['version'],'1.7.1')
         self.assertIn('64/72/80/88/96',CONFIG['description'])
 
 if __name__ == '__main__':
