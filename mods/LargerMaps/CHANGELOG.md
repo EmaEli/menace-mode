@@ -1,3 +1,12 @@
+## 1.7 - Optional terrain landmark density (experimental)
+
+- MEN-003: opt-in scaled *attempt* counts for terrain landform stamps on maps above 64x64, capped at 1.5x for 96x96. Default is OFF; 64x64 stays unchanged. Scales the integer argument to `ScatterStamps.SpawnStampsFromList` rather than modifying shared `StampCollection` assets.
+- Does not multiply per-tile environmental vegetation/props, grass or mission-authored setpieces. Overlap/placement validation remains native, so the number actually placed may be lower than the scaled attempt budget.
+- Optional capped generation-count diagnostic, OFF by default. No per-frame logging or AI/pathfinder changes.
+- Build/runtime still require Windows game installation, MENACE v0.7.15+21883; validate visuals, pathing and FPS in game before enabling broadly.
+
+---
+
 ## 1.6.1 - Fix inactive simplified combat planning (patch)
 
 - Fix the 1.6 bug confirmed in Latest(20261011-175248).log: zero eligible skill templates were modified, leaving completely unchanged vanilla combat AI. The first attempt uses the original full template collection; when it updates zero skills, fall back to the supported `DataTemplateLoader.Get<SkillTemplate>(ID,false)` lookup for known attack/buff IDs from the game data export.
