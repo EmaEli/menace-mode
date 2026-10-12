@@ -1,3 +1,30 @@
+## 1.8 - Adjustable high terrain stamp density (experimental)
+
+- MEN-003: expand optional terrain-stamp **attempt** multiplier on enlarged maps from 1.0-1.5x to **1.0-5.0x**; new slider default 1.5x, feature toggle remains OFF for new settings.
+- Raise the internal safety cap from 40 to 200 attempts per stamp group; never lower native counts. At 96x96, a native 4/10/0 large/medium/small budget now becomes 12/30/0 at 3x or 20/50/0 at 5x (before native placement rejections).
+- Preserve the gradual 64x64-to-96x96 ramp, unchanged 64x64 maps, unchanged scene objects/per-tile grass and foliage, mission setpieces, AI/pathfinding, and logging policy (diagnostics OFF by default, capped when enabled).
+- Elevated density may increase map generation time or crowd routes/compounds. Compare same-seed OFF, 1.5x, 3x and 5x and inspect visuals, FPS, vehicle access, objectives and AI turns before considering release.
+- Code/static checks only in this revision; Windows build and live tests still required.
+
+---
+
+## 1.7.1 - Fix Harmony namespace compilation error (patch)
+
+- Fix CS0118 in `TerrainStampDensity.cs`: fully qualify the Harmony patch argument as `HarmonyLib.Harmony` to avoid namespace/type ambiguity.
+- No change to stamp scaling, generation logic, settings, AI, pathfinding, or logging. Prior 1.7 behavior remains experimental.
+- Build and live testing on the user's Windows install still required; do not merge PR #10 until verified.
+
+---
+
+## 1.7 - Optional terrain landmark density (experimental)
+
+- MEN-003: opt-in scaled *attempt* counts for terrain landform stamps on maps above 64x64, capped at 1.5x for 96x96. Default is OFF; 64x64 stays unchanged. Scales the integer argument to `ScatterStamps.SpawnStampsFromList` rather than modifying shared `StampCollection` assets.
+- Does not multiply per-tile environmental vegetation/props, grass or mission-authored setpieces. Overlap/placement validation remains native, so the number actually placed may be lower than the scaled attempt budget.
+- Optional capped generation-count diagnostic, OFF by default. No per-frame logging or AI/pathfinder changes.
+- Build/runtime still require Windows game installation, MENACE v0.7.15+21883; validate visuals, pathing and FPS in game before enabling broadly.
+
+---
+
 ## 1.6.1 - Fix inactive simplified combat planning (patch)
 
 - Fix the 1.6 bug confirmed in Latest(20261011-175248).log: zero eligible skill templates were modified, leaving completely unchanged vanilla combat AI. The first attempt uses the original full template collection; when it updates zero skills, fall back to the supported `DataTemplateLoader.Get<SkillTemplate>(ID,false)` lookup for known attack/buff IDs from the game data export.

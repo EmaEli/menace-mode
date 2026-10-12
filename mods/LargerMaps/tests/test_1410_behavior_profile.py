@@ -19,7 +19,7 @@ class Behavior1410Tests(unittest.TestCase):
         self.assertIn('_aiPerfDeep = ReadBool("DiagnoseAIPathfinding", false);', PROF)
         self.assertIn('AddToggle("DiagnoseAIPerformance", "Aggregate AI task / unit timings; OFF by default", false)', PLUGIN)
         self.assertIn('AddToggle("DiagnoseAIPathfinding", "Extra AI operation and path timings (requires DiagnoseAIPerformance; OFF by default)", false)', PLUGIN)
-        self.assertIn('"version": "1.6.1"', META)
+        self.assertIn('"version": "1.8"', META)
 
     def test_reuses_existing_collect_hook_no_new_native_hooks(self):
         deep = PROF.split('if (_aiPerfDeep)', 1)[1].split('// With diagnostics OFF', 1)[0]

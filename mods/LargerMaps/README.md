@@ -1,3 +1,25 @@
+## 1.8 - Up to 5x terrain stamp density (MEN-003 experiment)
+
+In **Mod Settings > Larger Maps** choose `IncreaseTerrainStampDensity=ON` and set `TerrainStampDensityMultiplier` from **1x to 5x** (default **1.5x**, feature toggle OFF for new installs). Restart the game to apply. On an existing install the saved toggle and multiplier remain as set by the user.
+
+Suggested progression for a **96x96** map: **3x**, then **4x-5x** if there is still enough room for vehicles and objectives. Vanilla 4 large + 10 medium stamp attempts become 12 + 30 at 3x, or 20 + 50 at 5x, with a safety ceiling of 200 attempts per group (never below native counts). Placement validation can reject attempts; visible density is not guaranteed to scale linearly.
+
+64x64 maps remain unchanged, and 72/80/88 interpolate smoothly. This only adjusts **terrain stamp attempt counts**, not per-tile grass, foliage, buildings, or mission-authored setpieces. `DiagnoseTerrainStampDensity` enables up to 10 generation summaries and remains OFF by default. Test visuals, generated roads/cover and FPS; revert by turning the toggle OFF and restarting if needed. Follow the version-specific [1.8 A/B test plan](TEST-PLAN-1.8.md).
+
+---
+
+## 1.7.1 compile fix
+
+Fixes CS0118 (`Harmony` namespace/type ambiguity) in the 1.7 stamp-density integration. No behavior changes. Re-download the source branch before building. Build and game tests remain outstanding.
+
+---
+
+## 1.7 experimental MEN-003: terrain stamp density
+
+Set `IncreaseTerrainStampDensity=ON` and `TerrainStampDensityMultiplier=1.25` (restart required). The effect gradually ramps from zero at 64x64 to full strength at 96x96. It changes **terrain-landform stamp attempt budgets**, not per-tile vegetation, grass or mission setpieces. Default OFF for safe A/B testing. `DiagnoseTerrainStampDensity` optionally logs up to 10 generation summaries. Native placement may reject attempts, and no gameplay validation has yet been performed. See `TEST-PLAN-1.7.md`.
+
+---
+
 ## 1.6.1 note
 
 The 1.6 startup log proved the simplified AI feature was **not activated** (`no eligible skill templates updated`). 1.6.1 adds a direct game-template-ID fallback, without changing the native pathfinder. Before spending time testing gameplay, verify the startup line `simplified large-map combat planning: N attack / M buff skills adjusted` has **N > 0**. If it does not, stop and share the startup log. Live speedup is not yet established.
