@@ -1,7 +1,7 @@
 {
   "manifestVersion": 2,
   "name": "MENACE Gameplay Suite",
-  "version": "0.33.1",
+  "version": "0.33.2",
   "author": "Luca",
   "description": "Unified modular gameplay suite with caliber-based smoke footprints and native AI smoke use, scatter-based mortar ranging, Coordinated Fire AP recovery, and lethal suppression-aware Infantry Assault CQB, with faster native AI smoke target selection. Configurable initial leader cap and Black Market Headstart Spare Parts count.",
   "loadOrder": 190,
