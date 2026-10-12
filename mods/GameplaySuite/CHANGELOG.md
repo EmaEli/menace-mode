@@ -1,3 +1,10 @@
+## Repository / Suite 0.32.1 — MEN-005 Assault aim-cache fix
+
+- **Infantry Assault 0.5.2 → 0.5.3**: validates native cached executing-soldier indices during player Assault hover/preview. If squad casualties invalidate the cached list, rebuild it from MENACE's current executing-element selection before the native `Actor.AimAt(Vector3)` path.
+- Covers the 110 repeated `ArgumentOutOfRangeException` entries reported in the October 12 log (three bursts immediately before Assault confirmation). No global exception suppression or blanket `Actor.AimAt` patch; Mount Up and ordinary weapon targeting remain untouched.
+- Per-skill/squad-size caching prevents repetitive checks on every mouse-move. Fail-closed behavior affects only an unsafe Assault preview frame, with at most one debug-only warning per tactical scene. Default debug logging stays OFF.
+- No change to AP, movement, CQB, garrison combat, AI, ammo, or other suite modules. Windows build and actual in-game acceptance tests pending; MEN-005 stays open.
+
 ## Repository / Suite 0.32 Starting Options
 
 - New standalone/suite module **Starting Options 0.1**. In Mod Options, `InitialLeaderMaximum` extends the native New Game / Customize Difficulty Initial Leaders slider maximum from 6 to 12 by default (configurable 6-12). The limit is reduced to the available pickable leader pool if fewer than requested exist.
