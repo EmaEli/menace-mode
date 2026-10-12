@@ -1,3 +1,9 @@
+# 0.3.4 - explicit cinematic active state for other mod HUDs
+
+- Expose a public, read-only static `IsCinematicViewActive` getter on the camera MelonLoader mod. It reflects the existing shared `_active` flag for manual F6 and automatic movement/firing; no additional camera state or gameplay logic is introduced.
+- Enables other mods (notably Overwatch and Coordinated Fire) to hide their custom IMGUI buttons reliably without depending on observation of the native `UITactical.SetUIVisibility` call.
+- Version metadata/Mod Settings companion updated to 0.3.4. No default logging changes. Windows build and actual game compatibility tests pending.
+
 # 0.3.3 - Mod Settings namespace and live-value reading (patch)
 
 - Fixed `CS0103` in the settings companion: imported `Menace.SDK`, which exports `ModSettings`, following the working Larger Maps implementation.
