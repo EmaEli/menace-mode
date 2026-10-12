@@ -1,0 +1,15 @@
+# Third Person Camera: locally generated game and runtime assemblies
+refs/
+**/bin/
+**/obj/
+artifacts/
+.vs/
+.idea/
+__pycache__/
+*.pyc
+*.user
+*.suo
+*.dll
+*.pdb
+*.log
+UserData/
