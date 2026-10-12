@@ -1,4 +1,6 @@
-# MENACE Third Person Camera 0.3.3
+# MENACE Third Person Camera 0.3.4
+
+**0.3.4 compatibility API:** A read-only static `MenaceThirdPersonCamera.ThirdPersonCameraMod.IsCinematicViewActive` boolean now indicates whether the third-person camera is active. The state is common to F6 manual and automatic movement/fire modes, and is reset on camera exit. Other mods can consume this API using a cached managed delegate without referencing the camera DLL at build time. This fixes the inter-mod signal, without changing camera controls, behavior, gameplay or logging. See [MEN-006](https://github.com/EmaEli/menace-mode/issues/7). The new behavior still requires in-game verification.
 
 A **camera-only** MelonLoader mod. Watch infantry and vehicles from a chase/orbit camera while MENACE still handles orders, movement, combat, AI and action points. The camera does not change combat outcomes or reveal currently hidden enemies.
 
