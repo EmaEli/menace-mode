@@ -1,4 +1,8 @@
-# MENACE Mods Unified Repository 0.33.1
+# MENACE Mods Unified Repository 0.33.2
+
+### 0.33.2 MEN-001 direction-aware defensive smoke (unverified)
+
+Smoke Overhaul 0.6.2 no longer aims thrown smoke at the squad's facing. It uses the most relevant **currently detected** enemy (recent shooter or nearest) and checks up to 24 known enemies and six nearby forward smoke targets. Never forces a guessed rearward smoke when no enemy is detected. No global AI search or frame polling.
 
 ### 0.33.1 MEN-001 bounded native AI smoke (unverified)
 
