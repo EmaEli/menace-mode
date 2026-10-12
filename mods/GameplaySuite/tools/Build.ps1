@@ -2,7 +2,8 @@ param(
     [ValidateSet("All", "Standalone", "Suite")]
     [string]$Mode = "All",
     [switch]$Deploy,
-    [string]$GamePath = ""
+    [string]$GamePath = "",
+    [string]$Only = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -143,6 +144,14 @@ $Features = @(
         Template = Join-Path $Root "packaging\standalone\VisibilityOverhaul"
     }
 )
+
+# Optional single-component build, preserving the established source/staging logic.
+# Never use -Deploy for this installer; deployment must remain transactional.
+if (-not [string]::IsNullOrWhiteSpace($Only)) {
+    if ($Mode -ne 'Standalone') { throw '-Only requires -Mode Standalone.' }
+    $Features = @($Features | Where-Object { $_.Folder -eq $Only })
+    if ($Features.Count -ne 1) { throw "Unknown component: $Only" }
+}
 
 function Write-Log([string]$Text) {
     $Text | Tee-Object -FilePath $Log -Append | ForEach-Object { Write-Host $_ }
