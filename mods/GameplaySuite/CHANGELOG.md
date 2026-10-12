@@ -1,3 +1,11 @@
+## Repository / Suite 0.33.2 — MEN-001 enemy-oriented smoke fix (unverified)
+
+- Field test of 0.6.1: smoke grenades are **used** by enemies, but often thrown in the wrong or opposite direction.
+- Root cause: our direct AI action chose smoke targets from `Actor.GetDirection()` and rotation offsets, which are **not** the source of incoming fire or the front toward known enemies.
+- Fix 0.6.2: select the nearest *currently detected*, AI-known opponent; suppressed/pinned infantry may prefer their last detected attacker when within 2x nearest threat distance. Smoke only on tiles which **reduce distance to this known threat**. No currently detected enemy => no forced speculative throw.
+- Complexity capped at 24 known-opponent checks and six local tile checks per eligible AI turn, without a pathfinder, world scan, fog-of-war cheat, new periodic hooks or normal logging.
+- Verified geometry tests in all four cardinal and diagonal quadrants; still needs Windows compilation and in-game behavior/performance validation. MEN-001 remains open, PR draft.
+
 ## Repository / Suite 0.33.1 — MEN-001 proactive smoke regression fix (unverified)
 - Enemy AI threw zero smoke grenades with 0.6. Native GetTargetValue score floors alone were not sufficient.
 - Smoke Overhaul 0.6.1 uses one native Agent.Execute opportunity per AI infantry unit/turn for Pinned Down, Suppressed, or exposed flamethrowers with known opponents. Checks at most 6 local tiles (2 forward for flamethrowers), no pathfinding or hidden-enemy query.
