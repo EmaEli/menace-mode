@@ -1,4 +1,8 @@
-# MENACE Gameplay Suite 0.32.2
+# MENACE Gameplay Suite 0.32.3
+
+## 0.32.3 Cinematic camera compatibility correction (MEN-006)
+
+Includes Overwatch **0.32.3.3** and Coordinated Fire **1.6.9**. Their tactical buttons now follow Third Person Camera **0.3.4**'s explicit live managed cinematic-state signal for both automatic and manual views, not just the unreliable native HUD Harmony observation used in Suite 0.32.2. They still restore normally and do not intercept pointer clicks while hidden. No combat or default logging changes. The earlier 0.32.2 patch **failed** the actual automatic camera test. Runtime validation for this fix is still pending.
 
 ## 0.32.2 Cinematic HUD fix (MEN-006)
 
