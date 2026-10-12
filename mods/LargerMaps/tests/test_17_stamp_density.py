@@ -13,6 +13,10 @@ class StampDensityTests(unittest.TestCase):
         self.assertIn('PatchTerrainStampDensity(harmony);', PLUGIN)
         self.assertIn('if (!_increaseTerrainStamps && !_diagnoseTerrainStamps) return;', STAMP)
 
+    def test_harmony_type_disambiguated(self):
+        self.assertIn('PatchTerrainStampDensity(HarmonyLib.Harmony harmony)', STAMP)
+        self.assertNotIn('PatchTerrainStampDensity(Harmony harmony)', STAMP)
+
     def test_only_stamp_attempt_argument_changes(self):
         self.assertIn('m.Name != "SpawnStampsFromList"', STAMP)
         self.assertIn('private static void StampCountPrefix(ref int __1)', STAMP)
