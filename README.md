@@ -12,6 +12,10 @@ Source snapshots of MENACE mods maintained for issue tracking and ongoing develo
 
 **Baseline imported:** October 12, 2026, from the latest source ZIP archives provided in this ChatGPT MENACE project. These are source snapshots, not independently verified upstream releases.
 
+## Windows installer policy (mandatory)
+
+All MENACE installers must follow the [one-click installer standard](docs/INSTALLER_STANDARD.md). For every new chat or contributor, [AGENTS.md](AGENTS.md) requires reusing the existing launcher and build/deploy workflow rather than inventing another kit. A normal installation should be one double-click with pinned source, automatic build and deployment, safe backup/rollback, a persistent console, and a saved log that opens automatically on failure. Build-only is an explicit optional mode, **not** the default.
+
 ## Build / testing
 
 Follow each project's own instructions:
