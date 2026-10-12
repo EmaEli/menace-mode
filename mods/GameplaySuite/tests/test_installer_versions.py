@@ -36,7 +36,7 @@ class InstallerVersionRegression(unittest.TestCase):
         self.assertNotIn("<Version>0\\.6\\.1</Version>", installer)
         self.assertIn("$expectedCodeVersion", installer)
         self.assertIn("$expectedAssemblyAttribute", installer)
-        self.assertEqual(installer.count("Assert-DllVersion "), 4)  # definition + 3 validations
+        self.assertEqual(installer.count("Assert-DllVersion "), 3)  # build, stage, and installed DLL
 
     def test_single_launcher_pins_sources_and_preserves_windows_diagnostics(self):
         installer = PS.read_text(encoding="utf-8-sig")
