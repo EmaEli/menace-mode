@@ -2,7 +2,7 @@
   "manifestVersion": 2,
   "id": "luca.overwatch",
   "name": "Overwatch",
-  "version": "0.32.3.1",
+  "version": "0.32.3.4",
   "author": "Luca / ChatGPT",
   "description": "Adds XCOM-style reaction fire against enemy movement and completed attack skills for infantry and optional vehicles, with compact multi-reticle Overwatch indicators plus Coordinated Fire and Alpha Strike compatibility paths.",
   "loadOrder": 20,
