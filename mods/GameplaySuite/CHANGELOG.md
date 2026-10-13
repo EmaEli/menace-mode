@@ -1,3 +1,11 @@
+## Overwatch 0.32.3.4 — MEN-024 hybrid-weapon indirect-fire fix (unverified in game)
+
+- Scoped `INDIRECT_FIRE` detection to the fired `SkillTemplate.Tags` and explicit weapon-only tags (`ItemTemplate.HasTag(..., false)`), avoiding inherited tags from *other* attack skills attached to the same item.
+- Source-data case: normal K-PAC-with-Launcher rifle fire is now eligible; its indirect grenade ability stays excluded.
+- No changes to action-trigger hooks, reaction queue, AI behavior, AP/ammo, camera/HUD compatibility, settings or default logging.
+- **Not yet built/tested in MENACE.** Other named reports (ARC “Range”, PPP “CQB”) remain under investigation; do not close issue #24.
+- Isolated patch branch based on current `main`. Latest HUD PR #8 is still unmerged and has independent version edits to reconcile before integration.
+
 ## Repository / Suite 0.32.3 — MEN-019 Berserk AP refund hotfix
 
 - **Coordinated Fire 1.6.7 → 1.6.8:** preserves native Berserk AP grants clipped to the unit's cap while Coordinated Fire defers the single combined salvo fee. The lost portion is carried forward up to the fee and applied at settlement.
