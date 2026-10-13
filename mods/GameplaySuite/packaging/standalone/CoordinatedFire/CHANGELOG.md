@@ -1,3 +1,10 @@
+## 1.6.8
+
+- Fixed Berserk and other clamped AP gains losing part of their refund when a kill happens during Coordinated Fire. Native child attacks still use `NoApConsumed`; the combined AP fee is charged once at settlement, with only the clipped positive grants restored afterward (bounded by the fee).
+- Applies to both sequential and synchronized player volleys. Multiple kills cannot grant more than normal cost-before-kill semantics; ordinary attacks, ammunition, AI handling, and partial-salvo safety remain unchanged.
+- Normal logging remains silent by default. The new AP carry diagnostic is debug-only.
+- **Source/model verified; Windows build and in-game gameplay verification pending.** GitHub issue #19 remains open.
+
 ## 1.6.7
 
 - Fixed Coordinated Fire disabling itself when a long-running/setup child weapon (observed with `active.medium_mg_suppressive_fire_tripod`) asynchronously zeroes the actor's AP after `Skill.Use` already returned with `NoApConsumed`.

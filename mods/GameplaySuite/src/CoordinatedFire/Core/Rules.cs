@@ -96,6 +96,30 @@ public static class Fee
         return Math.Max(0, current - cost);
     }
 
+    // MENACE's clamping SetActionPoints loses the part of an AP grant above max.
+    // The deferred salvo fee would otherwise cause that lost amount to disappear.
+    public static int ClippedGain(int current, int requested, int maxActionPoints)
+    {
+        if (current < 0 || maxActionPoints < 0) throw new ArgumentOutOfRangeException();
+        if (requested <= current || current > maxActionPoints) return 0;
+        return Math.Max(0, requested - maxActionPoints);
+    }
+
+    // A prepaid fee could have absorbed at most 'cost' AP from clamped grants.
+    // Bound accumulation to that fee so multiple kills cannot mint extra AP.
+    public static int AccumulateClippedGain(int carried, int clipped, int cost)
+    {
+        if (carried < 0 || clipped < 0 || cost < 0) throw new ArgumentOutOfRangeException();
+        int remaining = Math.Max(0, cost - carried);
+        return carried + Math.Min(clipped, remaining);
+    }
+
+    public static int AfterPreservingClippedGains(int current, int cost, int carried)
+    {
+        if (carried < 0) throw new ArgumentOutOfRangeException();
+        return After(current, cost) + Math.Min(cost, carried);
+    }
+
     // During a coordinated child attack, suppress only the exact vanilla AP debit.
     // Other AP writes (bonuses, penalties, scripts) are left untouched.
     public static int SuppressNativeDebit(int current, int requested, int expectedCost)

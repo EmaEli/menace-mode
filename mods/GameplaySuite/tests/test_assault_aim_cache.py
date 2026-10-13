@@ -23,7 +23,7 @@ class AssaultAimCacheTests(unittest.TestCase):
         self.assertIn('AssemblyVersion("0.5.3.0")', PLUGIN)
         self.assertIn('private const string Version = "0.5.3";', PLUGIN)
         self.assertEqual(STANDALONE["version"], "0.5.3")
-        self.assertEqual(SUITE["version"], "0.32.1")
+        self.assertGreaterEqual(tuple(map(int, SUITE["version"].split("."))), (0, 32, 1))
 
     def test_only_assault_mouse_move_is_intercepted(self):
         prefix = between(

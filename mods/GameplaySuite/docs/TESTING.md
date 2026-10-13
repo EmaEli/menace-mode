@@ -1,3 +1,18 @@
+# MEN-019 — Coordinated Fire 1.6.8 / Gameplay Suite 0.32.3 (in-game verification pending)
+
+1. Deploy **one** copy of Coordinated Fire 1.6.8, either standalone or within Gameplay Suite 0.32.3. Do not load two copies. Leave Debug logging OFF initially.
+2. Equip a player squad leader with the **Berserk** perk and two coordinated-fire-compatible weapons. Record maximum AP and combined salvo fee.
+3. Starting close to full AP (e.g. dismount for 5 AP), make a kill with Coordinated Fire's **first child attack**. With a 30-AP fee and 30-AP Berserk grant, the expected AP are the same as immediately before shooting, not 25 AP lower. Repeat with 0, 15 and 30+ AP already spent.
+4. Repeat with **Synchronized player volley ON** and **OFF**. Repeat for a kill caused by the **second child attack**, and (if possible) multiple kills in one volley.
+5. Control: an ordinary attack with Berserk must keep its native refund. An attack without Berserk must still charge the maximum child AP fee only once. Both native attacks should still consume their own ammo.
+6. Edge cases: first attack kills target so second cannot fire; second native launch is rejected; canceled/abandoned targeting; setup/deploy weapon; actor turn changes. No unexpected AP gain or turn stall should occur. Verify AI behavior remains unchanged.
+7. If AP differs from expectation, temporarily enable Coordinated Fire **Debug logging**, repeat once, and inspect the single fee-settlement entry (`preserved clipped grants`) plus nearby native events. Return Debug logging to OFF; no repeating logs should be necessary.
+8. Keep issue [#19](https://github.com/EmaEli/menace-mode/issues/19) OPEN until gameplay results confirm the fix.
+
+**Coverage so far:** game binary AP cap and Berserk kill handler inspected; 2,072 model arithmetic scenarios passed. This does not constitute a Windows/.NET build or an in-game test.
+
+---
+
 # MEN-005 — Infantry Assault 0.5.3 / Gameplay Suite 0.32.1 (in-game verification pending)
 
 1. Build and deploy the 0.32.1 suite once using `Build-and-Deploy-Suite.cmd` (or deploy standalone Infantry Assault 0.5.3). Avoid duplicate standalone + suite DLLs. Default Debug logging OFF.
