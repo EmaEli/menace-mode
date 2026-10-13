@@ -1,3 +1,11 @@
+## 1.9 — MEN-002 infantry cover-and-fire A/B experiment
+
+For maps above 64x64, enable **SimplifyCombatAIPlanning=ON** and optionally **PreserveBasicInfantryFirePositioning=ON** (default OFF; restart MENACE). The second toggle selectively retains MENACE's native move-to-fire positioning for **at most five small-arms AI profiles**, rather than re-enabling speculative planning for hundreds of skills. It leaves mortars, indirect-fire weapons, smoke AI, and the native pathfinder alone.
+
+The aim is to see if pirates/Rogue infantry seek firing angles more often without making AI turns slow. It does **not** wake sleeping AI or guarantee that a squad attacks; mission-specific sleep/zone logic is investigated separately in MEN-002/MEN-009. Run the same-save A/B test in [TEST-PLAN-1.9.md](TEST-PLAN-1.9.md), compare AI turn time and actual shots, and turn the feature OFF if it degrades performance. Windows build and in-game verification remain outstanding.
+
+---
+
 ## 1.8 - Up to 5x terrain stamp density (MEN-003 experiment)
 
 In **Mod Settings > Larger Maps** choose `IncreaseTerrainStampDensity=ON` and set `TerrainStampDensityMultiplier` from **1x to 5x** (default **1.5x**, feature toggle OFF for new installs). Restart the game to apply. On an existing install the saved toggle and multiplier remain as set by the user.
