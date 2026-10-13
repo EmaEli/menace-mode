@@ -1,3 +1,17 @@
+# 1.0 - Cinematic Action Camera public release
+
+- Rebranded the player-facing MelonLoader name, in-game Mod Settings menu and modpack manifest from Third Person Camera to Cinematic Action Camera.
+- Retained the 0.3.4 public `IsCinematicViewActive` compatibility API that the user's 12 October 2026 in-game test confirmed works with Coordinated Fire and Overwatch (MEN-006 #7).
+- Preserved `MenaceThirdPersonCamera.dll`, the stable modpack ID, legacy modpack folder and `MenaceThirdPersonCamera` preferences category to avoid duplicate installs or lost settings.
+- Emitted real `1.0.0.0` assembly versions for camera and settings DLLs. No change to movement, combat, HUD timing, AI or default logging (Debug OFF).
+- New 1.0 compilation and in-game verification are pending and must not be inferred from the previous camera/Suite test.
+
+# 0.3.4 - explicit cinematic active state for other mod HUDs
+
+- Expose a public, read-only static `IsCinematicViewActive` getter on the camera MelonLoader mod. It reflects the existing shared `_active` flag for manual F6 and automatic movement/firing; no additional camera state or gameplay logic is introduced.
+- Enables other mods (notably Overwatch and Coordinated Fire) to hide their custom IMGUI buttons reliably without depending on observation of the native `UITactical.SetUIVisibility` call.
+- Version metadata/Mod Settings companion updated to 0.3.4. No default logging changes. Windows build and actual game compatibility tests pending.
+
 # 0.3.3 - Mod Settings namespace and live-value reading (patch)
 
 - Fixed `CS0103` in the settings companion: imported `Menace.SDK`, which exports `ModSettings`, following the working Larger Maps implementation.

@@ -1,4 +1,8 @@
-# MENACE Third Person Camera 0.3.3
+# Cinematic Action Camera 1.0
+
+**Release 1.0:** new player-facing name for the tested 0.3.4 camera. Legacy DLL identity `MenaceThirdPersonCamera.dll`, ModpackLoader manifest ID `luca.thirdpersoncamera.settings`, folder `ThirdPersonCamera` and MelonPreferences category `MenaceThirdPersonCamera` remain unchanged to preserve configuration and upgrade paths.
+
+**MEN-006 compatibility:** this release retains `MenaceThirdPersonCamera.ThirdPersonCameraMod.IsCinematicViewActive`, shared by automatic movement/fire and manual F6. HUD hiding for Coordinated Fire and Overwatch was confirmed in-game by the user with the compatible camera/Suite pairing on October 12, 2026 (issue #7). An upgraded 1.0 DLL should be regression-tested before publishing. For integrated Gameplay Suite 0.32.3+, install the camera runtime DLL and update the Suite's embedded camera-settings DLL, without installing a duplicate standalone `ThirdPersonCamera` modpack.
 
 A **camera-only** MelonLoader mod. Watch infantry and vehicles from a chase/orbit camera while MENACE still handles orders, movement, combat, AI and action points. The camera does not change combat outcomes or reveal currently hidden enemies.
 
@@ -17,7 +21,7 @@ Bare F6/F7 do not intercept the **Ctrl+F6 / Ctrl+F7** combinations used by DevHo
 
 ## Automatic camera
 
-Automatic mode is **OFF by default**. Activate with **F7**, `AutomaticMode=true` in `UserData/MelonPreferences.cfg`, or **Mod Settings > Third Person Camera** when the accompanying `ThirdPersonCameraSettings` modpack is installed.
+Automatic mode is **OFF by default**. Activate with **F7**, `AutomaticMode=true` in `UserData/MelonPreferences.cfg`, or **Mod Settings > Cinematic Action Camera** when the accompanying `ThirdPersonCameraSettings` modpack is installed.
 
 | Event | Default | Behavior |
 |---|---:|---|
@@ -44,10 +48,10 @@ Other preferences: `ToggleKey=F6`, `AutoToggleKey=F7`, `OrbitMouseButton=Middle`
 
 ## Build and deploy (Windows)
 
-1. Extract the entire `ThirdPersonCamera-0.3.3-authoring` folder into a **new directory**.
-2. Close MENACE and run `build-and-deploy.bat`.
-3. The script compiles using the game-generated IL2CPP assemblies under `MelonLoader/Il2CppAssemblies` when available, installs `MenaceThirdPersonCamera.dll` into `MENACE/Mods/`, and (if `Menace.ModpackLoader.dll` is present) also compiles and installs `Mods/ThirdPersonCamera/dlls/ThirdPersonCameraSettings.dll` and the `modpack.json` manifest.
-4. Launch MENACE, open **Mod Settings**, select **Third Person Camera**. You should see sliders for Movement chance (0-100%) and Firing chance (0-100%). Check `MelonLoader/Latest.log` for `[ModSettings] Registered 7 settings for 'Third Person Camera'`.
+1. Download and extract the `CinematicActionCamera-1.0-BuildKit.zip` release build kit into a new directory.
+2. Close MENACE and double-click `INSTALL-CinematicActionCamera.cmd`. It downloads a pinned source commit, builds both DLLs, validates assembly/manifest versions and backs up affected versions before deployment.
+3. The release installer compiles against game-generated IL2CPP assemblies in `MelonLoader/Il2CppAssemblies` and creates `output/CinematicActionCamera-1.0-Nexus.zip`. It installs the legacy-named camera runtime and deploys the menu bridge either to the standalone camera modpack or to an already-integrated Gameplay Suite. The repository's older `build-and-deploy.bat` remains a developer fallback.
+4. Launch MENACE, open **Mod Settings**, select **Cinematic Action Camera**. You should see sliders for Movement chance (0-100%) and Firing chance (0-100%). Check `MelonLoader/Latest.log` for `[ModSettings] Registered 7 settings for 'Cinematic Action Camera'`.
 
 Requires MelonLoader IL2CPP, the .NET SDK 6 or later (supporting `net6.0`) and the game's generated interop assemblies. **GitHub source checkout:** Game and MelonLoader DLLs are intentionally excluded from this public repository. Build with a local MENACE installation that has generated `MelonLoader/Il2CppAssemblies` and the MelonLoader runtime; the build script uses those local references. The original authoring ZIP also included fallback **compile-time** IL2CPP reference DLLs, which are not redistributed here. Do not copy any `refs` directory into the game.
 
@@ -62,7 +66,7 @@ Logs: `artifacts/build-and-deploy.log` for compiler issues; `MelonLoader/Latest.
 - Mod Settings requires the installed Menace Modpack Loader and the companion bridge modpack, both deployed by `build-and-deploy.bat`. Without them, use `UserData/MelonPreferences.cfg` instead.
 - When changing `AutomaticMode` or the percentages from the in-game menu, those values take precedence over legacy MelonPreferences values. F7 remains a temporary session override.
 - A bad native event callback is disabled individually rather than shutting off all automatic cameras. If camera update itself fails, the mod exits and restores the UI.
-- **The companion interface was checked against Larger Maps, but a Windows .NET compilation and runtime test remain necessary.** The bundled source/interop APIs and packaging are statically checked; please test with MENACE.
+- **New 1.0 release verification:** the 0.3.4 HUD fix was user-confirmed in-game; the renamed 1.0 package still requires a Windows build and gameplay regression test.
 
 ## Manual preference fallback (if Mod Settings is unavailable)
 
