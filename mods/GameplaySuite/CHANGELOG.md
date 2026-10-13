@@ -1,3 +1,9 @@
+## Repository / Suite 0.32.3 — MEN-019 Berserk AP refund hotfix
+
+- **Coordinated Fire 1.6.7 → 1.6.8:** preserves native Berserk AP grants clipped to the unit's cap while Coordinated Fire defers the single combined salvo fee. The lost portion is carried forward up to the fee and applied at settlement.
+- Sequential and synchronized player volleys share the fix; no changes to native ammo use, target selection, AI turn-safety, fee amount, or other modules.
+- Offline arithmetic regression coverage added; .NET build and live MENACE acceptance test pending. MEN-019 / #19 stays open until verified. Debug logging OFF by default.
+
 ## Repository / Suite 0.32.2 — MEN-004 alternate-fire ammo diagnostic
 
 - **Weapon Mechanics Rebalanced 0.4.4 -> 0.4.5:** added opt-in, per-activation `[MEN-004 AMMO]` snapshots of sustained/spray fire, distinguishing native skill consumption from WMR's own extra-ammo cost.
