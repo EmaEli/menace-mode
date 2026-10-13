@@ -1,3 +1,13 @@
+## 1.9 — MEN-002 selective infantry firing-position experiment (opt-in)
+
+- Adds `PreserveBasicInfantryFirePositioning` (default OFF, map size >64 only, requires restart), allowing **up to five existing infantry direct-fire AI profiles** to keep MENACE's native move-to-fire search while `SimplifyCombatAIPlanning` stays ON for other attacks, mortars and smoke.
+- Uses an explicit list of two pirate small arms, the pirate pipe gun, one standard assault rifle and one battle rifle; resolves native IL2CPP profile pointers once on tactical scene entry and protects shared profiles before applying simplification.
+- No new pathfinder, agent/round/frame hooks, behavior-scoring replacement or normal gameplay logs beyond the existing one-time setup summary. 64x64 and default-OFF behavior are unchanged.
+- This may make enemies reposition to acquire firing angles, but **does not itself wake sleeping factions**, guarantee attacks or fix mission orders. A/B comparison of actual AI turns and behavior is mandatory; if turns slow down, disable it and restart.
+- **Not yet compiled on Windows or verified in the game.** See `TEST-PLAN-1.9.md`.
+
+---
+
 ## 1.8 - Adjustable high terrain stamp density (experimental)
 
 - MEN-003: expand optional terrain-stamp **attempt** multiplier on enlarged maps from 1.0-1.5x to **1.0-5.0x**; new slider default 1.5x, feature toggle remains OFF for new settings.
