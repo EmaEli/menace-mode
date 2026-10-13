@@ -57,6 +57,8 @@ class TestSelectiveInfantryFirePositioning(unittest.TestCase):
         self.assertIn('private const string Version = "1.9";', PLUGIN)
         self.assertEqual(MANIFEST["version"], "1.9")
         self.assertIn("<Version>1.9</Version>", CSPROJ)
+        self.assertIn("<AssemblyVersion>1.9.0.0</AssemblyVersion>", CSPROJ)
+        self.assertIn("<FileVersion>1.9.0.0</FileVersion>", CSPROJ)
 
 
 if __name__ == "__main__":
