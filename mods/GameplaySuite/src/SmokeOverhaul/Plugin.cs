@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Linq;
+using Il2CppInterop.Runtime.InteropTypes;
+using Il2CppMenace.Tactical.AI;
 using HarmonyLib;
 using Il2CppMenace.Items;
 using Il2CppMenace.Tactical;
@@ -14,15 +16,15 @@ using Menace.ModpackLoader;
 using Menace.SDK;
 using UnityEngine;
 
-[assembly: AssemblyVersion("0.5.2.0")]
-[assembly: AssemblyFileVersion("0.5.2.0")]
+[assembly: AssemblyVersion("0.6.3.0")]
+[assembly: AssemblyFileVersion("0.6.3.0")]
 
 namespace SmokeOverhaul;
 
 public sealed class Plugin : IModpackPlugin
 {
     internal const string ModName = "Smoke Overhaul";
-    internal const string Version = "0.5.2";
+    internal const string Version = "0.6.3";
 
     private static MelonLogger.Instance? _log;
     private static readonly Dictionary<string, PatchedTemplate> PatchedTemplates = new(StringComparer.OrdinalIgnoreCase);
@@ -72,6 +74,13 @@ public sealed class Plugin : IModpackPlugin
         "active.mod.twinfire.launch_mortar_smoke_autoloader"
     };
     private static bool _fastSmokeAiSummaryLogged;
+    private static readonly string[] InfantrySmokeSkillIds =
+    {
+        "active.throw_smoke_grenade",
+        "active.throw_smoke_grenade_limited"
+    };
+    private static readonly Dictionary<IntPtr, PinnedSmokePermissionSnapshot> OriginalPinnedSmokePermissions = new();
+    private static bool _pinnedSmokeErrorLogged;
     private static bool _fastSmokeAiErrorLogged;
     private static readonly HashSet<string> MortarAiCooldownAddedByUs = new(StringComparer.OrdinalIgnoreCase);
     private static Cooldown? _nativeSmokeAiCooldown;
@@ -151,6 +160,30 @@ public sealed class Plugin : IModpackPlugin
             postfix: null,
             label: "Skill.Use");
 
+        // Native Pinned Down can remove every AP. This hook changes the cost
+        // only for the two hand-thrown smoke skills while actually pinned.
+        hooks += TryPatch(
+            harmony,
+            AccessTools.Method(typeof(Skill), nameof(Skill.GetActionPointCost), Type.EmptyTypes),
+            prefix: null,
+            postfix: nameof(Patches.Skill_GetActionPointCost_Postfix),
+            label: "Skill.GetActionPointCost");
+
+        // MEN-001: native LOS scoring is not sufficient to make smoke an AI
+        // action. Integrate a *single local decision* into native Agent.Execute.
+        // This hook is later than Infantry Assault and does not override it.
+        hooks += TryPatch(
+            harmony,
+            AccessTools.Method(typeof(Agent), nameof(Agent.Execute), Type.EmptyTypes),
+            prefix: nameof(Patches.Agent_Execute_Prefix), postfix: null,
+            label: "Agent.Execute");
+
+        hooks += TryPatch(
+            harmony,
+            AccessTools.Method(typeof(Agent), nameof(Agent.OnTurnStart), Type.EmptyTypes),
+            prefix: null, postfix: nameof(Patches.Agent_OnTurnStart_Postfix),
+            label: "Agent.OnTurnStart");
+
         hooks += TryPatch(
             harmony,
             AccessTools.Method(
@@ -185,12 +218,21 @@ public sealed class Plugin : IModpackPlugin
         ApplySmokeDeliveryProfiles();
 
         DevConsole.RegisterPanel(ModName, DrawDebug);
-        DebugMsg($"{ModName} {Version}: initialized with {hooks}/8 hooks.");
+        DebugMsg($"{ModName} {Version}: initialized with {hooks}/11 hooks.");
     }
 
     public void OnSceneLoaded(int buildIndex, string sceneName)
     {
         Patches.ResetCounters();
+        _smokeActedThisTurn.Clear();
+        if (!string.Equals(sceneName, "Tactical", StringComparison.OrdinalIgnoreCase) &&
+            RuntimeSettings.DebugLogging && _aiSmokeExecutions > 0)
+            DebugMsg($"AI smoke mission summary: execute={_aiSmokeExecutions}, pressure={_aiSmokeEligible}, skill={_aiSmokeSkillsAvailable}, target={_aiSmokeValidTargets}, chanceSkipped={_aiSmokeChanceSkipped}, used={_aiSmokeUsesSucceeded}.");
+        if (string.Equals(sceneName, "Tactical", StringComparison.OrdinalIgnoreCase))
+        {
+            _aiSmokeExecutions = _aiSmokeEligible = _aiSmokeSkillsAvailable = _aiSmokeValidTargets = _aiSmokeChanceSkipped = _aiSmokeUsesSucceeded = 0;
+            _aiSmokeDirectionDebugLines = 0;
+        }
 
         if (RuntimeSettings.Enabled)
             ApplyThrownGrenadeActionPointCosts();
@@ -298,6 +340,8 @@ public sealed class Plugin : IModpackPlugin
             s.AddToggle("CaliberBasedSmokeFootprints", "Caliber-based smoke footprints (infantry/light 1 tile, 80mm cross, 120mm 3x3)", true);
             s.AddToggle("EnableAISmokeUsage", "Let AI actively use smoke with MENACE's native LOS-blocker behavior", true);
             s.AddToggle("FastAISmokeSelection", "Fast AI smoke selection (current position only)", true);
+            s.AddToggle("AllowSmokeWhilePinnedDown", "Allow smoke throws while Pinned Down (0 AP in that state only)", true);
+            s.AddToggle("SimpleAISmokeRules", "Lightweight AI smoke: defensive throws and exposed flamethrowers", true);
 
             s.AddHeader("Diagnostics");
             s.AddToggle("DebugLogging", "Debug logging", false);
@@ -315,6 +359,7 @@ public sealed class Plugin : IModpackPlugin
         bool previousFootprints = RuntimeSettings.CaliberBasedSmokeFootprints;
         bool previousAiSmoke = RuntimeSettings.EnableAISmokeUsage;
         bool previousFastAiSmoke = RuntimeSettings.FastAISmokeSelection;
+        bool previousPinnedSmoke = RuntimeSettings.AllowSmokeWhilePinnedDown;
 
         bool enabled = Setting("EnableGameplay", true);
         bool losThroughSmoke = Setting("AllowLineOfSightThroughSmoke", true);
@@ -327,9 +372,11 @@ public sealed class Plugin : IModpackPlugin
         bool caliberFootprints = Setting("CaliberBasedSmokeFootprints", true);
         bool aiSmoke = Setting("EnableAISmokeUsage", true);
         bool fastAiSmoke = Setting("FastAISmokeSelection", true);
+        bool pinnedSmoke = Setting("AllowSmokeWhilePinnedDown", true);
+        bool simpleAiRules = Setting("SimpleAISmokeRules", true);
         bool debug = Setting("DebugLogging", false);
 
-        RuntimeSettings.Configure(enabled, losThroughSmoke, perTile, maximum, durationMultiplier, grenadeApCost, freeGrenade, freeFragGrenade, caliberFootprints, aiSmoke, fastAiSmoke, debug);
+        RuntimeSettings.Configure(enabled, losThroughSmoke, perTile, maximum, durationMultiplier, grenadeApCost, freeGrenade, freeFragGrenade, caliberFootprints, aiSmoke, fastAiSmoke, pinnedSmoke, simpleAiRules, debug);
 
         if ((previousEnabled && !enabled) || (previousLos && !losThroughSmoke))
             _restoreOnSafeScene = true;
@@ -356,7 +403,7 @@ public sealed class Plugin : IModpackPlugin
         else if ((!enabled || !freeFragGrenade) && (previousEnabled && previousFreeFragGrenade))
             RestoreFreeInfantryFragGrenades();
 
-        if (enabled && (force || !previousEnabled || previousFootprints != caliberFootprints || previousAiSmoke != aiSmoke || previousFastAiSmoke != fastAiSmoke))
+        if (enabled && (force || !previousEnabled || previousFootprints != caliberFootprints || previousAiSmoke != aiSmoke || previousFastAiSmoke != fastAiSmoke || previousPinnedSmoke != pinnedSmoke))
             ApplySmokeDeliveryProfiles();
         else if (!enabled && previousEnabled)
             RestoreSmokeDeliveryProfiles();
@@ -380,6 +427,9 @@ public sealed class Plugin : IModpackPlugin
         {
             HarmonyMethod? pre = prefix == null ? null : new HarmonyMethod(typeof(Patches), prefix);
             HarmonyMethod? post = postfix == null ? null : new HarmonyMethod(typeof(Patches), postfix);
+            // Let any earlier AI override (e.g. Infantry Assault) take precedence.
+            if (prefix == nameof(Patches.Agent_Execute_Prefix) && pre != null)
+                pre.priority = global::HarmonyLib.Priority.Last;
             harmony.Patch(original, prefix: pre, postfix: post);
             DebugMsg($"Patched {label}.");
             return 1;
@@ -426,6 +476,9 @@ public sealed class Plugin : IModpackPlugin
         Line("Infantry templates granted frag: " + FreeFragGrenadeTemplates.Count);
         Line("Caliber smoke footprints: " + (RuntimeSettings.CaliberBasedSmokeFootprints ? "yes" : "no"));
         Line("AI smoke usage: " + (RuntimeSettings.EnableAISmokeUsage ? "yes" : "no"));
+        Line("AI smoke direct rules: " + (RuntimeSettings.SimpleAISmokeRules ? "yes" : "no"));
+        Line($"Proactive smoke chance per valid target: pinned {PinnedDownSmokeChancePercent}%, suppressed {SuppressedSmokeChancePercent}%, flamethrower {FlamethrowerSmokeChancePercent}%");
+        Line($"AI actions / eligible / smoke skill / valid target / chance skipped / smoke thrown: {_aiSmokeExecutions} / {_aiSmokeEligible} / {_aiSmokeSkillsAvailable} / {_aiSmokeValidTargets} / {_aiSmokeChanceSkipped} / {_aiSmokeUsesSucceeded}");
         Line("Fast AI smoke selection: " + (RuntimeSettings.FastAISmokeSelection ? "yes" : "no"));
         Line("Optimized native smoke AI profiles: " + OriginalSmokeAiPositioning.Count);
         Line("80mm mortar smoke granted: " + (_mediumMortarSmokeGrantedByUs ? "yes" : "no/already present"));
@@ -980,6 +1033,11 @@ public sealed class Plugin : IModpackPlugin
 
             ConfigureSharedMortarSmokeSpawnEffect();
 
+            if (RuntimeSettings.AllowSmokeWhilePinnedDown)
+                ApplyPinnedSmokePermission();
+            else
+                RestorePinnedSmokePermission();
+
             if (RuntimeSettings.EnableAISmokeUsage)
                 ApplyNativeSmokeAiToMortars();
             else
@@ -1114,6 +1172,360 @@ public sealed class Plugin : IModpackPlugin
         DebugMsg("Restored native AI smoke positioning flags.");
     }
 
+    private sealed class PinnedSmokePermissionSnapshot
+    {
+        public PinnedSmokePermissionSnapshot(SkillTemplate template, bool original)
+        {
+            Template = template;
+            Original = original;
+        }
+
+        public SkillTemplate Template { get; }
+        public bool Original { get; }
+    }
+
+    private static bool IsHandThrownSmokeSkillId(string? id)
+        => string.Equals(id, "active.throw_smoke_grenade", StringComparison.OrdinalIgnoreCase) ||
+           string.Equals(id, "active.throw_smoke_grenade_limited", StringComparison.OrdinalIgnoreCase);
+
+    private static void ApplyPinnedSmokePermission()
+    {
+        try
+        {
+            foreach (string id in InfantrySmokeSkillIds)
+            {
+                SkillTemplate? template = DataTemplateLoader.Get<SkillTemplate>(id, false);
+                if (template == null || template.Pointer == IntPtr.Zero || template.IsUsableWhilePinnedDown)
+                    continue;
+
+                if (!OriginalPinnedSmokePermissions.ContainsKey(template.Pointer))
+                    OriginalPinnedSmokePermissions.Add(template.Pointer, new PinnedSmokePermissionSnapshot(template, false));
+
+                template.IsUsableWhilePinnedDown = true;
+            }
+        }
+        catch (Exception ex)
+        {
+            if (_pinnedSmokeErrorLogged)
+                return;
+            _pinnedSmokeErrorLogged = true;
+            Error($"Failed to allow pinned smoke throws: {ex.GetType().Name}: {ex.Message}");
+        }
+    }
+
+    private static void RestorePinnedSmokePermission()
+    {
+        foreach (PinnedSmokePermissionSnapshot snapshot in OriginalPinnedSmokePermissions.Values)
+        {
+            try
+            {
+                if (snapshot.Template != null && snapshot.Template.Pointer != IntPtr.Zero)
+                    snapshot.Template.IsUsableWhilePinnedDown = snapshot.Original;
+            }
+            catch { }
+        }
+        OriginalPinnedSmokePermissions.Clear();
+    }
+
+    internal static void ApplyPinnedSmokeApCost(Skill? skill, ref int cost)
+    {
+        if (!RuntimeSettings.Enabled || !RuntimeSettings.AllowSmokeWhilePinnedDown || skill == null || cost <= 0)
+            return;
+
+        try
+        {
+            Actor? consumer = skill.GetAPConsumer();
+            if (consumer == null || consumer.GetSuppressionState() != SuppressionState.PinnedDown)
+                return;
+
+            if (IsHandThrownSmokeSkillId(skill.GetID()))
+                cost = 0;
+        }
+        catch (Exception ex)
+        {
+            if (_pinnedSmokeErrorLogged)
+                return;
+            _pinnedSmokeErrorLogged = true;
+            Error($"Failed to determine pinned smoke AP cost: {ex.GetType().Name}: {ex.Message}");
+        }
+    }
+
+    // One emergency smoke decision per actor per turn, with a constant upper bound
+    // on candidate tiles. Agent.Execute is an AI action transition, not a frame hook.
+    private static readonly HashSet<IntPtr> _smokeActedThisTurn = new();
+    // Max known-opponent checks per eligible unit per turn. Avoid map-wide searches.
+    private const int MaxSmokeThreatChecks = 24;
+    // Only our proactive AI throw gets randomized; native and player smoke don't.
+    private const int PinnedDownSmokeChancePercent = 60;
+    private const int SuppressedSmokeChancePercent = 45;
+    private const int FlamethrowerSmokeChancePercent = 30;
+    private static int _aiSmokeExecutions;
+    private static int _aiSmokeEligible;
+    private static int _aiSmokeSkillsAvailable;
+    private static int _aiSmokeValidTargets;
+    private static int _aiSmokeChanceSkipped;
+    private static int _aiSmokeUsesSucceeded;
+    private static int _aiSmokeDirectionDebugLines;
+
+    internal static void ResetAiSmokeTurn(Agent? agent)
+    {
+        try
+        {
+            Actor? actor = agent?.GetActor();
+            if (actor != null && actor.Pointer != IntPtr.Zero)
+                _smokeActedThisTurn.Remove(actor.Pointer);
+        }
+        catch { }
+    }
+
+    internal static bool TryAiSmokeAction(Agent? agent)
+    {
+        if (!RuntimeSettings.Enabled || !RuntimeSettings.EnableAISmokeUsage ||
+            !RuntimeSettings.SimpleAISmokeRules || agent == null)
+            return false;
+
+        _aiSmokeExecutions++;
+        try
+        {
+            if (agent.IsSleeping() || agent.IsDeploymentPhase() || TacticalManager.IsSkillBusy())
+                return false;
+
+            Actor? actor = agent.GetActor();
+            if (actor == null || !actor.IsInfantry() || actor.IsDying() ||
+                actor.IsMoving() || actor.IsTurnDone() || actor.Pointer == IntPtr.Zero)
+                return false;
+
+            IntPtr actorKey = actor.Pointer;
+            if (_smokeActedThisTurn.Contains(actorKey))
+                return false;
+
+            Tile? origin = actor.GetTile();
+            if (origin == null || TileHasSmoke(origin))
+                return false;
+
+            SuppressionState pressure = actor.GetSuppressionState();
+            bool pinned = pressure == SuppressionState.PinnedDown;
+            bool suppressed = pressure == SuppressionState.Suppressed;
+            if (pinned && !RuntimeSettings.AllowSmokeWhilePinnedDown)
+                return false;
+
+            bool flamethrowerAdvance = !pinned && !suppressed &&
+                origin.GetCoverMask() == 0 &&
+                (agent.GetNumThreatsFaced() > 0 || agent.GetFaction()?.HasKnownOpponent() == true);
+            if (!pinned && !suppressed && !flamethrowerAdvance)
+                return false;
+
+            _smokeActedThisTurn.Add(actorKey);
+            _aiSmokeEligible++;
+
+            var rawSkills = actor.GetSkills()?.GetAllSkills();
+            if (rawSkills == null)
+                return false;
+            Skill? smoke = null;
+            bool carriesFlamethrower = false;
+            for (int i = 0; i < rawSkills.Count; i++)
+            {
+                BaseSkill? raw = rawSkills[i];
+                if (raw == null)
+                    continue;
+                string id = raw.GetID() ?? string.Empty;
+                if (id.IndexOf("flamethrower", StringComparison.OrdinalIgnoreCase) >= 0)
+                    carriesFlamethrower = true;
+                if (smoke != null || !IsHandThrownSmokeSkillId(id))
+                    continue;
+                try
+                {
+                    Skill? cast = raw.TryCast<Skill>();
+                    if (cast != null && !cast.IsOutOfUses() &&
+                        cast.IsUsable() && cast.IsAffordable())
+                        smoke = cast;
+                }
+                catch { }
+            }
+            if (smoke == null || (flamethrowerAdvance && !carriesFlamethrower))
+                return false;
+
+            _aiSmokeSkillsAvailable++;
+
+            // Don't guess where the enemy is from actor facing. The unit may be
+            // turned away from incoming fire, or still facing its last movement.
+            // Only use opponents already detected by MENACE's own faction AI.
+            if (!TryGetDetectedSmokeThreat(agent, actor, origin, pinned || suppressed,
+                out int threatX, out int threatZ))
+                return false;
+
+            Map? map = TacticalManager.Get()?.GetMap();
+            if (map == null)
+                return false;
+
+            // Aim at the known threat, NEVER at unit facing. Three narrow
+            // forward candidates on each of two distances: six tiles maximum.
+            // Always move closer to the threat; reject side/rear or beyond-enemy smoke.
+            int stepX = global::System.Math.Sign(threatX);
+            int stepZ = global::System.Math.Sign(threatZ);
+            int threatDistanceSquared = threatX * threatX + threatZ * threatZ;
+            for (int reachIndex = 0; reachIndex < 2; reachIndex++)
+            {
+                int reach = flamethrowerAdvance ? 2 - reachIndex : 1 + reachIndex;
+                for (int candidate = 0; candidate < 3; candidate++)
+                {
+                    int dirX, dirZ;
+                    if (candidate == 0)
+                    {
+                        dirX = stepX;
+                        dirZ = stepZ;
+                    }
+                    else if (stepX != 0 && stepZ != 0)
+                    {
+                        dirX = candidate == 1 ? stepX : 0;
+                        dirZ = candidate == 1 ? 0 : stepZ;
+                    }
+                    else if (stepX != 0)
+                    {
+                        dirX = stepX;
+                        dirZ = candidate == 1 ? 1 : -1;
+                    }
+                    else
+                    {
+                        dirX = candidate == 1 ? 1 : -1;
+                        dirZ = stepZ;
+                    }
+
+                    int remainingX = threatX - dirX * reach;
+                    int remainingZ = threatZ - dirZ * reach;
+                    if (remainingX * remainingX + remainingZ * remainingZ >= threatDistanceSquared)
+                        continue;
+
+                    int x = origin.GetX() + dirX * reach;
+                    int z = origin.GetZ() + dirZ * reach;
+                    if (!map.IsInBounds(x, z))
+                        continue;
+
+                    Tile? target = map.GetTile(x, z);
+                    if (target == null || !target.IsEmpty() || TileHasSmoke(target) ||
+                        (flamethrowerAdvance && !target.IsValidMovementDestination()))
+                        continue;
+
+                    if (!smoke.IsUsableOn(target, origin))
+                        continue;
+
+                    _aiSmokeValidTargets++;
+
+                    // One constant-time roll per actor/turn, only after finding
+                    // an affordable smoke skill and a legal target. On rejection,
+                    // vanilla MENACE AI may proceed without spending smoke.
+                    int chancePercent = pinned ? PinnedDownSmokeChancePercent
+                        : suppressed ? SuppressedSmokeChancePercent
+                        : FlamethrowerSmokeChancePercent;
+                    if (global::System.Random.Shared.Next(100) >= chancePercent)
+                    {
+                        _aiSmokeChanceSkipped++;
+                        return false;
+                    }
+
+                    if (!smoke.Use(target, UsageParameter.AutoAudioVolume))
+                        return false;
+
+                    _aiSmokeUsesSucceeded++;
+                    // One line per actual forced smoke grenade, DEBUG ON only.
+                    // Coordinates prove whether a reported bad throw was caused
+                    // by this mod or MENACE's normal smoke AI. Cap per mission.
+                    if (RuntimeSettings.DebugLogging && _aiSmokeDirectionDebugLines < 24)
+                    {
+                        _aiSmokeDirectionDebugLines++;
+                        DebugMsg($"AI smoke thrown: origin=({origin.GetX()},{origin.GetZ()}) " +
+                            $"threat=({origin.GetX() + threatX},{origin.GetZ() + threatZ}) " +
+                            $"target=({x},{z}) mode={(flamethrowerAdvance ? "advance" : "defensive")}");
+                    }
+                    return true;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            // Never flood the log from a repeated agent evaluation. Fail closed.
+            if (!_aiSmokeActionErrorLogged)
+            {
+                _aiSmokeActionErrorLogged = true;
+                Error($"AI emergency smoke decision failed: {ex.GetType().Name}: {ex.Message}");
+            }
+        }
+        return false;
+    }
+
+    private static bool TryGetDetectedSmokeThreat(
+        Agent agent, Actor actor, Tile origin, bool defensive,
+        out int dx, out int dz)
+    {
+        dx = dz = 0;
+        AIFaction? faction = agent.GetFaction();
+        var opponents = faction?.GetOpponents();
+        if (faction == null || opponents == null)
+            return false;
+
+        // A recent attacker is tactically useful but must STILL be known and
+        // presently detected. Do not query the true position of a hidden enemy.
+        Actor? recentAttacker = defensive ? actor.GetLastAttacker()?.ToActor() : null;
+        IntPtr attackerPointer = recentAttacker?.Pointer ?? IntPtr.Zero;
+        int nearDist2 = int.MaxValue, attackerDist2 = int.MaxValue;
+        int nearX = 0, nearZ = 0, attackerX = 0, attackerZ = 0;
+        int count = global::System.Math.Min(opponents.Count, MaxSmokeThreatChecks);
+
+        for (int i = 0; i < count; i++)
+        {
+            Opponent? opponent = opponents[i];
+            if (opponent == null || !opponent.IsKnown())
+                continue;
+            Actor? enemy = opponent.Actor;
+            if (enemy == null || enemy.Pointer == actor.Pointer ||
+                enemy.IsDying() || !enemy.IsAlive() ||
+                !enemy.IsDetectedByFaction(faction.GetIndex()))
+                continue;
+
+            Tile? enemyTile = enemy.GetTile();
+            if (enemyTile == null)
+                continue;
+            int ex = enemyTile.GetX() - origin.GetX();
+            int ez = enemyTile.GetZ() - origin.GetZ();
+            int d2 = ex * ex + ez * ez;
+            if (d2 == 0)
+                continue;
+
+            if (d2 < nearDist2)
+            {
+                nearDist2 = d2;
+                nearX = ex;
+                nearZ = ez;
+            }
+            if (attackerPointer != IntPtr.Zero && enemy.Pointer == attackerPointer)
+            {
+                attackerDist2 = d2;
+                attackerX = ex;
+                attackerZ = ez;
+            }
+        }
+
+        if (nearDist2 == int.MaxValue)
+            return false;
+
+        // Prefer the recent shooter only if reasonably close to the nearest
+        // threat; avoid looking away toward a distant previous attacker.
+        if (defensive && attackerDist2 != int.MaxValue &&
+            attackerDist2 <= nearDist2 * 4)
+        {
+            dx = attackerX;
+            dz = attackerZ;
+        }
+        else
+        {
+            dx = nearX;
+            dz = nearZ;
+        }
+        return true;
+    }
+
+    private static bool _aiSmokeActionErrorLogged;
+
     private static void ApplyNativeSmokeAiToMortars()
     {
         SkillTemplate? infantrySmoke = null;
@@ -1227,6 +1639,7 @@ public sealed class Plugin : IModpackPlugin
     {
         // Restore the shared native AI profile BEFORE unhooking mortar templates.
         RestoreFastAiSmokeSelection();
+        RestorePinnedSmokePermission();
         RemoveMediumMortarSmokeGrant();
         RestoreMortarSmokeAi();
         if (_sharedMortarSmokeSpawnEffect != null && _originalSharedMortarSmokeChancePerTile.HasValue)
@@ -1619,6 +2032,26 @@ internal static class Patches
         Plugin.FilterSmokeAoeTiles(__instance, __1, __2);
     }
 
+    public static bool Agent_Execute_Prefix(Agent __instance, ref bool __result, bool __runOriginal)
+    {
+        // Respect other AI prefixes that already suppressed the original action.
+        if (!__runOriginal || !Plugin.TryAiSmokeAction(__instance))
+            return true;
+
+        __result = true;
+        return false;
+    }
+
+    public static void Agent_OnTurnStart_Postfix(Agent __instance)
+    {
+        Plugin.ResetAiSmokeTurn(__instance);
+    }
+
+    public static void Skill_GetActionPointCost_Postfix(Skill __instance, ref int __result)
+    {
+        Plugin.ApplyPinnedSmokeApCost(__instance, ref __result);
+    }
+
     public static void Skill_Use_Prefix(Skill __instance, Tile _targetTile, UsageParameter _parameters)
     {
         Plugin.LogAiSmokeUse(__instance, _targetTile, _parameters);
@@ -1699,6 +2132,8 @@ internal static class RuntimeSettings
     public static bool CaliberBasedSmokeFootprints { get; private set; } = true;
     public static bool EnableAISmokeUsage { get; private set; } = true;
     public static bool FastAISmokeSelection { get; private set; } = true;
+    public static bool AllowSmokeWhilePinnedDown { get; private set; } = true;
+    public static bool SimpleAISmokeRules { get; private set; } = true;
     public static bool DebugLogging { get; private set; }
 
     public static string Summary =>
@@ -1706,9 +2141,10 @@ internal static class RuntimeSettings
         $"accuracyPenalty=-{AccuracyPenaltyPerTile}%/tile, cap=-{MaximumAccuracyPenalty}%, " +
         $"smokeDuration=x{SmokeDurationMultiplier}, thrownGrenadeAp={ThrownGrenadeApCost}, " +
         $"freeInfantryGrenade={GiveInfantryFreeSmokeGrenade}, freeInfantryFragGrenade={GiveInfantryFreeFragGrenade}, " +
-        $"caliberSmoke={CaliberBasedSmokeFootprints}, aiSmoke={EnableAISmokeUsage}, fastAiSmoke={FastAISmokeSelection}, debug={DebugLogging}";
+        $"caliberSmoke={CaliberBasedSmokeFootprints}, aiSmoke={EnableAISmokeUsage}, fastAiSmoke={FastAISmokeSelection}, " +
+        $"pinnedSmoke={AllowSmokeWhilePinnedDown}, simpleAiRules={SimpleAISmokeRules}, debug={DebugLogging}";
 
-    public static void Configure(bool enabled, bool allowLineOfSightThroughSmoke, int accuracyPenaltyPerTile, int maximumAccuracyPenalty, int smokeDurationMultiplier, int thrownGrenadeApCost, bool giveInfantryFreeSmokeGrenade, bool giveInfantryFreeFragGrenade, bool caliberBasedSmokeFootprints, bool enableAiSmokeUsage, bool fastAiSmokeSelection, bool debugLogging)
+    public static void Configure(bool enabled, bool allowLineOfSightThroughSmoke, int accuracyPenaltyPerTile, int maximumAccuracyPenalty, int smokeDurationMultiplier, int thrownGrenadeApCost, bool giveInfantryFreeSmokeGrenade, bool giveInfantryFreeFragGrenade, bool caliberBasedSmokeFootprints, bool enableAiSmokeUsage, bool fastAiSmokeSelection, bool allowSmokeWhilePinnedDown, bool simpleAiSmokeRules, bool debugLogging)
     {
         Enabled = enabled;
         AllowLineOfSightThroughSmoke = allowLineOfSightThroughSmoke;
@@ -1721,6 +2157,8 @@ internal static class RuntimeSettings
         CaliberBasedSmokeFootprints = caliberBasedSmokeFootprints;
         EnableAISmokeUsage = enableAiSmokeUsage;
         FastAISmokeSelection = fastAiSmokeSelection;
+        AllowSmokeWhilePinnedDown = allowSmokeWhilePinnedDown;
+        SimpleAISmokeRules = simpleAiSmokeRules;
         DebugLogging = debugLogging;
     }
 }

@@ -1,3 +1,32 @@
+## Repository / Suite 0.33.3 — MEN-001 AI smoke frequency refinement (Smoke Overhaul 0.6.3)
+
+- Balance refinement following favorable 0.6.2 field testing: the mod's proactive AI throws now happen probabilistically.
+- Exactly one constant-time random roll per actor-turn **after** confirming a usable/affordable smoke skill and legal target: **Pinned Down 60%, Suppressed 45%, exposed flamethrower 30%**.
+- A failed roll spends no grenade or AP and leaves normal native AI in control. MENACE's own independent smoke can still occur, so percentages do not guarantee an overall throw rate.
+- Unchanged: native skill cooldown/charges, detected-enemy aiming, 24 known-opponent checks, six local target checks, no pathfinding, quiet runtime logging and Debug OFF.
+- Static test and installer validation planned; Windows compile and in-game rate/AI performance tests pending. Keep issue #1 open, PR #12 draft.
+
+## Repository / Suite 0.33.2 — MEN-001 enemy-oriented smoke fix (unverified)
+
+- Field test of 0.6.1: smoke grenades are **used** by enemies, but often thrown in the wrong or opposite direction.
+- Root cause: our direct AI action chose smoke targets from `Actor.GetDirection()` and rotation offsets, which are **not** the source of incoming fire or the front toward known enemies.
+- Fix 0.6.2: select the nearest *currently detected*, AI-known opponent; suppressed/pinned infantry may prefer their last detected attacker when within 2x nearest threat distance. Smoke only on tiles which **reduce distance to this known threat**. No currently detected enemy => no forced speculative throw.
+- Complexity capped at 24 known-opponent checks and six local tile checks per eligible AI turn, without a pathfinder, world scan, fog-of-war cheat, new periodic hooks or normal logging.
+- Verified geometry tests in all four cardinal and diagonal quadrants; still needs Windows compilation and in-game behavior/performance validation. MEN-001 remains open, PR draft.
+
+## Repository / Suite 0.33.1 — MEN-001 proactive smoke regression fix (unverified)
+- Enemy AI threw zero smoke grenades with 0.6. Native GetTargetValue score floors alone were not sufficient.
+- Smoke Overhaul 0.6.1 uses one native Agent.Execute opportunity per AI infantry unit/turn for Pinned Down, Suppressed, or exposed flamethrowers with known opponents. Checks at most 6 local tiles (2 forward for flamethrowers), no pathfinding or hidden-enemy query.
+- Native smoke skill IsUsable, IsAffordable, IsUsableOn, limited uses and AI-only cooldown are checked before invoking Skill.Use. Pinned smoke retains zero-AP exception only for two smoke IDs.
+- Late-priority Agent.Execute Harmony prefix honors earlier mods such as Infantry Assault. Aggregated in-memory diagnostics, only one unexpected exception logged; default debug OFF.
+- Windows build, gameplay smoke activation and 96x96 turn-performance validation still pending. PR #12 remains draft, issue #1 open.
+
+## Repository / Suite 0.33 — MEN-001 tactical smoke (source-only, unverified)
+
+- Smoke Overhaul 0.6: allow pinned smoke grenades with 0 AP exclusively in Pinned Down; native normal/Suppressed AP unchanged.
+- Lightweight native immediate-target score floors for Pinned Down, Suppressed and exposed flamethrower infantry. No speculative search, no new map scan, no force-moving AI and no default logs.
+- Settings AllowSmokeWhilePinnedDown and SimpleAISmokeRules default ON, no game verification yet.
+
 ## Repository / Suite 0.32.2 — MEN-004 alternate-fire ammo diagnostic
 
 - **Weapon Mechanics Rebalanced 0.4.4 -> 0.4.5:** added opt-in, per-activation `[MEN-004 AMMO]` snapshots of sustained/spray fire, distinguishing native skill consumption from WMR's own extra-ammo cost.

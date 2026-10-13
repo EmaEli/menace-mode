@@ -1,4 +1,20 @@
-# MENACE Mods Unified Repository 0.32.2
+# MENACE Mods Unified Repository 0.33.3
+
+### 0.33.3 MEN-001 stochastic smoke throws (not yet in-game verified)
+
+Smoke Overhaul **0.6.3** now gates its extra proactive AI smoke throw with **60% Pinned Down / 45% Suppressed / 30% exposed flamethrower**, only when an affordable native smoke skill and valid target exist. It rolls once per actor-turn and lets normal AI proceed if the roll fails. Native smoke decisions may still occur. No new performance-heavy searches or logging.
+
+### 0.33.2 MEN-001 direction-aware defensive smoke (unverified)
+
+Smoke Overhaul 0.6.2 no longer aims thrown smoke at the squad's facing. It uses the most relevant **currently detected** enemy (recent shooter or nearest) and checks up to 24 known enemies and six nearby forward smoke targets. Never forces a guessed rearward smoke when no enemy is detected. No global AI search or frame polling.
+
+### 0.33.1 MEN-001 bounded native AI smoke (unverified)
+
+Smoke Overhaul 0.6.1 replaces score-only smoke weights with a bounded native Agent.Execute smoke action. At most 6 local target tiles are checked (2 for exposed flamethrowers), preserving native ammo, AP, cooldown, fog of war and movement. Windows compilation and gameplay verification still required.
+
+### 0.33 MEN-001 tactical smoke (unverified)
+
+Smoke Overhaul 0.6 permits Pinned Down emergency smoke and lightly boosts native AI usage under suppression and for exposed flamethrowers. Fast smoke selection stays enabled; no path scans or frame polling. Source-only change awaiting Windows build/in-game verification.
 
 ### 0.32.2 MEN-004 debug-only ammo trace
 
