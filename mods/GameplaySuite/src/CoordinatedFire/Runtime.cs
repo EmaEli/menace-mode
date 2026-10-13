@@ -483,10 +483,11 @@ internal sealed class Runtime : IVolleyPort, IDisposable
         {
             try
             {
-                var template = actor.GetTemplate();
-                if (Native.Valid(template))
+                // MENACE clamps to the actor's current, buff-adjusted EntityProperties.
+                var properties = actor.GetCurrentProperties();
+                if (Native.Valid(properties))
                 {
-                    int clipped = Fee.ClippedGain(current, requested, template.GetActionPoints());
+                    int clipped = Fee.ClippedGain(current, requested, properties.GetActionPoints());
                     _clampedApGain = Fee.AccumulateClippedGain(_clampedApGain, clipped, _transaction.Cost);
                 }
             }
