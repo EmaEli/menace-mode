@@ -22,7 +22,7 @@ internal sealed class Runtime : IVolleyPort, IDisposable
     private int _readDepth, _nativeDepth, _round;
     private bool _settling, _faulted, _transactionIsAI, _roundCheckDeferred;
     private bool _apDebitIntercepted, _apReconciled, _suppressFee;
-    private int _launchAp, _launchCost;
+    private int _launchAp, _launchCost, _clampedApGain;
     private UsageParameter _childUsage = UsageParameter.Default;
     private int _squadIndex, _leaderIndex, _vehiclePairIndex;
     private double _nextRefresh;
@@ -417,7 +417,7 @@ internal sealed class Runtime : IVolleyPort, IDisposable
         _transactionIsAI = isAI;
         _childUsage = usage;
         _apDebitIntercepted = _apReconciled = _suppressFee = false;
-        _launchAp = _launchCost = 0;
+        _launchAp = _launchCost = _clampedApGain = 0;
     }
 
     public bool Launch(AttackSnapshot attack, bool synchronizedFollowUp = false)
@@ -470,12 +470,34 @@ internal sealed class Runtime : IVolleyPort, IDisposable
             : _volley.CurrentSkill == _transaction.Second.SkillKey ? _transaction.Second.ActionPointCost : 0;
     }
 
-    private void InterceptActionPointWrite(Actor actor, ref int requested)
+    private void InterceptActionPointWrite(Actor actor, ref int requested, bool nativeClamps)
     {
         if (!IsActive || _settling || !Native.Same(actor, _firingActor)) return;
+        int current = actor.GetActionPoints();
+
+        // Native SetActionPoints clamps positive AP gains. During NoApConsumed child
+        // attacks, Berserk can hit that cap before the salvo fee has been paid.
+        // Preserve only the clipped portion of these gains for fee settlement.
+        // SetActionPointsUnsafe does not clamp and must not contribute to this pool.
+        if (nativeClamps && requested > current && _transaction is { Cost: > 0 })
+        {
+            try
+            {
+                var template = actor.GetTemplate();
+                if (Native.Valid(template))
+                {
+                    int clipped = Fee.ClippedGain(current, requested, template.GetActionPoints());
+                    _clampedApGain = Fee.AccumulateClippedGain(_clampedApGain, clipped, _transaction.Cost);
+                }
+            }
+            catch (Exception e)
+            {
+                _log("Native AP cap unavailable for deferred refund: " + e.Message);
+            }
+        }
+
         int cost = CurrentNativeCost();
         if (cost <= 0) return;
-        int current = actor.GetActionPoints();
         int adjusted = Fee.SuppressNativeDebit(current, requested, cost);
         if (adjusted == requested) return;
         _log($"Suppressed native child AP debit: {current}->{requested} (child cost {cost}).");
@@ -605,12 +627,12 @@ internal sealed class Runtime : IVolleyPort, IDisposable
             if (charge && !suppressed && Native.Valid(actor))
             {
                 int before = actor!.GetActionPoints();
-                int after = Fee.After(before, cost);
+                int after = Fee.AfterPreservingClippedGains(before, cost, _clampedApGain);
                 actor.SetActionPoints(after, true);
                 actor.UpdateActorState();
                 actor.GetSkills().ScheduleUpdate();
                 actor.GetSkills().UiNeedsUpdate = true;
-                _log($"AP fee committed once: {before}->{actor.GetActionPoints()} (fee {cost}).");
+                _log($"AP fee committed once: {before}->{actor.GetActionPoints()} (fee {cost}, preserved clipped grants {_clampedApGain}).");
             }
 
             if (Native.Valid(actor))
@@ -638,7 +660,7 @@ internal sealed class Runtime : IVolleyPort, IDisposable
         {
             _transaction = null; _firingActor = null; _firingSquad = _firingLeader = null; _target = null;
             _suppressFee = false; _settling = false; _transactionIsAI = false; _childUsage = UsageParameter.Default;
-            _apDebitIntercepted = _apReconciled = false; _launchAp = _launchCost = 0;
+            _apDebitIntercepted = _apReconciled = false; _launchAp = _launchCost = _clampedApGain = 0;
             bool hadDeferredRoundCheck = _roundCheckDeferred;
             _roundCheckDeferred = false;
             if (TacticalManager.IsMissionRunning())
@@ -699,7 +721,7 @@ internal sealed class Runtime : IVolleyPort, IDisposable
         _squad = _leader = _firingSquad = _firingLeader = null;
         _target = null; _settling = _suppressFee = _transactionIsAI = _roundCheckDeferred = false;
         _childUsage = UsageParameter.Default;
-        _apDebitIntercepted = _apReconciled = false; _launchAp = _launchCost = 0;
+        _apDebitIntercepted = _apReconciled = false; _launchAp = _launchCost = _clampedApGain = 0;
         _readDepth = _nativeDepth = 0;
         Current = Decision.Deny("Select an infantry squad or enabled vehicle in a mission.");
         _nextRefresh = 0;
@@ -736,14 +758,14 @@ internal sealed class Runtime : IVolleyPort, IDisposable
         {
             var r = Instance;
             if (r == null) return;
-            try { r.InterceptActionPointWrite(__instance, ref __0); }
+            try { r.InterceptActionPointWrite(__instance, ref __0, nativeClamps: true); }
             catch (Exception e) { r.Fail(e); }
         }
         public static void SetActionPointsUnsafe(Actor __instance, ref int __0)
         {
             var r = Instance;
             if (r == null) return;
-            try { r.InterceptActionPointWrite(__instance, ref __0); }
+            try { r.InterceptActionPointWrite(__instance, ref __0, nativeClamps: false); }
             catch (Exception e) { r.Fail(e); }
         }
         public static void MinRange(Skill __instance, ref int __result)
