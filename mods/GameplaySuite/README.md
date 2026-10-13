@@ -1,4 +1,8 @@
-# MENACE Mods Unified Repository 0.32.2
+# MENACE Mods Unified Repository 0.32.3
+
+### 0.32.3 MEN-019 Berserk AP refund fix
+
+Coordinated Fire **1.6.8** preserves AP refunds that would otherwise be clipped before the combined salvo fee is charged. The recovered amount is bounded by that fee and works with sequential or synchronized player volleys. Other modules are unchanged. Source/model checks passed; live Windows MENACE gameplay validation remains pending. See issue #19.
 
 ### 0.32.2 MEN-004 debug-only ammo trace
 
