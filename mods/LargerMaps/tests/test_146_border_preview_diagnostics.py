@@ -13,10 +13,10 @@ MANIFEST = json.loads((ROOT/'modpack/LargerMaps/modpack.json').read_text())
 
 class PreviewGeometry147Tests(unittest.TestCase):
     def test_version_alignment(self):
-        self.assertEqual(MANIFEST['version'], '1.8')
-        self.assertIn('Version = "1.8"', SRC)
-        self.assertIn('<Version>1.8</Version>', (ROOT/'src/LargerMaps/LargerMaps.csproj').read_text())
-        self.assertIn('Larger Maps 1.8', (ROOT/'build-and-deploy.bat').read_text())
+        self.assertEqual(MANIFEST['version'], '1.9')
+        self.assertIn('Version = "1.9"', SRC)
+        self.assertIn('<Version>1.9</Version>', (ROOT/'src/LargerMaps/LargerMaps.csproj').read_text())
+        self.assertIn('Larger Maps 1.9', (ROOT/'build-and-deploy.bat').read_text())
 
     def test_only_native_border_short_axis_is_scaled_after_bounds_fix(self):
         body = (ROOT/'src/LargerMaps/ConservativeMissionAreas.cs').read_text()
