@@ -1,4 +1,11 @@
-# Overwatch 0.32.3.1
+# Overwatch 0.32.3.4
+
+## 0.32.3.4 (MEN-024) — hybrid weapon indirect-fire classification
+
+- Corrected indirect-fire eligibility to inspect the **selected attack skill's own tags**, plus the weapon's own direct tags, not tags inherited from other abilities granted by the same weapon.
+- The normal rifle salvo/sustained fire on the **K-PAC with Launcher** no longer inherits `INDIRECT_FIRE` from its underbarrel grenade; the grenade attack remains excluded from Overwatch.
+- All other range, AP, ammo, native action-trigger and reaction-queue rules are unchanged. No new default logs.
+- **Code/source-data check only:** Windows build and in-game test are still required. The ARC "Range" and PPP "CQB" reports are **not confirmed fixed** by this narrow change; MEN-024 stays open.
 
 ## Alpha 32.1 changes
 
