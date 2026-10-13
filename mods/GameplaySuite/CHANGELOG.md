@@ -1,3 +1,11 @@
+## Repository / Suite 0.33.3 — MEN-001 AI smoke frequency refinement (Smoke Overhaul 0.6.3)
+
+- Balance refinement following favorable 0.6.2 field testing: the mod's proactive AI throws now happen probabilistically.
+- Exactly one constant-time random roll per actor-turn **after** confirming a usable/affordable smoke skill and legal target: **Pinned Down 60%, Suppressed 45%, exposed flamethrower 30%**.
+- A failed roll spends no grenade or AP and leaves normal native AI in control. MENACE's own independent smoke can still occur, so percentages do not guarantee an overall throw rate.
+- Unchanged: native skill cooldown/charges, detected-enemy aiming, 24 known-opponent checks, six local target checks, no pathfinding, quiet runtime logging and Debug OFF.
+- Static test and installer validation planned; Windows compile and in-game rate/AI performance tests pending. Keep issue #1 open, PR #12 draft.
+
 ## Repository / Suite 0.33.2 — MEN-001 enemy-oriented smoke fix (unverified)
 
 - Field test of 0.6.1: smoke grenades are **used** by enemies, but often thrown in the wrong or opposite direction.

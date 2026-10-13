@@ -16,15 +16,15 @@ using Menace.ModpackLoader;
 using Menace.SDK;
 using UnityEngine;
 
-[assembly: AssemblyVersion("0.6.2.0")]
-[assembly: AssemblyFileVersion("0.6.2.0")]
+[assembly: AssemblyVersion("0.6.3.0")]
+[assembly: AssemblyFileVersion("0.6.3.0")]
 
 namespace SmokeOverhaul;
 
 public sealed class Plugin : IModpackPlugin
 {
     internal const string ModName = "Smoke Overhaul";
-    internal const string Version = "0.6.2";
+    internal const string Version = "0.6.3";
 
     private static MelonLogger.Instance? _log;
     private static readonly Dictionary<string, PatchedTemplate> PatchedTemplates = new(StringComparer.OrdinalIgnoreCase);
@@ -227,10 +227,10 @@ public sealed class Plugin : IModpackPlugin
         _smokeActedThisTurn.Clear();
         if (!string.Equals(sceneName, "Tactical", StringComparison.OrdinalIgnoreCase) &&
             RuntimeSettings.DebugLogging && _aiSmokeExecutions > 0)
-            DebugMsg($"AI smoke mission summary: execute={_aiSmokeExecutions}, pressure={_aiSmokeEligible}, skill={_aiSmokeSkillsAvailable}, target={_aiSmokeValidTargets}, used={_aiSmokeUsesSucceeded}.");
+            DebugMsg($"AI smoke mission summary: execute={_aiSmokeExecutions}, pressure={_aiSmokeEligible}, skill={_aiSmokeSkillsAvailable}, target={_aiSmokeValidTargets}, chanceSkipped={_aiSmokeChanceSkipped}, used={_aiSmokeUsesSucceeded}.");
         if (string.Equals(sceneName, "Tactical", StringComparison.OrdinalIgnoreCase))
         {
-            _aiSmokeExecutions = _aiSmokeEligible = _aiSmokeSkillsAvailable = _aiSmokeValidTargets = _aiSmokeUsesSucceeded = 0;
+            _aiSmokeExecutions = _aiSmokeEligible = _aiSmokeSkillsAvailable = _aiSmokeValidTargets = _aiSmokeChanceSkipped = _aiSmokeUsesSucceeded = 0;
             _aiSmokeDirectionDebugLines = 0;
         }
 
@@ -477,7 +477,8 @@ public sealed class Plugin : IModpackPlugin
         Line("Caliber smoke footprints: " + (RuntimeSettings.CaliberBasedSmokeFootprints ? "yes" : "no"));
         Line("AI smoke usage: " + (RuntimeSettings.EnableAISmokeUsage ? "yes" : "no"));
         Line("AI smoke direct rules: " + (RuntimeSettings.SimpleAISmokeRules ? "yes" : "no"));
-        Line($"AI actions / eligible / smoke skill / valid target / smoke thrown: {_aiSmokeExecutions} / {_aiSmokeEligible} / {_aiSmokeSkillsAvailable} / {_aiSmokeValidTargets} / {_aiSmokeUsesSucceeded}");
+        Line($"Proactive smoke chance per valid target: pinned {PinnedDownSmokeChancePercent}%, suppressed {SuppressedSmokeChancePercent}%, flamethrower {FlamethrowerSmokeChancePercent}%");
+        Line($"AI actions / eligible / smoke skill / valid target / chance skipped / smoke thrown: {_aiSmokeExecutions} / {_aiSmokeEligible} / {_aiSmokeSkillsAvailable} / {_aiSmokeValidTargets} / {_aiSmokeChanceSkipped} / {_aiSmokeUsesSucceeded}");
         Line("Fast AI smoke selection: " + (RuntimeSettings.FastAISmokeSelection ? "yes" : "no"));
         Line("Optimized native smoke AI profiles: " + OriginalSmokeAiPositioning.Count);
         Line("80mm mortar smoke granted: " + (_mediumMortarSmokeGrantedByUs ? "yes" : "no/already present"));
@@ -1254,10 +1255,15 @@ public sealed class Plugin : IModpackPlugin
     private static readonly HashSet<IntPtr> _smokeActedThisTurn = new();
     // Max known-opponent checks per eligible unit per turn. Avoid map-wide searches.
     private const int MaxSmokeThreatChecks = 24;
+    // Only our proactive AI throw gets randomized; native and player smoke don't.
+    private const int PinnedDownSmokeChancePercent = 60;
+    private const int SuppressedSmokeChancePercent = 45;
+    private const int FlamethrowerSmokeChancePercent = 30;
     private static int _aiSmokeExecutions;
     private static int _aiSmokeEligible;
     private static int _aiSmokeSkillsAvailable;
     private static int _aiSmokeValidTargets;
+    private static int _aiSmokeChanceSkipped;
     private static int _aiSmokeUsesSucceeded;
     private static int _aiSmokeDirectionDebugLines;
 
@@ -1404,6 +1410,19 @@ public sealed class Plugin : IModpackPlugin
                         continue;
 
                     _aiSmokeValidTargets++;
+
+                    // One constant-time roll per actor/turn, only after finding
+                    // an affordable smoke skill and a legal target. On rejection,
+                    // vanilla MENACE AI may proceed without spending smoke.
+                    int chancePercent = pinned ? PinnedDownSmokeChancePercent
+                        : suppressed ? SuppressedSmokeChancePercent
+                        : FlamethrowerSmokeChancePercent;
+                    if (global::System.Random.Shared.Next(100) >= chancePercent)
+                    {
+                        _aiSmokeChanceSkipped++;
+                        return false;
+                    }
+
                     if (!smoke.Use(target, UsageParameter.AutoAudioVolume))
                         return false;
 

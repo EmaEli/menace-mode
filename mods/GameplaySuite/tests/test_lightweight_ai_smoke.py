@@ -9,10 +9,10 @@ def between(a,b):
     return SRC.split(a,1)[1].split(b,1)[0]
 class SmokeRegression(unittest.TestCase):
     def test_versions(self):
-        self.assertIn('internal const string Version = "0.6.2"',SRC)
-        self.assertIn('AssemblyVersion("0.6.2.0")',SRC)
-        self.assertEqual(json.loads((ROOT/"packaging/standalone/SmokeOverhaul/modpack.json").read_text())["version"],"0.6.2")
-        self.assertEqual(json.loads((ROOT/"packaging/suite/MenaceGameplaySuite/modpack.json").read_text())["version"],"0.33.2")
+        self.assertIn('internal const string Version = "0.6.3"',SRC)
+        self.assertIn('AssemblyVersion("0.6.3.0")',SRC)
+        self.assertEqual(json.loads((ROOT/"packaging/standalone/SmokeOverhaul/modpack.json").read_text())["version"],"0.6.3")
+        self.assertEqual(json.loads((ROOT/"packaging/suite/MenaceGameplaySuite/modpack.json").read_text())["version"],"0.33.3")
     def test_pinned_ap_only_smoke(self):
         x=between("internal static void ApplyPinnedSmokeApCost(","// One emergency smoke decision")
         self.assertIn("GetSuppressionState() != SuppressionState.PinnedDown",x)
@@ -49,6 +49,20 @@ class SmokeRegression(unittest.TestCase):
         self.assertNotIn("actor.GetDirection()",SRC)
         self.assertIn("_smokeActedThisTurn.Remove(actor.Pointer)",SRC)
         self.assertIn('s.AddToggle("DebugLogging", "Debug logging", false)',SRC)
+    def test_chance_runs_once_after_native_legality_checks(self):
+        action = between("internal static bool TryAiSmokeAction(", "private static bool TryGetDetectedSmokeThreat(")
+        self.assertIn("PinnedDownSmokeChancePercent = 60", SRC)
+        self.assertIn("SuppressedSmokeChancePercent = 45", SRC)
+        self.assertIn("FlamethrowerSmokeChancePercent = 30", SRC)
+        self.assertIn("_aiSmokeChanceSkipped++", action)
+        self.assertEqual(action.count("Random.Shared.Next(100)"), 1)
+        self.assertLess(action.index("_smokeActedThisTurn.Add(actorKey)"), action.index("Random.Shared.Next(100)"))
+        self.assertLess(action.index("smoke.IsUsableOn(target, origin)"), action.index("Random.Shared.Next(100)"))
+        self.assertLess(action.index("Random.Shared.Next(100)"), action.index("smoke.Use(target, UsageParameter.AutoAudioVolume)"))
+        self.assertNotIn("new Random(", action)
+        for odds in (30,45,60):
+            self.assertEqual(sum(roll < odds for roll in range(100)), odds)
+
     def test_cleanup(self):
         self.assertIn("snapshot.Template.IsUsableWhilePinnedDown = snapshot.Original",SRC)
         self.assertIn("RestorePinnedSmokePermission();",SRC)

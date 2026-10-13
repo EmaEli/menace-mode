@@ -8,7 +8,7 @@ param(
     [string]$SourceCommit,
     [ValidateSet('SmokeOverhaul')]
     [string]$Component = 'SmokeOverhaul',
-    [string]$ExpectedVersion = '0.6.2',
+    [string]$ExpectedVersion = '0.6.3',
     [string]$GamePath = '',
     [switch]$BuildOnly
 )
@@ -114,7 +114,7 @@ try {
     $StartedTranscript = $true
     $ExpectedAssemblyVersion = $ExpectedVersion + '.0'
     Write-Host ''
-    Write-Host 'MEN-001: SMOKE OVERHAUL 0.6.2 - ONE-CLICK INSTALLER' -ForegroundColor Cyan
+    Write-Host 'MEN-001: SMOKE OVERHAUL 0.6.3 - ONE-CLICK INSTALLER' -ForegroundColor Cyan
     Write-Host "Persistent installer log: $Log"
     Write-Host "Pinned source commit: $SourceCommit"
     Write-Host 'Only Smoke Overhaul will be replaced; other Gameplay Suite DLLs and camera will be kept.'
@@ -290,7 +290,7 @@ try {
         }
         if (-not $TransactionCompleted) { throw 'Installation ended before transaction verification.' }
         Write-Host ''
-        Write-Host 'SUCCESS: Smoke Overhaul 0.6.2 was installed and verified.' -ForegroundColor Green
+        Write-Host 'SUCCESS: Smoke Overhaul 0.6.3 was installed and verified.' -ForegroundColor Green
         Write-Host ('Install target: ' + $(if ($InsideSuite) { 'Existing Gameplay Suite (Smoke DLL only)' } else { 'Standalone Smoke Overhaul modpack' }))
         Write-Host "Backup: $Backup"
         Write-Host "Installed assembly version: $ExpectedAssemblyVersion; SHA256: $ExpectedDllHash"

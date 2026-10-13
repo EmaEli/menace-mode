@@ -1,6 +1,8 @@
-# Smoke Overhaul 0.6.2
+# Smoke Overhaul 0.6.3
 
 Smoke Overhaul changes MENACE smoke from a hard line-of-sight wall into a longer-lasting soft obstruction and gives smoke-delivery systems distinct tactical footprints.
+
+**0.6.3 smoke frequency balancing (not yet Windows/in-game verified):** The mod's extra proactive AI action makes just **one random decision per unit per turn, after validating native smoke usability and a legal tile**: 60% while Pinned Down, 45% when Suppressed, 30% for a normal exposed flamethrower squad. If the roll fails, the smoke charge and AP remain untouched and native AI takes over. MENACE may still throw smoke on its own; these percentages are not hard limits on all possible throws. No new candidate scans, pathfinder, callbacks, settings, or per-action logging. Debug remains OFF.
 
 **0.6.2 smoke direction fix (pending in-game verification):** Enemy smoke no longer follows the unit's facing. For suppressed/pinned infantry, choose the last detected shooter if reasonably close, otherwise the nearest currently detected known opponent; flamethrower infantry use the nearest currently detected known opponent. Search at most 24 opponents and 6 locally valid smoke tiles, all nearer to the known enemy than the throwing unit. If no opponent is currently detected, do not force a guess (normal MENACE AI remains free to act). Does not look up invisible enemy locations; no pathfinding, global map scan or normal gameplay logs.
 

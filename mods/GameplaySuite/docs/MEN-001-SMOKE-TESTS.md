@@ -1,9 +1,10 @@
-# MEN-001 Smoke Overhaul 0.6.2 — targeted smoke in-game verification
+# MEN-001 Smoke Overhaul 0.6.3 — targeted smoke in-game verification
 
 Status: source patch only. No Windows build or gameplay verification yet.
 
-1. Install with the single MEN-001 one-click CMD while MENACE is closed; confirm compiled DLL AssemblyVersion 0.6.2.0 and rollback/backup paths.
+1. Install with the single MEN-001 one-click CMD while MENACE is closed; confirm compiled DLL AssemblyVersion 0.6.3.0 and rollback/backup paths.
 2. Keep EnableAISmokeUsage, SimpleAISmokeRules, AllowSmokeWhilePinnedDown enabled. DebugLogging OFF for normal play.
+2a. Repeated *valid* AI smoke opportunities should become unpredictable: pinned 60%, suppressed 45%, exposed flamethrower 30%. A rejected roll uses no AP or smoke charge. The percentage gates only this mod's proactive decision; vanilla AI may still throw independently.
 3. Position enemies at N/E/S/W and diagonals, including units facing AWAY from the player: every forced smoke landing tile should be closer to its chosen known enemy than the throwing unit. Verify recent detected attackers receive reasonable priority, but an unseen opponent is never targeted from hidden position.
 4. Test pirate infantry visibly Suppressed and Pinned Down with smoke equipment on free adjacent tiles. Watch actual smoke throw, remaining grenade charges and two-round AI cooldown.
 5. Test exposed AI flamethrower with known opponents: smoke 1–2 tiles toward a currently detected opponent; subsequent movement remains vanilla.

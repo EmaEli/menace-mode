@@ -1,6 +1,6 @@
 """MEN-001: deterministic smoke-direction geometry regression examples.
 
-This mirrors the six-candidate local filter in SmokeOverhaul 0.6.2.
+This mirrors the six-candidate local filter in SmokeOverhaul 0.6.3.
 It does not run MENACE or replace the Windows compilation/in-game test.
 """
 from pathlib import Path

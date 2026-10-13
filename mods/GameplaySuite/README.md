@@ -1,4 +1,8 @@
-# MENACE Mods Unified Repository 0.33.2
+# MENACE Mods Unified Repository 0.33.3
+
+### 0.33.3 MEN-001 stochastic smoke throws (not yet in-game verified)
+
+Smoke Overhaul **0.6.3** now gates its extra proactive AI smoke throw with **60% Pinned Down / 45% Suppressed / 30% exposed flamethrower**, only when an affordable native smoke skill and valid target exist. It rolls once per actor-turn and lets normal AI proceed if the roll fails. Native smoke decisions may still occur. No new performance-heavy searches or logging.
 
 ### 0.33.2 MEN-001 direction-aware defensive smoke (unverified)
 
