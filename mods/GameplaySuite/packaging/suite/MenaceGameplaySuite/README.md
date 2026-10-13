@@ -1,4 +1,8 @@
-# MENACE Gameplay Suite 0.32.2
+# MENACE Gameplay Suite 0.32.3
+
+### 0.32.3 MEN-019 Berserk AP refund fix
+
+Coordinated Fire **1.6.8** now preserves clamped Berserk AP gains until after the single combined salvo fee is charged. Both synchronized and sequential modes are covered. Other gameplay modules remain unchanged; Windows build and gameplay verification pending. See issue #19.
 
 ### 0.32.2 MEN-004 debug-only ammo trace
 
