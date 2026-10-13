@@ -18,7 +18,7 @@ namespace LargerMaps;
 public sealed partial class Plugin : IModpackPlugin
 {
     private const string ModName = "Larger Maps";
-    private const string Version = "1.8";
+    private const string Version = "1.9";
     private const int VanillaSize = 42;
     // The active map size is fixed once at startup, after the native backend is verified.
     // If fingerprint/instruction validation fails we deliberately retain safe 64x64.
@@ -232,6 +232,7 @@ public sealed partial class Plugin : IModpackPlugin
             settings.AddToggle("DiagnoseMissionAreas", "Log mission area coordinates before/after transformations (restart required)", false);
             settings.AddHeader("Simplified combat AI (large maps only; restart required)");
             settings.AddToggle("SimplifyCombatAIPlanning", "Stop attack AI searching future firing positions; keep attacks available (restart required)", true);
+            settings.AddToggle("PreserveBasicInfantryFirePositioning", "MEN-002 experiment: keep move-to-fire planning for five basic infantry guns (OFF; restart required)", false);
             settings.AddHeader("Local Tactical Routing (large maps only; restart required)");
             settings.AddToggle("UseLocalTacticalRouting", "Limit AI destination search on maps above 64x64 (restart required)", false);
             settings.AddSlider("LocalNearTileLimit", "Maximum nearby destinations inspected for AI movement", 12f, 64f, 20f);

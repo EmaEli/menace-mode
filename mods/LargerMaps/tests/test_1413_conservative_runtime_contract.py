@@ -16,7 +16,7 @@ class ConservativeRuntimeContractTest(unittest.TestCase):
         self.assertIn('string areaPrefix = nameof(Reference64MissionAreaAddToListPrefix);', PLUGIN)
         self.assertIn('useReference64Areas ? nameof(Reference64MissionAreaAddToListPostfix) : nameof(ConservativeLargeMissionAreaAddToListPostfix)',PLUGIN)
         self.assertIn('Reference64TryScaleMissionAreaRect',REFERENCE)
-        self.assertIn('Version = "1.8"',PLUGIN)
+        self.assertIn('Version = "1.9"',PLUGIN)
 
     def test_no_broad_objective_init_hooks_installed(self):
         install=PLUGIN.split('private static void InstallHooks(',1)[1].split('private static void PatchMethod(',1)[0]
@@ -57,9 +57,9 @@ class ConservativeRuntimeContractTest(unittest.TestCase):
 
     def test_version_consistency(self):
         meta=json.loads((ROOT/'modpack/LargerMaps/modpack.json').read_text())
-        self.assertEqual(meta['version'],'1.8')
-        self.assertIn('<Version>1.8</Version>',(ROOT/'src/LargerMaps/LargerMaps.csproj').read_text())
-        self.assertIn('Larger Maps 1.8',(ROOT/'build-and-deploy.bat').read_text())
+        self.assertEqual(meta['version'],'1.9')
+        self.assertIn('<Version>1.9</Version>',(ROOT/'src/LargerMaps/LargerMaps.csproj').read_text())
+        self.assertIn('Larger Maps 1.9',(ROOT/'build-and-deploy.bat').read_text())
 
     def test_pathfinder_and_profiler_not_modified(self):
         old=Path('/mnt/data/lm_work/v1412/LargerMaps-1.4.12-area-regression-diagnostic-authoring/src/LargerMaps')

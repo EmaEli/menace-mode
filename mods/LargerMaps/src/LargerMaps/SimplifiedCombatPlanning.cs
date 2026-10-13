@@ -22,6 +22,20 @@ public sealed partial class Plugin
     private static bool _combatPlanningActive;
     private static bool _combatPlanningWarned;
 
+    // MEN-002: allow a small, explicit set of common infantry firearms to retain
+    // native move-to-fire scoring while large-map speculative AI is simplified.
+    // Selection is per native AI profile pointer, not proxy wrapper or template.
+    // Default OFF: no extra path searches unless a player explicitly opts in.
+    private static readonly string[] CandidateInfantryFireSkills =
+    {
+        "active.fire_pirate_assault_rifle",
+        "active.fire_pirate_pdw",
+        "active.fire_pirate_outcast_pipe_gun",
+        "active.fire_assault_rifle_tier1_556",
+        "active.fire_battle_rifle_tier_1",
+    };
+    private static readonly HashSet<IntPtr> _preservedInfantryFireProfiles = new();
+
     private static bool SimplifiedCombatPlanningEnabled()
         => TargetSize > ZoneReferenceSize && ReadBool("SimplifyCombatAIPlanning", true);
 
@@ -40,6 +54,13 @@ public sealed partial class Plugin
                 CombatPlanningWarnOnce("skill-template API not found; vanilla AI retained");
                 return;
             }
+
+            // Resolve the supported ID loader once. Before changing ANY profile,
+            // optionally record the handful of native profiles to preserve.
+            // Doing this first also protects shared profiles across skills.
+            MethodInfo getById = FindSkillTemplateIdLookup(loader, skillTemplate);
+            if (ReadBool("PreserveBasicInfantryFirePositioning", false))
+                CollectPreservedInfantryFireProfiles(getById);
 
             // Try the game's full collection first. Some Il2CppInterop versions
             // expose GetAll<T> as a non-CLR IEnumerable that yields zero entries;
@@ -75,17 +96,6 @@ public sealed partial class Plugin
 
             if (attacks + buffs == 0)
             {
-                MethodInfo getById = null;
-                foreach (MethodInfo method in loader.GetMethods(BindingFlags.Public | BindingFlags.Static))
-                {
-                    if (method.Name != "Get" || !method.IsGenericMethodDefinition ||
-                        method.GetGenericArguments().Length != 1) continue;
-                    ParameterInfo[] parameters = method.GetParameters();
-                    if (parameters.Length == 2 && parameters[0].ParameterType == typeof(string) &&
-                        parameters[1].ParameterType == typeof(bool))
-                    { getById = method.MakeGenericMethod(skillTemplate); break; }
-                }
-
                 if (getById != null)
                 {
                     foreach (string id in KnownCombatSkillIds)
@@ -105,13 +115,71 @@ public sealed partial class Plugin
             _combatPlanningActive = true;
             _log.Msg($"{ModName}: simplified large-map combat planning: " +
                      $"{attacks} attack / {buffs} buff skills adjusted; " +
-                     $"enumerated={inspected}, ID-lookup hits={lookupHits}. " +
+                     $"enumerated={inspected}, ID-lookup hits={lookupHits}, " +
+                     $"infantry profiles retained={_preservedInfantryFireProfiles.Count}. " +
                      "Native pathfinding and player movement unchanged.");
         }
         catch (Exception ex)
         {
             RestoreSimplifiedCombatPlanning();
             CombatPlanningWarnOnce("combat AI setup failed (" + ex.GetType().Name + "); vanilla AI retained");
+        }
+    }
+
+    private static MethodInfo FindSkillTemplateIdLookup(Type loader, Type skillTemplate)
+    {
+        try
+        {
+            foreach (MethodInfo method in loader.GetMethods(BindingFlags.Public | BindingFlags.Static))
+            {
+                if (method.Name != "Get" || !method.IsGenericMethodDefinition ||
+                    method.GetGenericArguments().Length != 1) continue;
+                ParameterInfo[] parameters = method.GetParameters();
+                if (parameters.Length == 2 && parameters[0].ParameterType == typeof(string) &&
+                    parameters[1].ParameterType == typeof(bool))
+                    return method.MakeGenericMethod(skillTemplate);
+            }
+        }
+        catch { }
+        return null;
+    }
+
+    private static IntPtr NativeProfilePointer(object profile)
+    {
+        // IL2CPP proxies for the same native object may be distinct managed wrappers.
+        object value = GetMember(profile, "Pointer");
+        return value is IntPtr pointer ? pointer : IntPtr.Zero;
+    }
+
+    private static void CollectPreservedInfantryFireProfiles(MethodInfo getById)
+    {
+        if (getById == null)
+        {
+            CombatPlanningWarnOnce("no skill ID loader for optional infantry fire preservation");
+            return;
+        }
+
+        // Fixed five-template budget, once per tactical scene. No per-agent hooks,
+        // speculative map scans, or repeated path searches introduced by this mod.
+        foreach (string id in CandidateInfantryFireSkills)
+        {
+            try
+            {
+                object template = getById.Invoke(null, new object[] { id, false });
+                if (template == null ||
+                    !Convert.ToBoolean(GetMember(template, "IsAttack") ?? false) ||
+                    !Convert.ToBoolean(GetMember(template, "IsLineOfFireNeeded") ?? false))
+                    continue;
+
+                object profile = GetMember(template, "AIConfig");
+                if (profile == null ||
+                    !Convert.ToBoolean(GetMember(profile, "InfluencesPositioning") ?? false))
+                    continue;
+                IntPtr pointer = NativeProfilePointer(profile);
+                if (pointer != IntPtr.Zero)
+                    _preservedInfantryFireProfiles.Add(pointer);
+            }
+            catch { /* Missing/incompatible templates are skipped. */ }
         }
     }
 
@@ -141,6 +209,9 @@ public sealed partial class Plugin
         {
             config = GetMember(template, "AIConfig");
             if (config == null) return;
+            if (_preservedInfantryFireProfiles.Count > 0 &&
+                _preservedInfantryFireProfiles.Contains(NativeProfilePointer(config)))
+                return;
             object old = GetMember(config, "InfluencesPositioning");
             if (old == null || !Convert.ToBoolean(old)) return;
 
@@ -187,6 +258,7 @@ public sealed partial class Plugin
             catch { /* Never block tactical scene exit. */ }
         }
         _combatPlanningRestores.Clear();
+        _preservedInfantryFireProfiles.Clear();
         _combatPlanningActive = false;
     }
 

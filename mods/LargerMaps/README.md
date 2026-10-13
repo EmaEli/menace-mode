@@ -1,3 +1,21 @@
+## 1.9 one-click Windows installer (MEN-002)
+
+Download **[INSTALL-MEN002-ONECLICK.cmd](INSTALL-MEN002-ONECLICK.cmd)** from the PR branch and double-click it on the Windows game machine **with MENACE closed**. It downloads a **pinned public commit**, verifies the SHA-256 of the PowerShell installer, compiles Larger Maps 1.9 against the locally installed game, validates source/manifest/actual DLL assembly version, stages a test package, backs up the installed Larger Maps mod outside `Mods`, installs only that mod, then verifies the installed DLL hash. It attempts rollback on error, opens the persistent log in Notepad on failure, and leaves the console open. Requires network, PowerShell 5.1 and .NET SDK 6+.
+
+Persistent log: `%TEMP%\MEN002-LargerMaps-install.log`. Backups: `<MENACE>\_MENACE_Backups\MEN002`. Source commit pinned by launcher: `50f59ac8015010f11fd1c10e3f03a2437f576da3`.
+
+In **Mod Settings > Larger Maps**, test `SimplifyCombatAIPlanning=ON` with `PreserveBasicInfantryFirePositioning=ON` after a restart; compare with OFF as in [TEST-PLAN-1.9.md](TEST-PLAN-1.9.md). The experiment stays **OFF by default**. Windows execution/gameplay success remains **unverified** until tested.
+
+---
+
+## 1.9 — MEN-002 infantry cover-and-fire A/B experiment
+
+For maps above 64x64, enable **SimplifyCombatAIPlanning=ON** and optionally **PreserveBasicInfantryFirePositioning=ON** (default OFF; restart MENACE). The second toggle selectively retains MENACE's native move-to-fire positioning for **at most five small-arms AI profiles**, rather than re-enabling speculative planning for hundreds of skills. It leaves mortars, indirect-fire weapons, smoke AI, and the native pathfinder alone.
+
+The aim is to see if pirates/Rogue infantry seek firing angles more often without making AI turns slow. It does **not** wake sleeping AI or guarantee that a squad attacks; mission-specific sleep/zone logic is investigated separately in MEN-002/MEN-009. Run the same-save A/B test in [TEST-PLAN-1.9.md](TEST-PLAN-1.9.md), compare AI turn time and actual shots, and turn the feature OFF if it degrades performance. Windows build and in-game verification remain outstanding.
+
+---
+
 ## 1.8 - Up to 5x terrain stamp density (MEN-003 experiment)
 
 In **Mod Settings > Larger Maps** choose `IncreaseTerrainStampDensity=ON` and set `TerrainStampDensityMultiplier` from **1x to 5x** (default **1.5x**, feature toggle OFF for new installs). Restart the game to apply. On an existing install the saved toggle and multiplier remain as set by the user.
