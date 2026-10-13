@@ -1,7 +1,7 @@
 @echo off
 setlocal EnableExtensions DisableDelayedExpansion
 
-rem MEN-001 - One-click Smoke Overhaul 0.6.2 installer.
+rem MEN-001 - One-click Smoke Overhaul 0.6.3 installer.
 rem Installer hotfix: .csproj Version is read as XML, never matched against a stale literal.
 rem No ZIP copying. No live Mods changes before successful build and validation.
 rem The current Suite and MEN-006 camera are preserved; only Smoke is updated.
@@ -11,19 +11,19 @@ if /I not "%~1"=="--stay-open" (
     exit /b 0
 )
 
-set "PIN=9fc4fc7826224ff4f3216bc2d64c1559cc62ed5c"
-set "BOOTSTRAP_HASH=D2CCA3E533CD7E52A407C1EB7FC03602A29D806C17B84E08B10056D363EB79C5"
+set "PIN=e0715deb99e579346d9b1b6d711fbbf371199004"
+set "BOOTSTRAP_HASH=A23E98CBC1B76E85B2F8FD59F3ADDAFD91CE7EA8032FC03594375D1E73975A49"
 set "BOOTSTRAP=%TEMP%\MENACE-MEN001-Install-Component.ps1"
 set "LOG=%TEMP%\MENACE-MEN001-install.log"
-title MEN-001 Smoke Overhaul 0.6.2 - One Click
+title MEN-001 Smoke Overhaul 0.6.3 - One Click
 
->"%LOG%" echo MENACE MEN-001 Smoke Overhaul 0.6.2 installer
+>"%LOG%" echo MENACE MEN-001 Smoke Overhaul 0.6.3 installer
 >>"%LOG%" echo Pinned source commit: %PIN%
 >>"%LOG%" echo Bootstrap expected SHA256: %BOOTSTRAP_HASH%
 
 echo.
 echo ===============================================================
-echo   MEN-001 SMOKE OVERHAUL 0.6.2 - ONE CLICK INSTALLER
+echo   MEN-001 SMOKE OVERHAUL 0.6.3 - ONE CLICK INSTALLER
 echo   Installer hotfix: corrected project version validation
 echo ===============================================================
 echo.
@@ -42,13 +42,13 @@ if errorlevel 1 goto bootstrap_failed
 
 echo Verified installer. Compiling, backing up and deploying automatically...
 echo.
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%BOOTSTRAP%" -SourceCommit "%PIN%" -Component SmokeOverhaul -ExpectedVersion 0.6.2
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%BOOTSTRAP%" -SourceCommit "%PIN%" -Component SmokeOverhaul -ExpectedVersion 0.6.3
 set "RC=%ERRORLEVEL%"
 if not "%RC%"=="0" goto install_failed
 
 echo.
 echo ===============================================================
-echo   SUCCESS: Smoke Overhaul 0.6.2 installed and verified on disk.
+echo   SUCCESS: Smoke Overhaul 0.6.3 installed and verified on disk.
 echo ===============================================================
 echo.
 echo Log: "%LOG%"
