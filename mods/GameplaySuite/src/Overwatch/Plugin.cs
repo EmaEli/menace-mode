@@ -7,16 +7,16 @@ using MenaceModSuite.Shared;
 using UnityEngine;
 using Path = global::System.IO.Path;
 
-[assembly: AssemblyVersion("0.32.3.1")]
-[assembly: AssemblyFileVersion("0.32.3.1")]
-[assembly: AssemblyInformationalVersion("0.32.3.1")]
+[assembly: AssemblyVersion("0.32.3.4")]
+[assembly: AssemblyFileVersion("0.32.3.4")]
+[assembly: AssemblyInformationalVersion("0.32.3.4")]
 
 namespace MenaceOverwatch;
 
 public sealed class Plugin : IModpackPlugin
 {
     private const string SettingsGroup = "Overwatch";
-    private const string Version = "0.32.3.1";
+    private const string Version = "0.32.3.4";
     private Runtime? _runtime;
     private global::HarmonyLib.Harmony? _harmony;
     private MelonLogger.Instance? _logger;

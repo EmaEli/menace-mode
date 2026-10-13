@@ -199,15 +199,32 @@ internal static class Native
 
     public static bool IsIndirectFire(Skill skill)
     {
-        if (!Valid(skill)) return false;
+        if (!Valid(skill)) return true;
         try
         {
+            // Classify the attack being fired, not all attacks granted by its weapon.
+            // ItemTemplate.HasTag's default recursion makes a rifle with an underbarrel
+            // indirect-fire grenade appear indirect even when firing normal rifle rounds.
+            var attackTemplate = skill.GetTemplate();
+            if (!Valid(attackTemplate)) return true;
+            var tags = attackTemplate.Tags;
+            if (tags != null)
+            {
+                for (int i = 0; i < tags.Count; i++)
+                {
+                    var tag = tags[i];
+                    if (Valid(tag) && tag.TagType == TagType.INDIRECT_FIRE) return true;
+                }
+            }
+
+            // Preserve explicitly indirect item tags, without inheriting tags from
+            // sibling skills on hybrid weapons (second argument deliberately false).
             var item = skill.GetItem();
             if (!Valid(item)) return false;
-            var template = item.GetTemplate();
-            return Valid(template) && template.HasTag(TagType.INDIRECT_FIRE);
+            var itemTemplate = item.GetTemplate();
+            return Valid(itemTemplate) && itemTemplate.HasTag(TagType.INDIRECT_FIRE, false);
         }
-        catch { return false; }
+        catch { return true; } // Fail closed if native tag metadata is unavailable.
     }
 
     private static bool SupportedBase(Skill skill)
