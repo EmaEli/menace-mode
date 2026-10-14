@@ -55,9 +55,9 @@ class Behavior1410Tests(unittest.TestCase):
         def digest(relative):
             return hashlib.sha256((ROOT/relative).read_bytes()).hexdigest()
         self.assertEqual(digest('src/LargerMaps/ExtendedPathfinding.cs'),
-                         '79f12cfc7425b090e1e493b4d58b15155ba8245326dc440b7587c4eee8fa82b8')
+                         'e77b76734090a53094abc8b2cd329eb8fab07daab73e61ad8a962de11c9adfef')
         self.assertEqual(digest('tests/pathfinding-sites.json'),
-                         '8ac911e89f8f9bc1b746af0b50f839674dca530f8a7b1707b596483352456de6')
+                         'd4c3a952135a276a70be1218ec84a32e7eba8996afa8eef806ef8139259fee26')
         self.assertIn('PatchAiTaskLifetime(harmony);\n            PatchAiPerformance(harmony);', PLUGIN)
 
     def test_behavior_parser_old_and_new_lines(self):

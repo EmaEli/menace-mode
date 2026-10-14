@@ -35,7 +35,7 @@ class TestNativeAiCandidateLimits(unittest.TestCase):
     def test_prior_native_path_backend_exact(self):
         if REFERENCE.exists():
             self.assertEqual(NATIVE,REFERENCE.read_text())
-        self.assertIn('new(0x69C9AE, 2, "C1E106", 0x07, 0x07',NATIVE)
+        self.assertIn('new(NativeMethod.PathfindingProcessFindPath, 0x2FE, 2, "C1E106", 0x07, 0x07',NATIVE)
     def test_version(self):
         self.assertIn('private const string Version = "1.8";', PLUGIN)
         self.assertEqual(json.loads((ROOT/'modpack/LargerMaps/modpack.json').read_text())['version'],'1.8')

@@ -91,7 +91,7 @@ class SpawnAreaSafetyTests(unittest.TestCase):
         self.assertIn('Math.Clamp(snapped, 64, 96)',PLUGIN)
         self.assertIn('mapSize < 72 || mapSize > 96 || (mapSize % 8) != 0',NATIVE)
         self.assertIn('Purpose.EndsWith("-loop", StringComparison.Ordinal)',NATIVE)
-        self.assertIn('ExpectedGameAssemblySha256',NATIVE)
+        self.assertIn('SupportedBuilds',NATIVE)
         for size in SIZES[1:]:
             self.assertLess(size,128)
             self.assertEqual(size%8,0)

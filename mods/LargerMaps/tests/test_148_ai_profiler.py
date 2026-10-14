@@ -10,8 +10,8 @@ ROOT = Path(__file__).resolve().parents[1]
 PLUGIN = (ROOT / 'src/LargerMaps/Plugin.cs').read_text()
 PROF = (ROOT / 'src/LargerMaps/AIProfiling.cs').read_text()
 BASE_PLUGIN_HASH = '8d61e62c42db637f152314ee2a6f4ede5ed76baa8890dff6ba9dd15f2b5312bf'
-BASE_NATIVE_HASH = '79f12cfc7425b090e1e493b4d58b15155ba8245326dc440b7587c4eee8fa82b8'
-BASE_PATCH_MANIFEST_HASH = '8ac911e89f8f9bc1b746af0b50f839674dca530f8a7b1707b596483352456de6'
+BASE_NATIVE_HASH = 'e77b76734090a53094abc8b2cd329eb8fab07daab73e61ad8a962de11c9adfef'
+BASE_PATCH_MANIFEST_HASH = 'd4c3a952135a276a70be1218ec84a32e7eba8996afa8eef806ef8139259fee26'
 
 
 class AiProfiling148Tests(unittest.TestCase):

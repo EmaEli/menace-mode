@@ -12,7 +12,13 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 SRC = (ROOT / 'src/LargerMaps/ExtendedPathfinding.cs').read_text()
 PLUGIN = (ROOT / 'src/LargerMaps/Plugin.cs').read_text()
-PATCHES = json.loads((ROOT / 'tests/pathfinding-sites.json').read_text())['sites']
+MANIFEST = json.loads((ROOT / 'tests/pathfinding-sites.json').read_text())
+PATCHES = MANIFEST['sites']
+BUILD_0715 = next(b for b in MANIFEST['builds'] if b['game_version'] == 'v0.7.15+21883')
+
+
+def absolute_rva(site, build=BUILD_0715):
+    return int(build['method_rvas'][site['method']], 16) + int(site['delta'], 16)
 
 
 def clamp_reference_rect(rect, limit):
@@ -34,8 +40,8 @@ class MissionBounds147Tests(unittest.TestCase):
     def test_game_hardcoded_42_bounds_identified_and_patched(self):
         sites = {s['purpose']:s for s in PATCHES if s['purpose'].startswith('mission-bound-')}
         self.assertEqual(set(sites), {'mission-bound-width','mission-bound-height'})
-        self.assertEqual(int(sites['mission-bound-width']['rva'],16),0x5F61C2)
-        self.assertEqual(int(sites['mission-bound-height']['rva'],16),0x5F61CF)
+        self.assertEqual(absolute_rva(sites['mission-bound-width']),0x5F61C2)
+        self.assertEqual(absolute_rva(sites['mission-bound-height']),0x5F61CF)
         for name, site in sites.items():
             original = bytes.fromhex(site['expected_instruction_hex'])
             self.assertEqual(site['immediate_offset'],3)
@@ -66,7 +72,7 @@ class MissionBounds147Tests(unittest.TestCase):
         self.assertIn('native 64x64 pathfinding selected (no native byte patches)',PLUGIN)
 
     def test_existing_backend_fail_closed(self):
-        for term in ('SHA256.Create()', 'ExpectedGameAssemblySha256',
+        for term in ('SHA256.Create()', 'SupportedBuilds.FirstOrDefault(', 'if (build == null)',
                      'foreach (PatchSite site in Sites)', 'Environment.FailFast(',
                      'FlushInstructionCache(', 'VirtualProtect('):
             self.assertIn(term,SRC)

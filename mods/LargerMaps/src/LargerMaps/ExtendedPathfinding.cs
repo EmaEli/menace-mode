@@ -8,7 +8,8 @@ using System.Security.Cryptography;
 namespace LargerMaps;
 
 /// <summary>
-/// Version-locked, fail-closed native pathfinding adaptation for MENACE v0.7.15+21883.
+/// Version-locked, fail-closed native pathfinding adaptation for the MENACE builds listed in
+/// <see cref="SupportedBuilds"/> (v0.7.15+21883 and v0.7.16+22323).
 ///
 /// Only instruction IMMEDIATES are modified, in memory, before any tactical map is loaded:
 /// - MissionTemplate.GetBounds's fixed 42x42 clipping rectangle becomes active NxN
@@ -20,35 +21,80 @@ namespace LargerMaps;
 /// - both 4096-byte bitmap memset lengths updated to 16384
 ///
 /// Never patch game files on disk. All sites must match the exact original assembly.
-/// Different game versions or earlier patch/detour attempts force a 64x64 fallback.
+/// Unknown game builds or earlier patch/detour attempts force a 64x64 fallback.
 /// This is EXPERIMENTAL and still requires in-game A*/AI validation.
+///
+/// Each patched instruction is addressed as (native method, byte offset inside that method).
+/// A game update moves the methods but, so far, has not changed their bodies, so adding a build
+/// means adding one <see cref="GameBuild"/> row with the method RVAs from its IL2CPP dump after
+/// checking that every expected instruction is still at the same offset (see
+/// tests/test_extended_pathfinding.py with MENACE_GAMEASSEMBLY set).
 /// </summary>
 internal static class ExtendedPathfinding
 {
     internal const int InternalStride = 128;
-    private const string ExpectedGameAssemblySha256 = "877622dd02ed79f6a3a37580b5cd9be12e29012bbd6f15a9c80cf917af1373db";
     private const uint PageExecuteReadWrite = 0x40;
+
+    private enum NativeMethod
+    {
+        MissionTemplateGetBounds,
+        PathfindingProcessCtor,
+        PathfindingProcessInit,
+        PathfindingManagerInit,
+        PathfindingProcessFindPath,
+        PathfindingProcessProcessNode,
+        PathfindingProcessClear,
+    }
+
+    /// <summary>One supported GameAssembly.dll: its on-disk SHA-256 and the RVA of each patched method.</summary>
+    private sealed class GameBuild
+    {
+        internal readonly string Version;
+        internal readonly string Sha256;
+        private readonly int[] _methodRvas;
+
+        internal GameBuild(string version, string sha256,
+            int missionTemplateGetBounds, int pathfindingProcessCtor, int pathfindingProcessInit,
+            int pathfindingManagerInit, int pathfindingProcessFindPath, int pathfindingProcessProcessNode,
+            int pathfindingProcessClear)
+        {
+            Version = version;
+            Sha256 = sha256;
+            _methodRvas = new[]
+            {
+                missionTemplateGetBounds, pathfindingProcessCtor, pathfindingProcessInit,
+                pathfindingManagerInit, pathfindingProcessFindPath, pathfindingProcessProcessNode,
+                pathfindingProcessClear,
+            };
+        }
+
+        internal int Rva(NativeMethod method) => _methodRvas[(int)method];
+    }
 
     private sealed class PatchSite
     {
-        internal readonly int Rva;
+        internal readonly NativeMethod Method;
+        internal readonly int Delta;
         internal readonly int Offset;
         internal readonly byte[] Original;
         internal readonly byte Value80;
         internal readonly byte Value96;
         internal readonly string Purpose;
 
-        internal PatchSite(int rva, int offset, string originalHex, byte value80, byte value96, string purpose)
+        internal PatchSite(NativeMethod method, int delta, int offset, string originalHex, byte value80, byte value96, string purpose)
         {
-            Rva = rva;
+            Method = method;
+            Delta = delta;
             Offset = offset;
             Original = Convert.FromHexString(originalHex);
             Value80 = value80;
             Value96 = value96;
             Purpose = purpose;
-            if (Offset < 0 || Offset >= Original.Length)
+            if (Delta < 0 || Offset < 0 || Offset >= Original.Length)
                 throw new ArgumentException("Invalid native byte patch descriptor for " + purpose);
         }
+
+        internal int Rva(GameBuild build) => build.Rva(Method) + Delta;
 
         internal byte ForMap(int size) => (Purpose.EndsWith("-loop", StringComparison.Ordinal) ||
             Purpose.StartsWith("mission-bound-", StringComparison.Ordinal))
@@ -56,8 +102,18 @@ internal static class ExtendedPathfinding
             : Value80;
     }
 
-    // RVA values are offsets from the loaded GameAssembly.dll module base, not file offsets.
-    // These original instructions were extracted and checked against the supplied binary.
+    // Method RVAs come from the IL2CPP dump of each build (offsets from the loaded
+    // GameAssembly.dll module base, not file offsets). Order follows NativeMethod.
+    private static readonly GameBuild[] SupportedBuilds =
+    {
+        new("v0.7.15+21883", "877622dd02ed79f6a3a37580b5cd9be12e29012bbd6f15a9c80cf917af1373db",
+            0x5F61C0, 0x69EED0, 0x69E210, 0x69BE30, 0x69C6B0, 0x69E840, 0x69C300),
+        new("v0.7.16+22323", "bd2266957504db63dbf6fbef63e2e0f53085e9f0cc17e2d2dd3352d04e960b32",
+            0x60F630, 0x6B1B00, 0x6B0E40, 0x6AEA60, 0x6AF2E0, 0x6B1470, 0x6AEF30),
+    };
+
+    // Each site is (method, byte offset inside the method). The original instructions were
+    // extracted from the v0.7.15 binary and re-verified byte for byte in v0.7.16.
     private static readonly PatchSite[] Sites =
     {
         // MissionTemplate.GetBounds returns (0,0,42,42) with two literal
@@ -65,33 +121,37 @@ internal static class ExtendedPathfinding
         // this 42x42 rectangle EVEN AFTER the blueprint has grown to 96.
         // The two checked bytes must change atomically with pathfinding.
         // This preserves 64x64 as-is (TryInstall is only called for >64).
-        new(0x5F61C2, 3, "C741082A000000", 0x50, 0x60, "mission-bound-width"),
-        new(0x5F61CF, 3, "C7410C2A000000", 0x50, 0x60, "mission-bound-height"),
-        new(0x69EF4E, 2, "BA00080000", 0x40, 0x40, "queue-capacity"),
-        new(0x69EFE3, 2, "B900100000", 0x40, 0x40, "closed-buffer-allocation"),
-        new(0x69F003, 5, "48C744242040000000", 0x80, 0x80, "node-grid-dim-x"),
-        new(0x69F00C, 5, "48C744242840000000", 0x80, 0x80, "node-grid-dim-z"),
-        new(0x69F074, 2, "83FB40", 0x50, 0x60, "ctor-inner-loop"),
-        new(0x69F07B, 2, "83FD40", 0x50, 0x60, "ctor-outer-loop"),
-        new(0x69E2DA, 2, "83FB40", 0x50, 0x60, "process-init-inner-loop"),
-        new(0x69E2E5, 2, "83FF40", 0x50, 0x60, "process-init-outer-loop"),
-        new(0x69BF2A, 2, "83FB40", 0x50, 0x60, "manager-init-inner-loop"),
-        new(0x69BF35, 2, "83FE40", 0x50, 0x60, "manager-init-outer-loop"),
-        new(0x69C341, 2, "BA00100000", 0x40, 0x40, "closed-buffer-clear"),
-        new(0x69C7AD, 2, "BA00100000", 0x40, 0x40, "findpath-buffer-clear"),
-        new(0x69C9AE, 2, "C1E106", 0x07, 0x07, "stride-disasm_findpath"),
-        new(0x69CA35, 2, "C1E006", 0x07, 0x07, "stride-disasm_findpath"),
-        new(0x69CC4E, 2, "C1E006", 0x07, 0x07, "stride-disasm_findpath"),
-        new(0x69D1DF, 2, "C1E006", 0x07, 0x07, "stride-disasm_findpath"),
-        new(0x69D618, 2, "C1E006", 0x07, 0x07, "stride-disasm_findpath"),
-        new(0x69D7A3, 2, "C1E006", 0x07, 0x07, "stride-disasm_findpath"),
-        new(0x69DBD7, 2, "C1E006", 0x07, 0x07, "stride-disasm_findpath"),
-        new(0x69DC5E, 2, "C1E006", 0x07, 0x07, "stride-disasm_findpath"),
-        new(0x69DCE7, 2, "C1E006", 0x07, 0x07, "stride-disasm_findpath"),
-        new(0x69DD6D, 2, "C1E006", 0x07, 0x07, "stride-disasm_findpath"),
-        new(0x69DDF6, 2, "C1E006", 0x07, 0x07, "stride-disasm_findpath"),
-        new(0x69EEA5, 2, "C1E006", 0x07, 0x07, "stride-disasm_processnode"),
+        new(NativeMethod.MissionTemplateGetBounds, 0x002, 3, "C741082A000000", 0x50, 0x60, "mission-bound-width"),
+        new(NativeMethod.MissionTemplateGetBounds, 0x00F, 3, "C7410C2A000000", 0x50, 0x60, "mission-bound-height"),
+        new(NativeMethod.PathfindingProcessCtor, 0x07E, 2, "BA00080000", 0x40, 0x40, "queue-capacity"),
+        new(NativeMethod.PathfindingProcessCtor, 0x113, 2, "B900100000", 0x40, 0x40, "closed-buffer-allocation"),
+        new(NativeMethod.PathfindingProcessCtor, 0x133, 5, "48C744242040000000", 0x80, 0x80, "node-grid-dim-x"),
+        new(NativeMethod.PathfindingProcessCtor, 0x13C, 5, "48C744242840000000", 0x80, 0x80, "node-grid-dim-z"),
+        new(NativeMethod.PathfindingProcessCtor, 0x1A4, 2, "83FB40", 0x50, 0x60, "ctor-inner-loop"),
+        new(NativeMethod.PathfindingProcessCtor, 0x1AB, 2, "83FD40", 0x50, 0x60, "ctor-outer-loop"),
+        new(NativeMethod.PathfindingProcessInit, 0x0CA, 2, "83FB40", 0x50, 0x60, "process-init-inner-loop"),
+        new(NativeMethod.PathfindingProcessInit, 0x0D5, 2, "83FF40", 0x50, 0x60, "process-init-outer-loop"),
+        new(NativeMethod.PathfindingManagerInit, 0x0FA, 2, "83FB40", 0x50, 0x60, "manager-init-inner-loop"),
+        new(NativeMethod.PathfindingManagerInit, 0x105, 2, "83FE40", 0x50, 0x60, "manager-init-outer-loop"),
+        new(NativeMethod.PathfindingProcessClear, 0x041, 2, "BA00100000", 0x40, 0x40, "closed-buffer-clear"),
+        new(NativeMethod.PathfindingProcessFindPath, 0x0FD, 2, "BA00100000", 0x40, 0x40, "findpath-buffer-clear"),
+        new(NativeMethod.PathfindingProcessFindPath, 0x2FE, 2, "C1E106", 0x07, 0x07, "stride-disasm_findpath"),
+        new(NativeMethod.PathfindingProcessFindPath, 0x385, 2, "C1E006", 0x07, 0x07, "stride-disasm_findpath"),
+        new(NativeMethod.PathfindingProcessFindPath, 0x59E, 2, "C1E006", 0x07, 0x07, "stride-disasm_findpath"),
+        new(NativeMethod.PathfindingProcessFindPath, 0xB2F, 2, "C1E006", 0x07, 0x07, "stride-disasm_findpath"),
+        new(NativeMethod.PathfindingProcessFindPath, 0xF68, 2, "C1E006", 0x07, 0x07, "stride-disasm_findpath"),
+        new(NativeMethod.PathfindingProcessFindPath, 0x10F3, 2, "C1E006", 0x07, 0x07, "stride-disasm_findpath"),
+        new(NativeMethod.PathfindingProcessFindPath, 0x1527, 2, "C1E006", 0x07, 0x07, "stride-disasm_findpath"),
+        new(NativeMethod.PathfindingProcessFindPath, 0x15AE, 2, "C1E006", 0x07, 0x07, "stride-disasm_findpath"),
+        new(NativeMethod.PathfindingProcessFindPath, 0x1637, 2, "C1E006", 0x07, 0x07, "stride-disasm_findpath"),
+        new(NativeMethod.PathfindingProcessFindPath, 0x16BD, 2, "C1E006", 0x07, 0x07, "stride-disasm_findpath"),
+        new(NativeMethod.PathfindingProcessFindPath, 0x1746, 2, "C1E006", 0x07, 0x07, "stride-disasm_findpath"),
+        new(NativeMethod.PathfindingProcessProcessNode, 0x665, 2, "C1E006", 0x07, 0x07, "stride-disasm_processnode"),
     };
+
+    /// <summary>Game build matched by the current install, for log/diagnostic output. Null until
+    /// <see cref="TryInstall"/> has identified the on-disk GameAssembly.dll.</summary>
+    internal static string MatchedGameVersion { get; private set; }
 
     // Do not install more than once in the process, or change native dimensions mid-session.
     private static bool _installAttempted;
@@ -136,11 +196,14 @@ internal static class ExtendedPathfinding
             using (var stream = File.OpenRead(gameAssemblyPath))
             using (var hasher = SHA256.Create())
                 sha = Convert.ToHexString(hasher.ComputeHash(stream)).ToLowerInvariant();
-            if (!string.Equals(sha, ExpectedGameAssemblySha256, StringComparison.Ordinal))
+            GameBuild build = SupportedBuilds.FirstOrDefault(b => string.Equals(sha, b.Sha256, StringComparison.Ordinal));
+            if (build == null)
             {
-                reason = "GameAssembly.dll SHA-256 mismatch (game update or different build)";
+                reason = "GameAssembly.dll SHA-256 " + sha.Substring(0, 12) + " is not a supported build (game update or different build); supported: "
+                    + string.Join(", ", SupportedBuilds.Select(b => b.Version));
                 return false;
             }
+            MatchedGameVersion = build.Version;
 
             IntPtr module = GetModuleHandleW("GameAssembly.dll");
             if (module == IntPtr.Zero)
@@ -153,20 +216,20 @@ internal static class ExtendedPathfinding
             // already hooked or patched these bytes causes a safe fallback instead.
             foreach (PatchSite site in Sites)
             {
-                IntPtr at = IntPtr.Add(module, site.Rva);
+                IntPtr at = IntPtr.Add(module, site.Rva(build));
                 for (int i = 0; i < site.Original.Length; ++i)
                 {
                     if (Marshal.ReadByte(at, i) != site.Original[i])
                     {
                         reason = "native instruction conflict at " + site.Purpose
-                            + " (RVA 0x" + site.Rva.ToString("X") + ")";
+                            + " (RVA 0x" + site.Rva(build).ToString("X") + ", " + build.Version + ")";
                         return false;
                     }
                 }
             }
 
-            int lowestRva = Sites.Min(s => s.Rva);
-            int exclusiveEndRva = Sites.Max(s => s.Rva + s.Original.Length);
+            int lowestRva = Sites.Min(s => s.Rva(build));
+            int exclusiveEndRva = Sites.Max(s => s.Rva(build) + s.Original.Length);
             IntPtr span = IntPtr.Add(module, lowestRva);
             uint sizeBytes = checked((uint)(exclusiveEndRva - lowestRva));
             if (!VirtualProtect(span, new UIntPtr(sizeBytes), PageExecuteReadWrite, out uint originalProtection))
@@ -182,10 +245,10 @@ internal static class ExtendedPathfinding
             try
             {
                 foreach (PatchSite site in Sites)
-                    Marshal.WriteByte(IntPtr.Add(module, site.Rva), site.Offset, site.ForMap(mapSize));
+                    Marshal.WriteByte(IntPtr.Add(module, site.Rva(build)), site.Offset, site.ForMap(mapSize));
 
                 writeOk = Sites.All(s =>
-                    Marshal.ReadByte(IntPtr.Add(module, s.Rva), s.Offset) == s.ForMap(mapSize));
+                    Marshal.ReadByte(IntPtr.Add(module, s.Rva(build)), s.Offset) == s.ForMap(mapSize));
             }
             catch (Exception ex)
             {
@@ -201,7 +264,7 @@ internal static class ExtendedPathfinding
                 {
                     foreach (PatchSite site in Sites)
                     {
-                        try { Marshal.WriteByte(IntPtr.Add(module, site.Rva), site.Offset, site.Original[site.Offset]); }
+                        try { Marshal.WriteByte(IntPtr.Add(module, site.Rva(build)), site.Offset, site.Original[site.Offset]); }
                         catch { /* full rollback verification is immediately below */ }
                     }
                 }
@@ -216,7 +279,7 @@ internal static class ExtendedPathfinding
             {
                 bool fullyRolledBack = Sites.All(site =>
                 {
-                    IntPtr at = IntPtr.Add(module, site.Rva);
+                    IntPtr at = IntPtr.Add(module, site.Rva(build));
                     for (int i = 0; i < site.Original.Length; ++i)
                         if (Marshal.ReadByte(at, i) != site.Original[i]) return false;
                     return true;
@@ -228,7 +291,7 @@ internal static class ExtendedPathfinding
                 return false;
             }
 
-            reason = "installed " + Sites.Length + " verified native byte edits (including MissionTemplate.GetBounds NxN)";
+            reason = "installed " + Sites.Length + " verified native byte edits for " + build.Version + " (including MissionTemplate.GetBounds NxN)";
             return true;
         }
         catch (Exception ex)

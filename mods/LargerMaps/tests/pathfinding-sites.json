@@ -1,6 +1,32 @@
 {
-  "expected_sha256": "877622dd02ed79f6a3a37580b5cd9be12e29012bbd6f15a9c80cf917af1373db",
-  "game_version": "v0.7.15+21883",
+  "builds": [
+    {
+      "game_version": "v0.7.15+21883",
+      "sha256": "877622dd02ed79f6a3a37580b5cd9be12e29012bbd6f15a9c80cf917af1373db",
+      "method_rvas": {
+        "MissionTemplateGetBounds": "0x5f61c0",
+        "PathfindingProcessCtor": "0x69eed0",
+        "PathfindingProcessInit": "0x69e210",
+        "PathfindingManagerInit": "0x69be30",
+        "PathfindingProcessFindPath": "0x69c6b0",
+        "PathfindingProcessProcessNode": "0x69e840",
+        "PathfindingProcessClear": "0x69c300"
+      }
+    },
+    {
+      "game_version": "v0.7.16+22323",
+      "sha256": "bd2266957504db63dbf6fbef63e2e0f53085e9f0cc17e2d2dd3352d04e960b32",
+      "method_rvas": {
+        "MissionTemplateGetBounds": "0x60f630",
+        "PathfindingProcessCtor": "0x6b1b00",
+        "PathfindingProcessInit": "0x6b0e40",
+        "PathfindingManagerInit": "0x6aea60",
+        "PathfindingProcessFindPath": "0x6af2e0",
+        "PathfindingProcessProcessNode": "0x6b1470",
+        "PathfindingProcessClear": "0x6aef30"
+      }
+    }
+  ],
   "internal_stride": 128,
   "supported_map_sizes": [
     64,
@@ -12,7 +38,8 @@
   "sites": [
     {
       "purpose": "mission-bound-width",
-      "rva": "0x5f61c2",
+      "method": "MissionTemplateGetBounds",
+      "delta": "0x002",
       "expected_instruction_hex": "C741082A000000",
       "immediate_offset": 3,
       "replacement_80": "0x50",
@@ -20,7 +47,8 @@
     },
     {
       "purpose": "mission-bound-height",
-      "rva": "0x5f61cf",
+      "method": "MissionTemplateGetBounds",
+      "delta": "0x00f",
       "expected_instruction_hex": "C7410C2A000000",
       "immediate_offset": 3,
       "replacement_80": "0x50",
@@ -28,7 +56,8 @@
     },
     {
       "purpose": "queue-capacity",
-      "rva": "0x69ef4e",
+      "method": "PathfindingProcessCtor",
+      "delta": "0x07e",
       "expected_instruction_hex": "BA00080000",
       "immediate_offset": 2,
       "replacement_80": "0x40",
@@ -36,7 +65,8 @@
     },
     {
       "purpose": "closed-buffer-allocation",
-      "rva": "0x69efe3",
+      "method": "PathfindingProcessCtor",
+      "delta": "0x113",
       "expected_instruction_hex": "B900100000",
       "immediate_offset": 2,
       "replacement_80": "0x40",
@@ -44,7 +74,8 @@
     },
     {
       "purpose": "node-grid-dim-x",
-      "rva": "0x69f003",
+      "method": "PathfindingProcessCtor",
+      "delta": "0x133",
       "expected_instruction_hex": "48C744242040000000",
       "immediate_offset": 5,
       "replacement_80": "0x80",
@@ -52,7 +83,8 @@
     },
     {
       "purpose": "node-grid-dim-z",
-      "rva": "0x69f00c",
+      "method": "PathfindingProcessCtor",
+      "delta": "0x13c",
       "expected_instruction_hex": "48C744242840000000",
       "immediate_offset": 5,
       "replacement_80": "0x80",
@@ -60,7 +92,8 @@
     },
     {
       "purpose": "ctor-inner-loop",
-      "rva": "0x69f074",
+      "method": "PathfindingProcessCtor",
+      "delta": "0x1a4",
       "expected_instruction_hex": "83FB40",
       "immediate_offset": 2,
       "replacement_80": "0x50",
@@ -68,7 +101,8 @@
     },
     {
       "purpose": "ctor-outer-loop",
-      "rva": "0x69f07b",
+      "method": "PathfindingProcessCtor",
+      "delta": "0x1ab",
       "expected_instruction_hex": "83FD40",
       "immediate_offset": 2,
       "replacement_80": "0x50",
@@ -76,7 +110,8 @@
     },
     {
       "purpose": "process-init-inner-loop",
-      "rva": "0x69e2da",
+      "method": "PathfindingProcessInit",
+      "delta": "0x0ca",
       "expected_instruction_hex": "83FB40",
       "immediate_offset": 2,
       "replacement_80": "0x50",
@@ -84,7 +119,8 @@
     },
     {
       "purpose": "process-init-outer-loop",
-      "rva": "0x69e2e5",
+      "method": "PathfindingProcessInit",
+      "delta": "0x0d5",
       "expected_instruction_hex": "83FF40",
       "immediate_offset": 2,
       "replacement_80": "0x50",
@@ -92,7 +128,8 @@
     },
     {
       "purpose": "manager-init-inner-loop",
-      "rva": "0x69bf2a",
+      "method": "PathfindingManagerInit",
+      "delta": "0x0fa",
       "expected_instruction_hex": "83FB40",
       "immediate_offset": 2,
       "replacement_80": "0x50",
@@ -100,7 +137,8 @@
     },
     {
       "purpose": "manager-init-outer-loop",
-      "rva": "0x69bf35",
+      "method": "PathfindingManagerInit",
+      "delta": "0x105",
       "expected_instruction_hex": "83FE40",
       "immediate_offset": 2,
       "replacement_80": "0x50",
@@ -108,7 +146,8 @@
     },
     {
       "purpose": "closed-buffer-clear",
-      "rva": "0x69c341",
+      "method": "PathfindingProcessClear",
+      "delta": "0x041",
       "expected_instruction_hex": "BA00100000",
       "immediate_offset": 2,
       "replacement_80": "0x40",
@@ -116,7 +155,8 @@
     },
     {
       "purpose": "findpath-buffer-clear",
-      "rva": "0x69c7ad",
+      "method": "PathfindingProcessFindPath",
+      "delta": "0x0fd",
       "expected_instruction_hex": "BA00100000",
       "immediate_offset": 2,
       "replacement_80": "0x40",
@@ -124,99 +164,111 @@
     },
     {
       "purpose": "stride-disasm_findpath",
-      "rva": "0x69c9ae",
+      "method": "PathfindingProcessFindPath",
+      "delta": "0x2fe",
       "expected_instruction_hex": "C1E106",
       "immediate_offset": 2,
-      "replacement_80": "0x7",
-      "replacement_96": "0x7"
+      "replacement_80": "0x07",
+      "replacement_96": "0x07"
     },
     {
       "purpose": "stride-disasm_findpath",
-      "rva": "0x69ca35",
+      "method": "PathfindingProcessFindPath",
+      "delta": "0x385",
       "expected_instruction_hex": "C1E006",
       "immediate_offset": 2,
-      "replacement_80": "0x7",
-      "replacement_96": "0x7"
+      "replacement_80": "0x07",
+      "replacement_96": "0x07"
     },
     {
       "purpose": "stride-disasm_findpath",
-      "rva": "0x69cc4e",
+      "method": "PathfindingProcessFindPath",
+      "delta": "0x59e",
       "expected_instruction_hex": "C1E006",
       "immediate_offset": 2,
-      "replacement_80": "0x7",
-      "replacement_96": "0x7"
+      "replacement_80": "0x07",
+      "replacement_96": "0x07"
     },
     {
       "purpose": "stride-disasm_findpath",
-      "rva": "0x69d1df",
+      "method": "PathfindingProcessFindPath",
+      "delta": "0xb2f",
       "expected_instruction_hex": "C1E006",
       "immediate_offset": 2,
-      "replacement_80": "0x7",
-      "replacement_96": "0x7"
+      "replacement_80": "0x07",
+      "replacement_96": "0x07"
     },
     {
       "purpose": "stride-disasm_findpath",
-      "rva": "0x69d618",
+      "method": "PathfindingProcessFindPath",
+      "delta": "0xf68",
       "expected_instruction_hex": "C1E006",
       "immediate_offset": 2,
-      "replacement_80": "0x7",
-      "replacement_96": "0x7"
+      "replacement_80": "0x07",
+      "replacement_96": "0x07"
     },
     {
       "purpose": "stride-disasm_findpath",
-      "rva": "0x69d7a3",
+      "method": "PathfindingProcessFindPath",
+      "delta": "0x10f3",
       "expected_instruction_hex": "C1E006",
       "immediate_offset": 2,
-      "replacement_80": "0x7",
-      "replacement_96": "0x7"
+      "replacement_80": "0x07",
+      "replacement_96": "0x07"
     },
     {
       "purpose": "stride-disasm_findpath",
-      "rva": "0x69dbd7",
+      "method": "PathfindingProcessFindPath",
+      "delta": "0x1527",
       "expected_instruction_hex": "C1E006",
       "immediate_offset": 2,
-      "replacement_80": "0x7",
-      "replacement_96": "0x7"
+      "replacement_80": "0x07",
+      "replacement_96": "0x07"
     },
     {
       "purpose": "stride-disasm_findpath",
-      "rva": "0x69dc5e",
+      "method": "PathfindingProcessFindPath",
+      "delta": "0x15ae",
       "expected_instruction_hex": "C1E006",
       "immediate_offset": 2,
-      "replacement_80": "0x7",
-      "replacement_96": "0x7"
+      "replacement_80": "0x07",
+      "replacement_96": "0x07"
     },
     {
       "purpose": "stride-disasm_findpath",
-      "rva": "0x69dce7",
+      "method": "PathfindingProcessFindPath",
+      "delta": "0x1637",
       "expected_instruction_hex": "C1E006",
       "immediate_offset": 2,
-      "replacement_80": "0x7",
-      "replacement_96": "0x7"
+      "replacement_80": "0x07",
+      "replacement_96": "0x07"
     },
     {
       "purpose": "stride-disasm_findpath",
-      "rva": "0x69dd6d",
+      "method": "PathfindingProcessFindPath",
+      "delta": "0x16bd",
       "expected_instruction_hex": "C1E006",
       "immediate_offset": 2,
-      "replacement_80": "0x7",
-      "replacement_96": "0x7"
+      "replacement_80": "0x07",
+      "replacement_96": "0x07"
     },
     {
       "purpose": "stride-disasm_findpath",
-      "rva": "0x69ddf6",
+      "method": "PathfindingProcessFindPath",
+      "delta": "0x1746",
       "expected_instruction_hex": "C1E006",
       "immediate_offset": 2,
-      "replacement_80": "0x7",
-      "replacement_96": "0x7"
+      "replacement_80": "0x07",
+      "replacement_96": "0x07"
     },
     {
       "purpose": "stride-disasm_processnode",
-      "rva": "0x69eea5",
+      "method": "PathfindingProcessProcessNode",
+      "delta": "0x665",
       "expected_instruction_hex": "C1E006",
       "immediate_offset": 2,
-      "replacement_80": "0x7",
-      "replacement_96": "0x7"
+      "replacement_80": "0x07",
+      "replacement_96": "0x07"
     }
   ]
 }
