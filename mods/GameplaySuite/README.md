@@ -2,11 +2,11 @@
 
 ### 0.32.5 MENACE 0.7.16 compatibility (Field Logistics)
 
-Field Logistics **1.0.7** restores `Resupply Infantry` and `Redistribute Ammo` on MENACE v0.7.16, which removed the skill template both were cloned from. The clones now derive from `active.rogue_officer_whistle` with the Refill Ammo behavior re-applied by the manifest, and all suite `EntityTemplate.Skills` patches use `$append` so the grenade skills 0.7.16 adds to player squads are kept. Other modules are unchanged. Live MENACE validation pending. See issue #41.
+Field Logistics **1.0.7** restores `Resupply Infantry` and `Redistribute Ammo` on MENACE v0.7.16, which removed the skill template both were cloned from. The clones now derive from `active.rogue_officer_whistle` with the Refill Ammo behavior re-applied by the manifest, and all suite `EntityTemplate.Skills` patches use `$append` so the grenade skills 0.7.16 adds to player squads are kept. Other modules are unchanged. Verified in game on 0.7.16. See issue #41.
 
 ### 0.32.4 MENACE 0.7.16 compatibility (Infantry Assault)
 
-Infantry Assault **0.5.4** restores compatibility with MENACE v0.7.16, which removed `Skill.GetDescription()`. The mod no longer patches that method; the Assault tooltip text comes from the manifest-defined `SkillTemplate.Description`. Unresolved Harmony targets are now reported by handler name. Other modules are unchanged. Live MENACE validation pending. See issue #41.
+Infantry Assault **0.5.4** restores compatibility with MENACE v0.7.16, which removed `Skill.GetDescription()`. The mod no longer patches that method; the Assault tooltip text comes from the manifest-defined `SkillTemplate.Description`. Unresolved Harmony targets are now reported by handler name. Other modules are unchanged. Verified in game on 0.7.16. See issue #41.
 
 ### 0.32.3 MEN-019 Berserk AP refund fix
 

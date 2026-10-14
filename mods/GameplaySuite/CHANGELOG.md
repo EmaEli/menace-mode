@@ -2,13 +2,13 @@
 
 - **Field Logistics 1.0.6 → 1.0.7:** MENACE v0.7.16 removed `active.rogue_ammo_runner_refill_ammo`, the clone source of `Resupply Infantry` and `Redistribute Ammo`; the Modpack Loader logged `Clone: source ... not found` and neither skill existed in game. Both clones now derive from `active.rogue_officer_whistle` and the manifest resets the fields that differ from the old base (targeting, line of fire, always-hit, AoE, muzzle effect, sounds, `RefillAmmo`/`DisplayText` handlers).
 - **Suite manifest:** all `EntityTemplate.Skills` patches (Field Logistics and Infantry Assault entries) now use `$append`; the previous full-array replacement would have stripped the smoke/frag grenade skills that 0.7.16 adds to player squads.
-- No balance or code behavior changes in any module. Build against 0.7.16 assemblies OK; in-game verification on 0.7.16 pending.
+- No balance or code behavior changes in any module. Built against the 0.7.16 assemblies and verified in game on 0.7.16: resupply refills ammo, no clone warnings in `Latest.log`.
 
 ## Repository / Suite 0.32.4 — MENACE 0.7.16 compatibility (#41)
 
 - **Infantry Assault 0.5.3 → 0.5.4:** MENACE v0.7.16 removed `Skill.GetDescription()` (and `GetSkillType()`); the unresolved Harmony target aborted the whole patch set, leaving Assault without its range/targeting/AI patches. The `GetDescription` postfix is removed; the Assault tooltip now relies on the manifest-defined `SkillTemplate.Description`, which the native tooltip path already displays.
 - `MissingMethodException` from the patch binder now names the handler whose target could not be resolved, so the next game patch is diagnosable from `Latest.log`.
-- No change to AP, CQB, defensive fire, AI, or other modules. Build and in-game verification on 0.7.16 pending.
+- No change to AP, CQB, defensive fire, AI, or other modules. Verified in game on 0.7.16.
 
 ## Repository / Suite 0.32.3 — MEN-019 Berserk AP refund hotfix
 
