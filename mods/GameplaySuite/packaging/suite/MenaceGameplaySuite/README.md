@@ -102,8 +102,8 @@ One installation containing these feature modules:
 - Squaddie Veterancy 1.10
 - Coordinated Fire 1.6.7
 - Overwatch 0.32.3.1
-- Field Logistics 1.0.6
-- Infantry Assault 0.5.1
+- Field Logistics 1.0.7
+- Infantry Assault 0.5.4
 - StrongerCover 2.2.3
 - Building Combat Rules 0.1.4
 - Forest Traversal 0.1.2

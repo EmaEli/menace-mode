@@ -1,3 +1,9 @@
+## 1.0.7 - MENACE 0.7.16 compatibility (#41)
+
+- MENACE v0.7.16 removed the `active.rogue_ammo_runner_refill_ammo` skill template that both Field Logistics skills were cloned from, so `Resupply Infantry` and `Redistribute Ammo` were never registered (`Clone: source ... not found` in `Latest.log`). Both skills now clone `active.rogue_officer_whistle` (closest surviving template) and the manifest resets every field that differs from the old base: targeting, line of fire, always-hit, AoE, muzzle effect, sounds, and the `RefillAmmo` / `DisplayText` event handlers.
+- `EntityTemplate.Skills` patches use `$append` instead of replacing the array, so the new 0.7.16 vanilla squad skills (smoke/frag grenades) and skills added by other mods are preserved.
+- No balance changes, no code behavior changes, no new normal logging.
+
 ## 1.0.6 - Concrete Skill use-state fix
 
 - Fixed vehicle resupply uses remaining at unreadable/uninitialized values (`max=-1`, `uses=-1`, `charges=-1`) even though the custom skill itself was present.

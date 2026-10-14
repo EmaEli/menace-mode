@@ -14,7 +14,7 @@ namespace FieldLogistics;
 public sealed class Plugin : IModpackPlugin
 {
     private const string ModName = "Field Logistics";
-    private const string Version = "1.0.6";
+    private const string Version = "1.0.7";
     private const string VehicleSkillId = "active.fieldlogistics_vehicle_resupply";
     private const string ShareSkillId = "active.fieldlogistics_redistribute_ammo";
     private const string ModuleId = "accessory.fieldlogistics_vehicle_ammo_supply";

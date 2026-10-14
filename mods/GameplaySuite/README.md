@@ -1,4 +1,8 @@
-# MENACE Mods Unified Repository 0.32.4
+# MENACE Mods Unified Repository 0.32.5
+
+### 0.32.5 MENACE 0.7.16 compatibility (Field Logistics)
+
+Field Logistics **1.0.7** restores `Resupply Infantry` and `Redistribute Ammo` on MENACE v0.7.16, which removed the skill template both were cloned from. The clones now derive from `active.rogue_officer_whistle` with the Refill Ammo behavior re-applied by the manifest, and all suite `EntityTemplate.Skills` patches use `$append` so the grenade skills 0.7.16 adds to player squads are kept. Other modules are unchanged. Live MENACE validation pending. See issue #41.
 
 ### 0.32.4 MENACE 0.7.16 compatibility (Infantry Assault)
 

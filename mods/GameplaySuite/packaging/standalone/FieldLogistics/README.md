@@ -1,6 +1,8 @@
-# Field Logistics 1.0.6
+# Field Logistics 1.0.7
 
 Field Logistics adds battlefield ammunition support for MENACE vehicles and an optional experimental infantry ammo-sharing system.
+
+1.0.7 restores compatibility with MENACE v0.7.16: the skill template both actions were cloned from was removed by the game, so the clones now derive from `active.rogue_officer_whistle` with the Refill Ammo behavior re-applied by the manifest, and squad/vehicle skill lists are appended to instead of replaced (see issue #41).
 
 ## Main feature: vehicle resupply
 
