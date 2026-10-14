@@ -24,8 +24,15 @@ internal static class SettingRows
         row.style.minHeight = new StyleLength(30f);
         row.style.marginBottom = new StyleLength(4f);
 
+        // Basis 0 + shrink: the label takes the width left by the controls and wraps there.
+        // With the default auto basis a long label is laid out at its single-line width and
+        // pushes the controls past the window edge, where Overflow.Hidden clips them.
         var label = Text(def.Label ?? def.Key, 14f);
         label.style.flexGrow = new StyleFloat(1f);
+        label.style.flexShrink = new StyleFloat(1f);
+        label.style.flexBasis = new StyleLength(0f);
+        label.style.minWidth = new StyleLength(0f);
+        label.style.marginRight = new StyleLength(10f);
         label.style.whiteSpace = new StyleEnum<WhiteSpace>(WhiteSpace.Normal);
         row.Add(label);
 

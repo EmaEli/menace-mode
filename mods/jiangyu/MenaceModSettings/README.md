@@ -13,7 +13,8 @@ theme on the game's panel), verified in game. 0.2.2 clamps the window to 85% of 
 when a group has many rows (Larger Maps ran off screen with a percent max-height alone) so the
 settings list scrolls; verified in game on MENACE 0.7.16. 0.3.0 adds `ModSettings.OnSettingChanged`
 as an alias of `Changed` (the legacy Modpack Loader name), so GameplaySuite sources shared between
-both hosts subscribe without `#if`.
+both hosts subscribe without `#if`. 0.3.1 wraps long row labels instead of letting them push the
+controls past the window edge (Starting Options' stepper was clipped); not yet verified in game.
 
 ## What it does
 

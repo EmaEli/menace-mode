@@ -7,4 +7,9 @@
     The compiled DLL is picked up from code/bin/ by `jiangyu compile`.
   -->
 
+  <PropertyGroup>
+    <!-- Keep in step with jiangyu.json so the DLL metadata identifies the shipped build. -->
+    <Version>0.3.1</Version>
+  </PropertyGroup>
+
 </Project>
