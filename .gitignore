@@ -18,6 +18,7 @@ GameAssembly.dll
 global-metadata.dat
 Il2CppAssemblies/
 ExtractedData/
+game_files/
 
 # Runtime logs and packaged releases
 *.log
