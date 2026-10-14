@@ -95,6 +95,8 @@ public sealed class SettingsWindowSystem : JiangyuSystem
         window.Root.style.width = new StyleLength(820f);
         window.Root.style.maxHeight = new StyleLength(Length.Percent(85f));
         window.Root.style.overflow = new StyleEnum<Overflow>(Overflow.Hidden);
+        // Solid backing under the game's semi-transparent .unit-window-background sprite.
+        window.Root.style.backgroundColor = new StyleColor(new Color(0.06f, 0.06f, 0.07f, 0.94f));
         window.Content.style.paddingLeft = window.Content.style.paddingRight = new StyleLength(18f);
         window.Content.style.paddingTop = window.Content.style.paddingBottom = new StyleLength(14f);
         window.Content.style.flexGrow = new StyleFloat(1f);
