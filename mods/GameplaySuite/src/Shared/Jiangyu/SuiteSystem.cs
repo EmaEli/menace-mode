@@ -2,19 +2,23 @@
 #nullable enable
 using System;
 using System.Collections;
+using System.Reflection;
 using Jiangyu.Sdk;
 
 namespace MenaceModSuite.Shared;
 
 // Jiangyu host binding shared by every GameplaySuite module. The gameplay code is the
 // module's Plugin (IHostedPlugin); this class only adapts the JiangyuSystem lifecycle:
-// a mod-owned Harmony instance, Context.Log behind ModLog and a per-frame coroutine in
-// place of the legacy OnUpdate callback. Not compiled into the legacy modpack DLLs.
+// a mod-owned Harmony instance, Context.Log behind ModLog, a per-frame coroutine in
+// place of the legacy OnUpdate callback and MenaceModSettings.ModGui in place of the
+// legacy OnGUI callback (only when the module declares its own OnGUI). Not compiled
+// into the legacy modpack DLLs.
 public abstract class SuiteSystem<TPlugin> : JiangyuSystem where TPlugin : class, IHostedPlugin, new()
 {
     private readonly TPlugin _plugin = new();
     private HarmonyLib.Harmony? _harmony;
     private object? _pollHandle;
+    private Action? _draw;
 
     protected abstract string HarmonyId { get; }
 
@@ -26,6 +30,11 @@ public abstract class SuiteSystem<TPlugin> : JiangyuSystem where TPlugin : class
         var log = new ModLog(Context.Log.Info, Context.Log.Warn, Context.Log.Error);
         _plugin.Initialize(log, _harmony);
         _pollHandle = Context.Coroutines.Start(PollEveryFrame());
+        if (typeof(TPlugin).GetMethod("OnGUI", BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly, null, Type.EmptyTypes, null) != null)
+        {
+            _draw = _plugin.OnGUI;
+            MenaceModSettings.ModGui.Add(_draw);
+        }
     }
 
     public override void OnSceneLoaded(int buildIndex, string sceneName)
@@ -33,6 +42,11 @@ public abstract class SuiteSystem<TPlugin> : JiangyuSystem where TPlugin : class
 
     public override void OnUnload()
     {
+        if (_draw != null)
+        {
+            MenaceModSettings.ModGui.Remove(_draw);
+            _draw = null;
+        }
         if (_pollHandle != null)
         {
             Context.Coroutines.Stop(_pollHandle);

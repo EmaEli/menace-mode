@@ -3,9 +3,11 @@ using System.Text;
 using CoordinatedFire.Core;
 using Il2CppMenace.Tactical;
 using Il2CppMenace.Tactical.Skills;
-using MelonLoader;
-using Menace.ModpackLoader;
+#if JIANGYU
+using MenaceModSettings;
+#else
 using Menace.SDK;
+#endif
 using MenaceModSuite.Shared;
 using UnityEngine;
 using Path = global::System.IO.Path;
@@ -16,11 +18,13 @@ using Path = global::System.IO.Path;
 
 namespace CoordinatedFire;
 
-public sealed class Plugin : IModpackPlugin
+// Host-agnostic core. The legacy Menace.ModpackLoader binding lives in
+// Plugin.Modpack.cs; the Jiangyu binding in mods/jiangyu/CoordinatedFire/code.
+public sealed partial class Plugin : IHostedPlugin
 {
     private const string SettingsGroup = "Coordinated Fire";
     private const string Version = "1.6.8";
-    private MelonLogger.Instance? _logger;
+    private ModLog? _logger;
     private global::HarmonyLib.Harmony? _harmony;
     private Runtime? _runtime;
     private string _data = "";
@@ -32,7 +36,7 @@ public sealed class Plugin : IModpackPlugin
     private GUIStyle? _reason;
     private bool _alphaStrikeWarningShown;
 
-    public void OnInitialize(MelonLogger.Instance logger, global::HarmonyLib.Harmony harmony)
+    public void Initialize(ModLog logger, global::HarmonyLib.Harmony harmony)
     {
         _logger = logger;
         _harmony = harmony;
@@ -66,7 +70,7 @@ public sealed class Plugin : IModpackPlugin
         DevConsole.RegisterPanel("Coordinated Fire", DrawDebugPanel);
 
         _bindAt = Time.realtimeSinceStartup + 2f;
-        Log($"{Version}: Modpack Loader v2 plugin initialized. Compact tactical UI and ModSettings enabled.");
+        Log($"{Version}: initialized. Compact tactical UI and ModSettings enabled.");
     }
 
     public void OnSceneLoaded(int buildIndex, string sceneName)

@@ -14,7 +14,11 @@ when a group has many rows (Larger Maps ran off screen with a percent max-height
 settings list scrolls; verified in game on MENACE 0.7.16. 0.3.0 adds `ModSettings.OnSettingChanged`
 as an alias of `Changed` (the legacy Modpack Loader name), so GameplaySuite sources shared between
 both hosts subscribe without `#if`. 0.3.1 wraps long row labels instead of letting them push the
-controls past the window edge (Starting Options' stepper was clipped); not yet verified in game.
+controls past the window edge (Starting Options' stepper was clipped), verified in game. 0.3.2 pins
+`AssemblyVersion` to 1.0.0.0 (0.3.1 briefly shipped 0.3.1.0 and every consumer failed to bind) and
+adds a near-opaque backing under the window frame. 0.4.0 adds `ModGui.Add/Remove(Action)`: an IMGUI
+frame hook driven by one injected `[JiangyuType]` MonoBehaviour, for mods that draw a GUI/GUILayout
+HUD (Jiangyu systems have no OnGUI callback); 0.3.2 and 0.4.0 not yet verified in game.
 
 ## What it does
 

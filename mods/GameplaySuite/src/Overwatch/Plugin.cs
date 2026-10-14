@@ -1,8 +1,10 @@
 using System.Reflection;
 using Il2CppMenace.Tactical;
-using MelonLoader;
-using Menace.ModpackLoader;
+#if JIANGYU
+using MenaceModSettings;
+#else
 using Menace.SDK;
+#endif
 using MenaceModSuite.Shared;
 using UnityEngine;
 using Path = global::System.IO.Path;
@@ -13,13 +15,15 @@ using Path = global::System.IO.Path;
 
 namespace MenaceOverwatch;
 
-public sealed class Plugin : IModpackPlugin
+// Host-agnostic core. The legacy Menace.ModpackLoader binding lives in
+// Plugin.Modpack.cs; the Jiangyu binding in mods/jiangyu/Overwatch/code.
+public sealed partial class Plugin : IHostedPlugin
 {
     private const string SettingsGroup = "Overwatch";
     private const string Version = "0.32.3.1";
     private Runtime? _runtime;
     private global::HarmonyLib.Harmony? _harmony;
-    private MelonLogger.Instance? _logger;
+    private ModLog? _logger;
     private float _bindAt;
     private bool _attempted;
     private Rect _hudRect;
@@ -27,7 +31,7 @@ public sealed class Plugin : IModpackPlugin
     private bool _updateErrorLogged;
     private bool _guiErrorLogged;
 
-    public void OnInitialize(MelonLogger.Instance logger, global::HarmonyLib.Harmony harmony)
+    public void Initialize(ModLog logger, global::HarmonyLib.Harmony harmony)
     {
         _logger = logger;
         _harmony = harmony;

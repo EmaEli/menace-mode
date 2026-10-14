@@ -90,7 +90,7 @@ class FastSmokeSelectionTests(unittest.TestCase):
         self.assertIn('mortarSmoke.AIConfig = infantrySmoke.AIConfig', mortar)
 
     def test_no_new_performance_hooks(self):
-        init = block('public void OnInitialize(', 'public void OnSceneLoaded(')
+        init = block('public void Initialize(', 'public void OnSceneLoaded(')
         self.assertEqual(init.count('hooks += TryPatch('), 8)
         self.assertNotIn('Agent.Evaluate', init)
         self.assertNotIn('CreateLOSBlocker', init)

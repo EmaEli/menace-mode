@@ -9,5 +9,6 @@ public interface IHostedPlugin
     void Initialize(ModLog log, HarmonyLib.Harmony harmony);
     void OnSceneLoaded(int buildIndex, string sceneName) { }
     void OnUpdate() { }
+    void OnGUI() { }
     void OnUnload() { }
 }

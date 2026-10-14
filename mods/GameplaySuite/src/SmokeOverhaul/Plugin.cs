@@ -9,9 +9,12 @@ using Il2CppMenace.Tools;
 using Il2CppMenace.Tactical.Skills;
 using Il2CppMenace.Tactical.Skills.Effects;
 using Il2CppMenace.Tactical.TileEffects;
-using MelonLoader;
-using Menace.ModpackLoader;
+#if JIANGYU
+using MenaceModSettings;
+#else
 using Menace.SDK;
+#endif
+using MenaceModSuite.Shared;
 using UnityEngine;
 
 [assembly: AssemblyVersion("0.5.2.0")]
@@ -19,12 +22,14 @@ using UnityEngine;
 
 namespace SmokeOverhaul;
 
-public sealed class Plugin : IModpackPlugin
+// Host-agnostic core. The legacy Menace.ModpackLoader binding lives in
+// Plugin.Modpack.cs; the Jiangyu binding in mods/jiangyu/SmokeOverhaul/code.
+public sealed partial class Plugin : IHostedPlugin
 {
     internal const string ModName = "Smoke Overhaul";
     internal const string Version = "0.5.2";
 
-    private static MelonLogger.Instance? _log;
+    private static ModLog? _log;
     private static readonly Dictionary<string, PatchedTemplate> PatchedTemplates = new(StringComparer.OrdinalIgnoreCase);
     private static readonly Dictionary<string, EntityTemplate> FreeGrenadeTemplates = new(StringComparer.OrdinalIgnoreCase);
     private static readonly Dictionary<string, EntityTemplate> FreeFragGrenadeTemplates = new(StringComparer.OrdinalIgnoreCase);
@@ -86,7 +91,7 @@ public sealed class Plugin : IModpackPlugin
     private string _lastSettingsSummary = string.Empty;
     private bool _restoreOnSafeScene;
 
-    public void OnInitialize(MelonLogger.Instance logger, global::HarmonyLib.Harmony harmony)
+    public void Initialize(ModLog logger, global::HarmonyLib.Harmony harmony)
     {
         _log = logger;
         RegisterSettings();

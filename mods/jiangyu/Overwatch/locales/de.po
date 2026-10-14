@@ -1,0 +1,12 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Overwatch 0.32.3.1\n"
+"Language: de\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#. Settings group shown in the MenaceModSettings window (placeholder: English kept)
+msgctxt "Overwatch::ui/group"
+msgid "Overwatch"
+msgstr "Overwatch"

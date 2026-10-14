@@ -1,6 +1,6 @@
 {
   "name": "MenaceModSettings",
-  "version": "0.3.2",
+  "version": "0.4.0",
   "author": "Luca",
   "description": "Companion settings mod for Jiangyu: a shared ModSettings registry (toggles, sliders, numbers, dropdowns) persisted to UserData/MenaceModSettings/settings.json and an in-game window on F9 (configurable). Other mods depend on it instead of the legacy Modpack Loader ModSettings.",
   "depends": [
