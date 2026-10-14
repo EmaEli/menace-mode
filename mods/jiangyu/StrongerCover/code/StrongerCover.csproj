@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Mod C# project. Build settings and the Jiangyu.Sdk + game references come
+    from the Jiangyu-managed Directory.Build.props / Directory.Build.targets in
+    this folder. The compiled DLL is picked up from code/bin/ by `jiangyu compile`.
+  -->
+  <PropertyGroup>
+    <!-- Keep in step with jiangyu.json so the DLL metadata identifies the shipped build. -->
+    <Version>3.0.0</Version>
+  </PropertyGroup>
+  <ItemGroup>
+    <!--
+      Settings companion (see ../../MenaceModSettings). Declared in jiangyu.json `depends`,
+      so the loader has already loaded it into the default context when this DLL binds.
+    -->
+    <Reference Include="MenaceModSettings">
+      <HintPath>../../MenaceModSettings/compiled/code/MenaceModSettings.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+</Project>
