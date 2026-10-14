@@ -113,8 +113,13 @@ public sealed class SettingsWindowSystem : JiangyuSystem
         _tabs.style.width = new StyleLength(200f);
         _tabs.style.marginRight = new StyleLength(14f);
         body.Add(_tabs);
-        var scroll = new ScrollView();
+        var scroll = new ScrollView(ScrollViewMode.Vertical);
         scroll.style.flexGrow = new StyleFloat(1f);
+        scroll.horizontalScrollerVisibility = ScrollerVisibility.Hidden;
+        scroll.verticalScrollerVisibility = ScrollerVisibility.Auto;
+        scroll.contentContainer.style.flexDirection = new StyleEnum<FlexDirection>(FlexDirection.Column);
+        scroll.contentContainer.style.flexGrow = new StyleFloat(1f);
+        StyleScroller(scroll.verticalScroller);
         _rows = scroll;
         body.Add(scroll);
         window.Content.Add(body);
@@ -126,6 +131,22 @@ public sealed class SettingsWindowSystem : JiangyuSystem
         PaintHint();
         window.Content.Add(_hint);
         return overlay;
+    }
+
+    // The game's panel has no default Unity theme, so an unstyled scroller shows as bright blocks.
+    private void StyleScroller(Scroller scroller)
+    {
+        try
+        {
+            scroller.style.width = new StyleLength(8f);
+            scroller.lowButton.style.display = new StyleEnum<DisplayStyle>(DisplayStyle.None);
+            scroller.highButton.style.display = new StyleEnum<DisplayStyle>(DisplayStyle.None);
+            scroller.slider.style.backgroundColor = new StyleColor(new Color(1f, 1f, 1f, 0.06f));
+            var dragger = scroller.slider.Q("unity-dragger", (string)null);
+            if (dragger != null)
+                dragger.style.backgroundColor = new StyleColor(new Color(0.78f, 0.70f, 0.50f, 0.6f));
+        }
+        catch (Exception ex) { Log.Debug($"scroller styling skipped: {ex.Message}"); }
     }
 
     private void PaintHint()

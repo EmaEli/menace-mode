@@ -7,7 +7,9 @@ Jiangyu has no equivalent for (tracked in #37; unblocks the code modules in #38)
 **Status:** compiles and packages with jiangyu 1.4.8; registry/persistence logic covered by an
 offline smoke test (19 checks). 0.1.0 loaded in game and the overlay opened, but plain labels
 rendered invisible (no USS class, Unity default black text) and F10 collided with
-SquaddieFieldPromotions; 0.2.0 fixes both and is **pending in-game re-test**.
+SquaddieFieldPromotions; 0.2.0 fixed both and rendered every element in game. 0.2.1 fixes the
+settings list laying out horizontally with an unstyled horizontal scrollbar (no default Unity
+theme on the game's panel) and is **pending in-game re-test**.
 
 ## What it does
 
