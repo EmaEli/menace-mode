@@ -87,7 +87,7 @@ class SpawnAreaSafetyTests(unittest.TestCase):
                     self.assertTrue(0<=x and 0<=y and w>=5 and h>=5)
                     self.assertTrue(x+w<=n and y+h<=n)
     def test_size_selector_and_exact_native_immediates(self):
-        self.assertIn('"Tactical map size: 64 / 72 / 80 / 88 / 96',PLUGIN)
+        self.assertIn('AddSlider("TacticalMapSize", "Tactical map size 64-96 (restart required)", 64f, 96f, 80f)',PLUGIN)
         self.assertIn('Math.Clamp(snapped, 64, 96)',PLUGIN)
         self.assertIn('mapSize < 72 || mapSize > 96 || (mapSize % 8) != 0',NATIVE)
         self.assertIn('Purpose.EndsWith("-loop", StringComparison.Ordinal)',NATIVE)

@@ -234,31 +234,26 @@ public sealed partial class Plugin
 
         ModSettings.Register(ModName, settings =>
         {
-            settings.AddHeader("Experimental maps (restart required)");
-            settings.AddSlider("TacticalMapSize", "Tactical map size: 64 / 72 / 80 / 88 / 96 (restart required)", 64f, 96f, 80f);
-            settings.AddHeader("Terrain landmarks (experimental, restart required)");
-            settings.AddToggle("IncreaseTerrainStampDensity", "Increase fixed terrain stamp counts on maps above 64x64 (OFF by default)", false);
-            settings.AddSlider("TerrainStampDensityMultiplier", "Terrain stamp attempt multiplier at 96x96 (1x-5x, restart required)", 1f, 5f, 1.5f);
-            settings.AddToggle("DiagnoseTerrainStampDensity", "Log capped terrain-stamp generation counts (OFF by default)", false);
-            settings.AddHeader("Mission area investigation (preview only, optional)");
-            settings.AddToggle("DiagnoseMissionAreas", "Log mission area coordinates before/after transformations (restart required)", false);
-            settings.AddHeader("Simplified combat AI (large maps only; restart required)");
-            settings.AddToggle("SimplifyCombatAIPlanning", "Stop attack AI searching future firing positions; keep attacks available (restart required)", true);
-            settings.AddHeader("Local Tactical Routing (large maps only; restart required)");
-            settings.AddToggle("UseLocalTacticalRouting", "Limit AI destination search on maps above 64x64 (restart required)", false);
-            settings.AddSlider("LocalNearTileLimit", "Maximum nearby destinations inspected for AI movement", 12f, 64f, 20f);
-            settings.AddSlider("LocalCullTileDistance", "Cull distant tactical positions (tiles)", 10f, 20f, 12f);
-            settings.AddHeader("AI route investigation (optional)");
-            settings.AddToggle("DiagnoseAIRoutes", "Diagnose AI operative zones and chosen movement targets (restart required)", false);
-            settings.AddHeader("AI performance (diagnostic only, restart required)");
-            settings.AddToggle("DiagnoseAIPerformance", "Aggregate AI task / unit timings; OFF by default", false);
-            settings.AddToggle("DiagnoseAIPathfinding", "Extra AI operation and path timings (requires DiagnoseAIPerformance; OFF by default)", false);
-            settings.AddHeader("Mission pacing");
-            settings.AddSlider("MissionRoundMultiplier", "Multiply round limits for timed attack/defense objectives on enlarged maps", 1f, 3f, 2f);
-
+            settings.AddHeader("Map");
+            settings.AddSlider("TacticalMapSize", "Tactical map size 64-96 (restart required)", 64f, 96f, 80f);
+            settings.AddSlider("MissionRoundMultiplier", "Round limit multiplier for timed objectives", 1f, 3f, 2f);
+            settings.AddHeader("Terrain landmarks (restart required)");
+            settings.AddToggle("IncreaseTerrainStampDensity", "More terrain stamps on maps above 64x64", false);
+            settings.AddSlider("TerrainStampDensityMultiplier", "Stamp attempt multiplier at 96x96", 1f, 5f, 1.5f);
+            settings.AddHeader("AI on large maps (restart required)");
+            settings.AddToggle("SimplifyCombatAIPlanning", "Simplified attack planning (no future firing positions)", true);
+            settings.AddToggle("UseLocalTacticalRouting", "Local tactical routing (limit destination search)", false);
+            settings.AddSlider("LocalNearTileLimit", "Nearby destinations inspected", 12f, 64f, 20f);
+            settings.AddSlider("LocalCullTileDistance", "Cull distance (tiles)", 10f, 20f, 12f);
             settings.AddHeader("Camera");
-            settings.AddToggle("ExtendedZoomOut", "Allow much farther tactical camera zoom-out on enlarged maps", true);
-            settings.AddSlider("ZoomOutMultiplier", "Maximum tactical zoom-out multiplier", 1f, 4f, 2f);
+            settings.AddToggle("ExtendedZoomOut", "Extended zoom-out on enlarged maps", true);
+            settings.AddSlider("ZoomOutMultiplier", "Maximum zoom-out multiplier", 1f, 4f, 2f);
+            settings.AddHeader("Diagnostics (log only, restart required)");
+            settings.AddToggle("DiagnoseTerrainStampDensity", "Log terrain stamp counts", false);
+            settings.AddToggle("DiagnoseMissionAreas", "Log mission area coordinates", false);
+            settings.AddToggle("DiagnoseAIRoutes", "Log AI zones and movement targets", false);
+            settings.AddToggle("DiagnoseAIPerformance", "Log AI task / unit timings", false);
+            settings.AddToggle("DiagnoseAIPathfinding", "Log AI path timings (needs AI task timings)", false);
         });
 
         // Install before the game constructs any PathfindingProcess. All native sites

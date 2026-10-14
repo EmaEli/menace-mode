@@ -24,10 +24,12 @@ public sealed class SettingsWindowSystem : JiangyuSystem
     private IDisposable _hotkey;
     private KeyCode _toggleKey;
     private VisualElement _overlay;
+    private VisualElement _window;
     private VisualElement _tabs;
     private VisualElement _rows;
     private Label _hint;
     private EventCallback<PointerDownEvent> _onBackdropPress;
+    private EventCallback<GeometryChangedEvent> _onWindowResized;
     private bool _open;
     private string _selected;
 
@@ -92,10 +94,15 @@ public sealed class SettingsWindowSystem : JiangyuSystem
         var window = new Flyout();
         window.Root.style.width = new StyleLength(820f);
         window.Root.style.maxHeight = new StyleLength(Length.Percent(85f));
+        window.Root.style.overflow = new StyleEnum<Overflow>(Overflow.Hidden);
         window.Content.style.paddingLeft = window.Content.style.paddingRight = new StyleLength(18f);
         window.Content.style.paddingTop = window.Content.style.paddingBottom = new StyleLength(14f);
         window.Content.style.flexGrow = new StyleFloat(1f);
+        window.Content.style.flexShrink = new StyleFloat(1f);
+        window.Content.style.minHeight = new StyleLength(0f);
         overlay.Add(window.Root);
+        _window = window.Root;
+        WatchWindowHeight(overlay, window.Root);
 
         var header = Row();
         var title = SettingRows.Text(Locale.Text("MenaceModSettings::ui/title", "MOD SETTINGS"), 20f);
@@ -107,6 +114,8 @@ public sealed class SettingsWindowSystem : JiangyuSystem
 
         var body = Row();
         body.style.flexGrow = new StyleFloat(1f);
+        body.style.flexShrink = new StyleFloat(1f);
+        body.style.minHeight = new StyleLength(0f);
         body.style.marginTop = new StyleLength(10f);
         body.style.alignItems = new StyleEnum<Align>(Align.Stretch);
         _tabs = new VisualElement();
@@ -115,6 +124,8 @@ public sealed class SettingsWindowSystem : JiangyuSystem
         body.Add(_tabs);
         var scroll = new ScrollView(ScrollViewMode.Vertical);
         scroll.style.flexGrow = new StyleFloat(1f);
+        scroll.style.flexShrink = new StyleFloat(1f);
+        scroll.style.minHeight = new StyleLength(0f);
         scroll.horizontalScrollerVisibility = ScrollerVisibility.Hidden;
         scroll.verticalScrollerVisibility = ScrollerVisibility.Auto;
         scroll.contentContainer.style.flexDirection = new StyleEnum<FlexDirection>(FlexDirection.Column);
@@ -131,6 +142,30 @@ public sealed class SettingsWindowSystem : JiangyuSystem
         PaintHint();
         window.Content.Add(_hint);
         return overlay;
+    }
+
+    // A percent max-height is not enough to make the ScrollView scroll when a group has
+    // many rows: the frame keeps growing with its content and runs off screen. Measure the
+    // frame after layout and pin its height to the limit only when it overflows, so short
+    // groups keep an auto-sized window.
+    private void WatchWindowHeight(VisualElement overlay, VisualElement frame)
+    {
+        try
+        {
+            _onWindowResized = DelegateSupport.ConvertDelegate<EventCallback<GeometryChangedEvent>>(
+                (Action<GeometryChangedEvent>)(_ => ClampWindowHeight(overlay, frame)));
+            frame.RegisterCallback<GeometryChangedEvent>(_onWindowResized);
+        }
+        catch (Exception ex) { Log.Warn($"window height clamp not available: {ex.Message}"); }
+    }
+
+    private static void ClampWindowHeight(VisualElement overlay, VisualElement frame)
+    {
+        float limit = overlay.resolvedStyle.height * 0.85f;
+        if (limit <= 0f || float.IsNaN(limit))
+            return;
+        if (frame.resolvedStyle.height > limit + 1f)
+            frame.style.height = new StyleLength(limit);
     }
 
     // The game's panel has no default Unity theme, so an unstyled scroller shows as bright blocks.
@@ -195,6 +230,8 @@ public sealed class SettingsWindowSystem : JiangyuSystem
         }
 
         _rows.Clear();
+        if (_window != null)
+            _window.style.height = new StyleLength(StyleKeyword.Auto);
         var current = groups.FirstOrDefault(g => g.Name == _selected);
         if (current == null)
         {

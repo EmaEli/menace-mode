@@ -30,8 +30,8 @@ class TestNativeAiCandidateLimits(unittest.TestCase):
         self.assertNotIn('nameof(LocalTactical',PLUGIN)
     def test_settings_default(self):
         self.assertIn('AddToggle("UseLocalTacticalRouting"',PLUGIN)
-        self.assertIn('"LocalNearTileLimit", "Maximum nearby destinations inspected for AI movement", 12f, 64f, 20f',PLUGIN)
-        self.assertIn('"LocalCullTileDistance", "Cull distant tactical positions (tiles)", 10f, 20f, 12f',PLUGIN)
+        self.assertIn('"LocalNearTileLimit", "Nearby destinations inspected", 12f, 64f, 20f',PLUGIN)
+        self.assertIn('"LocalCullTileDistance", "Cull distance (tiles)", 10f, 20f, 12f',PLUGIN)
     def test_prior_native_path_backend_exact(self):
         if REFERENCE.exists():
             self.assertEqual(NATIVE,REFERENCE.read_text())
