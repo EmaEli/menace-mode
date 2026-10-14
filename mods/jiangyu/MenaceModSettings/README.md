@@ -11,7 +11,9 @@ SquaddieFieldPromotions; 0.2.0 fixed both and rendered every element in game. 0.
 settings list laying out horizontally with an unstyled horizontal scrollbar (no default Unity
 theme on the game's panel), verified in game. 0.2.2 clamps the window to 85% of the screen
 when a group has many rows (Larger Maps ran off screen with a percent max-height alone) so the
-settings list scrolls; verified in game on MENACE 0.7.16.
+settings list scrolls; verified in game on MENACE 0.7.16. 0.3.0 adds `ModSettings.OnSettingChanged`
+as an alias of `Changed` (the legacy Modpack Loader name), so GameplaySuite sources shared between
+both hosts subscribe without `#if`.
 
 ## What it does
 
@@ -19,7 +21,8 @@ settings list scrolls; verified in game on MENACE 0.7.16.
   sliders (float), numbers (int) and dropdowns. Same shape as the legacy builder, so a module
   ports by swapping `using`.
 - `ModSettings.Get<T>(group, key)` / `Get` / `TryGet` / `Set` read and write values.
-  `Set` clamps and coerces to the definition, persists and raises `ModSettings.Changed`.
+  `Set` clamps and coerces to the definition, persists and raises `ModSettings.Changed`
+  (also exposed as `OnSettingChanged`, the legacy name).
 - Values persist in **one file for the whole install**:
   `UserData/MenaceModSettings/settings.json` (`{ "Group": { "Key": value } }`).
   They are not tied to a save slot, which matches the legacy behaviour.

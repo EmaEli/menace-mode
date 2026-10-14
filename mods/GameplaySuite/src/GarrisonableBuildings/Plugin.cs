@@ -3,14 +3,19 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using HarmonyLib;
-using MelonLoader;
-using Menace.ModpackLoader;
+#if JIANGYU
+using MenaceModSettings;
+#else
 using Menace.SDK;
+#endif
+using MenaceModSuite.Shared;
 using UnityEngine;
 
 namespace GarrisonableBuildings;
 
-public sealed class Plugin : IModpackPlugin
+// Host-agnostic core. The legacy Menace.ModpackLoader binding lives in
+// Plugin.Modpack.cs; the Jiangyu binding in mods/jiangyu/GarrisonableBuildings/code.
+public sealed partial class Plugin : IHostedPlugin
 {
     private const string ModName = "Garrisonable Buildings";
     private const string Version = "1.0.4";
@@ -85,7 +90,7 @@ public sealed class Plugin : IModpackPlugin
         public bool ChangedLeave;
     }
 
-    private static MelonLogger.Instance _log;
+    private static ModLog _log;
     private static Type _dataTemplateLoaderType;
     private static Type _entityTemplateType;
     private static MethodInfo _dataTemplateGetGeneric;
@@ -100,7 +105,7 @@ public sealed class Plugin : IModpackPlugin
     private static int _apOverrideDepth;
     private static bool _debugLogging;
 
-    public void OnInitialize(MelonLogger.Instance logger, HarmonyLib.Harmony harmony)
+    public void Initialize(ModLog logger, HarmonyLib.Harmony harmony)
     {
         _log = logger;
 

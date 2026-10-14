@@ -3,13 +3,18 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using HarmonyLib;
-using MelonLoader;
-using Menace.ModpackLoader;
+#if JIANGYU
+using MenaceModSettings;
+#else
 using Menace.SDK;
+#endif
+using MenaceModSuite.Shared;
 
 namespace BuildingsBlockLineOfSight;
 
-public sealed class Plugin : IModpackPlugin
+// Host-agnostic core. The legacy Menace.ModpackLoader binding lives in
+// Plugin.Modpack.cs; the Jiangyu binding in mods/jiangyu/BuildingsBlockLineOfSight/code.
+public sealed partial class Plugin : IHostedPlugin
 {
     private const string ModName = "Buildings Block Line of Sight";
     private const string Version = "0.2.2";
@@ -57,7 +62,7 @@ public sealed class Plugin : IModpackPlugin
 
     private static readonly HashSet<string> Handled = new(StringComparer.OrdinalIgnoreCase);
 
-    private static MelonLogger.Instance _log;
+    private static ModLog _log;
     private static Type _dataTemplateLoaderType;
     private static Type _entityTemplateType;
     private static Type _structureType;
@@ -67,7 +72,7 @@ public sealed class Plugin : IModpackPlugin
     private static bool _finished;
     private static bool _debugLogging;
 
-    public void OnInitialize(MelonLogger.Instance logger, HarmonyLib.Harmony harmony)
+    public void Initialize(ModLog logger, HarmonyLib.Harmony harmony)
     {
         _log = logger;
 

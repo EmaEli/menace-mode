@@ -1,0 +1,10 @@
+{
+  "name": "VisibilityOverhaul",
+  "version": "3.1.9",
+  "author": "Luca",
+  "description": "Configurable tactical visibility overhaul using MENACE native EntityProperties vision rebuilds plus movement-based infantry concealment. Jiangyu port of the legacy GameplaySuite module; options live in the MenaceModSettings window (F9).",
+  "depends": [
+    "Jiangyu >= 1.4.8",
+    "MenaceModSettings >= 0.3.0"
+  ]
+}

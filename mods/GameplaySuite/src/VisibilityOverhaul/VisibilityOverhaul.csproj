@@ -6,4 +6,8 @@
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <Version>3.1.9</Version>
   </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../Shared/ModLog.cs" Link="Shared/ModLog.cs" />
+    <Compile Include="../Shared/IHostedPlugin.cs" Link="Shared/IHostedPlugin.cs" />
+  </ItemGroup>
 </Project>

@@ -8,4 +8,9 @@
     <AssemblyVersion>1.0.4.0</AssemblyVersion>
     <FileVersion>1.0.4.0</FileVersion>
   </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../Shared/ModLog.cs" Link="Shared/ModLog.cs" />
+    <Compile Include="../Shared/IHostedPlugin.cs" Link="Shared/IHostedPlugin.cs" />
+    <Compile Include="../Shared/NullableMetadata.cs" Link="Shared/NullableMetadata.cs" />
+  </ItemGroup>
 </Project>

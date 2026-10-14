@@ -35,6 +35,13 @@ public static class ModSettings
     /// <summary>Raised after a value changes: (group, key, new value).</summary>
     public static event Action<string, string, object> Changed;
 
+    /// <summary>Legacy Modpack Loader name for <see cref="Changed"/>, so shared module sources compile against both hosts.</summary>
+    public static event Action<string, string, object> OnSettingChanged
+    {
+        add => Changed += value;
+        remove => Changed -= value;
+    }
+
     /// <summary>Groups in registration order, for the settings window.</summary>
     public static IReadOnlyList<SettingsGroup> AllGroups
     {

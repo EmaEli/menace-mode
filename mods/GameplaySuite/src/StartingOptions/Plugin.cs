@@ -5,9 +5,12 @@ using Il2CppMenace.Items;
 using Il2CppMenace.Strategy;
 using Il2CppMenace.UI;
 using Il2CppMenace.UI.Menu;
-using MelonLoader;
-using Menace.ModpackLoader;
+#if JIANGYU
+using MenaceModSettings;
+#else
 using Menace.SDK;
+#endif
+using MenaceModSuite.Shared;
 
 [assembly: AssemblyVersion("0.1.0.0")]
 [assembly: AssemblyFileVersion("0.1.0.0")]
@@ -18,8 +21,10 @@ namespace MenaceStartingOptions;
 /// <summary>
 /// Configures MENACE's native New Game screen. No patches run during tactical play.
 /// Both settings affect newly created campaigns only.
+/// Host-agnostic core: the legacy Menace.ModpackLoader binding lives in
+/// Plugin.Modpack.cs, the Jiangyu binding in mods/jiangyu/StartingOptions/code.
 /// </summary>
-public sealed class Plugin : IModpackPlugin
+public sealed partial class Plugin : IHostedPlugin
 {
     private const string ModName = "Starting Options";
     private const string SparePartsTemplateId = "commodity.spare_parts";
@@ -28,7 +33,7 @@ public sealed class Plugin : IModpackPlugin
     private const int VanillaHeadstartCount = 36;
     private const int MaximumHeadstartCount = 1000;
 
-    private static MelonLogger.Instance? _logger;
+    private static ModLog? _logger;
     private static int _leaderMaximum = MaximumSupportedLeaders;
     private static int _headstartCount = VanillaHeadstartCount;
     private static bool _debug;
@@ -37,7 +42,7 @@ public sealed class Plugin : IModpackPlugin
     private static readonly FieldInfo? BlackMarketHeadstartField =
         AccessTools.Field(typeof(NewGameWindow), "m_BlackMarketHeadstartToggle");
 
-    public void OnInitialize(MelonLogger.Instance logger, HarmonyLib.Harmony harmony)
+    public void Initialize(ModLog logger, HarmonyLib.Harmony harmony)
     {
         _logger = logger;
 

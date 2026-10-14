@@ -2,9 +2,12 @@ using System.Reflection;
 using HarmonyLib;
 using Il2CppMenace.Tactical;
 using Il2CppMenace.Tactical.Skills;
-using MelonLoader;
-using Menace.ModpackLoader;
+#if JIANGYU
+using MenaceModSettings;
+#else
 using Menace.SDK;
+#endif
+using MenaceModSuite.Shared;
 using UnityEngine;
 
 [assembly: AssemblyVersion("3.1.9.0")]
@@ -12,16 +15,18 @@ using UnityEngine;
 
 namespace VisibilityOverhaul;
 
-public sealed class Plugin : IModpackPlugin
+// Host-agnostic core. The legacy Menace.ModpackLoader binding lives in
+// Plugin.Modpack.cs; the Jiangyu binding in mods/jiangyu/VisibilityOverhaul/code.
+public sealed partial class Plugin : IHostedPlugin
 {
     internal const string SettingsGroup = "Visibility Overhaul";
     internal const string Version = "3.1.9";
 
-    private MelonLogger.Instance? _logger;
+    private ModLog? _logger;
     private float _nextSettingsRefresh;
     private string _lastSettingsSummary = string.Empty;
 
-    public void OnInitialize(MelonLogger.Instance logger, global::HarmonyLib.Harmony harmony)
+    public void Initialize(ModLog logger, global::HarmonyLib.Harmony harmony)
     {
         _logger = logger;
         RegisterSettings();

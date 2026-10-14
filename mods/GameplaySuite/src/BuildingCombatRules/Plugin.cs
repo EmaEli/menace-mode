@@ -5,9 +5,12 @@ using Il2CppMenace.Tactical;
 using Il2CppMenace.Tactical.Skills;
 using Il2CppMenace.Tactical.Skills.Effects;
 using Il2CppMenace.Tags;
-using MelonLoader;
-using Menace.ModpackLoader;
+#if JIANGYU
+using MenaceModSettings;
+#else
 using Menace.SDK;
+#endif
+using MenaceModSuite.Shared;
 using UnityEngine;
 
 [assembly: AssemblyVersion("0.1.4.0")]
@@ -16,7 +19,9 @@ using UnityEngine;
 
 namespace MenaceBuildingCombatRules;
 
-public sealed class Plugin : IModpackPlugin
+// Host-agnostic core. The legacy Menace.ModpackLoader binding lives in
+// Plugin.Modpack.cs; the Jiangyu binding in mods/jiangyu/BuildingCombatRules/code.
+public sealed partial class Plugin : IHostedPlugin
 {
     private const string SettingsGroup = "Building Combat Rules";
     private const string Version = "0.1.4";
@@ -24,7 +29,7 @@ public sealed class Plugin : IModpackPlugin
     private const int CollapseEjectRetryFrames = 15;
     private const int CollapseStallReportFrames = 600;
 
-    private static MelonLogger.Instance? _logger;
+    private static ModLog? _logger;
     private static global::HarmonyLib.Harmony? _harmony;
     private static bool _patchesApplied;
     private static bool _protectBuildings = true;
@@ -76,7 +81,7 @@ public sealed class Plugin : IModpackPlugin
         "building_civilian_storage_01"
     };
 
-    public void OnInitialize(MelonLogger.Instance logger, global::HarmonyLib.Harmony harmony)
+    public void Initialize(ModLog logger, global::HarmonyLib.Harmony harmony)
     {
         _logger = logger;
         _harmony = harmony;

@@ -10,4 +10,8 @@
     <FileVersion>0.2.2.0</FileVersion>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../Shared/ModLog.cs" Link="Shared/ModLog.cs" />
+    <Compile Include="../Shared/IHostedPlugin.cs" Link="Shared/IHostedPlugin.cs" />
+  </ItemGroup>
 </Project>

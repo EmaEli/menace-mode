@@ -1,0 +1,10 @@
+{
+  "name": "StartingOptions",
+  "version": "0.1.0",
+  "author": "Luca",
+  "description": "Configurable starting leader slider cap (up to 12) and Black Market Headstart Spare Parts count (up to 1000). No changes to existing campaigns. Jiangyu port of the legacy GameplaySuite module; options live in the MenaceModSettings window (F9).",
+  "depends": [
+    "Jiangyu >= 1.4.8",
+    "MenaceModSettings >= 0.3.0"
+  ]
+}

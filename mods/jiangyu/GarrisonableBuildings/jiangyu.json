@@ -1,0 +1,10 @@
+{
+  "name": "GarrisonableBuildings",
+  "version": "1.0.4",
+  "author": "Luca",
+  "description": "Native-style infantry garrisons for selected small buildings, with configurable building-specific inside cover and optional 3x3 support. Jiangyu port of the legacy GameplaySuite module; options live in the MenaceModSettings window (F9).",
+  "depends": [
+    "Jiangyu >= 1.4.8",
+    "MenaceModSettings >= 0.3.0"
+  ]
+}
