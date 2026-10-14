@@ -6,19 +6,25 @@ using System.Runtime.InteropServices;
 using System.Linq;
 using System.Reflection;
 using HarmonyLib;
-using MelonLoader;
-using Menace.ModpackLoader;
+#if JIANGYU
+using MenaceModSettings;
+#else
 using Menace.SDK;
+#endif
 using Il2CppMenace.Tactical.Mapgen;
 using Il2CppMenace.Tactical.Mapgen.TerrainGen;
 using UnityEngine;
 
 namespace LargerMaps;
 
-public sealed partial class Plugin : IModpackPlugin
+// Host-agnostic core. The legacy Menace.ModpackLoader binding lives in
+// Plugin.Modpack.cs; the Jiangyu binding in mods/jiangyu/LargerMaps/code.
+public sealed partial class Plugin
 {
     private const string ModName = "Larger Maps";
-    private const string Version = "1.8";
+    private const string Version = "1.9";
+    private static string _version = Version;
+    private static Action<int, Action> _runDelayed;
     private const int VanillaSize = 42;
     // The active map size is fixed once at startup, after the native backend is verified.
     // If fingerprint/instruction validation fails we deliberately retain safe 64x64.
@@ -35,7 +41,7 @@ public sealed partial class Plugin : IModpackPlugin
     private const int MinimumAiSpawnAreaSize = 5;
     private const int ElevationPixelsPerTile = 32;
 
-    private static MelonLogger.Instance _log;
+    private static ModLog _log;
     private static Type _mapType;
     private static Type _missionPreviewType;
     private static Type _missionType;
@@ -216,9 +222,15 @@ public sealed partial class Plugin : IModpackPlugin
     private static readonly Dictionary<ushort, int> _resolverAssetTypeCounts = new();
     private static readonly Dictionary<ushort, int> _resolverFlagCounts = new();
 
-    public void OnInitialize(MelonLogger.Instance logger, HarmonyLib.Harmony harmony)
+    // Set by the host before the first scene loads; the Jiangyu host polls it to
+    // decide whether a per-frame coroutine is needed at all.
+    internal static bool NeedsUpdatePolling => _aiPerfEnabled;
+
+    public void Initialize(ModLog logger, HarmonyLib.Harmony harmony, Action<int, Action> runDelayed, string version)
     {
         _log = logger;
+        _runDelayed = runDelayed;
+        if (!string.IsNullOrEmpty(version)) _version = version;
 
         ModSettings.Register(ModName, settings =>
         {
@@ -269,7 +281,7 @@ public sealed partial class Plugin : IModpackPlugin
 
         ResolveTypes();
         InstallHooks(harmony);
-        _log.Msg($"{ModName} {Version}: {TargetSize}x{TargetSize} tactical map; AI task safety and map/pathfinder backend unchanged; " +
+        _log.Msg($"{ModName} {_version}: {TargetSize}x{TargetSize} tactical map; AI task safety and map/pathfinder backend unchanged; " +
             (TargetSize <= ZoneReferenceSize ? "64x64 reference mission areas." : "conservative mission areas (no broad objective expansion)."));
     }
 
@@ -292,18 +304,24 @@ public sealed partial class Plugin : IModpackPlugin
 
         if (string.Equals(sceneName, "MissionPreparation", StringComparison.OrdinalIgnoreCase))
         {
-            GameState.RunDelayed(30, () => ProbeMissionPreview("MissionPrep+30"));
-            GameState.RunDelayed(120, () => ProbeMissionPreview("MissionPrep+120"));
+            RunDelayed(30, () => ProbeMissionPreview("MissionPrep+30"));
+            RunDelayed(120, () => ProbeMissionPreview("MissionPrep+120"));
         }
 
         if (string.Equals(sceneName, "Tactical", StringComparison.OrdinalIgnoreCase))
         {
-            GameState.RunDelayed(1, () => { ProbeMap("Tactical+1"); ProbeTileHighlighter("Tactical+1"); ProbeTacticalStartup("Tactical+1"); });
-            GameState.RunDelayed(30, () => { ProbeMap("Tactical+30"); ProbeTileHighlighter("Tactical+30"); ProbeTacticalStartup("Tactical+30"); });
-            GameState.RunDelayed(120, () => ProbeTacticalStartup("Tactical+120"));
-            GameState.RunDelayed(300, () => ProbeTacticalStartup("Tactical+300"));
-            GameState.RunDelayed(600, () => ProbeTacticalStartup("Tactical+600"));
+            RunDelayed(1, () => { ProbeMap("Tactical+1"); ProbeTileHighlighter("Tactical+1"); ProbeTacticalStartup("Tactical+1"); });
+            RunDelayed(30, () => { ProbeMap("Tactical+30"); ProbeTileHighlighter("Tactical+30"); ProbeTacticalStartup("Tactical+30"); });
+            RunDelayed(120, () => ProbeTacticalStartup("Tactical+120"));
+            RunDelayed(300, () => ProbeTacticalStartup("Tactical+300"));
+            RunDelayed(600, () => ProbeTacticalStartup("Tactical+600"));
         }
+    }
+
+    private static void RunDelayed(int frames, Action action)
+    {
+        if (_runDelayed == null) return;
+        _runDelayed(frames, action);
     }
 
     public void OnUpdate()
