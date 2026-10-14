@@ -10,33 +10,61 @@ namespace MenaceModSettings;
 
 /// <summary>
 /// The settings window: a full-screen overlay holding a native window frame, one tab per
-/// registered group and one row per setting. Toggled with F10, closed by the CLOSE button
-/// or a click on the dimmed backdrop. Injected once; the loader re-applies it per screen.
+/// registered group and one row per setting. Toggled with a configurable key (F9 by default),
+/// closed by the CLOSE button or a click on the dimmed backdrop. Injected once; the loader
+/// re-applies it per screen.
 /// </summary>
 public sealed class SettingsWindowSystem : JiangyuSystem
 {
-    public const KeyCode ToggleKey = KeyCode.F10;
+    public const string OwnGroup = "MenaceModSettings";
+    public const string ToggleKeySetting = "ToggleKey";
+    private static readonly string[] ToggleKeyOptions = { "F8", "F9", "F10", "F11", "F12", "Insert", "Home", "End" };
 
     private UiInjection _injection;
     private IDisposable _hotkey;
+    private KeyCode _toggleKey;
     private VisualElement _overlay;
     private VisualElement _tabs;
     private VisualElement _rows;
+    private Label _hint;
     private EventCallback<PointerDownEvent> _onBackdropPress;
     private bool _open;
     private string _selected;
 
     public override void OnInit()
     {
+        ModSettings.Register(OwnGroup, s =>
+        {
+            s.AddHeader("Window");
+            s.AddDropdown(ToggleKeySetting, "Key that opens and closes this window", ToggleKeyOptions, "F9");
+        });
+        ModSettings.Changed += OnSettingChanged;
+        BindHotkey();
         _injection = UI.Inject(UiTarget.Overlay(), Build, Bind);
-        _hotkey = Hotkeys.OnKeyDown(ToggleKey, Toggle);
-        Log.Debug($"settings window on {ToggleKey}");
+        Log.Debug($"settings window on {_toggleKey}");
     }
 
     public override void OnUnload()
     {
+        ModSettings.Changed -= OnSettingChanged;
         _hotkey?.Dispose();
         _injection?.Remove();
+    }
+
+    private void OnSettingChanged(string group, string key, object value)
+    {
+        if (group != OwnGroup || key != ToggleKeySetting)
+            return;
+        BindHotkey();
+        PaintHint();
+    }
+
+    private void BindHotkey()
+    {
+        var name = ModSettings.TryGet<string>(OwnGroup, ToggleKeySetting, out var v) ? v : null;
+        _toggleKey = Enum.TryParse<KeyCode>(name, out var key) ? key : KeyCode.F9;
+        _hotkey?.Dispose();
+        _hotkey = Hotkeys.OnKeyDown(_toggleKey, Toggle);
     }
 
     public void Toggle() => SetOpen(!_open);
@@ -70,8 +98,7 @@ public sealed class SettingsWindowSystem : JiangyuSystem
         overlay.Add(window.Root);
 
         var header = Row();
-        var title = new Label(Locale.Text("MenaceModSettings::ui/title", "MOD SETTINGS"));
-        title.style.fontSize = new StyleLength(20f);
+        var title = SettingRows.Text(Locale.Text("MenaceModSettings::ui/title", "MOD SETTINGS"), 20f);
         title.style.flexGrow = new StyleFloat(1f);
         header.Add(title);
         header.Add(new TextButton(Locale.Text("MenaceModSettings::ui/reset_group", "RESET GROUP")).OnClick(ResetSelected).Root);
@@ -92,14 +119,20 @@ public sealed class SettingsWindowSystem : JiangyuSystem
         body.Add(scroll);
         window.Content.Add(body);
 
-        var hint = new Label(Locale.Format("MenaceModSettings::ui/hint",
-            "Changes apply immediately and are saved to UserData/MenaceModSettings/settings.json. {0} toggles this window.", ToggleKey));
-        hint.style.fontSize = new StyleLength(11f);
-        hint.style.opacity = new StyleFloat(0.7f);
-        hint.style.marginTop = new StyleLength(10f);
-        hint.style.whiteSpace = new StyleEnum<WhiteSpace>(WhiteSpace.Normal);
-        window.Content.Add(hint);
+        _hint = SettingRows.Text(string.Empty, 11f);
+        _hint.style.opacity = new StyleFloat(0.7f);
+        _hint.style.marginTop = new StyleLength(10f);
+        _hint.style.whiteSpace = new StyleEnum<WhiteSpace>(WhiteSpace.Normal);
+        PaintHint();
+        window.Content.Add(_hint);
         return overlay;
+    }
+
+    private void PaintHint()
+    {
+        if (_hint != null)
+            _hint.text = Locale.Format("MenaceModSettings::ui/hint",
+                "Changes apply immediately and are saved to UserData/MenaceModSettings/settings.json. {0} toggles this window.", _toggleKey);
     }
 
     private void Bind(VisualElement element)
@@ -144,7 +177,7 @@ public sealed class SettingsWindowSystem : JiangyuSystem
         var current = groups.FirstOrDefault(g => g.Name == _selected);
         if (current == null)
         {
-            _rows.Add(new Label(Locale.Text("MenaceModSettings::ui/empty", "No mod has registered settings.")));
+            _rows.Add(SettingRows.Text(Locale.Text("MenaceModSettings::ui/empty", "No mod has registered settings."), 14f));
             return;
         }
         foreach (var def in current.Definitions)

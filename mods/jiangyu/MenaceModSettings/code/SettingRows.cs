@@ -24,10 +24,9 @@ internal static class SettingRows
         row.style.minHeight = new StyleLength(30f);
         row.style.marginBottom = new StyleLength(4f);
 
-        var label = new Label(def.Label ?? def.Key);
+        var label = Text(def.Label ?? def.Key, 14f);
         label.style.flexGrow = new StyleFloat(1f);
         label.style.whiteSpace = new StyleEnum<WhiteSpace>(WhiteSpace.Normal);
-        label.style.fontSize = new StyleLength(14f);
         row.Add(label);
 
         var controls = new VisualElement();
@@ -46,10 +45,22 @@ internal static class SettingRows
         return row;
     }
 
+    /// <summary>
+    /// A plain label with an inline text colour. Injected elements only pick up the game's
+    /// stylesheet through USS classes, and a bare Label falls back to Unity's default (black),
+    /// which is invisible on the window frame.
+    /// </summary>
+    internal static Label Text(string text, float size)
+    {
+        var label = new Label(text);
+        label.style.fontSize = new StyleLength(size);
+        label.style.color = new StyleColor(new Color(0.92f, 0.90f, 0.85f));
+        return label;
+    }
+
     private static VisualElement Header(string title)
     {
-        var header = new Label((title ?? string.Empty).ToUpperInvariant());
-        header.style.fontSize = new StyleLength(13f);
+        var header = Text((title ?? string.Empty).ToUpperInvariant(), 13f);
         header.style.color = new StyleColor(new Color(0.78f, 0.70f, 0.50f));
         header.style.marginTop = new StyleLength(12f);
         header.style.marginBottom = new StyleLength(6f);
@@ -135,9 +146,8 @@ internal static class SettingRows
 
     private static Label ValueLabel(float width)
     {
-        var label = new Label();
+        var label = Text(string.Empty, 14f);
         label.style.width = new StyleLength(width);
-        label.style.fontSize = new StyleLength(14f);
         label.CenterText();
         return label;
     }
