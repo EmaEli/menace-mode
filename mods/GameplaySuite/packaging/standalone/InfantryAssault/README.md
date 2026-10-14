@@ -1,4 +1,9 @@
-# Infantry Assault 0.5.3
+# Infantry Assault 0.5.4
+
+## 0.5.4 MENACE 0.7.16 compatibility (#41)
+
+- MENACE v0.7.16 removed `Skill.GetDescription()`. Version 0.5.3 failed to bind that method and silently dropped all its Harmony patches, so Assault could not be used. The patch is removed; the tooltip text comes from the mod's own `SkillTemplate.Description`.
+- An unresolved Harmony target is now reported with its handler name in `MelonLoader/Latest.log`.
 
 ## 0.5.3 targeting stability fix (MEN-005)
 

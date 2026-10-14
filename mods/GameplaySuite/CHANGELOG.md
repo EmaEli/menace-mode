@@ -1,3 +1,9 @@
+## Repository / Suite 0.32.4 — MENACE 0.7.16 compatibility (#41)
+
+- **Infantry Assault 0.5.3 → 0.5.4:** MENACE v0.7.16 removed `Skill.GetDescription()` (and `GetSkillType()`); the unresolved Harmony target aborted the whole patch set, leaving Assault without its range/targeting/AI patches. The `GetDescription` postfix is removed; the Assault tooltip now relies on the manifest-defined `SkillTemplate.Description`, which the native tooltip path already displays.
+- `MissingMethodException` from the patch binder now names the handler whose target could not be resolved, so the next game patch is diagnosable from `Latest.log`.
+- No change to AP, CQB, defensive fire, AI, or other modules. Build and in-game verification on 0.7.16 pending.
+
 ## Repository / Suite 0.32.3 — MEN-019 Berserk AP refund hotfix
 
 - **Coordinated Fire 1.6.7 → 1.6.8:** preserves native Berserk AP grants clipped to the unit's cap while Coordinated Fire defers the single combined salvo fee. The lost portion is carried forward up to the fee and applied at settlement.

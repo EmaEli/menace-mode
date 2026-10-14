@@ -1,3 +1,9 @@
+## 0.5.4
+
+- MENACE v0.7.16 compatibility: the game removed `Skill.GetDescription()`, which made the Harmony binder throw and abandon every Assault patch (symptom: `Failed to apply patches: System.MissingMethodException: Harmony target method was not resolved.`). The `GetDescription` postfix is removed; the Assault tooltip is served by the manifest-defined `SkillTemplate.Description`.
+- The binder now reports the handler name of an unresolved target.
+- No gameplay, AI, AP, or logging-default changes.
+
 ## 0.5.3
 
 - MEN-005: repair stale cached native executing-element indices before Infantry Assault mouse-hover aiming, preventing `Actor.AimAt(Vector3)` out-of-range spam after squad casualties.

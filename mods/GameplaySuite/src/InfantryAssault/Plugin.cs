@@ -5,15 +5,15 @@ using Menace.ModpackLoader;
 using Menace.SDK;
 using UnityEngine;
 
-[assembly: AssemblyVersion("0.5.3.0")]
-[assembly: AssemblyFileVersion("0.5.3.0")]
+[assembly: AssemblyVersion("0.5.4.0")]
+[assembly: AssemblyFileVersion("0.5.4.0")]
 
 namespace MenaceInfantryAssault;
 
 public sealed class Plugin : IModpackPlugin
 {
     private const string SettingsGroup = "Infantry Assault";
-    private const string Version = "0.5.3";
+    private const string Version = "0.5.4";
     private const int AssaultApCost = 40;
     private const string AssaultSkillId = "mod.infantry_assault";
 
@@ -327,8 +327,9 @@ public sealed class Plugin : IModpackPlugin
 
         try
         {
+            // MENACE 0.7.16 removed Skill.GetDescription(); the Assault tooltip text now comes
+            // from the manifest-defined SkillTemplate.Description through the native tooltip path.
             Patch(Method(_skillType, "GetTitle", 0), postfix: nameof(SkillGetTitlePostfix));
-            Patch(Method(_skillType, "GetDescription", 0), postfix: nameof(SkillGetDescriptionPostfix));
             Patch(Method(_skillType, "IsVisible", 0), prefix: nameof(SkillIsVisiblePrefix));
             Patch(Method(_skillType, "IsHidden", 0), prefix: nameof(SkillIsHiddenPrefix));
             Patch(_skillGetActionPointCost, prefix: nameof(SkillGetActionPointCostPrefix));
@@ -483,12 +484,6 @@ public sealed class Plugin : IModpackPlugin
     public static void SkillGetTitlePostfix(object __instance, ref string __result)
     {
         if (IsAssaultSkill(__instance)) __result = "Assault";
-    }
-
-    public static void SkillGetDescriptionPostfix(object __instance, ref string __result)
-    {
-        if (!IsAssaultSkill(__instance)) return;
-        __result = "Assault adjacent enemy infantry. The defender fires first if able. Surviving assaulters then fire at close range with reduced enemy cover. If the defender is destroyed, the assaulters occupy the target position.";
     }
 
     public static bool SkillGetMinRangePrefix(object __instance, ref int __result)
@@ -2129,7 +2124,7 @@ public sealed class Plugin : IModpackPlugin
 
     private static void Patch(MethodInfo? original, string? prefix = null, string? postfix = null, int? priority = null)
     {
-        if (original == null) throw new MissingMethodException("Harmony target method was not resolved.");
+        if (original == null) throw new MissingMethodException($"Harmony target method was not resolved for {prefix ?? postfix}.");
         global::HarmonyLib.HarmonyMethod? pre = null;
         global::HarmonyLib.HarmonyMethod? post = null;
         if (prefix != null) pre = new global::HarmonyLib.HarmonyMethod(typeof(Plugin), prefix);

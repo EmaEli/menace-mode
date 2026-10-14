@@ -1,4 +1,4 @@
-"""MEN-005 authoring regression checks for Infantry Assault 0.5.3.
+"""MEN-005 / #41 authoring regression checks for Infantry Assault 0.5.4.
 
 These tests verify source scoping, index validation, and packaging metadata.
 They cannot replace .NET compilation or in-game testing on MENACE IL2CPP.
@@ -20,10 +20,16 @@ def between(start, end):
 
 class AssaultAimCacheTests(unittest.TestCase):
     def test_patch_versions(self):
-        self.assertIn('AssemblyVersion("0.5.3.0")', PLUGIN)
-        self.assertIn('private const string Version = "0.5.3";', PLUGIN)
-        self.assertEqual(STANDALONE["version"], "0.5.3")
-        self.assertGreaterEqual(tuple(map(int, SUITE["version"].split("."))), (0, 32, 1))
+        self.assertIn('AssemblyVersion("0.5.4.0")', PLUGIN)
+        self.assertIn('private const string Version = "0.5.4";', PLUGIN)
+        self.assertEqual(STANDALONE["version"], "0.5.4")
+        self.assertGreaterEqual(tuple(map(int, SUITE["version"].split("."))), (0, 32, 4))
+
+    def test_no_patch_on_members_removed_in_menace_0_7_16(self):
+        self.assertNotIn('"GetDescription"', PLUGIN)
+        self.assertNotIn('"GetSkillType"', PLUGIN)
+        self.assertNotIn("SkillGetDescriptionPostfix", PLUGIN)
+        self.assertIn("was not resolved for {prefix ?? postfix}", PLUGIN)
 
     def test_only_assault_mouse_move_is_intercepted(self):
         prefix = between(

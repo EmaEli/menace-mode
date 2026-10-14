@@ -1,4 +1,8 @@
-# MENACE Mods Unified Repository 0.32.3
+# MENACE Mods Unified Repository 0.32.4
+
+### 0.32.4 MENACE 0.7.16 compatibility (Infantry Assault)
+
+Infantry Assault **0.5.4** restores compatibility with MENACE v0.7.16, which removed `Skill.GetDescription()`. The mod no longer patches that method; the Assault tooltip text comes from the manifest-defined `SkillTemplate.Description`. Unresolved Harmony targets are now reported by handler name. Other modules are unchanged. Live MENACE validation pending. See issue #41.
 
 ### 0.32.3 MEN-019 Berserk AP refund fix
 
