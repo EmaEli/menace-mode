@@ -2,7 +2,7 @@
 
 Data-only port of the legacy standalone `mods/GameplaySuite/packaging/standalone/ForestTraversal` (Modpack Loader 0.1.2) to Jiangyu.Loader. No C# code: the legacy Harmony `Structure.Create` prefix and the `OnUpdate` retry loop only re-applied the same two template fields at runtime, which Jiangyu's loader applies itself before `OnTemplatesApplied`.
 
-Status: **unverified in game**. The legacy releases are untouched; do not ship this alongside the legacy ForestTraversal modpack (both write the same two fields).
+Status: **compiled and packaged (2026-10-14), unverified in game**. `jiangyu compile --release` (CLI 1.4.8 built from source on macOS, validated against the installed game's `Assembly-CSharp.dll` + `globalgamemanagers`) passed with 0 errors. The packaged build is committed at `dist/ForestTraversal-0.2.0.zip` (sha256 `60edf02e6fd16a18a0b8cc80807b1d8261729b5fa7f3ee9e9ebfc2bc748e48ec`; contents `ForestTraversal/jiangyu.json` + `ForestTraversal/templates.json`). Extract it into `<MENACE>\Mods\` so you get `Mods\ForestTraversal\`. Build intermediates (`.jiangyu/`, `compiled/`) are gitignored. The legacy releases are untouched; do not ship this alongside the legacy ForestTraversal modpack (both write the same two fields).
 
 ## Pinned versions
 
