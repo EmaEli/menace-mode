@@ -11,7 +11,7 @@ SquaddieFieldPromotions; 0.2.0 fixed both and rendered every element in game. 0.
 settings list laying out horizontally with an unstyled horizontal scrollbar (no default Unity
 theme on the game's panel), verified in game. 0.2.2 clamps the window to 85% of the screen
 when a group has many rows (Larger Maps ran off screen with a percent max-height alone) so the
-settings list scrolls; **pending in-game re-test**.
+settings list scrolls; verified in game on MENACE 0.7.16.
 
 ## What it does
 
