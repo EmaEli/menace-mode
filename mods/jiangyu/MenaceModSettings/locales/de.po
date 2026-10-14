@@ -1,0 +1,33 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: MenaceModSettings 0.1.0\n"
+"Language: de\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#. UI · MenaceModSettings::ui/title
+msgctxt "MenaceModSettings::ui/title"
+msgid "MOD SETTINGS"
+msgstr "MOD-EINSTELLUNGEN"
+
+#. UI · MenaceModSettings::ui/reset_group
+msgctxt "MenaceModSettings::ui/reset_group"
+msgid "RESET GROUP"
+msgstr "GRUPPE ZURÜCKSETZEN"
+
+#. UI · MenaceModSettings::ui/close
+msgctxt "MenaceModSettings::ui/close"
+msgid "CLOSE"
+msgstr "SCHLIESSEN"
+
+#. UI · MenaceModSettings::ui/hint
+msgctxt "MenaceModSettings::ui/hint"
+msgid "Changes apply immediately and are saved to UserData/MenaceModSettings/settings.json. {0} toggles this window."
+msgstr "Änderungen gelten sofort und werden in UserData/MenaceModSettings/settings.json gespeichert. {0} öffnet und schließt dieses Fenster."
+
+#. UI · MenaceModSettings::ui/empty
+msgctxt "MenaceModSettings::ui/empty"
+msgid "No mod has registered settings."
+msgstr "Kein Mod hat Einstellungen registriert."
+
