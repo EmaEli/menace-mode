@@ -1,0 +1,6 @@
+// Port of legacy modpack.json patch (Forest Traversal 0.1.2).
+// Vanilla (MENACE 0.7.15): IsTraversableByInfantry=false, ContainerType=None.
+patch "EntityTemplate" "environment_backbone_forestdense" {
+    set "IsTraversableByInfantry" #true
+    set "ContainerType" enum="EntityContainerType" "Forest"
+}
