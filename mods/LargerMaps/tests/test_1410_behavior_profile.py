@@ -52,12 +52,14 @@ class Behavior1410Tests(unittest.TestCase):
         self.assertIn('AI PERF behavior turn=#', PROF)
 
     def test_no_change_to_gameplay_or_native_instruction_sites(self):
+        # #45: reviewed addition of the 0.7.17 fingerprint/RVAs only; 26 instruction
+        # descriptors/patch algorithm unchanged (also checked against the real DLL).
         def digest(relative):
             return hashlib.sha256((ROOT/relative).read_bytes()).hexdigest()
         self.assertEqual(digest('src/LargerMaps/ExtendedPathfinding.cs'),
-                         'e77b76734090a53094abc8b2cd329eb8fab07daab73e61ad8a962de11c9adfef')
+                         'b3a149b45817259accf1f36674003d06b3218bc47f0d7590f961524c25d1f5ca')
         self.assertEqual(digest('tests/pathfinding-sites.json'),
-                         'd4c3a952135a276a70be1218ec84a32e7eba8996afa8eef806ef8139259fee26')
+                         '66baaaa89c8e643482c0b573311483bb9e815551a96219763d5f9b3390e139b1')
         self.assertIn('PatchAiTaskLifetime(harmony);\n            PatchAiPerformance(harmony);', PLUGIN)
 
     def test_behavior_parser_old_and_new_lines(self):

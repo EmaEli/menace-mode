@@ -10,8 +10,9 @@ ROOT = Path(__file__).resolve().parents[1]
 PLUGIN = (ROOT / 'src/LargerMaps/Plugin.cs').read_text()
 PROF = (ROOT / 'src/LargerMaps/AIProfiling.cs').read_text()
 BASE_PLUGIN_HASH = '8d61e62c42db637f152314ee2a6f4ede5ed76baa8890dff6ba9dd15f2b5312bf'
-BASE_NATIVE_HASH = 'e77b76734090a53094abc8b2cd329eb8fab07daab73e61ad8a962de11c9adfef'
-BASE_PATCH_MANIFEST_HASH = 'd4c3a952135a276a70be1218ec84a32e7eba8996afa8eef806ef8139259fee26'
+# #45 reviewed baseline: only the verified 0.7.17 build mapping was added.
+BASE_NATIVE_HASH = 'b3a149b45817259accf1f36674003d06b3218bc47f0d7590f961524c25d1f5ca'
+BASE_PATCH_MANIFEST_HASH = '66baaaa89c8e643482c0b573311483bb9e815551a96219763d5f9b3390e139b1'
 
 
 class AiProfiling148Tests(unittest.TestCase):

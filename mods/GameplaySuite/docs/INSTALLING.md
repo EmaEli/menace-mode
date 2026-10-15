@@ -14,7 +14,8 @@ the canonical `tools/Install-IntegratedSuite.ps1`. Its default is to build **and
 the independent Jiangyu packages plus the single MelonLoader camera DLL. No second ZIP
 or manual file-copy step is required. Unrelated mods and ModpackLoader are preserved.
 
-Prerequisites: the pinned MENACE 0.7.16+22323 native game hash, installed MelonLoader and
+Candidate build target (not gameplay acceptance): MENACE 0.7.17+22362 and its pinned native
+game hash. Prerequisites: installed MelonLoader and
 generated IL2CPP proxies, Internet access for the pinned Microsoft .NET and Jiangyu 1.4.8
 downloads. Do **not** preinstall an SDK: the installer bootstraps SDK 10.0.113 automatically
 under `<kit>\tools\dotnet`, using a pinned Microsoft script and SHA512-verified SDK archive.
@@ -25,7 +26,7 @@ and [the shared standard](../../../docs/INSTALLER_STANDARD.md#private-net-sdk-bo
 The Jiangyu archive and loader have separate SHA256 checks. Unity Editor is not required:
 only code is rebuilt on the player's machine; authored data was compiled for the pinned
 game. The game must be closed both at preflight and immediately before live changes.
-The new 0.7.17 game build remains a separate, unpassed verification gate in #45; do not
+The 0.7.17 game build remains an unpassed gameplay verification gate in #45; do not
 relabel this candidate or its earlier 0.7.16 checks as a verified 0.7.17 release.
 
 The scripts verify the bundled inventory, copy sources to a unique temporary workspace,

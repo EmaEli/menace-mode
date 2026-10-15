@@ -9,7 +9,7 @@ namespace LargerMaps;
 
 /// <summary>
 /// Version-locked, fail-closed native pathfinding adaptation for the MENACE builds listed in
-/// <see cref="SupportedBuilds"/> (v0.7.15+21883 and v0.7.16+22323).
+/// <see cref="SupportedBuilds"/> (v0.7.15+21883, v0.7.16+22323 and v0.7.17+22362).
 ///
 /// Only instruction IMMEDIATES are modified, in memory, before any tactical map is loaded:
 /// - MissionTemplate.GetBounds's fixed 42x42 clipping rectangle becomes active NxN
@@ -110,10 +110,12 @@ internal static class ExtendedPathfinding
             0x5F61C0, 0x69EED0, 0x69E210, 0x69BE30, 0x69C6B0, 0x69E840, 0x69C300),
         new("v0.7.16+22323", "bd2266957504db63dbf6fbef63e2e0f53085e9f0cc17e2d2dd3352d04e960b32",
             0x60F630, 0x6B1B00, 0x6B0E40, 0x6AEA60, 0x6AF2E0, 0x6B1470, 0x6AEF30),
+        new("v0.7.17+22362", "871b4c3468c68dae3d75e7b5e29fcc9b0a8a253fcebf64045af348f0aec75111",
+            0x60F630, 0x6B1EA0, 0x6B11E0, 0x6AEE00, 0x6AF680, 0x6B1810, 0x6AF2D0),
     };
 
     // Each site is (method, byte offset inside the method). The original instructions were
-    // extracted from the v0.7.15 binary and re-verified byte for byte in v0.7.16.
+    // extracted from the v0.7.15 binary and re-verified byte for byte in v0.7.16/0.7.17.
     private static readonly PatchSite[] Sites =
     {
         // MissionTemplate.GetBounds returns (0,0,42,42) with two literal
