@@ -125,18 +125,15 @@ This repository is the common authoring tree for Luca's MENACE gameplay mods.
 
 ## Distribution model
 
-The repository produces two distribution styles from the same source:
+Every module ships as its own [Jiangyu](https://github.com/antistrategie/jiangyu) package under `../jiangyu/<Module>/`. This directory holds only the shared C# gameplay sources; each Jiangyu package's `code/<Module>.csproj` compiles them together with its host binding (`<Module>System.cs`). Data changes (template clones and patches) are authored as KDL under the package's `templates/`. Options live in the MenaceModSettings window (F9).
 
-1. **Standalone** - Squaddie Veterancy, Coordinated Fire, Overwatch, Field Logistics, Infantry Assault, StrongerCover, Building Combat Rules, Forest Traversal, Cover Destruction Rebalance, Weapon Ranges Rebalanced, Weapon Mechanics Rebalanced, Garrisonable Buildings, Buildings Block Line of Sight, Smoke Overhaul, Starting Options and Visibility Overhaul remain individually installable Nexus/modpack packages.
-2. **MENACE Gameplay Suite** - one modpack folder containing all feature DLLs. Users install one package and enable/disable the individual features through their existing Mod Settings.
-
-The suite deliberately uses multiple isolated DLLs rather than one monolithic gameplay DLL. That keeps failures contained, preserves existing save/runtime behavior and lets each feature retain its own version while the suite has its own version (`0.31`).
+Modules stay isolated in separate DLLs rather than one monolithic gameplay DLL. That keeps failures contained, preserves existing save/runtime behavior and lets each feature retain its own version.
 
 ## Repository layout
 
 ```text
 src/
-  Shared/                 shared compatibility/build source
+  Shared/                 shared host/compatibility source (IHostedPlugin, ModLog, Jiangyu/*)
   SquaddieVeterancy/      veterancy feature
   CoordinatedFire/        coordinated-fire feature + pure Core
   Overwatch/              reaction-fire feature
@@ -152,24 +149,22 @@ src/
   BuildingsBlockLineOfSight/ native LoS blocking for enterable buildings
   SmokeOverhaul/            soft-obstruction smoke + free infantry smoke/frag grenades
   VisibilityOverhaul/      configurable vision/concealment overhaul
-packaging/
-  standalone/             individual modpack templates
-  suite/                   unified modpack template
-tools/Build.ps1           one build/package/deploy pipeline
-artifacts/                 generated builds and ZIPs
+tests/                     offline authoring regression checks (python3 -m unittest discover -s tests)
+docs/                      testing notes and investigations
 ```
+
+Per-module README/CHANGELOG files, manifests (`jiangyu.json`), KDL templates and locales live in `../jiangyu/<Module>/`.
 
 ## Build
 
-Run one of:
+Each package is built with the Jiangyu CLI from its own directory:
 
-- `Build-Nexus-Packages.cmd` - builds all DLLs and produces standalone ZIPs plus the suite ZIP.
-- `Build-and-Deploy-Suite.cmd` - builds and deploys only the suite; removes standalone copies first to prevent duplicate loading.
-- `Build-and-Deploy-Standalone.cmd` - builds and deploys the fourteen standalone mods; removes the suite first.
+```text
+cd ../jiangyu/<Module>
+jiangyu compile --release --clean
+```
 
-The scripts default to `M:\SteamLibrary\steamapps\common\Menace` and prompt if it is not found.
-
-Requirements are unchanged: .NET 6 SDK, MelonLoader IL2CPP assemblies and `Menace.ModpackLoader.dll` in the MENACE installation.
+`jiangyu compile` fingerprints only `code/`, so pass `--clean` after editing the shared sources here. The output in `compiled/` is what gets installed into `Mods\<Module>\`. Requirements: .NET SDK, the Jiangyu CLI and the game's `Il2CppAssemblies` (see `code/Directory.Build.props` in each package). `Menace.ModpackLoader.dll` is no longer required for these modules.
 
 ## Shared-code policy
 

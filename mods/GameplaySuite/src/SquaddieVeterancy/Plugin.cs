@@ -1,8 +1,4 @@
-#if JIANGYU
 using MenaceModSettings;
-#else
-using Menace.SDK;
-#endif
 using MenaceModSuite.Shared;
 using UnityEngine;
 
@@ -11,17 +7,11 @@ using UnityEngine;
 
 namespace SquaddieProbe;
 
-// Host-agnostic core. The legacy Menace.ModpackLoader binding lives in
-// Plugin.Modpack.cs; the Jiangyu binding in mods/jiangyu/SquaddieVeterancy/code.
+// Host-agnostic core; the Jiangyu host binding lives in mods/jiangyu/SquaddieVeterancy/code.
 public sealed partial class Plugin : IHostedPlugin
 {
     private const string Version = "1.10";
-#if JIANGYU
     private const string SettingsGroup = "Squaddie Veterancy";
-#else
-    // Historical group name; keeps existing Modpack Loader ModSettings.json values valid.
-    private const string SettingsGroup = "SquaddieProbe";
-#endif
 
     private ModLog? _logger;
     private global::HarmonyLib.Harmony? _harmony;

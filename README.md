@@ -20,8 +20,8 @@ All MENACE installers must follow the [one-click installer standard](docs/INSTAL
 
 Follow each project's own instructions:
 
-- Gameplay Suite: [README](mods/GameplaySuite/README.md), [Build script](mods/GameplaySuite/Build-and-Deploy-Suite.cmd), [Testing](mods/GameplaySuite/docs/TESTING.md).
-- Larger Maps: [README](mods/LargerMaps/README.md), [Build script](mods/LargerMaps/build-and-deploy.bat), [Tests](mods/LargerMaps/run-tests.bat).
+- Gameplay Suite: [README](mods/GameplaySuite/README.md) (shared sources; each module is built as a Jiangyu package from [`mods/jiangyu/<Module>`](mods/jiangyu)), [Testing](mods/GameplaySuite/docs/TESTING.md).
+- Larger Maps: [README](mods/LargerMaps/README.md) (sources; built as the Jiangyu package [`mods/jiangyu/LargerMaps`](mods/jiangyu/LargerMaps)), [Tests](mods/LargerMaps/run-tests.bat).
 - Third Person Camera: [README](mods/ThirdPersonCamera/README.md), [Build script](mods/ThirdPersonCamera/build-and-deploy.bat), [Test plan](mods/ThirdPersonCamera/TEST-PLAN.md).
 
 Compiling requires local game dependencies and the intended MENACE/MelonLoader environment; game assemblies and extracted game assets are **not** included in this repository.

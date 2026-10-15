@@ -3,11 +3,7 @@ using System.Text;
 using CoordinatedFire.Core;
 using Il2CppMenace.Tactical;
 using Il2CppMenace.Tactical.Skills;
-#if JIANGYU
 using MenaceModSettings;
-#else
-using Menace.SDK;
-#endif
 using MenaceModSuite.Shared;
 using UnityEngine;
 using Path = global::System.IO.Path;
@@ -18,8 +14,7 @@ using Path = global::System.IO.Path;
 
 namespace CoordinatedFire;
 
-// Host-agnostic core. The legacy Menace.ModpackLoader binding lives in
-// Plugin.Modpack.cs; the Jiangyu binding in mods/jiangyu/CoordinatedFire/code.
+// Host-agnostic core; the Jiangyu host binding lives in mods/jiangyu/CoordinatedFire/code.
 public sealed partial class Plugin : IHostedPlugin
 {
     private const string SettingsGroup = "Coordinated Fire";

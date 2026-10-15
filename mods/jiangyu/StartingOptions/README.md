@@ -14,9 +14,9 @@ The leader cap is also constrained to the number of pickable leader templates av
 
 ## Build / installation
 
-This is a **source/authoring template**. From the top-level unified repo run `Build-Nexus-Packages.cmd` to build the installable standalone `StartingOptions-0.1.zip` and `MenaceGameplaySuite-0.32.zip`. Requires a working MENACE installation with MelonLoader, Menace Modpack Loader v2, and .NET 6 SDK. Or run `Build-and-Deploy-Suite.cmd` to build and deploy the suite directly.
+Jiangyu package. Build with `jiangyu compile --release --clean` from this directory and copy `compiled/` into `Mods\StartingOptions\`. Requires MelonLoader, the Jiangyu loader and MenaceModSettings (options are shown in the F9 window).
 
-Do not install both the unified suite and individual copies of Starting Options.
+Remove any legacy Modpack Loader copy of Starting Options (`modpack.json` + `dlls\`) so the module is loaded only once.
 
 ## Notes
 

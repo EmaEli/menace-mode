@@ -189,9 +189,9 @@ class ReferenceScalingTests(unittest.TestCase):
         self.assertIn('Math.Clamp(snapped, 64, 96)',SOURCE)
 
     def test_version_and_dump_class_coverage(self):
-        self.assertIn('Version = "1.9"',SOURCE)
-        m=json.loads((ROOT/'modpack/LargerMaps/modpack.json').read_text())
-        self.assertEqual(m['version'],'1.9')
+        self.assertNotIn('private const string Version', SOURCE)
+        m=json.loads((ROOT/'../jiangyu/LargerMaps/jiangyu.json').read_text())
+        self.assertEqual(m['version'],'2.0.1')
         dump=Path('/mnt/data/dump.cs')
         if dump.exists():
             text=dump.read_text()

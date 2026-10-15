@@ -1,9 +1,0 @@
-<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <AssemblyName>WeaponMechanicsRebalanced</AssemblyName>
-    <Version>0.4.5</Version>
-  </PropertyGroup>
-  <ItemGroup>
-    <Compile Include="../Shared/*.cs" Link="Shared/%(Filename)%(Extension)" />
-  </ItemGroup>
-</Project>

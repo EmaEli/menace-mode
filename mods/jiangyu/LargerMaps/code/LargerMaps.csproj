@@ -1,11 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <!--
-    Jiangyu host for Larger Maps. The gameplay code is shared with the legacy
-    modpack and compiled from ../../../LargerMaps/src/LargerMaps (JIANGYU defined);
-    only the host binding (LargerMapsSystem.cs) lives here. Build settings and the
-    Jiangyu.Sdk + game references come from Directory.Build.props / .targets.
+    Jiangyu host for Larger Maps. The gameplay code is compiled from
+    ../../../LargerMaps/src/LargerMaps; only the host binding (LargerMapsSystem.cs) lives here.
+    Build settings and the Jiangyu.Sdk + game references come from Directory.Build.props / .targets.
 
-    Note: `jiangyu compile` fingerprints only code/, so after editing the shared
+    Note: `jiangyu compile` fingerprints only code/, so after editing the module
     sources run `jiangyu compile` with the clean flag.
   -->
   <PropertyGroup>
@@ -15,11 +14,10 @@
     <RootNamespace>LargerMaps</RootNamespace>
     <ImplicitUsings>disable</ImplicitUsings>
     <PlatformTarget>x64</PlatformTarget>
-    <DefineConstants>$(DefineConstants);JIANGYU</DefineConstants>
     <SharedSourceDir>$(MSBuildThisFileDirectory)../../../LargerMaps/src/LargerMaps</SharedSourceDir>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="$(SharedSourceDir)/*.cs" Exclude="$(SharedSourceDir)/Plugin.Modpack.cs" LinkBase="Shared" />
+    <Compile Include="$(SharedSourceDir)/*.cs" LinkBase="Shared" />
   </ItemGroup>
   <ItemGroup>
     <!-- Direct Harmony (37 manual patches with __instance/__result/ref/__state) and

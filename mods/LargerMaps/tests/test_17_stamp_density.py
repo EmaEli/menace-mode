@@ -26,7 +26,7 @@ class StampDensityTests(unittest.TestCase):
         self.assertIn('Math.Min(MaximumStampAttemptsPerGroup, scaled)', STAMP)
 
     def test_high_density_slider_and_safety_cap(self):
-        self.assertIn('private const string Version = "1.9";', PLUGIN)
+        self.assertNotIn('private const string Version', PLUGIN)
         self.assertIn('AddSlider("TerrainStampDensityMultiplier"', PLUGIN)
         self.assertIn('1f, 5f, 1.5f);', PLUGIN)
         self.assertIn('ReadFloat("TerrainStampDensityMultiplier", 1.5f)', STAMP)

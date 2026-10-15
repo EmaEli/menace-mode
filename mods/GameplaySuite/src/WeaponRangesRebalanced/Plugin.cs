@@ -1,7 +1,5 @@
 using MelonLoader;
-#if JIANGYU
 using MenaceModSettings;
-#endif
 using Menace.SDK;
 using MenaceModSuite.Shared;
 using UnityEngine;
@@ -12,15 +10,12 @@ using UnityEngine;
 
 namespace MenaceWeaponRangesRebalanced;
 
-// Host-agnostic core. The legacy Menace.ModpackLoader binding lives in
-// Plugin.Modpack.cs; the Jiangyu binding in mods/jiangyu/WeaponRangesRebalanced/code.
+// Host-agnostic core; the Jiangyu host binding lives in mods/jiangyu/WeaponRangesRebalanced/code.
 public sealed partial class Plugin : IHostedPlugin
 {
     private const string SettingsGroup = "Weapon Ranges Rebalanced";
     private const string Version = "2.9.0";
     private const string OverrideFileName = "weapon-overrides.json";
-    private const string ModpackId = "luca.weaponrangesrebalanced";
-    private const string SuiteModpackId = "luca.menacegameplaysuite";
 
     private enum WeaponFamily
     {
@@ -444,7 +439,6 @@ public sealed partial class Plugin : IHostedPlugin
 
     private static string ResolveOverrideFilePath()
     {
-#if JIANGYU
         // The Jiangyu package folder is replaced on every install, so user overrides live
         // in UserData. A file left in the legacy modpack folder is migrated once.
         string userData;
@@ -464,53 +458,6 @@ public sealed partial class Plugin : IHostedPlugin
         {
         }
         return target;
-#else
-        try
-        {
-            string assemblyLocation = typeof(Plugin).Assembly.Location;
-            if (!string.IsNullOrWhiteSpace(assemblyLocation))
-            {
-                DirectoryInfo? dir = new FileInfo(assemblyLocation).Directory;
-                for (int i = 0; i < 4 && dir != null; i++, dir = dir.Parent)
-                {
-                    string manifest = Path.Combine(dir.FullName, "modpack.json");
-                    if (File.Exists(manifest))
-                    {
-                        string text = File.ReadAllText(manifest);
-                        if (text.Contains(ModpackId, StringComparison.OrdinalIgnoreCase) ||
-                            text.Contains(SuiteModpackId, StringComparison.OrdinalIgnoreCase))
-                            return Path.Combine(dir.FullName, OverrideFileName);
-                    }
-                }
-            }
-        }
-        catch
-        {
-        }
-
-        string modsRoot = Path.Combine(Environment.CurrentDirectory, "Mods");
-        try
-        {
-            if (Directory.Exists(modsRoot))
-            {
-                foreach (string dir in Directory.GetDirectories(modsRoot))
-                {
-                    string manifest = Path.Combine(dir, "modpack.json");
-                    if (!File.Exists(manifest)) continue;
-
-                    string text = File.ReadAllText(manifest);
-                    if (text.Contains(ModpackId, StringComparison.OrdinalIgnoreCase) ||
-                        text.Contains(SuiteModpackId, StringComparison.OrdinalIgnoreCase))
-                        return Path.Combine(dir, OverrideFileName);
-                }
-            }
-        }
-        catch
-        {
-        }
-
-        return Path.Combine(modsRoot, "WeaponRangesRebalanced", OverrideFileName);
-#endif
     }
 
     private static void EnsureOverrideFileExists()

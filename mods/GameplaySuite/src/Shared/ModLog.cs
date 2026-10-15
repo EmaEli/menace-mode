@@ -2,7 +2,7 @@ using System;
 
 namespace MenaceModSuite.Shared;
 
-// Host-neutral logger. Legacy wraps MelonLogger.Instance, Jiangyu wraps IModLog.
+// Host-neutral logger; SuiteSystem wraps Jiangyu's IModLog in it.
 public sealed class ModLog
 {
     private readonly Action<string> _msg;

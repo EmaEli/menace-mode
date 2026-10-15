@@ -10,10 +10,10 @@ import re
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
+PACKAGE = ROOT.parent / "jiangyu/SmokeOverhaul"
 PLUGIN = (ROOT / "src/SmokeOverhaul/Plugin.cs").read_text()
-CONFIG = (ROOT / "src/SmokeOverhaul/SmokeOverhaul.csproj").read_text()
-SMOKE_MANIFEST = json.loads((ROOT / "packaging/standalone/SmokeOverhaul/modpack.json").read_text())
-SUITE_MANIFEST = json.loads((ROOT / "packaging/suite/MenaceGameplaySuite/modpack.json").read_text())
+CONFIG = (PACKAGE / "code/SmokeOverhaul.csproj").read_text()
+SMOKE_MANIFEST = json.loads((PACKAGE / "jiangyu.json").read_text())
 
 
 def block(start: str, end: str) -> str:
@@ -26,7 +26,6 @@ class FastSmokeSelectionTests(unittest.TestCase):
         self.assertIn('internal const string Version = "0.5.2"', PLUGIN)
         self.assertIn('<Version>0.5.2</Version>', CONFIG)
         self.assertEqual(SMOKE_MANIFEST['version'], '0.5.2')
-        self.assertGreaterEqual(tuple(map(int, SUITE_MANIFEST['version'].split('.'))), (0, 31, 8))
 
     def test_disabled_performance_search_by_default(self):
         self.assertIn('s.AddToggle("FastAISmokeSelection"', PLUGIN)
@@ -106,8 +105,8 @@ class FastSmokeSelectionTests(unittest.TestCase):
         self.assertIn('private static void RestoreMortarSmokeAi()', PLUGIN)
 
     def test_readme_mentions_behavioral_tradeoff(self):
-        for filename in ('README.md', 'packaging/standalone/SmokeOverhaul/README.md'):
-            txt=(ROOT/filename).read_text()
+        for path in (ROOT / 'README.md', PACKAGE / 'README.md'):
+            txt=path.read_text()
             self.assertIn('FastAISmokeSelection', txt)
             self.assertIn('current', txt.lower())
 

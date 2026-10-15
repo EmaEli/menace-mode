@@ -1,8 +1,6 @@
 using MelonLoader;
 using Il2CppInterop.Runtime.InteropTypes;
-#if JIANGYU
 using MenaceModSettings;
-#endif
 using Menace.SDK;
 using MenaceModSuite.Shared;
 using UnityEngine;
@@ -13,8 +11,7 @@ using UnityEngine;
 
 namespace MenaceWeaponMechanicsRebalanced;
 
-// Host-agnostic core. The legacy Menace.ModpackLoader binding lives in
-// Plugin.Modpack.cs; the Jiangyu binding in mods/jiangyu/WeaponMechanicsRebalanced/code.
+// Host-agnostic core; the Jiangyu host binding lives in mods/jiangyu/WeaponMechanicsRebalanced/code.
 public sealed partial class Plugin : IHostedPlugin
 {
     private const string SettingsGroup = "Weapon Mechanics Rebalanced";

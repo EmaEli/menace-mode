@@ -64,8 +64,8 @@ class PrimaryCompoundReferenceTests(unittest.TestCase):
         self.assertIn('((objectiveArea && role == ObjectiveAreaRole.ControlOrExtraction) || deploymentScope)',SOURCE)
 
     def test_1_4_5_manifest_is_consistent(self):
-        data=json.loads((ROOT/'modpack/LargerMaps/modpack.json').read_text())
-        self.assertEqual(data['version'],'1.9')
-        self.assertIn('1.9', (ROOT/'src/LargerMaps/LargerMaps.csproj').read_text())
+        data=json.loads((ROOT/'../jiangyu/LargerMaps/jiangyu.json').read_text())
+        self.assertEqual(data['version'],'2.0.1')
+        self.assertIn('<Version>2.0.1</Version>', (ROOT/'../jiangyu/LargerMaps/code/LargerMaps.csproj').read_text())
 
 if __name__=='__main__':unittest.main()

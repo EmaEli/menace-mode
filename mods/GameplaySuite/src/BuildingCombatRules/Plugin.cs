@@ -5,11 +5,7 @@ using Il2CppMenace.Tactical;
 using Il2CppMenace.Tactical.Skills;
 using Il2CppMenace.Tactical.Skills.Effects;
 using Il2CppMenace.Tags;
-#if JIANGYU
 using MenaceModSettings;
-#else
-using Menace.SDK;
-#endif
 using MenaceModSuite.Shared;
 using UnityEngine;
 
@@ -19,8 +15,7 @@ using UnityEngine;
 
 namespace MenaceBuildingCombatRules;
 
-// Host-agnostic core. The legacy Menace.ModpackLoader binding lives in
-// Plugin.Modpack.cs; the Jiangyu binding in mods/jiangyu/BuildingCombatRules/code.
+// Host-agnostic core; the Jiangyu host binding lives in mods/jiangyu/BuildingCombatRules/code.
 public sealed partial class Plugin : IHostedPlugin
 {
     private const string SettingsGroup = "Building Combat Rules";

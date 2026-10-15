@@ -8,7 +8,7 @@ import unittest
 ROOT = Path(__file__).resolve().parents[1]
 PROF = (ROOT/'src/LargerMaps/AIProfiling.cs').read_text()
 PLUGIN = (ROOT/'src/LargerMaps/Plugin.cs').read_text()
-META = (ROOT/'modpack/LargerMaps/modpack.json').read_text()
+META = (ROOT/'../jiangyu/LargerMaps/jiangyu.json').read_text()
 
 
 class Behavior1410Tests(unittest.TestCase):
@@ -19,7 +19,7 @@ class Behavior1410Tests(unittest.TestCase):
         self.assertIn('_aiPerfDeep = ReadBool("DiagnoseAIPathfinding", false);', PROF)
         self.assertIn('AddToggle("DiagnoseAIPerformance", "Log AI task / unit timings", false)', PLUGIN)
         self.assertIn('AddToggle("DiagnoseAIPathfinding", "Log AI path timings (needs AI task timings)", false)', PLUGIN)
-        self.assertIn('"version": "1.9"', META)
+        self.assertIn('"version": "2.0.1"', META)
 
     def test_reuses_existing_collect_hook_no_new_native_hooks(self):
         deep = PROF.split('if (_aiPerfDeep)', 1)[1].split('// With diagnostics OFF', 1)[0]

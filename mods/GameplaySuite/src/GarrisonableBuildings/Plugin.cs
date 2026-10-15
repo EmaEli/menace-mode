@@ -3,18 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using HarmonyLib;
-#if JIANGYU
 using MenaceModSettings;
-#else
-using Menace.SDK;
-#endif
 using MenaceModSuite.Shared;
 using UnityEngine;
 
 namespace GarrisonableBuildings;
 
-// Host-agnostic core. The legacy Menace.ModpackLoader binding lives in
-// Plugin.Modpack.cs; the Jiangyu binding in mods/jiangyu/GarrisonableBuildings/code.
+// Host-agnostic core; the Jiangyu host binding lives in mods/jiangyu/GarrisonableBuildings/code.
 public sealed partial class Plugin : IHostedPlugin
 {
     private const string ModName = "Garrisonable Buildings";

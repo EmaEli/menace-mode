@@ -255,8 +255,8 @@ Root cause based on IL2CPP inspection, not yet proven by a controlled A/B runtim
 ## Build/deploy
 
 1. Close MENACE.
-2. Run `Build-and-Deploy-Suite.cmd`.
-3. The script removes standalone copies of all suite modules plus the legacy root-level `CoverDestructionRebalance.dll` before deploying `Mods/MenaceGameplaySuite`, preventing duplicate plugin/assembly loading.
+2. In each changed package run `jiangyu compile --release --clean` from `mods/jiangyu/<Module>/`.
+3. Copy the package's `compiled/` output into `Mods\<Module>\` on the game PC. Remove any legacy copy of the same module (`modpack.json` + `dlls\` folder, or a root-level DLL) so the module is loaded only once.
 
 ## Loader smoke test
 
@@ -294,9 +294,9 @@ The setting keys/groups were intentionally not renamed, so existing `UserData/Mo
 6. End several turns with AI enabled for both features.
 7. Check `Latest.log` for excessive logging. Debug options should remain OFF.
 
-## Switching back to standalone
+## Disabling a module
 
-Run `Build-and-Deploy-Standalone.cmd`. It removes `Mods/MenaceGameplaySuite` first and deploys the fifteen standalone modules from the same source tree.
+Each module is an independent Jiangyu package; remove or rename its `Mods\<Module>\` folder to disable it. There is no longer a combined suite package.
 
 
 ## Infantry Assault 0.5.1 smoke test

@@ -6,24 +6,19 @@ using System.Runtime.InteropServices;
 using System.Linq;
 using System.Reflection;
 using HarmonyLib;
-#if JIANGYU
 using MenaceModSettings;
-#else
-using Menace.SDK;
-#endif
 using Il2CppMenace.Tactical.Mapgen;
 using Il2CppMenace.Tactical.Mapgen.TerrainGen;
 using UnityEngine;
 
 namespace LargerMaps;
 
-// Host-agnostic core. The legacy Menace.ModpackLoader binding lives in
-// Plugin.Modpack.cs; the Jiangyu binding in mods/jiangyu/LargerMaps/code.
+// Host-agnostic core. The Jiangyu binding lives in mods/jiangyu/LargerMaps/code
+// and passes the package version from jiangyu.json at initialization.
 public sealed partial class Plugin
 {
     private const string ModName = "Larger Maps";
-    private const string Version = "1.9";
-    private static string _version = Version;
+    private static string _version = "unknown";
     private static Action<int, Action> _runDelayed;
     private const int VanillaSize = 42;
     // The active map size is fixed once at startup, after the native backend is verified.

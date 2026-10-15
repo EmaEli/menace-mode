@@ -1,4 +1,3 @@
-#if JIANGYU
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,10 +11,10 @@ using Il2CppMenace.Tactical.Skills;
 using Il2CppMenace.Tools;
 using UnityEngine;
 
-// Stand-ins for the subset of the Modpack Loader's Menace.SDK that the suite modules use
-// (template field access, faction names, mission status). Kept in the Menace.SDK namespace
-// so the shared module sources compile unchanged under Jiangyu. Not compiled into the
-// legacy modpack DLLs, which get the real SDK from Menace.ModpackLoader.dll.
+// Minimal game-access helpers (template field access, faction names, mission status)
+// used by the suite modules. The namespace and API shape are inherited from the
+// Menace.SDK surface of the former Modpack Loader host, so the module sources were
+// kept unchanged when the suite moved to Jiangyu.
 namespace Menace.SDK;
 
 internal enum FactionType
@@ -357,4 +356,3 @@ internal static class Il2CppTypes
         catch (ReflectionTypeLoadException ex) { return ex.Types.Where(t => t != null)!; }
     }
 }
-#endif

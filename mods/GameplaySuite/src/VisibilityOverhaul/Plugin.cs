@@ -2,11 +2,7 @@ using System.Reflection;
 using HarmonyLib;
 using Il2CppMenace.Tactical;
 using Il2CppMenace.Tactical.Skills;
-#if JIANGYU
 using MenaceModSettings;
-#else
-using Menace.SDK;
-#endif
 using MenaceModSuite.Shared;
 using UnityEngine;
 
@@ -15,8 +11,7 @@ using UnityEngine;
 
 namespace VisibilityOverhaul;
 
-// Host-agnostic core. The legacy Menace.ModpackLoader binding lives in
-// Plugin.Modpack.cs; the Jiangyu binding in mods/jiangyu/VisibilityOverhaul/code.
+// Host-agnostic core; the Jiangyu host binding lives in mods/jiangyu/VisibilityOverhaul/code.
 public sealed partial class Plugin : IHostedPlugin
 {
     internal const string SettingsGroup = "Visibility Overhaul";

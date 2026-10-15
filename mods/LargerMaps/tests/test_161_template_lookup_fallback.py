@@ -37,7 +37,7 @@ class TestKnownCombatFallback(unittest.TestCase):
             self.assertNotIn(forbidden,COMBAT)
 
     def test_version(self):
-        self.assertEqual(json.loads((ROOT/'modpack/LargerMaps/modpack.json').read_text())['version'],'1.9')
-        self.assertIn('private const string Version = "1.9"', (ROOT/'src/LargerMaps/Plugin.cs').read_text())
+        self.assertEqual(json.loads((ROOT/'../jiangyu/LargerMaps/jiangyu.json').read_text())['version'],'2.0.1')
+        self.assertNotIn('private const string Version', (ROOT/'src/LargerMaps/Plugin.cs').read_text())
 
 if __name__=='__main__': unittest.main()

@@ -1,11 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <!--
-    Jiangyu host for InfantryAssault. The gameplay code is shared with the legacy GameplaySuite
-    modpack and compiled from ../../../GameplaySuite/src/InfantryAssault (JIANGYU defined); only
-    the host binding (InfantryAssaultSystem.cs) lives here. Build settings and the Jiangyu.Sdk +
-    game references come from Directory.Build.props / .targets.
+    Jiangyu host for InfantryAssault. The gameplay code is compiled from
+    ../../../GameplaySuite/src/InfantryAssault; only the host binding (InfantryAssaultSystem.cs) lives here.
+    Build settings and the Jiangyu.Sdk + game references come from Directory.Build.props / .targets.
 
-    Note: `jiangyu compile` fingerprints only code/, so after editing the shared
+    Note: `jiangyu compile` fingerprints only code/, so after editing the module
     sources run `jiangyu compile` with the clean flag.
   -->
   <PropertyGroup>
@@ -15,11 +14,10 @@
     <RootNamespace>MenaceInfantryAssault</RootNamespace>
     <Nullable>enable</Nullable>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-    <DefineConstants>$(DefineConstants);JIANGYU</DefineConstants>
     <SuiteSourceDir>$(MSBuildThisFileDirectory)../../../GameplaySuite/src</SuiteSourceDir>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="$(SuiteSourceDir)/InfantryAssault/**/*.cs" Exclude="$(SuiteSourceDir)/InfantryAssault/Plugin.Modpack.cs;$(SuiteSourceDir)/InfantryAssault/bin/**;$(SuiteSourceDir)/InfantryAssault/obj/**" LinkBase="Module" />
+    <Compile Include="$(SuiteSourceDir)/InfantryAssault/**/*.cs" Exclude="$(SuiteSourceDir)/InfantryAssault/bin/**;$(SuiteSourceDir)/InfantryAssault/obj/**" LinkBase="Module" />
     <Compile Include="$(SuiteSourceDir)/Shared/*.cs" LinkBase="Shared" />
     <Compile Include="$(SuiteSourceDir)/Shared/Jiangyu/*.cs" LinkBase="Shared/Jiangyu" />
   </ItemGroup>

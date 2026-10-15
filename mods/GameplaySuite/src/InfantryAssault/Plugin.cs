@@ -1,9 +1,7 @@
 using System.Runtime.CompilerServices;
 using Il2CppInterop.Runtime.InteropTypes;
 using MelonLoader;
-#if JIANGYU
 using MenaceModSettings;
-#endif
 using Menace.SDK;
 using MenaceModSuite.Shared;
 using UnityEngine;
@@ -13,8 +11,7 @@ using UnityEngine;
 
 namespace MenaceInfantryAssault;
 
-// Host-agnostic core. The legacy Menace.ModpackLoader binding lives in
-// Plugin.Modpack.cs; the Jiangyu binding in mods/jiangyu/InfantryAssault/code.
+// Host-agnostic core; the Jiangyu host binding lives in mods/jiangyu/InfantryAssault/code.
 public sealed partial class Plugin : IHostedPlugin
 {
     private const string SettingsGroup = "Infantry Assault";
@@ -422,13 +419,11 @@ public sealed partial class Plugin : IHostedPlugin
                 return;
             }
 
-#if JIANGYU
             // The Jiangyu KDL compiler only accepts single enum members; the clone ships
             // SkillOrder.Any / SkillTarget.EnemyActor as baselines and the exact legacy
             // values (Any+10, EnemyActor|Structure) are written here.
             SetEnumMember(_assaultTemplate, "Order", 50010);
             SetEnumMember(_assaultTemplate, "TargetsAllowed", 1049600);
-#endif
 
             // The clone inherits the vehicle Charge icon; use the vanilla running-figure skill icon.
             var icon = SpriteLookup.Find("skill_32");

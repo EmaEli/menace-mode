@@ -1,10 +1,6 @@
 using System.Reflection;
 using Il2CppMenace.Tactical;
-#if JIANGYU
 using MenaceModSettings;
-#else
-using Menace.SDK;
-#endif
 using MenaceModSuite.Shared;
 using UnityEngine;
 using Path = global::System.IO.Path;
@@ -15,8 +11,7 @@ using Path = global::System.IO.Path;
 
 namespace MenaceOverwatch;
 
-// Host-agnostic core. The legacy Menace.ModpackLoader binding lives in
-// Plugin.Modpack.cs; the Jiangyu binding in mods/jiangyu/Overwatch/code.
+// Host-agnostic core; the Jiangyu host binding lives in mods/jiangyu/Overwatch/code.
 public sealed partial class Plugin : IHostedPlugin
 {
     private const string SettingsGroup = "Overwatch";

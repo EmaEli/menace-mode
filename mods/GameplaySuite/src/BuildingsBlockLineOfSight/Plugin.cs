@@ -3,17 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using HarmonyLib;
-#if JIANGYU
 using MenaceModSettings;
-#else
-using Menace.SDK;
-#endif
 using MenaceModSuite.Shared;
 
 namespace BuildingsBlockLineOfSight;
 
-// Host-agnostic core. The legacy Menace.ModpackLoader binding lives in
-// Plugin.Modpack.cs; the Jiangyu binding in mods/jiangyu/BuildingsBlockLineOfSight/code.
+// Host-agnostic core; the Jiangyu host binding lives in mods/jiangyu/BuildingsBlockLineOfSight/code.
 public sealed partial class Plugin : IHostedPlugin
 {
     private const string ModName = "Buildings Block Line of Sight";

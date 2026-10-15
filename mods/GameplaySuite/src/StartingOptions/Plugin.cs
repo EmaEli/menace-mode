@@ -5,11 +5,7 @@ using Il2CppMenace.Items;
 using Il2CppMenace.Strategy;
 using Il2CppMenace.UI;
 using Il2CppMenace.UI.Menu;
-#if JIANGYU
 using MenaceModSettings;
-#else
-using Menace.SDK;
-#endif
 using MenaceModSuite.Shared;
 
 [assembly: AssemblyVersion("0.1.0.0")]
@@ -21,8 +17,7 @@ namespace MenaceStartingOptions;
 /// <summary>
 /// Configures MENACE's native New Game screen. No patches run during tactical play.
 /// Both settings affect newly created campaigns only.
-/// Host-agnostic core: the legacy Menace.ModpackLoader binding lives in
-/// Plugin.Modpack.cs, the Jiangyu binding in mods/jiangyu/StartingOptions/code.
+/// Host-agnostic core; the Jiangyu host binding lives in mods/jiangyu/StartingOptions/code.
 /// </summary>
 public sealed partial class Plugin : IHostedPlugin
 {

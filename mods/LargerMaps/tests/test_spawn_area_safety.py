@@ -12,7 +12,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 PLUGIN = (ROOT / 'src/LargerMaps/Plugin.cs').read_text()
 NATIVE = (ROOT / 'src/LargerMaps/ExtendedPathfinding.cs').read_text()
-CONFIG = json.loads((ROOT / 'modpack/LargerMaps/modpack.json').read_text())
+CONFIG = json.loads((ROOT / '../jiangyu/LargerMaps/jiangyu.json').read_text())
 SIZES=(64,72,80,88,96)
 
 def normalize(x,y,w,h,n,min_size=5):
@@ -151,7 +151,7 @@ class SpawnAreaSafetyTests(unittest.TestCase):
         self.assertIn('PatchAiTaskLifetime(harmony)',PLUGIN)
         self.assertIn('PatchTerrainHoleIndexing(harmony)',PLUGIN)
     def test_archive_version(self):
-        self.assertEqual(CONFIG['version'],'1.9')
+        self.assertEqual(CONFIG['version'],'2.0.1')
         self.assertIn('64/72/80/88/96',CONFIG['description'])
 
 if __name__ == '__main__':

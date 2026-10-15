@@ -34,7 +34,7 @@ class AiRollover149Tests(unittest.TestCase):
         self.assertIn('__result = Il2CppSystem.Threading.Tasks.Task.Run(__0);', safety)
         self.assertIn('return false;', safety)
         self.assertIn('PatchAiTaskLifetime(harmony);\n            PatchAiPerformance(harmony);', GAME)
-        self.assertIn('private const string Version = "1.9";', GAME)
+        self.assertNotIn('private const string Version', GAME)
 
     def test_parser_preserves_actor_identity_and_duration(self):
         spec = importlib.util.spec_from_file_location('ai_performance_149', ROOT/'tools/analyze_ai_perf.py')

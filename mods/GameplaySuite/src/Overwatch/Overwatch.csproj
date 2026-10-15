@@ -1,8 +1,0 @@
-<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <AssemblyName>Overwatch</AssemblyName>
-  </PropertyGroup>
-  <ItemGroup>
-    <Compile Include="../Shared/*.cs" Link="Shared/%(Filename)%(Extension)" />
-  </ItemGroup>
-</Project>

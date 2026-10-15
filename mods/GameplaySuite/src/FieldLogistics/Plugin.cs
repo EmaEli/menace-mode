@@ -6,16 +6,13 @@ using System.Reflection;
 using Il2CppInterop.Runtime.InteropTypes;
 using HarmonyLib;
 using MelonLoader;
-#if JIANGYU
 using MenaceModSettings;
-#endif
 using Menace.SDK;
 using MenaceModSuite.Shared;
 
 namespace FieldLogistics;
 
-// Host-agnostic core. The legacy Menace.ModpackLoader binding lives in
-// Plugin.Modpack.cs; the Jiangyu binding in mods/jiangyu/FieldLogistics/code.
+// Host-agnostic core; the Jiangyu host binding lives in mods/jiangyu/FieldLogistics/code.
 public sealed partial class Plugin : IHostedPlugin
 {
     private const string ModName = "Field Logistics";
@@ -40,9 +37,7 @@ public sealed partial class Plugin : IHostedPlugin
     private bool _testModuleGranted;
     private bool _testVehicleGranted;
     private bool _testLoadoutReadyLogged;
-#if JIANGYU
     private static bool _moduleIconsApplied;
-#endif
     private static bool _skillIconsApplied;
 
     public void Initialize(ModLog logger, HarmonyLib.Harmony harmony)
@@ -624,7 +619,6 @@ public sealed partial class Plugin : IHostedPlugin
                 Templates.WriteField(module, "Rarity", GetInt("Rarity", 20));
                 Templates.WriteField(module, "BlackMarketMaxQuantity", GetInt("BlackMarketMaxQuantity", 1));
                 Templates.WriteField(module, "MinCampaignProgress", GetInt("MinimumCampaignProgress", 0));
-#if JIANGYU
                 // Jiangyu KDL cannot reference a vanilla sprite by name without shipping
                 // the file; mirror the legacy loader's by-name lookup, best effort.
                 if (!_moduleIconsApplied)
@@ -634,7 +628,6 @@ public sealed partial class Plugin : IHostedPlugin
                     if (icon != null) _moduleIconsApplied = Templates.WriteField(module, "IconEquipment", icon);
                     if (iconDisabled != null) Templates.WriteField(module, "IconEquipmentDisabled", iconDisabled);
                 }
-#endif
             }
 
             var vehicleSkill = Templates.Find("SkillTemplate", VehicleSkillId);
@@ -650,13 +643,11 @@ public sealed partial class Plugin : IHostedPlugin
             {
                 Templates.WriteField(shareSkill, "ActionPointCost", GetInt("AmmoSharingAPCost", 40));
                 Templates.WriteField(shareSkill, "IsHidden", !SharingEnabled());
-#if JIANGYU
                 // The Jiangyu KDL compiler only accepts single enum members; the clone ships
                 // SkillOrder.Last / SkillTarget.AlliedActor as baselines and the exact legacy
                 // values (Last+10, AlliedActor|Self) are written here.
                 Templates.WriteField(shareSkill, "Order", 70010);
                 Templates.WriteField(shareSkill, "TargetsAllowed", 2099200);
-#endif
             }
 
             // Both skills are cloned from the officer whistle (lightning bolt icon); swap in

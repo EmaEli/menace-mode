@@ -1,4 +1,4 @@
-"""MEN-005 / #41 authoring regression checks for Infantry Assault 0.5.4.
+"""MEN-005 / #41 authoring regression checks for Infantry Assault 0.5.6.
 
 These tests verify source scoping, index validation, and packaging metadata.
 They cannot replace .NET compilation or in-game testing on MENACE IL2CPP.
@@ -8,9 +8,10 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+PACKAGE = ROOT.parent / "jiangyu/InfantryAssault"
 PLUGIN = (ROOT / "src/InfantryAssault/Plugin.cs").read_text(encoding="utf-8")
-STANDALONE = json.loads((ROOT / "packaging/standalone/InfantryAssault/modpack.json").read_text())
-SUITE = json.loads((ROOT / "packaging/suite/MenaceGameplaySuite/modpack.json").read_text())
+MANIFEST = json.loads((PACKAGE / "jiangyu.json").read_text())
+CSPROJ = (PACKAGE / "code/InfantryAssault.csproj").read_text(encoding="utf-8")
 
 
 def between(start, end):
@@ -20,10 +21,10 @@ def between(start, end):
 
 class AssaultAimCacheTests(unittest.TestCase):
     def test_patch_versions(self):
-        self.assertIn('AssemblyVersion("0.5.4.0")', PLUGIN)
-        self.assertIn('private const string Version = "0.5.4";', PLUGIN)
-        self.assertEqual(STANDALONE["version"], "0.5.4")
-        self.assertGreaterEqual(tuple(map(int, SUITE["version"].split("."))), (0, 32, 4))
+        self.assertIn('AssemblyVersion("0.5.6.0")', PLUGIN)
+        self.assertIn('private const string Version = "0.5.6";', PLUGIN)
+        self.assertEqual(MANIFEST["version"], "0.5.6")
+        self.assertIn("<Version>0.5.6</Version>", CSPROJ)
 
     def test_no_patch_on_members_removed_in_menace_0_7_16(self):
         self.assertNotIn('"GetDescription"', PLUGIN)

@@ -1,11 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <!--
-    Jiangyu host for WeaponRangesRebalanced. The gameplay code is shared with the legacy GameplaySuite
-    modpack and compiled from ../../../GameplaySuite/src/WeaponRangesRebalanced (JIANGYU defined); only
-    the host binding (WeaponRangesRebalancedSystem.cs) lives here. Build settings and the Jiangyu.Sdk +
-    game references come from Directory.Build.props / .targets.
+    Jiangyu host for WeaponRangesRebalanced. The gameplay code is compiled from
+    ../../../GameplaySuite/src/WeaponRangesRebalanced; only the host binding (WeaponRangesRebalancedSystem.cs) lives here.
+    Build settings and the Jiangyu.Sdk + game references come from Directory.Build.props / .targets.
 
-    Note: `jiangyu compile` fingerprints only code/, so after editing the shared
+    Note: `jiangyu compile` fingerprints only code/, so after editing the module
     sources run `jiangyu compile` with the clean flag.
   -->
   <PropertyGroup>
@@ -15,11 +14,10 @@
     <RootNamespace>MenaceWeaponRangesRebalanced</RootNamespace>
     <Nullable>enable</Nullable>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-    <DefineConstants>$(DefineConstants);JIANGYU</DefineConstants>
     <SuiteSourceDir>$(MSBuildThisFileDirectory)../../../GameplaySuite/src</SuiteSourceDir>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="$(SuiteSourceDir)/WeaponRangesRebalanced/**/*.cs" Exclude="$(SuiteSourceDir)/WeaponRangesRebalanced/Plugin.Modpack.cs;$(SuiteSourceDir)/WeaponRangesRebalanced/bin/**;$(SuiteSourceDir)/WeaponRangesRebalanced/obj/**" LinkBase="Module" />
+    <Compile Include="$(SuiteSourceDir)/WeaponRangesRebalanced/**/*.cs" Exclude="$(SuiteSourceDir)/WeaponRangesRebalanced/bin/**;$(SuiteSourceDir)/WeaponRangesRebalanced/obj/**" LinkBase="Module" />
     <Compile Include="$(SuiteSourceDir)/Shared/*.cs" LinkBase="Shared" />
     <Compile Include="$(SuiteSourceDir)/Shared/Jiangyu/*.cs" LinkBase="Shared/Jiangyu" />
   </ItemGroup>

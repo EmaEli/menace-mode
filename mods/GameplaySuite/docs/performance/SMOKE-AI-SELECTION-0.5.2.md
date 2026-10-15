@@ -48,7 +48,7 @@ Because the optimization also applies to infantry smoke, their AI will no
 longer move solely to get a smoke-throwing angle. It does not remove their
 ability to select and throw smoke after moving for other reasons.
 
-On Windows, build with `Build-and-Deploy-Suite.cmd`. Keep Larger Maps 1.6.1
+Build with `jiangyu compile --release --clean` in `mods/jiangyu/SmokeOverhaul/`. Keep Larger Maps 1.6.1
 unchanged and verify a single:
 
 `[SmokeOverhaul] Fast AI smoke selection active: N native profile(s)`

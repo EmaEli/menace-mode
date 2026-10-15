@@ -1,3 +1,9 @@
+## 2.0 - Jiangyu package
+
+Larger Maps is built and installed as the Jiangyu package in [`../jiangyu/LargerMaps`](../jiangyu/LargerMaps) (`jiangyu compile --release --clean` from that directory, then copy `compiled/` into `Mods\LargerMaps\`). Options live in the MenaceModSettings window (F9). This directory keeps the gameplay sources (`src/LargerMaps`), the offline regression tests (`run-tests.bat` / `python3 -m unittest discover -s tests`) and the technical notes. The legacy Modpack Loader build (`build-and-deploy.bat`, `modpack.json`) has been removed; references to it in the version notes below are historical.
+
+---
+
 ## 1.8 - Up to 5x terrain stamp density (MEN-003 experiment)
 
 In **Mod Settings > Larger Maps** choose `IncreaseTerrainStampDensity=ON` and set `TerrainStampDensityMultiplier` from **1x to 5x** (default **1.5x**, feature toggle OFF for new installs). Restart the game to apply. On an existing install the saved toggle and multiplier remain as set by the user.

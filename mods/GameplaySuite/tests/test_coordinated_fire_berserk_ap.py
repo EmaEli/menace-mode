@@ -12,8 +12,9 @@ ROOT = Path(__file__).resolve().parents[1]
 RUNTIME = (ROOT / "src/CoordinatedFire/Runtime.cs").read_text(encoding="utf-8")
 RULES = (ROOT / "src/CoordinatedFire/Core/Rules.cs").read_text(encoding="utf-8")
 PLUGIN = (ROOT / "src/CoordinatedFire/Plugin.cs").read_text(encoding="utf-8")
-STANDALONE = json.loads((ROOT / "packaging/standalone/CoordinatedFire/modpack.json").read_text())
-SUITE = json.loads((ROOT / "packaging/suite/MenaceGameplaySuite/modpack.json").read_text())
+PACKAGE = ROOT.parent / "jiangyu/CoordinatedFire"
+MANIFEST = json.loads((PACKAGE / "jiangyu.json").read_text())
+CSPROJ = (PACKAGE / "code/CoordinatedFire.csproj").read_text(encoding="utf-8")
 
 
 def expected_native_order(start, maximum, cost, gains):
@@ -102,8 +103,8 @@ class BerserkApRefundTests(unittest.TestCase):
     def test_versions_and_debug_default(self):
         self.assertIn('AssemblyVersion("1.6.8.0")', PLUGIN)
         self.assertIn('private const string Version = "1.6.8";', PLUGIN)
-        self.assertEqual(STANDALONE["version"], "1.6.8")
-        self.assertGreaterEqual(tuple(map(int, SUITE["version"].split("."))), (0, 32, 3))
+        self.assertEqual(MANIFEST["version"], "1.6.8")
+        self.assertIn("<Version>1.6.8</Version>", CSPROJ)
         self.assertIn('AddToggle("VerboseLogging", "Debug logging", false)', PLUGIN)
 
 

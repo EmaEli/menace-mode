@@ -9,11 +9,7 @@ using Il2CppMenace.Tools;
 using Il2CppMenace.Tactical.Skills;
 using Il2CppMenace.Tactical.Skills.Effects;
 using Il2CppMenace.Tactical.TileEffects;
-#if JIANGYU
 using MenaceModSettings;
-#else
-using Menace.SDK;
-#endif
 using MenaceModSuite.Shared;
 using UnityEngine;
 
@@ -22,8 +18,7 @@ using UnityEngine;
 
 namespace SmokeOverhaul;
 
-// Host-agnostic core. The legacy Menace.ModpackLoader binding lives in
-// Plugin.Modpack.cs; the Jiangyu binding in mods/jiangyu/SmokeOverhaul/code.
+// Host-agnostic core; the Jiangyu host binding lives in mods/jiangyu/SmokeOverhaul/code.
 public sealed partial class Plugin : IHostedPlugin
 {
     internal const string ModName = "Smoke Overhaul";

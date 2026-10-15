@@ -29,5 +29,5 @@ class ConservativeAreaReferenceTest(unittest.TestCase):
         self.assertIn('PatchAiTaskLifetime(harmony);',src)
         self.assertIn('PatchMissionAreaScaling(harmony);',src)
         self.assertNotIn('PatchAllObjectiveAreaScopes(harmony);',src)
-        self.assertIn('Version = "1.9"',src)
+        self.assertNotIn('private const string Version', src)
 if __name__=='__main__': unittest.main()
