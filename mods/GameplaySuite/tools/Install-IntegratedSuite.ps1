@@ -15,6 +15,8 @@ $ProgressPreference = 'SilentlyContinue'
 $log = Join-Path ([IO.Path]::GetTempPath()) 'MENACE-install.log'
 $lock = $null
 $transcript = $false
+$buildLocation = $false
+$processEnvironment = $null
 try {
     Start-Transcript -LiteralPath $log -Append -ErrorAction Stop | Out-Null
     $transcript = $true
@@ -34,6 +36,7 @@ try {
     }
     . (Join-Path $PSScriptRoot 'Install.Common.ps1')
     . (Join-Path $PSScriptRoot 'Install.Deployment.ps1')
+    $processEnvironment = Save-BuildEnvironment
     Assert-Bundle $BundleRoot $kit
     $catalog = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'distribution.json') -Raw | ConvertFrom-Json
     if (-not $GamePath) {
@@ -52,8 +55,11 @@ try {
     $runtime = Join-Path $GamePath 'MelonLoader\net6'
     foreach ($name in @('Assembly-CSharp.dll', 'Il2Cppmscorlib.dll', 'UnityEngine.CoreModule.dll')) { Assert-Leaf (Join-Path $refs $name) }
     foreach ($name in @('MelonLoader.dll', 'Il2CppInterop.Runtime.dll', '0Harmony.dll')) { Assert-Leaf (Join-Path $runtime $name) }
-    if (-not (Get-Command dotnet -ErrorAction SilentlyContinue)) { throw 'Install the .NET 10 SDK before running this installer.' }
-    if (-not ((& dotnet --list-sdks) -match '^10\.')) { throw '.NET 10 SDK is required.' }
+    foreach ($property in $catalog.dotnetSdk.PSObject.Properties) {
+        if ($kit.dotnetSdk.($property.Name) -ne $property.Value) { throw 'Kit/catalog SDK pin mismatch.' }
+    }
+    # First build step: automatic, private SDK bootstrap. No preinstalled SDK required.
+    Initialize-PrivateDotnet $BundleRoot $kit.dotnetSdk
     $selected = @($catalog.modules)
     if ($Product -eq 'Camera') { $selected = @('MenaceModSettings', 'CinematicActionCamera') }
     if ($Product -eq 'Standalone') {
@@ -68,6 +74,8 @@ try {
     New-Item -ItemType Directory -Path $work | Out-Null
     $source = Join-Path $work 'source'
     Copy-Item -LiteralPath (Join-Path $BundleRoot 'source') -Destination $source -Recurse
+    Push-Location $source
+    $buildLocation = $true
     $archive = Join-Path $work 'jiangyu-cli-win-x64.zip'
     [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
     Invoke-WebRequest -UseBasicParsing -Uri $catalog.cliUrl -OutFile $archive -TimeoutSec 180
@@ -148,6 +156,8 @@ catch {
     exit 1
 }
 finally {
+    if ($buildLocation) { Pop-Location }
+    if ($null -ne $processEnvironment) { Restore-BuildEnvironment $processEnvironment }
     if ($lock) { $lock.Dispose() }
     if ($transcript) { Stop-Transcript | Out-Null }
 }

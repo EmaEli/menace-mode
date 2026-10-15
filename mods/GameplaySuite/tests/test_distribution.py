@@ -118,6 +118,51 @@ class DistributionTests(unittest.TestCase):
         self.assertIn("Missing project Version", source)
         self.assertNotIn("Menace.ModpackLoader.dll", source)
 
+    def test_private_sdk_pins_are_recorded_in_kit_manifest(self):
+        pin = json.loads((TOOLS / "distribution.json").read_text())["dotnetSdk"]
+        self.assertEqual(pin["channel"], "10.0")
+        self.assertRegex(pin["version"], r"^10\.0\.1[0-9]{2}$")
+        self.assertRegex(pin["archiveSha512"], r"^[a-f0-9]{128}$")
+        self.assertRegex(pin["installScriptSha256"], r"^[a-f0-9]{64}$")
+        self.assertEqual(pin["metadataUrl"], "https://builds.dotnet.microsoft.com/dotnet/release-metadata/10.0/releases.json")
+        self.assertIn("/" + pin["version"] + "/dotnet-sdk-", pin["archiveUrl"])
+        self.assertRegex(pin["installScriptUrl"], r"/dotnet/install-scripts/[a-f0-9]{40}/src/dotnet-install\.ps1$")
+        archive, kit = BUILDER.make_archive({"source/example.cs": b"fixture"}, {}, "test-base", pin)
+        with zipfile.ZipFile(io.BytesIO(archive)) as data:
+            self.assertEqual(json.loads(data.read("kit.json"))["dotnetSdk"], pin)
+        self.assertEqual(kit["dotnetSdk"], pin)
+
+    def test_sdk_bootstrap_is_automatic_logged_and_before_builds(self):
+        source = (TOOLS / "Install-IntegratedSuite.ps1").read_text()
+        bootstrap = source.index("Initialize-PrivateDotnet $BundleRoot $kit.dotnetSdk")
+        self.assertLess(source.index("Start-Transcript"), bootstrap)
+        self.assertLess(bootstrap, source.index("Invoke-Dotnet @('build'"))
+        self.assertIn("Kit/catalog SDK pin mismatch", source)
+        self.assertIn("$processEnvironment = Save-BuildEnvironment", source)
+        self.assertIn("Restore-BuildEnvironment $processEnvironment", source[source.index("finally {"):])
+        self.assertNotIn("Install the .NET 10 SDK before running", source)
+
+    def test_sdk_script_consumes_only_verified_local_archive(self):
+        source = (TOOLS / "Install.Common.ps1").read_text()
+        script = source.index("& $installer -Channel")
+        self.assertLess(source.index("Get-VerifiedDownload $Pin.installScriptUrl"), script)
+        self.assertLess(source.index("Get-VerifiedDownload $Pin.archiveUrl $archive $Pin.archiveSha512 'SHA512'"), script)
+        self.assertLess(source.index("$drive.AvailableFreeSpace"), source.index("Get-VerifiedDownload $Pin.installScriptUrl"))
+        self.assertIn("-InstallDir $root -NoPath -AzureFeed $feed", source)
+        self.assertIn("Pinned private SDK already present; no download/extraction required", source)
+        self.assertIn("$actual -ne $Pin.version", source)
+        self.assertIn("Cached download integrity failed", source)
+
+    def test_sdk_environment_is_process_scoped_and_restorable(self):
+        source = (TOOLS / "Install.Common.ps1").read_text()
+        self.assertIn("Join-Path $KitRoot 'tools'", source)
+        self.assertIn("Join-Path $tools 'dotnet'", source)
+        for variable in ("DOTNET_ROOT", "PATH", "DOTNET_CLI_TELEMETRY_OPTOUT", "DOTNET_NOLOGO", "DOTNET_SKIP_FIRST_TIME_EXPERIENCE"):
+            self.assertIn("$env:" + variable + " =", source)
+        self.assertIn("[Environment]::SetEnvironmentVariable($name, $Saved[$name], 'Process')", source)
+        for forbidden in ("msiexec", "Set-ItemProperty", "SetEnvironmentVariable($name, $Saved[$name], 'User')", "global.json"):
+            self.assertNotIn(forbidden, source)
+
     def test_partial_copies_and_journal_errors_are_in_rollback_scope(self):
         source = (TOOLS / "Install.Deployment.ps1").read_text()
         self.assertLess(source.index("$entry.installed = $true"), source.index("Copy-Item -LiteralPath (Join-Path $Stage"))

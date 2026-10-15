@@ -90,6 +90,96 @@ function Invoke-Dotnet([string[]]$BuildArguments) {
     if ($LASTEXITCODE -ne 0) { throw "dotnet failed with exit code $LASTEXITCODE" }
 }
 
+function Get-VerifiedDownload([string]$Uri, [string]$Path, [string]$Hash, [string]$Algorithm) {
+    if (Test-Path -LiteralPath $Path) {
+        Assert-NotLink $Path
+        if ((Get-FileHash -LiteralPath $Path -Algorithm $Algorithm).Hash -ne $Hash) {
+            throw "Cached download integrity failed: $Path. No archive was extracted."
+        }
+        Write-Host "Reusing verified download: $Path"
+        return
+    }
+    $partial = $Path + '.partial-' + [guid]::NewGuid().ToString('N')
+    Write-Host "Downloading pinned build input: $Uri"
+    Invoke-WebRequest -UseBasicParsing -Uri $Uri -OutFile $partial -TimeoutSec 1200
+    if ((Get-FileHash -LiteralPath $partial -Algorithm $Algorithm).Hash -ne $Hash) {
+        throw "Downloaded $Algorithm mismatch; rejected file retained at $partial. No archive was extracted."
+    }
+    Move-Item -LiteralPath $partial -Destination $Path -ErrorAction Stop
+    Write-Host "$Algorithm verified: $Path"
+}
+
+function Save-BuildEnvironment {
+    $saved = @{}
+    foreach ($name in @('PATH', 'DOTNET_ROOT', 'DOTNET_ROOT_X64', 'DOTNET_CLI_TELEMETRY_OPTOUT', 'DOTNET_NOLOGO', 'DOTNET_SKIP_FIRST_TIME_EXPERIENCE', 'DOTNET_MULTILEVEL_LOOKUP', 'DOTNET_CLI_HOME', 'NUGET_PACKAGES')) {
+        $saved[$name] = [Environment]::GetEnvironmentVariable($name, 'Process')
+    }
+    return $saved
+}
+function Restore-BuildEnvironment($Saved) {
+    foreach ($name in $Saved.Keys) { [Environment]::SetEnvironmentVariable($name, $Saved[$name], 'Process') }
+}
+
+function Initialize-PrivateDotnet([string]$KitRoot, $Pin) {
+    # The caller restores these process-local variables in finally. Never use User/Machine targets.
+    if ($Pin.channel -ne '10.0' -or $Pin.version -notmatch '^10\.0\.1[0-9]{2}$' -or
+        $Pin.archiveSha512 -notmatch '^[a-fA-F0-9]{128}$' -or $Pin.installScriptSha256 -notmatch '^[a-fA-F0-9]{64}$') {
+        throw 'Missing/invalid pinned .NET 10 SDK metadata.'
+    }
+    $expectedArchive = 'https://builds.dotnet.microsoft.com/dotnet/Sdk/' + $Pin.version + '/dotnet-sdk-' + $Pin.version + '-win-x64.zip'
+    if ($Pin.archiveUrl -ne $expectedArchive -or
+        $Pin.installScriptUrl -notmatch '^https://raw\.githubusercontent\.com/dotnet/install-scripts/[a-f0-9]{40}/src/dotnet-install\.ps1$') {
+        throw 'SDK bootstrap requires pinned official Microsoft archive/script URLs.'
+    }
+    if (-not [Environment]::Is64BitProcess) { throw 'Use Windows x64 PowerShell for the private SDK.' }
+    $tools = Join-Path $KitRoot 'tools'
+    if (Test-Path -LiteralPath $tools) { Assert-NotLink $tools }
+    $root = Join-Path $tools 'dotnet'
+    if (Test-Path -LiteralPath $root) { Assert-NotLink $root }
+    New-Item -ItemType Directory -Path $root -Force | Out-Null
+    $env:DOTNET_ROOT = $root
+    $env:DOTNET_ROOT_X64 = $root
+    $env:PATH = $root + [IO.Path]::PathSeparator + $env:PATH
+    $env:DOTNET_CLI_TELEMETRY_OPTOUT = '1'
+    $env:DOTNET_NOLOGO = '1'
+    $env:DOTNET_SKIP_FIRST_TIME_EXPERIENCE = '1'
+    $env:DOTNET_MULTILEVEL_LOOKUP = '0'
+    $env:DOTNET_CLI_HOME = Join-Path $tools 'dotnet-home'
+    $env:NUGET_PACKAGES = Join-Path $tools 'nuget-packages'
+    $exe = Join-Path $root 'dotnet.exe'
+    $versionFolder = Join-Path (Join-Path $root 'sdk') $Pin.version
+    if (-not ((Test-Path -LiteralPath $exe -PathType Leaf) -and (Test-Path -LiteralPath $versionFolder -PathType Container))) {
+        $drive = New-Object IO.DriveInfo ([IO.Path]::GetPathRoot([IO.Path]::GetFullPath($root)))
+        if ($drive.AvailableFreeSpace -lt [long]$Pin.minimumFreeBytes) {
+            throw 'Not enough free disk space for the private SDK archive, extraction copy and installed SDK (2 GiB required).'
+        }
+        Write-Host 'Private SDK disk-space check passed (2 GiB download/extraction allowance).'
+        $downloads = Join-Path $tools 'downloads'
+        if (Test-Path -LiteralPath $downloads) { Assert-NotLink $downloads }
+        $feed = Join-Path $downloads 'verified-feed'
+        $sdkFeed = Join-Path (Join-Path $feed 'Sdk') $Pin.version
+        New-Item -ItemType Directory -Path $sdkFeed -Force | Out-Null
+        $archive = Join-Path $sdkFeed ('dotnet-sdk-' + $Pin.version + '-win-x64.zip')
+        $installer = Join-Path $downloads 'dotnet-install.ps1'
+        [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
+        Get-VerifiedDownload $Pin.installScriptUrl $installer $Pin.installScriptSha256 'SHA256'
+        Get-VerifiedDownload $Pin.archiveUrl $archive $Pin.archiveSha512 'SHA512'
+        # Microsoft's filesystem AzureFeed consumes ONLY our already hash-verified archive.
+        Write-Host 'Installing with pinned Microsoft script from the SHA512-verified local feed.'
+        & $installer -Channel $Pin.channel -Version $Pin.version -Architecture x64 -InstallDir $root -NoPath -AzureFeed $feed | Out-Host
+    }
+    else { Write-Host 'Pinned private SDK already present; no download/extraction required.' }
+    Assert-Leaf $exe
+    Assert-NotLink $exe
+    Push-Location $root
+    try {
+        $actual = (& $exe --version | Out-String).Trim()
+        if ($LASTEXITCODE -ne 0 -or $actual -ne $Pin.version) { throw "Private SDK version mismatch: expected $($Pin.version)." }
+        Write-Host "Private dotnet --version: $actual"
+    }
+    finally { Pop-Location }
+}
+
 function Assert-NoUnknownDuplicates([string]$Mods, [string]$Stage, [string[]]$Names, [string[]]$Conflicts) {
     $knownDlls = @($Names | Where-Object { $_ -match '\.dll$' })
     foreach ($name in $Names) {
