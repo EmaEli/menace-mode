@@ -1,4 +1,4 @@
-"""MEN-005 / #41 authoring regression checks for Infantry Assault 0.5.6.
+"""MEN-005 / #41 / #31 authoring regression checks for Infantry Assault.
 
 These tests verify source scoping, index validation, and packaging metadata.
 They cannot replace .NET compilation or in-game testing on MENACE IL2CPP.
@@ -21,10 +21,18 @@ def between(start, end):
 
 class AssaultAimCacheTests(unittest.TestCase):
     def test_patch_versions(self):
-        self.assertIn('AssemblyVersion("0.5.6.0")', PLUGIN)
-        self.assertIn('private const string Version = "0.5.6";', PLUGIN)
-        self.assertEqual(MANIFEST["version"], "0.5.6")
-        self.assertIn("<Version>0.5.6</Version>", CSPROJ)
+        version = MANIFEST["version"]
+        self.assertIn(f'AssemblyVersion("{version}.0")', PLUGIN)
+        self.assertIn(f'AssemblyFileVersion("{version}.0")', PLUGIN)
+        self.assertIn(f'private const string Version = "{version}";', PLUGIN)
+        self.assertIn(f"<Version>{version}</Version>", CSPROJ)
+
+    def test_requested_icon_pair(self):
+        self.assertIn('SpriteLookup.Find("skill_41")', PLUGIN)
+        self.assertIn('SpriteLookup.Find("skill_41_inactive")', PLUGIN)
+        self.assertNotIn('SpriteLookup.Find("skill_32', PLUGIN)
+        self.assertIn('SetMember(_assaultTemplate, "Icon", icon)', PLUGIN)
+        self.assertIn('SetMember(_assaultTemplate, "IconDisabled", iconDisabled)', PLUGIN)
 
     def test_no_patch_on_members_removed_in_menace_0_7_16(self):
         self.assertNotIn('"GetDescription"', PLUGIN)

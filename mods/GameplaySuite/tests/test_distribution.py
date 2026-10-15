@@ -1,0 +1,155 @@
+"""ZIP builder and installer source guards; these do not execute PowerShell or Windows."""
+import importlib.util
+import io
+import json
+import tempfile
+import unittest
+import zipfile
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[3]
+TOOLS = ROOT / "mods/GameplaySuite/tools"
+SPEC = importlib.util.spec_from_file_location("build_kit", TOOLS / "build_kit.py")
+BUILDER = importlib.util.module_from_spec(SPEC)
+SPEC.loader.exec_module(BUILDER)
+import sys
+sys.modules["build_kit"] = BUILDER
+VERIFY_SPEC = importlib.util.spec_from_file_location("verify_kit", TOOLS / "verify_kit.py")
+VERIFIER = importlib.util.module_from_spec(VERIFY_SPEC)
+VERIFY_SPEC.loader.exec_module(VERIFIER)
+
+
+class DistributionTests(unittest.TestCase):
+    def fixture(self, root):
+        def write(name, content):
+            path = root / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(content)
+        write("mods/GameplaySuite/tools/distribution.json", json.dumps({"modules": ["Example"]}))
+        manifest = json.dumps({"name": "Example", "version": "1.2.3"})
+        write("mods/jiangyu/Example/jiangyu.json", manifest)
+        write("mods/jiangyu/Example/compiled/jiangyu.json", manifest)
+        write("mods/jiangyu/Example/code/Example.csproj", '<Project><PropertyGroup><Version>1.2.3</Version></PropertyGroup></Project>')
+        write("mods/jiangyu/Example/compiled/code/Example.dll", "test stand-in; real PE metadata is checked by the C# runner")
+        write("mods/jiangyu/Example/code/local.props", "machine-local fixture, must not ship")
+        write("mods/jiangyu/Example/code/bin/ignored.cs", "generated")
+        write("mods/jiangyu/Example/compiled/code/Example.pdb", "debug fixture")
+        for file in ("Install-IntegratedSuite.ps1", "Install.Common.ps1", "Install.Deployment.ps1"):
+            write("mods/GameplaySuite/tools/" + file, "# test fixture")
+        write("mods/GameplaySuite/INSTALL-SUITE.cmd", "@echo off\n")
+        write("mods/GameplaySuite/docs/INSTALLING.md", "Offline fixture")
+        write("docs/MIGRATION_STATUS.md", "Offline migration fixture")
+        for file in ("ThirdPersonCamera.csproj", "src/ThirdPersonCameraMod.cs", "README.md"):
+            write("mods/ThirdPersonCamera/" + file, "test fixture")
+
+    def test_archive_is_reproducible_and_fully_inventoried(self):
+        payload = {"source/test.cs": b"example", "INSTALL-SUITE.cmd": b"@echo off"}
+        first, kit = BUILDER.make_archive(payload, {"Example": "1.2.3"}, "test-base")
+        second, _ = BUILDER.make_archive(payload, {"Example": "1.2.3"}, "test-base")
+        self.assertEqual(first, second)
+        with zipfile.ZipFile(io.BytesIO(first)) as archive:
+            self.assertIsNone(archive.testzip())
+            self.assertEqual(set(archive.namelist()), set(payload) | {"kit.json"})
+            for entry in kit["files"]:
+                self.assertEqual(BUILDER.digest(archive.read(entry["path"])), entry["sha256"])
+
+    def test_unsafe_archive_paths_are_rejected(self):
+        for name in ("../bad", "/absolute", "source/../bad", "C:/absolute", "source\\bad"):
+            with self.subTest(name=name), self.assertRaises(ValueError):
+                BUILDER.make_archive({name: b"test"}, {}, "test-base")
+
+    def test_collection_excludes_machine_and_debug_files(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder).resolve()
+            self.fixture(root)
+            payload, versions = BUILDER.collect(root)
+            self.assertEqual(versions, {"Example": "1.2.3"})
+            self.assertFalse(any("local.props" in n or "/bin/" in n or n.endswith(".pdb") for n in payload))
+            self.assertIn("source/mods/jiangyu/Example/compiled/code/Example.dll", payload)
+            self.assertIn("source/docs/MIGRATION_STATUS.md", payload)
+            self.assertEqual(payload["INSTALL-SUITE.cmd"], b"@echo off\r\n")
+
+    def test_manifest_mismatch_and_extra_dll_fail_closed(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder).resolve()
+            self.fixture(root)
+            path = root / "mods/jiangyu/Example/compiled/jiangyu.json"
+            original = path.read_text()
+            path.write_text(json.dumps({"name": "Example", "version": "9.0.0"}))
+            with self.assertRaisesRegex(ValueError, "Manifest mismatch"):
+                BUILDER.collect(root)
+            path.write_text(original)
+            (path.parent / "code/Other.dll").write_text("unexpected")
+            with self.assertRaisesRegex(ValueError, "unexpected compiled DLLs"):
+                BUILDER.collect(root)
+
+    def test_symlinks_are_rejected(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder).resolve()
+            self.fixture(root)
+            (root / "mods/jiangyu/Example/code/link.cs").symlink_to(root / "mods/ThirdPersonCamera/src/ThirdPersonCameraMod.cs")
+            with self.assertRaisesRegex(ValueError, "Symlink"):
+                BUILDER.collect(root)
+
+    def test_catalog_covers_all_current_modules(self):
+        catalog = json.loads((TOOLS / "distribution.json").read_text())
+        actual = {p.parent.name for p in (ROOT / "mods/jiangyu").glob("*/jiangyu.json")}
+        self.assertEqual(set(catalog["modules"]), actual)
+        self.assertEqual(catalog["modules"][0], "MenaceModSettings")
+        self.assertIn("CinematicActionCamera", actual)
+
+    def test_bootstrap_requires_all_three_hashes_before_execution(self):
+        launcher = (ROOT / "mods/GameplaySuite/INSTALL-SUITE.cmd").read_text()
+        self.assertIn("cmd.exe /k", launcher)
+        self.assertIn("$f.Count -ne 1", launcher)
+        for name in ("Install-IntegratedSuite.ps1", "Install.Common.ps1", "Install.Deployment.ps1"):
+            self.assertIn(name, launcher)
+        self.assertLess(launcher.index("Get-FileHash"), launcher.index(' -File "%~dp0source'))
+        self.assertLess(launcher.index('starting.>"%LOG%"'), launcher.index("powershell.exe"))
+        self.assertIn("notepad.exe", launcher)
+
+    def test_builds_and_staging_precede_live_install(self):
+        source = (TOOLS / "Install-IntegratedSuite.ps1").read_text()
+        install = source.index("Install-StagedMods $GamePath")
+        self.assertLess(source.index("Assert-Dll $dll $cameraVersion"), install)
+        self.assertLess(source.index("Assert-NoUnknownDuplicates"), install)
+        self.assertLess(source.index("if ($BuildOnly)"), install)
+        self.assertIn("SelectSingleNode('/Project/PropertyGroup/Version')", source)
+        self.assertIn("Missing project Version", source)
+        self.assertNotIn("Menace.ModpackLoader.dll", source)
+
+    def test_partial_copies_and_journal_errors_are_in_rollback_scope(self):
+        source = (TOOLS / "Install.Deployment.ps1").read_text()
+        self.assertLess(source.index("$entry.installed = $true"), source.index("Copy-Item -LiteralPath (Join-Path $Stage"))
+        self.assertIn("Restore-ModBackup $Game $backup -Journal $journal", source)
+        self.assertIn("Assert-Inventory $live @($entry.oldFiles)", source)
+        self.assertIn("Rollback incomplete", source)
+        self.assertIn("[switch]$CheckCurrent", source)
+        self.assertNotIn("Remove-Item", source)
+        self.assertEqual(source.count("    Assert-GameClosed"), 2)
+
+    def test_version_padding_and_unknown_sources_guard(self):
+        source = (TOOLS / "Install.Common.ps1").read_text()
+        self.assertIn("while ($parts.Count -lt 4)", source)
+        self.assertIn("Uninventoried source files", source)
+        self.assertIn("Duplicate source inventory entry", source)
+        self.assertIn("Renamed duplicate package", source)
+
+    def test_verifier_detects_modified_payload(self):
+        data, _ = BUILDER.make_archive({"source/example.cs": b"good"}, {}, "test-base")
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "kit.zip"
+            path.write_bytes(data)
+            files, _ = VERIFIER.read_archive(path)
+            self.assertEqual(files["source/example.cs"], b"good")
+            output = io.BytesIO()
+            with zipfile.ZipFile(io.BytesIO(data)) as old, zipfile.ZipFile(output, "w") as new:
+                for name in old.namelist():
+                    new.writestr(name, b"changed" if name == "source/example.cs" else old.read(name))
+            path.write_bytes(output.getvalue())
+            with self.assertRaisesRegex(ValueError, "SHA256 mismatch"):
+                VERIFIER.read_archive(path)
+
+
+if __name__ == "__main__":
+    unittest.main()

@@ -1,6 +1,6 @@
 {
   "name": "SmokeOverhaul",
-  "version": "0.5.3",
+  "version": "0.6.4",
   "author": "Luca",
   "description": "Smoke rework: configurable LOS blocking, duration, free smoke/frag grenades, mortar smoke delivery and faster AI smoke use. Jiangyu port of the legacy GameplaySuite module; options live in the MenaceModSettings window (F9).",
   "depends": [

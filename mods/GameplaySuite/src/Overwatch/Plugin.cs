@@ -5,9 +5,9 @@ using MenaceModSuite.Shared;
 using UnityEngine;
 using Path = global::System.IO.Path;
 
-[assembly: AssemblyVersion("0.32.3.2")]
-[assembly: AssemblyFileVersion("0.32.3.2")]
-[assembly: AssemblyInformationalVersion("0.32.3.2")]
+[assembly: AssemblyVersion("0.32.3.5")]
+[assembly: AssemblyFileVersion("0.32.3.5")]
+[assembly: AssemblyInformationalVersion("0.32.3.5")]
 
 namespace MenaceOverwatch;
 
@@ -15,7 +15,7 @@ namespace MenaceOverwatch;
 public sealed partial class Plugin : IHostedPlugin
 {
     private const string SettingsGroup = "Overwatch";
-    private const string Version = "0.32.3.2";
+    private const string Version = "0.32.3.5";
     private Runtime? _runtime;
     private global::HarmonyLib.Harmony? _harmony;
     private ModLog? _logger;
@@ -56,6 +56,7 @@ public sealed partial class Plugin : IHostedPlugin
             s.AddToggle("DebugLogging", "Debug logging", false);
         });
         DevConsole.RegisterPanel("Overwatch", DrawDebug);
+        HudInputGuard.Register(this, GetHudRect);
         _bindAt = Time.realtimeSinceStartup + 2f;
         DebugLog($"{Version}: initialized. Overwatch provocation is whitelisted to movement completion and native attack skills only; utility/transport actions such as passenger ejection cannot provoke reaction fire. Indirect-fire weapons remain excluded.");
     }
@@ -112,17 +113,17 @@ public sealed partial class Plugin : IHostedPlugin
         }
     }
 
-    private void DrawGUI()
+    private Rect? GetHudRect()
     {
-        if (_runtime == null || !_runtime.InMission || !Setting("ShowHUD", true)) return;
+        if (_guiErrorLogged || _runtime == null || !Setting("EnableGameplay", true) || !Setting("ShowHUD", true) || !TacticalManager.IsMissionRunning()) return null;
         var manager = TacticalManager.Get();
-        if (!Native.Valid(manager) || !manager.IsPlayerTurn() || manager.IsPaused()) return;
+        if (!Native.Valid(manager) || !manager.IsPlayerTurn() || manager.IsPaused()) return null;
 
         // No selected player unit means there is nothing for the panel to operate on.
         // Hide it unconditionally; "Show button when unavailable" only applies to a
         // currently selected unit that cannot arm Overwatch for some other reason.
-        if (!_runtime.HasSelectedPlayerActor) return;
-        if (!_runtime.CanArmCurrent && !_runtime.Armed && !Setting("ShowUnavailableHUD", true)) return;
+        if (!_runtime.HasSelectedPlayerActor) return null;
+        if (!_runtime.CanArmCurrent && !_runtime.Armed && !Setting("ShowUnavailableHUD", true)) return null;
 
         float scale = Math.Clamp(Setting("HUDScale", 1.0f), 0.75f, 1.5f);
         float width = 390f * scale, height = 78f * scale;
@@ -140,8 +141,17 @@ public sealed partial class Plugin : IHostedPlugin
         else if (Setting("StackWithCoordinatedFire", true) && IsCoordinatedFireInstalled() && pos.StartsWith("Top", StringComparison.Ordinal))
             y += 84f * scale;
 
-        _hudRect = new Rect(Math.Clamp(x, 4, Math.Max(4, Screen.width - width - 4)),
+        return new Rect(Math.Clamp(x, 4, Math.Max(4, Screen.width - width - 4)),
             Math.Clamp(y, 4, Math.Max(4, Screen.height - height - 4)), width, height);
+    }
+
+    private void DrawGUI()
+    {
+        var rect = GetHudRect();
+        if (!rect.HasValue) return;
+        _hudRect = rect.Value;
+        float scale = Math.Clamp(Setting("HUDScale", 1.0f), 0.75f, 1.5f);
+        float width = _hudRect.width;
         GUI.Box(_hudRect, GUIContent.none);
 
         float pad = 6f * scale, chipH = 22f * scale, gap = 4f * scale;
@@ -263,6 +273,7 @@ public sealed partial class Plugin : IHostedPlugin
 
     public void OnUnload()
     {
+        HudInputGuard.Unregister(this);
         DevConsole.RemovePanel("Overwatch");
         _runtime?.Dispose();
         _runtime = null;

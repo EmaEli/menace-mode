@@ -16,7 +16,7 @@ namespace FieldLogistics;
 public sealed partial class Plugin : IHostedPlugin
 {
     private const string ModName = "Field Logistics";
-    private const string Version = "1.0.10";
+    private const string Version = "1.0.11";
     private const string VehicleSkillId = "active.fieldlogistics_vehicle_resupply";
     private const string ShareSkillId = "active.fieldlogistics_redistribute_ammo";
     private const string ModuleId = "accessory.fieldlogistics_vehicle_ammo_supply";
@@ -651,11 +651,11 @@ public sealed partial class Plugin : IHostedPlugin
             }
 
             // Both skills are cloned from the officer whistle (lightning bolt icon); swap in
-            // vanilla ammo-themed skill-bar icons once, by sprite name.
+            // the same cartridge icon for both actions, as requested in issue #38.
             if (!_skillIconsApplied && !vehicleSkill.IsNull && !shareSkill.IsNull)
             {
                 bool ok = ApplySkillIcons(vehicleSkill, "skill_05");
-                ok &= ApplySkillIcons(shareSkill, "skill_28");
+                ok &= ApplySkillIcons(shareSkill, "skill_05");
                 _skillIconsApplied = ok;
             }
 

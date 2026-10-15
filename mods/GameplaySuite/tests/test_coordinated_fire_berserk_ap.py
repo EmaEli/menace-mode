@@ -1,4 +1,4 @@
-"""MEN-019 offline regression checks for Coordinated Fire 1.6.8.
+"""MEN-019 offline model/wiring checks for the current Coordinated Fire package.
 
 These validate the cost-before-grant AP arithmetic and patch wiring in source.
 They do NOT compile the C# code or replace live MENACE/IL2CPP testing.
@@ -100,11 +100,20 @@ class BerserkApRefundTests(unittest.TestCase):
         self.assertIn("public static int AfterPreservingClippedGains(", RULES)
         self.assertIn("return After(current, cost) + Math.Min(cost, carried);", RULES)
 
+    def test_followup_keeps_live_native_legality_and_resource_flags(self):
+        section = RUNTIME.split("private bool ValidateFollowUpCore(", 1)[1].split("public void Finish(", 1)[0]
+        self.assertIn("Native.HasAttack(actor!, second)", section)
+        self.assertIn("Native.WeaponTemplateKey(second) != _transaction.Second.WeaponKey", section)
+        self.assertIn("Native.CanTarget(second, actor!, _target!)", section)
+        self.assertIn("a.ActionPoints < _transaction!.Cost", section)
+        self.assertIn("var launchUsage = _childUsage | UsageParameter.NoApConsumed;", RUNTIME)
+        self.assertNotIn("| UsageParameter.Free", RUNTIME)
+
     def test_versions_and_debug_default(self):
-        self.assertIn('AssemblyVersion("1.6.8.0")', PLUGIN)
-        self.assertIn('private const string Version = "1.6.8";', PLUGIN)
-        self.assertEqual(MANIFEST["version"], "1.6.8")
-        self.assertIn("<Version>1.6.8</Version>", CSPROJ)
+        version = MANIFEST["version"]
+        self.assertIn(f'AssemblyVersion("{version}.0")', PLUGIN)
+        self.assertIn(f'private const string Version = "{version}";', PLUGIN)
+        self.assertIn(f"<Version>{version}</Version>", CSPROJ)
         self.assertIn('AddToggle("VerboseLogging", "Debug logging", false)', PLUGIN)
 
 

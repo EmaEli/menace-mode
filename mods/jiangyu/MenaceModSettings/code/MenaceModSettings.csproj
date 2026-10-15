@@ -11,9 +11,18 @@
     <!-- Keep in step with jiangyu.json so the DLL metadata identifies the shipped build.
          AssemblyVersion stays fixed: consumer mods bind to "MenaceModSettings, Version=1.0.0.0"
          and the loader resolves by exact identity, so changing it breaks every installed consumer. -->
-    <Version>0.4.0</Version>
-    <FileVersion>0.4.0.0</FileVersion>
+    <Version>0.5.0</Version>
+    <FileVersion>0.5.0.0</FileVersion>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
   </PropertyGroup>
-
+  <ItemGroup>
+    <Reference Include="0Harmony">
+      <HintPath>$(MelonLoaderDir)/0Harmony.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.InputLegacyModule">
+      <HintPath>$(GameAssembliesDir)/UnityEngine.InputLegacyModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
 </Project>

@@ -1,0 +1,32 @@
+{
+  "provenance": "Minimal fields from cached game_files/v0.7.16/ExtractedData/SkillTemplate.json; not independently established as pristine vanilla or current live state.",
+  "exportSha256": "47e27b92413f6715aeb50041e46fc2237b79a57fb6da9f4cff30e1882620720d",
+  "skills": [
+    {
+      "name": "perk.first_aid",
+      "IsAttack": false,
+      "handlerTypes": ["DisplayText", "Regeneration", "ChangeMorale", "ChangeSquaddieRescue"]
+    },
+    {
+      "name": "perk.reinforcements",
+      "IsAttack": false,
+      "handlerTypes": ["RefillSquaddies", "DisplayText"]
+    },
+    {
+      "name": "active.infantry.cut_fence",
+      "IsAttack": false
+    }
+  ],
+  "thirdPartyRepairKit": {
+    "version": "1.0.0",
+    "sourceSha256": "f9d037be43b143e162e654a5fd448478e1223dfae3107069f781015fd73674d8",
+    "cloneSourceId": "active.infantry.cut_fence",
+    "clearsNativeEventHandlers": true,
+    "cloneIds": [
+      "active.frk_vehicle_repair_defect",
+      "active.frk_vehicle_repair_hull",
+      "active.frk_field_repair_defect",
+      "active.frk_field_repair_hull"
+    ]
+  }
+}

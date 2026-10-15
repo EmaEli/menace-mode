@@ -1,0 +1,19 @@
+{
+  "source": "Available template-index/template-values asset export; SkillTemplate.Tags and WeaponTemplate.Tags/SkillsGranted only",
+  "weapon": "weapon.generic_assault_rifle_tier1_kpac_grenade_launcher",
+  "direct_item_tags": [],
+  "attacks": [
+    {
+      "id": "active.fire_assault_rifle_tier1_556",
+      "tags": ["projectile", "assault_rifle", "squad_weapon"]
+    },
+    {
+      "id": "active.fire_assault_rifle_sustained_fire_tier1_556",
+      "tags": ["projectile", "assault_rifle", "squad_weapon", "suppressive"]
+    },
+    {
+      "id": "active.launch_underbarrel_frag_grenade",
+      "tags": ["indirect_fire", "projectile", "mobile", "area_of_effect", "grenade"]
+    }
+  ]
+}

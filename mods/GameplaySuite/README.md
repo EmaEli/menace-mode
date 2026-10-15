@@ -1,5 +1,14 @@
 # MENACE Mods Unified Repository 0.32.5
 
+## Current offline follow-up (not a verified Suite release)
+
+The headings below retain historical release notes. See `../../docs/MIGRATION_STATUS.md`
+for current independently versioned Jiangyu packages and `docs/TESTING.md` for acceptance.
+Smoke Overhaul **0.6.4** ports PR #12's bounded proactive smoke rules (60/45/30%) and
+pinned-only emergency smoke permission/AP behavior. Native use, coexistence and AI
+timing are unverified; no global scheduler or new pathfinder was added. The previous
+migration ZIP is unchanged and does not contain this subsequent AI follow-up.
+
 ### 0.32.5 MENACE 0.7.16 compatibility (Field Logistics)
 
 Field Logistics **1.0.7** restores `Resupply Infantry` and `Redistribute Ammo` on MENACE v0.7.16, which removed the skill template both were cloned from. The clones now derive from `active.rogue_officer_whistle` with the Refill Ammo behavior re-applied by the manifest, and all suite `EntityTemplate.Skills` patches use `$append` so the grenade skills 0.7.16 adds to player squads are kept. Other modules are unchanged. Verified in game on 0.7.16. See issue #41.

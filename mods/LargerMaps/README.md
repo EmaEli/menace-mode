@@ -1,3 +1,13 @@
+## 2.1.0 - Selective infantry positioning (offline candidate)
+
+Ports the OFF-by-default PR #18 experiment to the current Jiangyu host; the option
+was absent from 2.0.1. On maps above 64x64 with simplified combat planning enabled,
+preserve only already-enabled profiles from five explicit infantry fire skills.
+Native profile identity is captured before mutations; no new movement hooks,
+orders, sleep changes or blanket enabling. Native CPU cost may increase when ON.
+See [current package instructions and A/B acceptance](../jiangyu/LargerMaps/README.md).
+Build/offline checks do not validate native gameplay or performance; #2 remains open.
+
 ## 2.0 - Jiangyu package
 
 Larger Maps is built and installed as the Jiangyu package in [`../jiangyu/LargerMaps`](../jiangyu/LargerMaps) (`jiangyu compile --release --clean` from that directory, then copy `compiled/` into `Mods\LargerMaps\`). Options live in the MenaceModSettings window (F9). This directory keeps the gameplay sources (`src/LargerMaps`), the offline regression tests (`run-tests.bat` / `python3 -m unittest discover -s tests`) and the technical notes. The legacy Modpack Loader build (`build-and-deploy.bat`, `modpack.json`) has been removed; references to it in the version notes below are historical.

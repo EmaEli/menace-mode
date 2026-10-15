@@ -52,7 +52,6 @@ internal sealed class Runtime : IVolleyPort, IDisposable
     public bool IsActive => _volley.IsActive;
     public bool Locked => _volley.IsActive || _settling;
     public int ReservedCost => _transaction?.Cost ?? 0;
-    public Func<bool> PointerOverPanel { get; set; } = () => false;
     public double Now { get; private set; }
     public long Frame { get; private set; }
     public bool IsBusy => Native.Valid(_firingActor) &&
@@ -801,7 +800,7 @@ internal sealed class Runtime : IVolleyPort, IDisposable
         public static bool Select(ref bool __result)
         { if (Instance?.Locked != true) return true; __result = false; return false; }
         public static bool Mouse()
-        { var r = Instance; return r == null || (!r.Locked && !r.PointerOverPanel()); }
+        { return Instance?.Locked != true; }
         public static bool Keyboard()
         {
             var r = Instance;

@@ -5,6 +5,7 @@ using System.Linq;
 using HarmonyLib;
 using Il2CppMenace.Items;
 using Il2CppMenace.Tactical;
+using Il2CppMenace.Tactical.AI;
 using Il2CppMenace.Tools;
 using Il2CppMenace.Tactical.Skills;
 using Il2CppMenace.Tactical.Skills.Effects;
@@ -13,8 +14,8 @@ using MenaceModSettings;
 using MenaceModSuite.Shared;
 using UnityEngine;
 
-[assembly: AssemblyVersion("0.5.3.0")]
-[assembly: AssemblyFileVersion("0.5.3.0")]
+[assembly: AssemblyVersion("0.6.4.0")]
+[assembly: AssemblyFileVersion("0.6.4.0")]
 
 namespace SmokeOverhaul;
 
@@ -22,7 +23,7 @@ namespace SmokeOverhaul;
 public sealed partial class Plugin : IHostedPlugin
 {
     internal const string ModName = "Smoke Overhaul";
-    internal const string Version = "0.5.3";
+    internal const string Version = "0.6.4";
 
     private static ModLog? _log;
     private static readonly Dictionary<string, PatchedTemplate> PatchedTemplates = new(StringComparer.OrdinalIgnoreCase);
@@ -88,6 +89,7 @@ public sealed partial class Plugin : IHostedPlugin
 
     public void Initialize(ModLog logger, global::HarmonyLib.Harmony harmony)
     {
+        _aiSmokeMainThreadId = Environment.CurrentManagedThreadId;
         _log = logger;
         RegisterSettings();
         RefreshSettings(force: true);
@@ -151,6 +153,16 @@ public sealed partial class Plugin : IHostedPlugin
             postfix: null,
             label: "Skill.Use");
 
+        hooks += TryPatch(harmony,
+            AccessTools.Method(typeof(Skill), nameof(Skill.GetActionPointCost), Type.EmptyTypes),
+            prefix: null, postfix: nameof(Patches.Skill_GetActionPointCost_Postfix), label: "Skill.GetActionPointCost");
+        hooks += TryPatch(harmony,
+            AccessTools.Method(typeof(Agent), nameof(Agent.Execute), Type.EmptyTypes),
+            prefix: nameof(Patches.Agent_Execute_Prefix), postfix: null, label: "Agent.Execute");
+        hooks += TryPatch(harmony,
+            AccessTools.Method(typeof(Agent), nameof(Agent.OnTurnStart), Type.EmptyTypes),
+            prefix: null, postfix: nameof(Patches.Agent_OnTurnStart_Postfix), label: "Agent.OnTurnStart");
+
         hooks += TryPatch(
             harmony,
             AccessTools.Method(
@@ -185,12 +197,13 @@ public sealed partial class Plugin : IHostedPlugin
         ApplySmokeDeliveryProfiles();
 
         DevConsole.RegisterPanel(ModName, DrawDebug);
-        DebugMsg($"{ModName} {Version}: initialized with {hooks}/8 hooks.");
+        DebugMsg($"{ModName} {Version}: initialized with {hooks}/11 hooks.");
     }
 
     public void OnSceneLoaded(int buildIndex, string sceneName)
     {
         Patches.ResetCounters();
+        AiSmokeSceneChanged(sceneName);
 
         if (RuntimeSettings.Enabled)
             ApplyThrownGrenadeActionPointCosts();
@@ -298,6 +311,8 @@ public sealed partial class Plugin : IHostedPlugin
             s.AddToggle("CaliberBasedSmokeFootprints", "Caliber-based smoke footprints (infantry/light 1 tile, 80mm cross, 120mm 3x3)", true);
             s.AddToggle("EnableAISmokeUsage", "Let AI actively use smoke with MENACE's native LOS-blocker behavior", true);
             s.AddToggle("FastAISmokeSelection", "Fast AI smoke selection (current position only)", true);
+            s.AddToggle("AllowSmokeWhilePinnedDown", "Allow smoke throws while Pinned Down (0 AP in that state only)", true);
+            s.AddToggle("SimpleAISmokeRules", "Lightweight AI smoke: defensive throws and exposed flamethrowers", true);
 
             s.AddHeader("Diagnostics");
             s.AddToggle("DebugLogging", "Debug logging", false);
@@ -315,6 +330,7 @@ public sealed partial class Plugin : IHostedPlugin
         bool previousFootprints = RuntimeSettings.CaliberBasedSmokeFootprints;
         bool previousAiSmoke = RuntimeSettings.EnableAISmokeUsage;
         bool previousFastAiSmoke = RuntimeSettings.FastAISmokeSelection;
+        bool previousPinnedSmoke = RuntimeSettings.AllowSmokeWhilePinnedDown;
 
         bool enabled = Setting("EnableGameplay", true);
         bool losThroughSmoke = Setting("AllowLineOfSightThroughSmoke", true);
@@ -327,9 +343,11 @@ public sealed partial class Plugin : IHostedPlugin
         bool caliberFootprints = Setting("CaliberBasedSmokeFootprints", true);
         bool aiSmoke = Setting("EnableAISmokeUsage", true);
         bool fastAiSmoke = Setting("FastAISmokeSelection", true);
+        bool pinnedSmoke = Setting("AllowSmokeWhilePinnedDown", true);
+        bool simpleAiRules = Setting("SimpleAISmokeRules", true);
         bool debug = Setting("DebugLogging", false);
 
-        RuntimeSettings.Configure(enabled, losThroughSmoke, perTile, maximum, durationMultiplier, grenadeApCost, freeGrenade, freeFragGrenade, caliberFootprints, aiSmoke, fastAiSmoke, debug);
+        RuntimeSettings.Configure(enabled, losThroughSmoke, perTile, maximum, durationMultiplier, grenadeApCost, freeGrenade, freeFragGrenade, caliberFootprints, aiSmoke, fastAiSmoke, pinnedSmoke, simpleAiRules, debug);
 
         if ((previousEnabled && !enabled) || (previousLos && !losThroughSmoke))
             _restoreOnSafeScene = true;
@@ -356,7 +374,7 @@ public sealed partial class Plugin : IHostedPlugin
         else if ((!enabled || !freeFragGrenade) && (previousEnabled && previousFreeFragGrenade))
             RestoreFreeInfantryFragGrenades();
 
-        if (enabled && (force || !previousEnabled || previousFootprints != caliberFootprints || previousAiSmoke != aiSmoke || previousFastAiSmoke != fastAiSmoke))
+        if (enabled && (force || !previousEnabled || previousFootprints != caliberFootprints || previousAiSmoke != aiSmoke || previousFastAiSmoke != fastAiSmoke || previousPinnedSmoke != pinnedSmoke))
             ApplySmokeDeliveryProfiles();
         else if (!enabled && previousEnabled)
             RestoreSmokeDeliveryProfiles();
@@ -380,6 +398,8 @@ public sealed partial class Plugin : IHostedPlugin
         {
             HarmonyMethod? pre = prefix == null ? null : new HarmonyMethod(typeof(Patches), prefix);
             HarmonyMethod? post = postfix == null ? null : new HarmonyMethod(typeof(Patches), postfix);
+            if (prefix == nameof(Patches.Agent_Execute_Prefix) && pre != null)
+                pre.priority = global::HarmonyLib.Priority.Last;
             harmony.Patch(original, prefix: pre, postfix: post);
             DebugMsg($"Patched {label}.");
             return 1;
@@ -426,6 +446,9 @@ public sealed partial class Plugin : IHostedPlugin
         Line("Infantry templates granted frag: " + FreeFragGrenadeTemplates.Count);
         Line("Caliber smoke footprints: " + (RuntimeSettings.CaliberBasedSmokeFootprints ? "yes" : "no"));
         Line("AI smoke usage: " + (RuntimeSettings.EnableAISmokeUsage ? "yes" : "no"));
+        Line("Proactive AI smoke rules: " + (RuntimeSettings.SimpleAISmokeRules ? "yes" : "no"));
+        Line($"Proactive chances pinned/suppressed/flamer: {SmokeAiRules.PinnedChance}%/{SmokeAiRules.SuppressedChance}%/{SmokeAiRules.FlamethrowerChance}%");
+        Line($"AI smoke eligible/skill/target/skipped/used: {_aiSmokeEligible}/{_aiSmokeSkillsAvailable}/{_aiSmokeValidTargets}/{_aiSmokeChanceSkipped}/{_aiSmokeUsesSucceeded}");
         Line("Fast AI smoke selection: " + (RuntimeSettings.FastAISmokeSelection ? "yes" : "no"));
         Line("Optimized native smoke AI profiles: " + OriginalSmokeAiPositioning.Count);
         Line("80mm mortar smoke granted: " + (_mediumMortarSmokeGrantedByUs ? "yes" : "no/already present"));
@@ -980,6 +1003,11 @@ public sealed partial class Plugin : IHostedPlugin
 
             ConfigureSharedMortarSmokeSpawnEffect();
 
+            if (RuntimeSettings.AllowSmokeWhilePinnedDown)
+                ApplyPinnedSmokePermission();
+            else
+                RestorePinnedSmokePermission();
+
             if (RuntimeSettings.EnableAISmokeUsage)
                 ApplyNativeSmokeAiToMortars();
             else
@@ -1227,6 +1255,8 @@ public sealed partial class Plugin : IHostedPlugin
     {
         // Restore the shared native AI profile BEFORE unhooking mortar templates.
         RestoreFastAiSmokeSelection();
+        RestorePinnedSmokePermission();
+        _smokeActedThisTurn.Clear();
         RemoveMediumMortarSmokeGrant();
         RestoreMortarSmokeAi();
         if (_sharedMortarSmokeSpawnEffect != null && _originalSharedMortarSmokeChancePerTile.HasValue)
@@ -1594,7 +1624,7 @@ public sealed partial class Plugin : IHostedPlugin
     }
 }
 
-internal static class Patches
+internal static partial class Patches
 {
     internal static int SmokeTemplatesChanged;
     internal static int AdjustedHitChanceQueries;
@@ -1699,6 +1729,8 @@ internal static class RuntimeSettings
     public static bool CaliberBasedSmokeFootprints { get; private set; } = true;
     public static bool EnableAISmokeUsage { get; private set; } = true;
     public static bool FastAISmokeSelection { get; private set; } = true;
+    public static bool AllowSmokeWhilePinnedDown { get; private set; } = true;
+    public static bool SimpleAISmokeRules { get; private set; } = true;
     public static bool DebugLogging { get; private set; }
 
     public static string Summary =>
@@ -1706,9 +1738,10 @@ internal static class RuntimeSettings
         $"accuracyPenalty=-{AccuracyPenaltyPerTile}%/tile, cap=-{MaximumAccuracyPenalty}%, " +
         $"smokeDuration=x{SmokeDurationMultiplier}, thrownGrenadeAp={ThrownGrenadeApCost}, " +
         $"freeInfantryGrenade={GiveInfantryFreeSmokeGrenade}, freeInfantryFragGrenade={GiveInfantryFreeFragGrenade}, " +
-        $"caliberSmoke={CaliberBasedSmokeFootprints}, aiSmoke={EnableAISmokeUsage}, fastAiSmoke={FastAISmokeSelection}, debug={DebugLogging}";
+        $"caliberSmoke={CaliberBasedSmokeFootprints}, aiSmoke={EnableAISmokeUsage}, fastAiSmoke={FastAISmokeSelection}, " +
+        $"pinnedSmoke={AllowSmokeWhilePinnedDown}, simpleAiRules={SimpleAISmokeRules}, debug={DebugLogging}";
 
-    public static void Configure(bool enabled, bool allowLineOfSightThroughSmoke, int accuracyPenaltyPerTile, int maximumAccuracyPenalty, int smokeDurationMultiplier, int thrownGrenadeApCost, bool giveInfantryFreeSmokeGrenade, bool giveInfantryFreeFragGrenade, bool caliberBasedSmokeFootprints, bool enableAiSmokeUsage, bool fastAiSmokeSelection, bool debugLogging)
+    public static void Configure(bool enabled, bool allowLineOfSightThroughSmoke, int accuracyPenaltyPerTile, int maximumAccuracyPenalty, int smokeDurationMultiplier, int thrownGrenadeApCost, bool giveInfantryFreeSmokeGrenade, bool giveInfantryFreeFragGrenade, bool caliberBasedSmokeFootprints, bool enableAiSmokeUsage, bool fastAiSmokeSelection, bool allowSmokeWhilePinnedDown, bool simpleAiSmokeRules, bool debugLogging)
     {
         Enabled = enabled;
         AllowLineOfSightThroughSmoke = allowLineOfSightThroughSmoke;
@@ -1721,6 +1754,8 @@ internal static class RuntimeSettings
         CaliberBasedSmokeFootprints = caliberBasedSmokeFootprints;
         EnableAISmokeUsage = enableAiSmokeUsage;
         FastAISmokeSelection = fastAiSmokeSelection;
+        AllowSmokeWhilePinnedDown = allowSmokeWhilePinnedDown;
+        SimpleAISmokeRules = simpleAiSmokeRules;
         DebugLogging = debugLogging;
     }
 }

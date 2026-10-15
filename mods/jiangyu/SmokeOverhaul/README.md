@@ -1,6 +1,10 @@
-# Smoke Overhaul 0.5.3
+# Smoke Overhaul 0.6.4 — offline Jiangyu candidate
 
 Smoke Overhaul changes MENACE smoke from a hard line-of-sight wall into a longer-lasting soft obstruction and gives smoke-delivery systems distinct tactical footprints.
+
+**0.6.4:** ports PR #12's 0.6.3 proactive rules to the current Jiangyu host. Not verified
+in game: native execution, ammo/AP/cooldown, AI coexistence and 64/96-map timing remain
+acceptance gates. The earlier migration ZIP remains an unchanged historical candidate.
 
 **0.5.2 AI performance fix:** MENACE's native `CreateLOSBlocker.Collect` was spending excessive time evaluating hypothetical positions for smoke on 80x80 maps. By default, `FastAISmokeSelection` changes only the existing AI profile flag `InfluencesPositioning` to false for smoke grenades and mortar smoke shells. The AI can still choose valid smoke targets from its current position; it no longer looks for better positions *specifically to use smoke*. Full native smoke decision making, smoke footprints, AI smoke use, and the two-round mortar AI cooldown remain in place. A single log line verifies activation, with no per-turn logging. Turn this setting OFF to restore vanilla speculative smoke positioning.
 
@@ -32,6 +36,20 @@ Enabled by default. Infantry smoke keeps MENACE's native **CreateLOSBlocker** AI
 
 With `FastAISmokeSelection` ON, native AI smoke selection no longer uses future movement locations solely to position smoke. It can still fire smoke using its currently available valid targets. The native AI evaluates the skill's current AoE tiles, so the 1-tile, cross and 3x3 footprints participate in its target selection. Smoke Overhaul does not add per-frame custom AI scanning. Debug logging can report actual AI smoke uses, but is OFF by default.
 
+`SimpleAISmokeRules` additionally makes one proactive hand-thrown smoke decision per
+eligible actor/turn: **60% Pinned Down, 45% Suppressed, 30% exposed flamethrower**. The
+roll happens only after native skill affordability/usability and target checks. These
+are proactive probabilities, not total smoke-use percentages: native AI may still act.
+Only known, currently detected opponents supply coordinates (at most 24 checked);
+at most six nearby tiles are considered, with no custom pathfinding or global scan.
+Earlier Infantry Assault overrides take precedence; failed decisions return to native
+AI. The guard is cleared at the actor's turn start and on scene changes.
+
+`AllowSmokeWhilePinnedDown` permits only the two infantry smoke-grenade skills while
+Pinned Down; their queried AP cost becomes zero **only in that state**, including
+player use. Other grenades and normal/Suppressed AP costs are unchanged. Native ammo,
+cooldown and target checks remain in force. Disabling restores owned permissions.
+
 ## Mod Settings
 
 Open MENACE Mod Settings and select **Smoke Overhaul**. You can configure:
@@ -45,6 +63,8 @@ Open MENACE Mod Settings and select **Smoke Overhaul**. You can configure:
 - Caliber-based smoke footprints.
 - Native AI smoke use.
 - Fast AI smoke selection (ON by default; disable for original speculative smoke positioning).
+- Proactive AI smoke rules (ON; native AI remains the fallback).
+- Smoke permission / zero AP while Pinned Down only (ON, independent toggle).
 - Debug logging.
 
 Debug logging is OFF by default and hot paths do not write routine logs.

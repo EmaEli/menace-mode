@@ -1,6 +1,6 @@
 {
   "name": "InfantryAssault",
-  "version": "0.5.7",
+  "version": "0.5.8",
   "author": "Luca",
   "description": "Adds lethal 40 AP adjacent infantry assaults with symmetric CQB bonuses, suppression-aware defensive fire, garrison capture and AI use. Jiangyu port of the legacy GameplaySuite module; options live in the MenaceModSettings window (F9).",
   "depends": [

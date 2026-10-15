@@ -1,3 +1,174 @@
+## Smoke Overhaul 0.6.4 — #1 offline follow-up, acceptance pending
+
+Ports PR #12 commit `0426b4484581e355cbd5b831f85fb40c483f114c` to the current
+Jiangyu host. Compilation and pure geometry tests do **not** verify native AI use.
+Keep the existing migration ZIP as its own historical candidate; do not deploy it
+expecting these new smoke rules. Use only one Smoke Overhaul copy.
+
+1. Verify both new toggles (`SimpleAISmokeRules`, `AllowSmokeWhilePinnedDown`) default
+   ON and Debug OFF. Keep fast selection ON; no speculative positioning is needed.
+2. With known equipped infantry and a detected threat, exercise Pinned Down (60%),
+   Suppressed (45%) and exposed flamethrower (30%) opportunities separately. Roll
+   once per eligible actor/turn **after** native skill/target legality. These are
+   proactive odds, not overall-use odds: native AI can still choose smoke afterward.
+3. Compare valid threats in every direction, edges, occupied/smoked/blocked target
+   tiles and hidden/recently lost enemies. No throws from facing alone or use of
+   hidden coordinates; at most six local candidates and 24 opponent checks.
+4. Confirm native ammo/cooldown, no reroll after a rejected/failed proactive use,
+   turn-start reset, repeated scene changes, and fallback when no legal target exists.
+5. Pinned player and AI infantry may use **only the two hand-thrown smoke skills** at
+   zero queried AP cost. Suppressed/normal smoke and every other grenade retain their
+   configured costs. Independently toggle permission OFF/ON and verify restoration;
+   disabling proactive rules must leave native smoke behavior available.
+6. Run with Infantry Assault enabled: an earlier override must win; smoke must not
+   start another action. Check main-thread execution/reset and off-thread fallback.
+7. Separate debug-only diagnostic runs from performance runs. Proactive coordinate
+   logs cap at 24 per mission; mission counters distinguish eligible/skill/target/
+   chance-rejected/successful use. The older `AI SMOKE USE` prefix logs an attempt,
+   not proof of a successful throw. Debug OFF must remain quiet.
+8. Compare the same save/seed/settings on 64x64 and 96x96, proactive rules OFF vs ON,
+   with all deep AI profilers OFF. Record actual throws, repeated opportunities,
+   native actions/AP/ammo and ~3 AI-turn times; do not infer improvement from builds.
+
+## Larger Maps 2.1.0 — #2 selective positioning, acceptance pending
+
+- Keep `PreserveBasicInfantryFirePositioning` OFF normally. It preserves at most five
+  already-enabled native profiles, only above 64x64 with simplified planning ON.
+  Other attacks/buffs retain baseline simplification; no waking or new orders.
+- Same 2.1.0 binary, save/seed and mission: OFF/ON runs with restarts, local routing OFF,
+  all deep AI diagnostics OFF and Smoke/Assault settings identical. Prefer proactive
+  smoke OFF to isolate #2 after completing #1's separate acceptance.
+- Use 64x64 as an inert control, then 96x96. Separate offensive vs sleeping/defensive
+  missions. Record ~3 AI-turn times, actual shots/repositions, cover/objective retention
+  and oscillation. Historical 1.9 observations on a different mission are not an A/B.
+- A separate setup-log run must show 0 preserved profiles when OFF, at most 5 when ON
+  above 64, and no activation at 64. Sharing may mean fewer than five distinct profiles.
+- Check lost/missing/disabled profiles, next mission and unload. In-memory doubles test
+  production setup/restore paths, not IL2CPP validity, native shots or CPU performance.
+  Leave OFF if timing/tactical behavior regresses. No new per-issue installer.
+
+## Migration checkpoint — #38 / #31 follow-up
+
+Field Logistics 1.0.11 and Infantry Assault 0.5.8 are follow-ups to the
+historical batches below. MenaceModSettings is now 0.5.0 (ABI remains 1.0.0.0).
+The canonical installer exists as an **unexecuted PowerShell candidate**; do not read
+older notes saying "packaging pending" as an instruction to create another installer.
+
+### Infantry Assault 0.5.8 (#31)
+
+Verify the Assault button uses `skill_41` / `skill_41_inactive` in active and disabled
+states, including after loading a save and another tactical scene. Then exercise the
+existing hover-after-casualties, 40 AP, defensive-fire, garrison and AI regressions below.
+
+### Field Logistics 1.0.11 (#38)
+
+- Verify both Resupply Infantry and Redistribute Ammo show `skill_05`, and their
+  disabled states use `skill_05_inactive`; no exchange-arrow or whistle icon remains.
+- Default sharing OFF: no redistribution or pending transfer; vehicle resupply remains
+  one use, with four extra uses from the module. Check 60 AP resupply / 40 AP sharing.
+- Turn sharing ON: adjacent compatible squad weapons conserve total ammunition;
+  grenades/special weapons and incompatible categories do not exchange ammunition.
+- Exercise inactive/unreadable `-1` ammo, delayed credits, alternate fire modes, skill
+  refresh and repeated use. Turn sharing OFF while pending; no delayed transfer later.
+- Repeat with vehicle module absent/present, default vehicle resupply ON/OFF, loaded save,
+  actor spawn, mission exit and next mission. Debug/test-loadout options remain OFF.
+
+### StrongerCover / Garrisonable Buildings / WRR (#38)
+
+- With StrongerCover absent/disabled, buildings use Garrisonable Buildings' own 40%
+  default (or saved custom value); enabled cover uses its BuildingCover 30% default.
+- Change both settings live, in either module/load order; disable/re-enable StrongerCover
+  and verify the current garrison base, not a stale/default value, is restored.
+- WRR: compare 2.9.2 ranges and linked skill ranges with gameplay ON/OFF and each type
+  toggle; only WRR-owned values should restore. Check indirect-fire AI positioning too.
+- Put different synthetic override values in the modern UserData file and old Mods file
+  in a disposable test install. Modern wins; when absent, legacy is copied once. Test
+  hot reload and malformed JSON without replacing real user files.
+
+Offline coverage executes actual CoverSettings and ModSettings code with an in-memory
+store; checks template-lookup/restore/override wiring; inspects actual binary references,
+dependency minimums and DLL versions. It does not prove IL2CPP template writes, ammo
+conservation, on-disk persistence, live unload or Windows installation/rollback.
+
+# Offline batch 1 — final candidate, not deployed
+
+| Module | Manifest / file version | Assembly identity |
+| --- | --- | --- |
+| MenaceModSettings | 0.4.1 / 0.4.1.0 | 1.0.0.0 (stable) |
+| Coordinated Fire | 1.6.10 / 1.6.10.0 | 1.6.10.0 |
+| Overwatch | 0.32.3.5 / 0.32.3.5 | 0.32.3.5 |
+| Squaddie Veterancy | 1.10.2 / 1.10.2.0 | 1.10.2.0 |
+
+Local Jiangyu release builds only; no Windows build, deployment, startup or gameplay test.
+Overwatch .3/.4 below are intermediate implementation steps included in final .5, not
+separate packages to install. Use one coordinated distribution with the settings companion;
+the canonical installer/packaging work is still pending under #34. Test commands and the
+metadata-only artifact verifier are in [tests/README.md](../tests/README.md).
+
+# #23 — Native vehicle firing sector (in-game verification pending)
+
+Overwatch 0.32.3.5 combines #43/#24 with an explicit native `IsInRange(tile, source, true)`
+check for vehicle reactions, both before queueing and before firing. Binary evidence and
+the limitations of this API are recorded in [OVERWATCH_NATIVE_CHECKS.md](OVERWATCH_NATIVE_CHECKS.md).
+
+Use the captured heavy tank/short-barrel gun, a hull-fixed weapon and a rotating turret;
+compare normal shots with Overwatch at front/side/rear and just inside/outside native limits.
+Repeat for hostile AI, movement and attack provocations, and Both/Alpha Strike modes. If
+facing changes while a reaction is queued, revalidation must reject an illegal shot without
+extra ammo/AP/reaction charges or a stuck pending watch. No free hull turn should be added.
+Native circle-range guns and visual-only turret stops require explicit observation; no
+additional guessed angle restrictions were introduced. Debug reasons already use the
+existing opt-in logging path; leave Debug OFF normally. Keep #23 open until live validation.
+
+# #24 — K-PAC tag classification, partial fix (in-game verification pending)
+
+Overwatch 0.32.3.4 carries PR #28's skill-scoped indirect-fire fix together with #43's HUD
+guard. The available asset export confirms K-PAC grants direct normal/sustained rifle modes
+and an indirect underbarrel frag launcher; fixture/model and source-wiring tests cover that
+distinction. Direct weapon indirect tags still exclude attacks; metadata exceptions fail closed.
+
+Test discovering, reserving and actually firing each mode for player and AI. The two rifle
+modes should be eligible; the launcher and genuine indirect-fire/indirect ATGM attacks must
+remain excluded. Verify direct ATGM and native built-in vehicle attacks, range/LOS, ammo/AP
+and Squad/Leader/Both modes. Distinguish using a weapon for a reaction from provoking enemy
+Overwatch by firing it. ARC Range and PPP CQB remain undiagnosed: no speculative SourceSkill
+or role fallback was added. Keep #24 open, and PR #28 draft, until live validation.
+
+# #35 — Leader display names (in-game verification pending)
+
+Squaddie Veterancy 1.10.2 changes display resolution only. Compare vanilla leaders and SFP
+dynamic leaders in the deployment/roster overlay, then after deployment and another scene
+change. The native localized nickname should win, followed by speaker full name/title.
+GUIDs and dynamic template IDs must never appear as names; missing data shows `Unknown Squad
+Leader`. Verify punctuation/casing/accents, squad numbers, member IDs, existing XP and save
+contents remain unchanged. No SFP promotion/save integration is included in this fix.
+
+The offline C# runner tests the actual resolver with managed stand-ins for localized fields,
+missing/throwing members, dynamic IDs, fallback sources and an untouched identity getter.
+This does not exercise real IL2CPP localized proxies; keep #35 open until tested in game.
+
+# #43 — Shared tactical HUD input guard (in-game verification pending)
+
+Offline build: MenaceModSettings 0.4.1, Coordinated Fire 1.6.10, Overwatch 0.32.3.3.
+The companion retains assembly identity 1.0.0.0; both HUD mods require companion >=0.4.1.
+
+1. In a tactical player turn, select an infantry squad. Click/double-click each panel's main
+   button and weapon-mode chips, including disabled controls and panel background. No move,
+   native attack, map selection or camera drag should result from these HUD clicks.
+2. Press in either panel, drag onto the map and release. The release must not act on the map;
+   the next independent click outside must work. Repeat left/right/middle buttons.
+3. Repeat with both mods together, each alone, compact/normal CF HUD, all anchors, scale/offset
+   changes and different resolutions. Input geometry must match visible panels immediately.
+4. Hide HUDs, disable gameplay, pause, enter an enemy turn, change scenes and unload modules.
+   Hidden panels must not leave blocked rectangles; release from an already captured press is
+   still swallowed. Normal keyboard/camera keys and CF Escape cancellation must remain native.
+5. Verify each HUD mod with no valid selection/plan, and CF during its locked volley. The shared
+   guard has no runtime-bound or unlocked requirement; only genuinely visible HUDs block input.
+
+Offline checks execute the actual C# capture policy and inspect shared-registry wiring. The
+0.7.16 native mouse dispatcher/camera/double-click path was inspected. None of that proves
+successful Harmony registration or click interception in a running IL2CPP game. Keep #43 open.
+
 # MEN-019 — Coordinated Fire 1.6.8 / Gameplay Suite 0.32.3 (in-game verification pending)
 
 1. Deploy **one** copy of Coordinated Fire 1.6.8, either standalone or within Gameplay Suite 0.32.3. Do not load two copies. Leave Debug logging OFF initially.

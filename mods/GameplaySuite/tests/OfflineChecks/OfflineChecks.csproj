@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../../jiangyu/MenaceModSettings/code/HudPointerCapture.cs" Link="HudPointerCapture.cs" />
+    <Compile Include="../../src/SquaddieVeterancy/LeaderDisplayName.cs" Link="LeaderDisplayName.cs" />
+    <Compile Include="../../../jiangyu/MenaceModSettings/code/ModSettings.cs" Link="ModSettings.cs" />
+    <Compile Include="../../../jiangyu/MenaceModSettings/code/SettingDefinition.cs" Link="SettingDefinition.cs" />
+    <Compile Include="../../../jiangyu/MenaceModSettings/code/LegacySettings.cs" Link="LegacySettings.cs" />
+    <Compile Include="../../../jiangyu/StrongerCover/code/CoverSettings.cs" Link="CoverSettings.cs" />
+    <Compile Include="../../src/CoordinatedFire/Core/Rules.cs" Link="CoordinatedFireRules.cs" />
+    <Compile Include="../../src/SmokeOverhaul/SmokeAiRules.cs" Link="SmokeAiRules.cs" />
+    <Compile Include="../../../LargerMaps/src/LargerMaps/SimplifiedCombatPlanning.cs" Link="SimplifiedCombatPlanning.cs" />
+  </ItemGroup>
+</Project>

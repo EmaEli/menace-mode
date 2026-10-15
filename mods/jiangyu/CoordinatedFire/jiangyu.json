@@ -1,10 +1,10 @@
 {
   "name": "CoordinatedFire",
-  "version": "1.6.9",
+  "version": "1.6.10",
   "author": "Luca",
   "description": "Coordinated Fire: a squad and its leader (or vehicle) fire together on one target, with an IMGUI tactical button and AI support. Jiangyu port of the legacy GameplaySuite module; options live in the MenaceModSettings window (F9).",
   "depends": [
     "Jiangyu >= 1.4.8",
-    "MenaceModSettings >= 0.4.0"
+    "MenaceModSettings >= 0.4.1"
   ]
 }

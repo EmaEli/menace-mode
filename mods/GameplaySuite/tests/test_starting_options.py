@@ -19,8 +19,7 @@ class StartingOptionsAuthoringTests(unittest.TestCase):
         self.manifest = json.loads((PACKAGE / 'jiangyu.json').read_text(encoding='utf8'))
 
     def test_new_module_packaging(self):
-        self.assertEqual(self.manifest['version'], '0.1.0')
-        self.assertIn('<Version>0.1.0</Version>', self.csproj)
+        self.assertIn(f"<Version>{self.manifest['version']}</Version>", self.csproj)
         self.assertIn('<AssemblyName>StartingOptions</AssemblyName>', self.csproj)
         self.assertTrue(any(d.startswith('MenaceModSettings') for d in self.manifest['depends']))
         # Code-only module: no template patches.

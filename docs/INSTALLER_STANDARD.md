@@ -60,6 +60,31 @@ The assembly check must separately verify real compiled DLL metadata, not projec
 
 ## Acceptance checklist (required before delivery)
 
+### Current shared Jiangyu candidate (#34)
+
+`mods/GameplaySuite/INSTALL-SUITE.cmd` and the canonical
+`tools/Install-IntegratedSuite.ps1` now implement the MEN-006 pattern with explicitly
+bundled, SHA256-inventoried sources. All products use the same installer and independently
+versioned packages; no floating Git download or second camera installer is needed.
+`distribution.json` centralizes the supported native game hash and Jiangyu 1.4.8 asset pins.
+The SDK comes from the hash-verified CLI archive; code is built directly with .NET against
+installed game proxies. Authored templates/bundles are precompiled for the pinned game,
+so the player does **not** need Unity Editor or a global Jiangyu configuration change.
+
+Regression guards: pad three-part versions before asking `.NET Version.ToString(4)`;
+reject renamed/ambiguous duplicates rather than moving unrelated folders; preserve the
+legacy WRR override inside staging for its existing runtime migration; journal partial
+copies and retain an in-memory journal for automatic rollback even if writing the journal
+fails. Rollback moves rejected files outside Mods and retains original backups, verifies
+hashes, and refuses manual rollback over changed live files. No live recursive deletion.
+Require an explicit, unique inventory entry for each installer/helper before executing it;
+an empty hash list must not bypass bootstrap validation. Reject extra uninventoried source
+files (especially MSBuild props/targets), and recheck that MENACE is closed at deployment
+and rollback, not only before a potentially lengthy build.
+
+The scripts are a **candidate**, not Windows-verified. Console/log behavior, real filesystem
+failure recovery, Windows builds and gameplay remain explicit acceptance gates.
+
 - [ ] Launcher is one double-click action, not a sequence of ZIPs and commands.
 - [ ] Download/bootstrap errors, compilation errors and version mismatches leave a readable, persisted log; failure opens it automatically.
 - [ ] Console stays open if the user clicks or presses a key.

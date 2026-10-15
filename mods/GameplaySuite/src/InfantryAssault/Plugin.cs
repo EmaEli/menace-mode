@@ -6,8 +6,8 @@ using Menace.SDK;
 using MenaceModSuite.Shared;
 using UnityEngine;
 
-[assembly: AssemblyVersion("0.5.7.0")]
-[assembly: AssemblyFileVersion("0.5.7.0")]
+[assembly: AssemblyVersion("0.5.8.0")]
+[assembly: AssemblyFileVersion("0.5.8.0")]
 
 namespace MenaceInfantryAssault;
 
@@ -15,7 +15,7 @@ namespace MenaceInfantryAssault;
 public sealed partial class Plugin : IHostedPlugin
 {
     private const string SettingsGroup = "Infantry Assault";
-    private const string Version = "0.5.7";
+    private const string Version = "0.5.8";
     private const int AssaultApCost = 40;
     private const string AssaultSkillId = "mod.infantry_assault";
 
@@ -425,9 +425,9 @@ public sealed partial class Plugin : IHostedPlugin
             SetEnumMember(_assaultTemplate, "Order", 50010);
             SetEnumMember(_assaultTemplate, "TargetsAllowed", 1049600);
 
-            // The clone inherits the vehicle Charge icon; use the vanilla running-figure skill icon.
-            var icon = SpriteLookup.Find("skill_32");
-            var iconDisabled = SpriteLookup.Find("skill_32_inactive");
+            // The clone inherits the vehicle Charge icon; use the icon requested in #31.
+            var icon = SpriteLookup.Find("skill_41");
+            var iconDisabled = SpriteLookup.Find("skill_41_inactive");
             if (icon != null && iconDisabled != null)
             {
                 SetMember(_assaultTemplate, "Icon", icon);
@@ -435,7 +435,7 @@ public sealed partial class Plugin : IHostedPlugin
             }
             else
             {
-                Warn("Assault skill icon sprites 'skill_32' were not found; keeping the inherited Charge icon.");
+                Warn("Assault skill icon sprites 'skill_41' were not found; keeping the inherited Charge icon.");
             }
 
             _templatePrepared = true;

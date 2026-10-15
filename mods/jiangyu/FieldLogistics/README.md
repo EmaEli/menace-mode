@@ -1,6 +1,10 @@
-# Field Logistics 1.0.10
+# Field Logistics 1.0.11
 
 Field Logistics adds battlefield ammunition support for MENACE vehicles and an optional experimental infantry ammo-sharing system.
+
+Both actions use the cartridge sprites `skill_05` / `skill_05_inactive` in 1.0.11
+(issue #38). This is an offline-built candidate; the new icons still need visual
+verification in game.
 
 1.0.7 restores compatibility with MENACE v0.7.16: the skill template both actions were cloned from was removed by the game, so the clones now derive from `active.rogue_officer_whistle` with the Refill Ammo behavior re-applied by the manifest, and squad/vehicle skill lists are appended to instead of replaced (see issue #41).
 
@@ -31,59 +35,28 @@ When enabled, adjacent infantry squads gain `Redistribute Ammo`:
 
 Because MENACE 0.7.14 can expose inactive weapon state inconsistently, this feature should still be treated as experimental.
 
-## Build and deploy for development
+## Jiangyu package and shared installer
 
-Run:
+This package uses `jiangyu.json`, compiled template data and `code/FieldLogistics.dll`;
+it is not the legacy `modpack.json` / `dlls` package. Options use MenaceModSettings (F9).
+Gameplay code is shared with `mods/GameplaySuite/src/FieldLogistics`.
 
-```text
-build-and-deploy.bat
-```
+Use the canonical [shared installer workflow](../../GameplaySuite/docs/INSTALLING.md).
+The same installer supports the full Suite or `-Product Standalone -Modules FieldLogistics`;
+do not install the legacy copy alongside this Jiangyu package. Unrelated mods and
+ModpackLoader are preserved. The installer candidate still needs Windows/rollback tests.
 
-By default the script expects MENACE at:
-
-```text
-M:\SteamLibrary\steamapps\common\Menace
-```
-
-To use another installation, set `MENACE_GAME` before running the script.
-
-The script builds the DLL and deploys the modpack to:
-
-```text
-MENACE\Mods\FieldLogistics
-```
-
-## Build a Nexus release ZIP
-
-Run:
-
-```text
-build-nexus-release.bat
-```
-
-This script builds the release DLL but does **not** deploy anything into the game. It creates:
-
-```text
-artifacts\FieldLogistics-1.0.6.zip
-```
-
-The archive contains only the installable Nexus/modpack structure:
-
-```text
-FieldLogistics\
-  modpack.json
-  dlls\
-    FieldLogistics.dll
-```
-
-The authoring ZIP is for development and source distribution; the ZIP produced by `build-nexus-release.bat` is the one intended for Nexus Mods.
+For authoring, use `jiangyu compile --clean --release` after changing shared gameplay
+sources: Jiangyu's code fingerprint does not include the linked GameplaySuite sources.
+The compiled package must include `templates.json` and locales, not just its DLL.
 
 ## Requirements
 
-- MENACE
-- MelonLoader
-- Menace Modpack Loader v2
-- .NET 6 SDK for local compilation
+- MENACE 0.7.16+22323 and existing MelonLoader with generated game proxies.
+- Jiangyu 1.4.8 or later; the shared installer pins and hash-checks 1.4.8.
+- MenaceModSettings >= 0.4.0 (the shared distribution includes 0.5.0).
+- .NET 10 SDK for the canonical build workflow; Unity Editor is not needed to rebuild
+  code in the bundled-source candidate. Authoring asset changes has separate tool requirements.
 
 ## Version 1.0.6
 

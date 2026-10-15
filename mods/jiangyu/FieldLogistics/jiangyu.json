@@ -1,6 +1,6 @@
 {
   "name": "FieldLogistics",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "author": "Luca",
   "description": "Adds vehicle-based infantry ammunition resupply, an optional Field Ammunition Supply module for extra uses, and experimental adjacent squad ammo redistribution. Jiangyu port of the legacy GameplaySuite module; options live in the MenaceModSettings window (F9).",
   "depends": [

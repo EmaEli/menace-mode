@@ -237,6 +237,7 @@ public sealed partial class Plugin
             settings.AddSlider("TerrainStampDensityMultiplier", "Stamp attempt multiplier at 96x96", 1f, 5f, 1.5f);
             settings.AddHeader("AI on large maps (restart required)");
             settings.AddToggle("SimplifyCombatAIPlanning", "Simplified attack planning (no future firing positions)", true);
+            settings.AddToggle("PreserveBasicInfantryFirePositioning", "MEN-002 experiment: preserve five infantry fire profiles (OFF; restart required)", false);
             settings.AddToggle("UseLocalTacticalRouting", "Local tactical routing (limit destination search)", false);
             settings.AddSlider("LocalNearTileLimit", "Nearby destinations inspected", 12f, 64f, 20f);
             settings.AddSlider("LocalCullTileDistance", "Cull distance (tiles)", 10f, 20f, 12f);

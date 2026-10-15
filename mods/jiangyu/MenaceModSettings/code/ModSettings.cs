@@ -75,6 +75,29 @@ public static class ModSettings
                 g.Values[def.Key] = def.Coerce(raw);
             }
         }
+        ImportMissing(group, SettingsStore.LegacyValues(group));
+    }
+
+    /// <summary>Seed recognized missing keys only; an explicitly saved value, even a
+    /// default/false/zero, always wins. Does not modify the legacy preference source.</summary>
+    public static void ImportMissing(string group, IDictionary<string, object> values)
+    {
+        if (values == null || values.Count == 0) return;
+        lock (Gate)
+        {
+            EnsureLoaded();
+            if (!Groups.TryGetValue(group, out var g)) return;
+            if (!_stored.TryGetValue(group, out var saved))
+                _stored[group] = saved = new Dictionary<string, object>(StringComparer.Ordinal);
+            bool changed = false;
+            foreach (var def in g.Definitions)
+            {
+                if (def.Key == null || saved.ContainsKey(def.Key) || !values.TryGetValue(def.Key, out var raw)) continue;
+                saved[def.Key] = g.Values[def.Key] = def.Coerce(raw);
+                changed = true;
+            }
+            if (changed) SettingsStore.Save(_stored);
+        }
     }
 
     public static object Get(string group, string key)
@@ -115,7 +138,9 @@ public static class ModSettings
             if (def == null)
                 return;
             coerced = def.Coerce(value);
-            if (g.Values.TryGetValue(key, out var old) && Equals(old, coerced))
+            EnsureLoaded();
+            if (g.Values.TryGetValue(key, out var old) && Equals(old, coerced)
+                && _stored.TryGetValue(group, out var existing) && existing.ContainsKey(key))
                 return;
             g.Values[key] = coerced;
             EnsureLoaded();

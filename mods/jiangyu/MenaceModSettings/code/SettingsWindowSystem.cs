@@ -35,6 +35,7 @@ public sealed class SettingsWindowSystem : JiangyuSystem
 
     public override void OnInit()
     {
+        HudInputGuard.Install();
         ModSettings.Register(OwnGroup, s =>
         {
             s.AddHeader("Window");
@@ -48,10 +49,13 @@ public sealed class SettingsWindowSystem : JiangyuSystem
 
     public override void OnUnload()
     {
+        HudInputGuard.Unload();
         ModSettings.Changed -= OnSettingChanged;
         _hotkey?.Dispose();
         _injection?.Remove();
     }
+
+    public override void OnSceneLoaded(int buildIndex, string sceneName) => HudInputGuard.SceneChanged();
 
     private void OnSettingChanged(string group, string key, object value)
     {

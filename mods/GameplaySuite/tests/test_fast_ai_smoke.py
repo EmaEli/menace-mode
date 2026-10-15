@@ -1,4 +1,4 @@
-"""Offline regression checks for Smoke Overhaul 0.5.2.
+"""Offline regression checks for the current Jiangyu Smoke Overhaul port.
 
 These tests verify that the performance optimization is scoped to smoke AI
 profiles and uses MENACE's existing `InfluencesPositioning` guard. They are
@@ -23,9 +23,9 @@ def block(start: str, end: str) -> str:
 
 class FastSmokeSelectionTests(unittest.TestCase):
     def test_versions_and_manifests(self):
-        self.assertIn('internal const string Version = "0.5.2"', PLUGIN)
-        self.assertIn('<Version>0.5.2</Version>', CONFIG)
-        self.assertEqual(SMOKE_MANIFEST['version'], '0.5.2')
+        version = SMOKE_MANIFEST['version']
+        self.assertIn(f'internal const string Version = "{version}"', PLUGIN)
+        self.assertIn(f'<Version>{version}</Version>', CONFIG)
 
     def test_disabled_performance_search_by_default(self):
         self.assertIn('s.AddToggle("FastAISmokeSelection"', PLUGIN)
@@ -81,16 +81,16 @@ class FastSmokeSelectionTests(unittest.TestCase):
     def test_settings_refresh_reapplies_for_toggle(self):
         refresh = block('private void RefreshSettings(bool force)', 'private static int TryPatch(')
         self.assertIn('previousFastAiSmoke != fastAiSmoke', refresh)
-        self.assertIn('aiSmoke, fastAiSmoke, debug', refresh)
+        self.assertIn('aiSmoke, fastAiSmoke, pinnedSmoke, simpleAiRules, debug', refresh)
 
     def test_cooldown_retained(self):
         mortar = block('private static void ApplyNativeSmokeAiToMortars()', 'private static void RestoreMortarSmokeAi()')
         self.assertIn('MortarAiCooldownAddedByUs.Add(id)', mortar)
         self.assertIn('mortarSmoke.AIConfig = infantrySmoke.AIConfig', mortar)
 
-    def test_no_new_performance_hooks(self):
+    def test_only_bounded_action_hooks_not_worker_evaluation(self):
         init = block('public void Initialize(', 'public void OnSceneLoaded(')
-        self.assertEqual(init.count('hooks += TryPatch('), 8)
+        self.assertEqual(init.count('hooks += TryPatch('), 11)
         self.assertNotIn('Agent.Evaluate', init)
         self.assertNotIn('CreateLOSBlocker', init)
 

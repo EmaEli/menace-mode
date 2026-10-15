@@ -1,4 +1,9 @@
-# Infantry Assault 0.5.7
+# Infantry Assault 0.5.8
+
+## 0.5.8 requested icon (#31)
+
+- Assault uses `skill_41` / `skill_41_inactive` rather than the former `skill_32` pair.
+- No targeting-cache, AP, CQB or AI changes. Visual verification in game is pending.
 
 ## 0.5.4 MENACE 0.7.16 compatibility (#41)
 

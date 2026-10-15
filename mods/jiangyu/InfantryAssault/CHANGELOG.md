@@ -1,3 +1,9 @@
+## 0.5.8 - Requested Assault icon (#31)
+
+- Use `skill_41` / `skill_41_inactive` for the Assault button, as requested in #31.
+- No AP, CQB, targeting-cache, AI or logging-default changes. Missing sprites still
+  retain the inherited icon. Visual confirmation in game remains pending.
+
 ## 0.5.7
 
 - Fixed a crash to desktop at the start of the AI's first turn (access violation in the .NET JIT, `CEEInfo::resolveVirtualMethodHelper`). MENACE's AI tasks call hooked methods from IL2CPP worker threads, and the module's helper code was JIT-compiled there on first use. The Jiangyu host now compiles the whole module assembly on the main thread at load. No gameplay changes. GitHub issue #44.

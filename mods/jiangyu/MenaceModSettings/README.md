@@ -22,6 +22,11 @@ HUD (Jiangyu systems have no OnGUI callback); 0.3.2 and 0.4.0 not yet verified i
 
 ## What it does
 
+- 0.4.1 adds a shared tactical HUD input guard (#43). IMGUI consumers register a live
+  rectangle provider with `HudInputGuard.Register(owner, provider)` (GUI coordinates, null
+  when hidden) and call `Unregister(owner)` on unload. One companion-owned Harmony guard
+  blocks native map/camera mouse paths and captures HUD-origin presses through release.
+  Keyboard input is untouched. Offline build/tests passed; in-game interception is pending.
 - `ModSettings.Register(group, builder)` declares a group of settings: headers, toggles,
   sliders (float), numbers (int) and dropdowns. Same shape as the legacy builder, so a module
   ports by swapping `using`.

@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <Version>1.0.0</Version>
+    <AssemblyName>ThirdPersonCameraSettings</AssemblyName>
+    <RootNamespace>MenaceThirdPersonCamera.Settings</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="MenaceModSettings">
+      <HintPath>../../MenaceModSettings/compiled/code/MenaceModSettings.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+</Project>

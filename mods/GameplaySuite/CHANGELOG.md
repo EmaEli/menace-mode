@@ -1,3 +1,46 @@
+## Offline AI follow-up — #1 / #2 (not game-verified)
+
+- **Larger Maps 2.1.0**: ports PR #18 commit `3f50705dffe21fa729813001ac2fe5378d30b33f`.
+  Five-ID selective preservation was absent from 2.0.1. OFF by default, above 64 only,
+  native profile identity collected before writes; no enabling original false flags,
+  wake-ups, orders or new hot hooks. Normal setup/restore and backend remain unchanged.
+  Added tests running production setup/restore with in-memory host/object doubles.
+
+- **Smoke Overhaul 0.6.4**: Jiangyu port of PR #12's 0.6.3 proactive rules at commit
+  `0426b4484581e355cbd5b831f85fb40c483f114c`. Retains 60/45/30% chances, actor/turn
+  guard, detected-opponent-only direction, 24 opponent / 6 local candidate limits,
+  native legality/consumption/fallback and late coexistence with Infantry Assault.
+- Pinned-only smoke permission and zero queried AP cost remain independent of the
+  proactive toggle. Added main-thread fallthrough guards consistent with existing
+  AI integration; owned false-to-true template flags restore on disable/unload.
+- Pure C# geometry/probability is shared by production and offline tests. Native
+  use, AP/ammo/cooldown, Harmony order and 64/96-map timing still require runtime tests.
+- No merge, deployment, Windows/PowerShell acceptance or modification of prior ZIPs.
+
+## Offline migration follow-up — #38 / #31
+
+- **Field Logistics 1.0.11**: both ammunition-support actions use `skill_05` and its
+  inactive variant, per #38. **Infantry Assault 0.5.8**: use `skill_41` and its inactive
+  variant, per #31. No balance, ammo, AP, targeting-cache or AI changes.
+- Added actual StrongerCover/ModSettings settings-contract tests, cross-module lookup/
+  restore/override guards, and real DLL checks for declared dependencies, settings ABI
+  and absence of binary ModpackLoader references. These do not prove live behavior.
+- Updated Field Logistics' Jiangyu instructions; legacy build/deploy instructions were
+  obsolete. Windows installer, rollback and gameplay acceptance remain pending.
+
+## Offline Jiangyu batch 1 — #43, #35, partial #24 and native gate #23
+
+- **MenaceModSettings 0.4.1**, **Coordinated Fire 1.6.10**, **Overwatch 0.32.3.5**: companion-owned
+  tactical HUD input guard, live visible geometry shared with drawing, mouse press capture
+  through release, unload/scene cleanup. Keyboard paths and CF Escape/locked-volley guards remain.
+- **Squaddie Veterancy 1.10.2**: localized nickname/speaker display resolution; reject GUIDs and
+  internal IDs, preserve user-facing spelling. No ID, squad mapping, XP or persistence changes.
+- **Overwatch**: classify indirect fire by executed skill/direct item tags rather than sibling
+  launcher modes; restore native angle-inclusive vehicle range checks at queue and execution.
+  ARC Range/PPP CQB and model-specific visual turret constraints remain unconfirmed.
+- Release builds and offline regressions passed locally. No Windows deployment or game tests;
+  issues remain open. This is not a suite-wide release, installer or gameplay validation.
+
 ## Repository / Suite 0.32.5 — MENACE 0.7.16 compatibility, Field Logistics (#41)
 
 - **Field Logistics 1.0.6 → 1.0.7:** MENACE v0.7.16 removed `active.rogue_ammo_runner_refill_ammo`, the clone source of `Resupply Infantry` and `Redistribute Ammo`; the Modpack Loader logged `Clone: source ... not found` and neither skill existed in game. Both clones now derive from `active.rogue_officer_whistle` and the manifest resets the fields that differ from the old base (targeting, line of fire, always-hit, AoE, muzzle effect, sounds, `RefillAmmo`/`DisplayText` handlers).

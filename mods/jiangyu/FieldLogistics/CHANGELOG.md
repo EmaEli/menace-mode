@@ -1,3 +1,10 @@
+## 1.0.11 - Shared ammunition icon (#38)
+
+- Both `Resupply Infantry` and `Redistribute Ammo` now request `skill_05` and
+  `skill_05_inactive`, matching the user's icon choice. Sharing no longer uses `skill_28`.
+- No ammunition, AP, charge, targeting or default-setting changes. Missing sprites
+  retain the existing retry behavior. Visual verification in game remains pending.
+
 ## 1.0.10
 
 - Fixed `SkillTemplate` / `AccessoryTemplate` lookups silently failing under Jiangyu, so the runtime wiring of the resupply module and skills could not find its templates. The Jiangyu host resolved template types only in `Il2Cpp*` proxy assemblies, but the game's own proxy keeps its original name (`Assembly-CSharp.dll`), so no game template type could be resolved. The host now also searches `Assembly-CSharp` and reads templates through `DataTemplateLoader.GetAll<T>()` / `TryGet<T>()`, the per-type cache the game itself uses. No balance changes.
