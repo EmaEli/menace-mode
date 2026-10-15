@@ -83,10 +83,28 @@ runtime and pinned Jiangyu loader, with every staged/live tree hash-verified. Ba
 rollback journal and recognized replaced/legacy originals. No manual partial copy
 or deletion was used. Before/after content hashes confirm **748 protected files**
 (UserData and unrelated mods, including CustomSupplySliders) unchanged. The game
-was closed; it has not yet been launched with this candidate. Installer never
+was closed during installation. Installer never
 writes save directories. Earlier save acceptance is not carried forward.
 
-Step-5 gameplay remains pending.
+## First candidate title check — passed, gameplay still pending
+
+User launched to the main menu and exited. Retrieved the fresh log directly from
+the PC; last write 15 October 2026, 17:21:04.5196602 UTC, 82,643 bytes. Native binary
+SHA256 is unchanged from the validated input above. Log SHA256:
+`2401de31a9f070776aad5604764d44ce0c015dd79b6ce16aeda50e0cbdb0c116`.
+
+- Game version: `v0.7.17+22362` at 19:20:31.640 local time.
+- Larger Maps: experimental **96x96 backend active**, 128x128 pathfinder and
+  verified native instructions at 19:20:41.415. No 64x64 fallback message.
+- Main menu reached at 19:20:54.431. All 19 package names appear in the log.
+- Two ERROR lines are the already-known external Custom Leader Harmony failure
+  on `BlackMarket.FillUp`. No new Suite errors were found. Nine warnings remain,
+  including the known StartingOptions field fallback warning. All eleven current
+  ERROR/WARNING entries match the original pre-install log after timestamp/native
+  address normalization; none is a new diagnostic. This is not an error-free log.
+- Game confirmed closed. No save was loaded and no tactical turn tested.
+
+The startup/title portion of step 5 passed; its gameplay checks remain pending.
 Minimum: clean Suite title startup, load save, end turn/AI turn 1 (#44), WRR
 debug range pass with zero write failures then debug OFF, OW/CF/Smoke activations,
 and Field Logistics resupply. Only afterward record a verified buildid and implement
