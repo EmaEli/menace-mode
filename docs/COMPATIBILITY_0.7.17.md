@@ -59,8 +59,35 @@ LargerMaps correctly fell back to 64x64. StartingOptions' property-first lookup 
 probes an unused field fallback and emits a warning; no new native field removal
 was found. External mods and CustomSupplySliders are not modified by this work.
 
-Windows canonical build/install/rollback acceptance and step-5 gameplay remain
-pending. Minimum: clean Suite title startup, load save, end turn/AI turn 1 (#44), WRR
+## Windows checks
+
+Canonical PowerShell 5.1 Suite build-only completed against the actual installed
+0.7.17 proxies: 19 packages plus camera runtime, all real DLL/version checks passed,
+zero compiler errors, and `BUILD-ONLY: no live mod changed`. The local SSH wait timed
+out at 40 seconds; completion was independently confirmed in the remote transcript,
+not inferred from the interrupted local output.
+
+Candidate ZIP: `bdeb17d1798dade1acafee3c0152c00213a9b0af23905bf89ff9a35b5fb13f99`,
+279 inventoried payload files; source base `12446f9`. Clean extracted-source rebuild
+and real DLL metadata checks passed locally against the same fresh cache.
+
+`Test-DeploymentTransactions.ps1` passed on Windows against the production helpers:
+synthetic install, recognized legacy alias retirement, unrelated mod/settings/save
+preservation, explicit hash-verified restore, and injected copy failure followed by
+automatic verified rollback. Only a new temporary synthetic game tree was used;
+its fixtures/backups were retained. This is not a live-game crash-recovery claim.
+
+The canonical Suite installer then rebuilt and installed all 19 packages, camera
+runtime and pinned Jiangyu loader, with every staged/live tree hash-verified. Backup:
+`_MENACE_Backups/20261015-190105-332f429947994ae78a4c42c76707f0cc/`, including the
+rollback journal and recognized replaced/legacy originals. No manual partial copy
+or deletion was used. Before/after content hashes confirm **748 protected files**
+(UserData and unrelated mods, including CustomSupplySliders) unchanged. The game
+was closed; it has not yet been launched with this candidate. Installer never
+writes save directories. Earlier save acceptance is not carried forward.
+
+Step-5 gameplay remains pending.
+Minimum: clean Suite title startup, load save, end turn/AI turn 1 (#44), WRR
 debug range pass with zero write failures then debug OFF, OW/CF/Smoke activations,
 and Field Logistics resupply. Only afterward record a verified buildid and implement
 the mismatch warning/explicit-confirmation installer gate (not a blanket hard block).
