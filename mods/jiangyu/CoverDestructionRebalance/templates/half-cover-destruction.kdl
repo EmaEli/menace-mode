@@ -1,0 +1,314 @@
+// Half-cover destruction tiers, one tier lower than vanilla (Medium->Light,
+// Heavy->Medium; gunslinger laser rifle Heavy->Light). Light/medium infantry
+// mortar HE no longer destroys half cover. Rule: GameplaySuite/packaging/standalone/CoverDestructionRebalance/PATCHES.md.
+
+patch "SkillTemplate" "active.at_wardog_detonate" {
+    set "EventHandlers" index=1 {
+        set "DestroyHalfCover" enum="HalfCoverClass" "Light"
+    }
+}
+patch "SkillTemplate" "active.detonate_boomer_shambler_charge" {
+    set "EventHandlers" index=1 {
+        set "DestroyHalfCover" enum="HalfCoverClass" "Light"
+    }
+}
+patch "SkillTemplate" "active.detonate_carrier" {
+    set "EventHandlers" index=1 {
+        set "DestroyHalfCover" enum="HalfCoverClass" "Medium"
+    }
+}
+patch "SkillTemplate" "active.detonate_explosive_charge" {
+    set "EventHandlers" index=2 {
+        set "DestroyHalfCover" enum="HalfCoverClass" "Medium"
+    }
+}
+patch "SkillTemplate" "active.detonate_hoverbomb" {
+    set "EventHandlers" index=1 {
+        set "DestroyHalfCover" enum="HalfCoverClass" "Medium"
+    }
+}
+patch "SkillTemplate" "active.explosion_large_bomb" {
+    set "EventHandlers" index=0 {
+        set "DestroyHalfCover" enum="HalfCoverClass" "Medium"
+    }
+}
+patch "SkillTemplate" "active.fire_artillery" {
+    set "EventHandlers" index=0 {
+        set "DestroyHalfCover" enum="HalfCoverClass" "Light"
+    }
+}
+patch "SkillTemplate" "active.fire_laser_lance" {
+    set "EventHandlers" index=0 {
+        set "DestroyHalfCover" enum="HalfCoverClass" "Medium"
+    }
+}
+patch "SkillTemplate" "active.laser_rifle_gunslinger" {
+    set "EventHandlers" index=0 {
+        set "DestroyHalfCover" enum="HalfCoverClass" "Light"
+    }
+}
+patch "SkillTemplate" "active.launch_bug_blaster" {
+    set "EventHandlers" index=0 {
+        set "DestroyHalfCover" enum="HalfCoverClass" "Light"
+    }
+}
+patch "SkillTemplate" "active.launch_construct_rocket" {
+    set "EventHandlers" index=0 {
+        set "DestroyHalfCover" enum="HalfCoverClass" "Light"
+    }
+}
+patch "SkillTemplate" "active.launch_disposable_rocket" {
+    set "EventHandlers" index=0 {
+        set "DestroyHalfCover" enum="HalfCoverClass" "Light"
+    }
+}
+patch "SkillTemplate" "active.launch_light_mortar_frag" {
+    set "EventHandlers" index=0 {
+        set "DestroyHalfCover" enum="HalfCoverClass" "None"
+    }
+}
+patch "SkillTemplate" "active.launch_medium_mortar_frag" {
+    set "EventHandlers" index=0 {
+        set "DestroyHalfCover" enum="HalfCoverClass" "None"
+    }
+}
+patch "SkillTemplate" "active.launch_rocket" {
+    set "EventHandlers" index=0 {
+        set "DestroyHalfCover" enum="HalfCoverClass" "Light"
+    }
+}
+patch "SkillTemplate" "active.launch_rpg_t1" {
+    set "EventHandlers" index=0 {
+        set "DestroyHalfCover" enum="HalfCoverClass" "Light"
+    }
+}
+patch "SkillTemplate" "active.launch_rpg_t2" {
+    set "EventHandlers" index=0 {
+        set "DestroyHalfCover" enum="HalfCoverClass" "Light"
+    }
+}
+patch "SkillTemplate" "active.launch_vmat_missile" {
+    set "EventHandlers" index=0 {
+        set "DestroyHalfCover" enum="HalfCoverClass" "Light"
+    }
+}
+patch "SkillTemplate" "active.mod.atgm.direct_fire" {
+    set "EventHandlers" index=0 {
+        set "DestroyHalfCover" enum="HalfCoverClass" "Medium"
+    }
+}
+patch "SkillTemplate" "active.mod.atgm.indirect_fire" {
+    set "EventHandlers" index=0 {
+        set "DestroyHalfCover" enum="HalfCoverClass" "Medium"
+    }
+}
+patch "SkillTemplate" "active.mod.fire_120mm_mortar_autoloader" {
+    set "EventHandlers" index=0 {
+        set "DestroyHalfCover" enum="HalfCoverClass" "Light"
+    }
+}
+patch "SkillTemplate" "active.mod.fire_laser_lance" {
+    set "EventHandlers" index=0 {
+        set "DestroyHalfCover" enum="HalfCoverClass" "Medium"
+    }
+}
+patch "SkillTemplate" "active.mod.gravity_manipulator_mini" {
+    set "EventHandlers" index=0 {
+        set "DestroyHalfCover" enum="HalfCoverClass" "Medium"
+    }
+}
+patch "SkillTemplate" "active.mod.launch_rocket" {
+    set "EventHandlers" index=0 {
+        set "DestroyHalfCover" enum="HalfCoverClass" "Medium"
+    }
+}
+patch "SkillTemplate" "active.mod.shoot_apfsds_tank_gun_mgs" {
+    set "EventHandlers" index=0 {
+        set "DestroyHalfCover" enum="HalfCoverClass" "Medium"
+    }
+}
+patch "SkillTemplate" "active.mod.shoot_short_cannon" {
+    set "EventHandlers" index=1 {
+        set "DestroyHalfCover" enum="HalfCoverClass" "Light"
+    }
+}
+patch "SkillTemplate" "active.mod.twinfire.atgm.direct_fire" {
+    set "EventHandlers" index=0 {
+        set "DestroyHalfCover" enum="HalfCoverClass" "Medium"
+    }
+}
+patch "SkillTemplate" "active.mod.twinfire.atgm.indirect_fire" {
+    set "EventHandlers" index=0 {
+        set "DestroyHalfCover" enum="HalfCoverClass" "Medium"
+    }
+}
+patch "SkillTemplate" "active.mod.twinfire.fire_120mm_mortar_autoloader" {
+    set "EventHandlers" index=0 {
+        set "DestroyHalfCover" enum="HalfCoverClass" "Light"
+    }
+}
+patch "SkillTemplate" "active.mod.twinfire.fire_auto_laser" {
+    set "EventHandlers" index=0 {
+        set "DestroyHalfCover" enum="HalfCoverClass" "Medium"
+    }
+}
+patch "SkillTemplate" "active.mod.twinfire.fire_laser_lance" {
+    set "EventHandlers" index=0 {
+        set "DestroyHalfCover" enum="HalfCoverClass" "Medium"
+    }
+}
+patch "SkillTemplate" "active.mod.twinfire.launch_rocket" {
+    set "EventHandlers" index=0 {
+        set "DestroyHalfCover" enum="HalfCoverClass" "Medium"
+    }
+}
+patch "SkillTemplate" "active.mod.twinfire.shoot_apfds_tank_gun_mgs" {
+    set "EventHandlers" index=0 {
+        set "DestroyHalfCover" enum="HalfCoverClass" "Medium"
+    }
+}
+patch "SkillTemplate" "active.mod.twinfire.shoot_short_cannon" {
+    set "EventHandlers" index=1 {
+        set "DestroyHalfCover" enum="HalfCoverClass" "Light"
+    }
+}
+patch "SkillTemplate" "active.orbital_sniper_laser_lance" {
+    set "EventHandlers" index=0 {
+        set "DestroyHalfCover" enum="HalfCoverClass" "Light"
+    }
+}
+patch "SkillTemplate" "active.sentry_turret_atgm.direct_fire" {
+    set "EventHandlers" index=0 {
+        set "DestroyHalfCover" enum="HalfCoverClass" "Medium"
+    }
+}
+patch "SkillTemplate" "active.sentry_turret_atgm.indirect_fire" {
+    set "EventHandlers" index=0 {
+        set "DestroyHalfCover" enum="HalfCoverClass" "Medium"
+    }
+}
+patch "SkillTemplate" "active.sentry_turret_launch_rocket" {
+    set "EventHandlers" index=0 {
+        set "DestroyHalfCover" enum="HalfCoverClass" "Light"
+    }
+}
+patch "SkillTemplate" "active.shoot_HEAT_15cm_assault_howitzer" {
+    set "EventHandlers" index=0 {
+        set "DestroyHalfCover" enum="HalfCoverClass" "Light"
+    }
+}
+patch "SkillTemplate" "active.shoot_HE_15cm_assault_howitzer" {
+    set "EventHandlers" index=1 {
+        set "DestroyHalfCover" enum="HalfCoverClass" "Light"
+    }
+}
+patch "SkillTemplate" "active.shoot_he_rocket_launcher" {
+    set "EventHandlers" index=1 {
+        set "DestroyHalfCover" enum="HalfCoverClass" "Light"
+    }
+}
+patch "SkillTemplate" "active.special_critical_hit_explosion" {
+    set "EventHandlers" index=1 {
+        set "DestroyHalfCover" enum="HalfCoverClass" "Medium"
+    }
+}
+patch "SkillTemplate" "active.throw_anti_tank_grenade_tier1_grenade_bundle" {
+    set "EventHandlers" index=0 {
+        set "DestroyHalfCover" enum="HalfCoverClass" "Medium"
+    }
+}
+patch "SkillTemplate" "active.throw_anti_tank_grenade_tier2" {
+    set "EventHandlers" index=0 {
+        set "DestroyHalfCover" enum="HalfCoverClass" "Medium"
+    }
+}
+patch "SkillTemplate" "active.throw_plasma_grenade" {
+    set "EventHandlers" index=0 {
+        set "DestroyHalfCover" enum="HalfCoverClass" "Light"
+    }
+}
+patch "SkillTemplate" "active.tripod.fire_laser_lance" {
+    set "EventHandlers" index=0 {
+        set "DestroyHalfCover" enum="HalfCoverClass" "Medium"
+    }
+}
+patch "SkillTemplate" "active.tripod_atgm.direct_fire" {
+    set "EventHandlers" index=0 {
+        set "DestroyHalfCover" enum="HalfCoverClass" "Medium"
+    }
+}
+patch "SkillTemplate" "active.tripod_atgm.indirect_fire" {
+    set "EventHandlers" index=0 {
+        set "DestroyHalfCover" enum="HalfCoverClass" "Medium"
+    }
+}
+patch "SkillTemplate" "offmap.gravity_manipulator" {
+    set "EventHandlers" index=0 {
+        set "DestroyHalfCover" enum="HalfCoverClass" "Medium"
+    }
+}
+patch "SkillTemplate" "offmap.gravity_manipulator_oci_overhaul" {
+    set "EventHandlers" index=0 {
+        set "DestroyHalfCover" enum="HalfCoverClass" "Medium"
+    }
+}
+patch "SkillTemplate" "offmap.guided_missile_strike" {
+    set "EventHandlers" index=0 {
+        set "DestroyHalfCover" enum="HalfCoverClass" "Medium"
+    }
+}
+patch "SkillTemplate" "offmap.heavy_gravity_manipulator" {
+    set "EventHandlers" index=0 {
+        set "DestroyHalfCover" enum="HalfCoverClass" "Medium"
+    }
+}
+patch "SkillTemplate" "offmap.ion_cannon" {
+    set "EventHandlers" index=0 {
+        set "DestroyHalfCover" enum="HalfCoverClass" "Medium"
+    }
+}
+patch "SkillTemplate" "offmap.main_battery_salvo" {
+    set "EventHandlers" index=0 {
+        set "DestroyHalfCover" enum="HalfCoverClass" "Light"
+    }
+}
+patch "SkillTemplate" "offmap.massive_barrage" {
+    set "EventHandlers" index=0 {
+        set "DestroyHalfCover" enum="HalfCoverClass" "Light"
+    }
+}
+patch "SkillTemplate" "offmap.rigged_for_demolition" {
+    set "EventHandlers" index=0 {
+        set "DestroyHalfCover" enum="HalfCoverClass" "Medium"
+    }
+}
+patch "SkillTemplate" "offmap.rigged_for_explosion" {
+    set "EventHandlers" index=0 {
+        set "DestroyHalfCover" enum="HalfCoverClass" "Medium"
+    }
+}
+patch "SkillTemplate" "offmap.sustained_barrage" {
+    set "EventHandlers" index=0 {
+        set "DestroyHalfCover" enum="HalfCoverClass" "Light"
+    }
+}
+patch "SkillTemplate" "offmap.unguided_missile_strike" {
+    set "EventHandlers" index=0 {
+        set "DestroyHalfCover" enum="HalfCoverClass" "Medium"
+    }
+}
+patch "SkillTemplate" "offmap.unguided_missile_strike_tutorial" {
+    set "EventHandlers" index=0 {
+        set "DestroyHalfCover" enum="HalfCoverClass" "Medium"
+    }
+}
+patch "SkillTemplate" "offmap.upgraded_ion_cannon" {
+    set "EventHandlers" index=0 {
+        set "DestroyHalfCover" enum="HalfCoverClass" "Medium"
+    }
+}
+patch "SkillTemplate" "special.vehicle_plow_through_infantry" {
+    set "EventHandlers" index=0 {
+        set "DestroyHalfCover" enum="HalfCoverClass" "Medium"
+    }
+}

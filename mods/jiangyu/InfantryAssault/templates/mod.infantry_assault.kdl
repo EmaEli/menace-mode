@@ -1,0 +1,32 @@
+// Generated from GameplaySuite/packaging/standalone/InfantryAssault/modpack.json
+// by .tmp/gen_batch3_kdl.py. Edit the legacy manifest and regenerate.
+
+clone "SkillTemplate" from="player.close_combat_charge" id="mod.infantry_assault" {
+    set "Order" enum="SkillOrder" "Any"
+    set "ActionPointCost" 40
+    set "IsLimitedUses" #false
+    set "Uses" 1
+    set "IsActive" #true
+    set "IsTargeted" #true
+    set "TargetingCursor" enum="CursorType" "Attack"
+    set "TargetsAllowed" enum="SkillTarget" "EnemyActor"
+    set "KeepSelectedIfStillUsable" #false
+    set "IsLineOfFireNeeded" #false
+    set "IsAttack" #false
+    set "IsAlwaysHitting" #true
+    set "CanHitAnotherTile" #true
+    set "IsIgnoringCover" #true
+    set "IsSilent" #true
+    set "UsabilityWhileContained" enum="UsabilityWhileContained" "Always"
+    set "MarkAsActed" #true
+    set "IsHidden" #false
+    set "IsOverridingRanges" #true
+    set "MinRange" 1
+    set "IdealRange" 1
+    set "MaxRange" 1
+    set "ApplyToEntityInsideStructure" #true
+    set "Title" { set "m_DefaultTranslation" "Assault" }
+    set "Description" { set "m_DefaultTranslation" "Spend 40 AP to assault adjacent enemy infantry. Cannot be used while deployed/kneeling, Suppressed, or Pinned Down. The defender fires first if able; Pinned Down defenders react with half CQB bonuses, while Suppressed defenders cannot react. Surviving assaulters then fire; if the defender is destroyed, the assaulters occupy the target position." }
+    clear "EventHandlers"
+    set "AIConfig" #null
+}

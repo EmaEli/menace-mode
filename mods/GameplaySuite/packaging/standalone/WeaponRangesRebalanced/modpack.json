@@ -2,7 +2,7 @@
   "manifestVersion": 2,
   "id": "luca.weaponrangesrebalanced",
   "name": "Weapon Ranges Rebalanced",
-  "version": "2.8.1",
+  "version": "2.9.0",
   "author": "Luca / ChatGPT",
   "description": "Realistic configurable weapon ranges, proportional secondary-range synchronization, JSON overrides, and the verified long-range indirect-fire AI positioning fix. Non-range weapon mechanics are now separate.",
   "loadOrder": 500,

@@ -1,23 +1,28 @@
 using System.Runtime.CompilerServices;
 using Il2CppInterop.Runtime.InteropTypes;
 using MelonLoader;
-using Menace.ModpackLoader;
+#if JIANGYU
+using MenaceModSettings;
+#endif
 using Menace.SDK;
+using MenaceModSuite.Shared;
 using UnityEngine;
 
-[assembly: AssemblyVersion("0.5.4.0")]
-[assembly: AssemblyFileVersion("0.5.4.0")]
+[assembly: AssemblyVersion("0.5.6.0")]
+[assembly: AssemblyFileVersion("0.5.6.0")]
 
 namespace MenaceInfantryAssault;
 
-public sealed class Plugin : IModpackPlugin
+// Host-agnostic core. The legacy Menace.ModpackLoader binding lives in
+// Plugin.Modpack.cs; the Jiangyu binding in mods/jiangyu/InfantryAssault/code.
+public sealed partial class Plugin : IHostedPlugin
 {
     private const string SettingsGroup = "Infantry Assault";
-    private const string Version = "0.5.4";
+    private const string Version = "0.5.6";
     private const int AssaultApCost = 40;
     private const string AssaultSkillId = "mod.infantry_assault";
 
-    private static MelonLogger.Instance? _logger;
+    private static ModLog? _logger;
     private static global::HarmonyLib.Harmony? _harmony;
     private static Assembly? _game;
     private static bool _inTacticalScene;
@@ -129,6 +134,12 @@ public sealed class Plugin : IModpackPlugin
     }
 
     private static AssaultPhase _phase;
+    // MENACE evaluates AI criteria on IL2CPP thread-pool tasks (AIFaction.Think ->
+    // Agent.ScheduleCriterionEvaluation). Those threads are foreign to CoreCLR, and a
+    // lazy JIT triggered there from a Harmony hook crashes inside MonoMod's JIT hook.
+    // Hooks fall through to vanilla off the main thread; AI Assault goes via Agent.Execute.
+    private static int _mainThreadId;
+    private static bool OffMainThread => Environment.CurrentManagedThreadId != _mainThreadId;
     private static float _phaseCqbBonusScale = 1f;
     private static int _phaseWeaponKey;
     private static int _activeActorKey;
@@ -136,7 +147,7 @@ public sealed class Plugin : IModpackPlugin
     private static int _assaultsStarted;
     private static int _aiAssaultsStarted;
 
-    public void OnInitialize(MelonLogger.Instance logger, global::HarmonyLib.Harmony harmony)
+    public void Initialize(ModLog logger, global::HarmonyLib.Harmony harmony)
     {
         _logger = logger;
         _harmony = harmony;
@@ -225,6 +236,7 @@ public sealed class Plugin : IModpackPlugin
     {
         if (_patchesApplied) return;
 
+        _mainThreadId = Environment.CurrentManagedThreadId;
         _game = AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(a => a.GetName().Name == "Assembly-CSharp");
         if (_game == null)
         {
@@ -408,6 +420,27 @@ public sealed class Plugin : IModpackPlugin
                 Error($"Refusing to enable Assault: manifest clone still has {handlerCount} native Charge event handler(s).");
                 _assaultTemplate = null;
                 return;
+            }
+
+#if JIANGYU
+            // The Jiangyu KDL compiler only accepts single enum members; the clone ships
+            // SkillOrder.Any / SkillTarget.EnemyActor as baselines and the exact legacy
+            // values (Any+10, EnemyActor|Structure) are written here.
+            SetEnumMember(_assaultTemplate, "Order", 50010);
+            SetEnumMember(_assaultTemplate, "TargetsAllowed", 1049600);
+#endif
+
+            // The clone inherits the vehicle Charge icon; use the vanilla running-figure skill icon.
+            var icon = SpriteLookup.Find("skill_32");
+            var iconDisabled = SpriteLookup.Find("skill_32_inactive");
+            if (icon != null && iconDisabled != null)
+            {
+                SetMember(_assaultTemplate, "Icon", icon);
+                SetMember(_assaultTemplate, "IconDisabled", iconDisabled);
+            }
+            else
+            {
+                Warn("Assault skill icon sprites 'skill_32' were not found; keeping the inherited Charge icon.");
             }
 
             _templatePrepared = true;
@@ -864,7 +897,7 @@ public sealed class Plugin : IModpackPlugin
 
     public static void SkillGetCoverMultPostfix(object __instance, object _targetTile, object _overrideTargetEntity, ref float __result)
     {
-        if (!_enabled || (_phase != AssaultPhase.DefensiveFire && _phase != AssaultPhase.AssaultFire) || Key(__instance) != _phaseWeaponKey) return;
+        if (OffMainThread || !_enabled || (_phase != AssaultPhase.DefensiveFire && _phase != AssaultPhase.AssaultFire) || Key(__instance) != _phaseWeaponKey) return;
 
         // At point-blank range StrongerCover can intentionally suppress directional cover.
         // An occupied bunker/building/tower must still contribute its live inside-cover value
@@ -902,7 +935,7 @@ public sealed class Plugin : IModpackPlugin
 
     public static bool AgentExecutePrefix(object __instance, ref bool __result)
     {
-        if (!_inTacticalScene || !_enabled || !_enableAi) return true;
+        if (OffMainThread || !_inTacticalScene || !_enabled || !_enableAi) return true;
 
         try
         {
@@ -1814,7 +1847,7 @@ public sealed class Plugin : IModpackPlugin
 
     private static bool IsAssaultSkill(object? skill)
     {
-        if (skill == null) return false;
+        if (skill == null || OffMainThread) return false;
         IntPtr ptr = skill is Il2CppObjectBase native ? native.Pointer : IntPtr.Zero;
         if (ptr != IntPtr.Zero && AssaultSkillPointers.Contains(ptr)) return true;
 
@@ -2134,6 +2167,10 @@ public sealed class Plugin : IModpackPlugin
             if (pre != null) pre.priority = priority.Value;
             if (post != null) post.priority = priority.Value;
         }
+        // Compile the hook bodies now, on the main thread, so the first call from an
+        // AI worker thread never has to JIT.
+        if (pre?.method != null) RuntimeHelpers.PrepareMethod(pre.method.MethodHandle);
+        if (post?.method != null) RuntimeHelpers.PrepareMethod(post.method.MethodHandle);
         _harmony?.Patch(original, prefix: pre, postfix: post);
     }
 

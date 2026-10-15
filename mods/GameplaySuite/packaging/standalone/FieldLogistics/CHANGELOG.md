@@ -1,3 +1,8 @@
+## 1.0.8 - Skill icons
+
+- `Resupply Infantry` and `Redistribute Ammo` no longer show the lightning-bolt icon inherited from the `active.rogue_officer_whistle` clone source. They now use the vanilla skill-bar sprites `skill_05` / `skill_05_inactive` (three cartridges) and `skill_28` / `skill_28_inactive` (exchange arrows), assigned at runtime by sprite name in both the legacy and the Jiangyu build.
+- No balance or behavior changes.
+
 ## 1.0.7 - MENACE 0.7.16 compatibility (#41)
 
 - MENACE v0.7.16 removed the `active.rogue_ammo_runner_refill_ammo` skill template that both Field Logistics skills were cloned from, so `Resupply Infantry` and `Redistribute Ammo` were never registered (`Clone: source ... not found` in `Latest.log`). Both skills now clone `active.rogue_officer_whistle` (closest surviving template) and the manifest resets every field that differs from the old base: targeting, line of fire, always-hit, AoE, muzzle effect, sounds, and the `RefillAmmo` / `DisplayText` event handlers.

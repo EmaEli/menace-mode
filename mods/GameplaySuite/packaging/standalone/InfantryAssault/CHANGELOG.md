@@ -1,3 +1,13 @@
+## 0.5.6
+
+- Fix for a tactical crash (`0xc0000005` / `ExecutionEngineException` inside the .NET runtime's JIT, dump `Menace.exe.24232.dmp`): MENACE evaluates AI criteria on IL2CPP thread-pool threads, and a Harmony hook of this mod being compiled lazily on such a thread crashed the process. Hook bodies are now compiled up front on the main thread, and every hook falls through to vanilla behaviour when invoked off the main thread. AI Assault is unaffected: it is decided in `Agent.Execute` on the main thread.
+- No gameplay, AP, or logging-default changes.
+
+## 0.5.5
+
+- The `Assault` button no longer shows the vehicle Charge icon inherited from the `player.close_combat_charge` clone source; it now uses the vanilla running-figure skill sprites `skill_32` / `skill_32_inactive`, assigned at runtime by sprite name in both the legacy and the Jiangyu build.
+- No gameplay, AI, AP, or logging-default changes.
+
 ## 0.5.4
 
 - MENACE v0.7.16 compatibility: the game removed `Skill.GetDescription()`, which made the Harmony binder throw and abandon every Assault patch (symptom: `Failed to apply patches: System.MissingMethodException: Harmony target method was not resolved.`). The `GetDescription` postfix is removed; the Assault tooltip is served by the manifest-defined `SkillTemplate.Description`.

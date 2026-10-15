@@ -1,7 +1,7 @@
 {
   "manifestVersion": 2,
   "name": "Field Logistics",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "author": "Luca / OpenAI",
   "description": "Adds vehicle-based infantry ammunition resupply, an optional Field Ammunition Supply module for extra uses, and experimental adjacent squad ammo redistribution.",
   "loadOrder": 180,

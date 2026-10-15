@@ -1,0 +1,198 @@
+// Generated from GameplaySuite/packaging/standalone/InfantryAssault/modpack.json
+// by .tmp/gen_batch3_kdl.py. Edit the legacy manifest and regenerate.
+
+patch "EntityTemplate" "allied.local_forces_basic_infantry" {
+    append "Skills" ref="SkillTemplate" "mod.infantry_assault"
+}
+patch "EntityTemplate" "allied.local_forces_medium_machinegun_weapon_team" {
+    append "Skills" ref="SkillTemplate" "mod.infantry_assault"
+}
+patch "EntityTemplate" "allied.local_forces_mortar_weapon_team" {
+    append "Skills" ref="SkillTemplate" "mod.infantry_assault"
+}
+patch "EntityTemplate" "allied.pirate_scavengers" {
+    append "Skills" ref="SkillTemplate" "mod.infantry_assault"
+}
+patch "EntityTemplate" "allied.player_local_forces_conscripts" {
+    append "Skills" ref="SkillTemplate" "mod.infantry_assault"
+}
+patch "EntityTemplate" "allied.player_local_forces_regular_infantry" {
+    append "Skills" ref="SkillTemplate" "mod.infantry_assault"
+}
+patch "EntityTemplate" "allied_civilian_militia_buyout" {
+    append "Skills" ref="SkillTemplate" "mod.infantry_assault"
+}
+patch "EntityTemplate" "allied_local_forces.hunters" {
+    append "Skills" ref="SkillTemplate" "mod.infantry_assault"
+}
+patch "EntityTemplate" "allied_local_forces.militia" {
+    append "Skills" ref="SkillTemplate" "mod.infantry_assault"
+}
+patch "EntityTemplate" "enemy.construct_boomer_shambler" {
+    append "Skills" ref="SkillTemplate" "mod.infantry_assault"
+}
+patch "EntityTemplate" "enemy.construct_gunslinger" {
+    append "Skills" ref="SkillTemplate" "mod.infantry_assault"
+}
+patch "EntityTemplate" "enemy.construct_skirmisher" {
+    append "Skills" ref="SkillTemplate" "mod.infantry_assault"
+}
+patch "EntityTemplate" "enemy.construct_soldier_tier1" {
+    append "Skills" ref="SkillTemplate" "mod.infantry_assault"
+}
+patch "EntityTemplate" "enemy.construct_soldier_tier1_phantom" {
+    append "Skills" ref="SkillTemplate" "mod.infantry_assault"
+}
+patch "EntityTemplate" "enemy.construct_soldier_tier1_samples" {
+    append "Skills" ref="SkillTemplate" "mod.infantry_assault"
+}
+patch "EntityTemplate" "enemy.construct_stalker" {
+    append "Skills" ref="SkillTemplate" "mod.infantry_assault"
+}
+patch "EntityTemplate" "enemy.construct_worker_drone" {
+    append "Skills" ref="SkillTemplate" "mod.infantry_assault"
+}
+patch "EntityTemplate" "enemy.construct_worker_drone_low_acc" {
+    append "Skills" ref="SkillTemplate" "mod.infantry_assault"
+}
+patch "EntityTemplate" "enemy.pirate_boarding_commandos" {
+    append "Skills" ref="SkillTemplate" "mod.infantry_assault"
+}
+patch "EntityTemplate" "enemy.pirate_boarding_commandos_bodyguard" {
+    append "Skills" ref="SkillTemplate" "mod.infantry_assault"
+}
+patch "EntityTemplate" "enemy.pirate_boarding_commandos_first_mate" {
+    append "Skills" ref="SkillTemplate" "mod.infantry_assault"
+}
+patch "EntityTemplate" "enemy.pirate_bombmaker" {
+    append "Skills" ref="SkillTemplate" "mod.infantry_assault"
+}
+patch "EntityTemplate" "enemy.pirate_bullet_sponge" {
+    append "Skills" ref="SkillTemplate" "mod.infantry_assault"
+}
+patch "EntityTemplate" "enemy.pirate_captain" {
+    append "Skills" ref="SkillTemplate" "mod.infantry_assault"
+}
+patch "EntityTemplate" "enemy.pirate_chaingun_team" {
+    append "Skills" ref="SkillTemplate" "mod.infantry_assault"
+}
+patch "EntityTemplate" "enemy.pirate_emp_team" {
+    append "Skills" ref="SkillTemplate" "mod.infantry_assault"
+}
+patch "EntityTemplate" "enemy.pirate_emp_team_engineer" {
+    append "Skills" ref="SkillTemplate" "mod.infantry_assault"
+}
+patch "EntityTemplate" "enemy.pirate_flamethrower_team" {
+    append "Skills" ref="SkillTemplate" "mod.infantry_assault"
+}
+patch "EntityTemplate" "enemy.pirate_outcasts" {
+    append "Skills" ref="SkillTemplate" "mod.infantry_assault"
+}
+patch "EntityTemplate" "enemy.pirate_outcasts_with_shotguns" {
+    append "Skills" ref="SkillTemplate" "mod.infantry_assault"
+}
+patch "EntityTemplate" "enemy.pirate_saboteur_chaingun_team" {
+    append "Skills" ref="SkillTemplate" "mod.infantry_assault"
+}
+patch "EntityTemplate" "enemy.pirate_saboteurs_scavenger_ringleader" {
+    append "Skills" ref="SkillTemplate" "mod.infantry_assault"
+}
+patch "EntityTemplate" "enemy.pirate_saboteurs_scavengers" {
+    append "Skills" ref="SkillTemplate" "mod.infantry_assault"
+}
+patch "EntityTemplate" "enemy.pirate_scavengers" {
+    append "Skills" ref="SkillTemplate" "mod.infantry_assault"
+}
+patch "EntityTemplate" "enemy.pirate_scavengers_tutorial_weak" {
+    append "Skills" ref="SkillTemplate" "mod.infantry_assault"
+}
+patch "EntityTemplate" "enemy.pirate_veteran_scavengers_t2" {
+    append "Skills" ref="SkillTemplate" "mod.infantry_assault"
+}
+patch "EntityTemplate" "enemy.rogue_army_ammo_runner" {
+    append "Skills" ref="SkillTemplate" "mod.infantry_assault"
+}
+patch "EntityTemplate" "enemy.rogue_army_atgm_weapon_team" {
+    append "Skills" ref="SkillTemplate" "mod.infantry_assault"
+}
+patch "EntityTemplate" "enemy.rogue_army_autocannon_weapon_team" {
+    append "Skills" ref="SkillTemplate" "mod.infantry_assault"
+}
+patch "EntityTemplate" "enemy.rogue_army_conscripts" {
+    append "Skills" ref="SkillTemplate" "mod.infantry_assault"
+}
+patch "EntityTemplate" "enemy.rogue_army_heavy_infantry" {
+    append "Skills" ref="SkillTemplate" "mod.infantry_assault"
+}
+patch "EntityTemplate" "enemy.rogue_army_infantry" {
+    append "Skills" ref="SkillTemplate" "mod.infantry_assault"
+}
+patch "EntityTemplate" "enemy.rogue_army_infantry_with_battle_rifles" {
+    append "Skills" ref="SkillTemplate" "mod.infantry_assault"
+}
+patch "EntityTemplate" "enemy.rogue_army_medium_machinegun_weapon_team" {
+    append "Skills" ref="SkillTemplate" "mod.infantry_assault"
+}
+patch "EntityTemplate" "enemy.rogue_army_mortar_weapon_team" {
+    append "Skills" ref="SkillTemplate" "mod.infantry_assault"
+}
+patch "EntityTemplate" "enemy.rogue_army_officer_squad" {
+    append "Skills" ref="SkillTemplate" "mod.infantry_assault"
+}
+patch "EntityTemplate" "enemy.rogue_army_sniper_team_jaeger" {
+    append "Skills" ref="SkillTemplate" "mod.infantry_assault"
+}
+patch "EntityTemplate" "enemy.rogue_army_storm_troopers" {
+    append "Skills" ref="SkillTemplate" "mod.infantry_assault"
+}
+patch "EntityTemplate" "enemy.shadow_forces" {
+    append "Skills" ref="SkillTemplate" "mod.infantry_assault"
+}
+patch "EntityTemplate" "player_squad.carda" {
+    append "Skills" ref="SkillTemplate" "mod.infantry_assault"
+}
+patch "EntityTemplate" "player_squad.corlain" {
+    append "Skills" ref="SkillTemplate" "mod.infantry_assault"
+}
+patch "EntityTemplate" "player_squad.darby" {
+    append "Skills" ref="SkillTemplate" "mod.infantry_assault"
+}
+patch "EntityTemplate" "player_squad.greifinger" {
+    append "Skills" ref="SkillTemplate" "mod.infantry_assault"
+}
+patch "EntityTemplate" "player_squad.kubra" {
+    append "Skills" ref="SkillTemplate" "mod.infantry_assault"
+}
+patch "EntityTemplate" "player_squad.lim" {
+    append "Skills" ref="SkillTemplate" "mod.infantry_assault"
+}
+patch "EntityTemplate" "player_squad.pike" {
+    append "Skills" ref="SkillTemplate" "mod.infantry_assault"
+}
+patch "EntityTemplate" "player_squad.pike_tutorial" {
+    append "Skills" ref="SkillTemplate" "mod.infantry_assault"
+}
+patch "EntityTemplate" "player_squad.sachin" {
+    append "Skills" ref="SkillTemplate" "mod.infantry_assault"
+}
+patch "EntityTemplate" "player_squad.sy" {
+    append "Skills" ref="SkillTemplate" "mod.infantry_assault"
+}
+patch "EntityTemplate" "player_squad.tech" {
+    append "Skills" ref="SkillTemplate" "mod.infantry_assault"
+}
+patch "EntityTemplate" "player_squad.test" {
+    append "Skills" ref="SkillTemplate" "mod.infantry_assault"
+}
+patch "EntityTemplate" "player_squad.vamplew" {
+    append "Skills" ref="SkillTemplate" "mod.infantry_assault"
+}
+patch "EntityTemplate" "player_squad.weiwu" {
+    append "Skills" ref="SkillTemplate" "mod.infantry_assault"
+}
+patch "EntityTemplate" "player_squad.wetteroth" {
+    append "Skills" ref="SkillTemplate" "mod.infantry_assault"
+}
+patch "EntityTemplate" "player_squad.yaz" {
+    append "Skills" ref="SkillTemplate" "mod.infantry_assault"
+}

@@ -6,21 +6,26 @@ using System.Reflection;
 using Il2CppInterop.Runtime.InteropTypes;
 using HarmonyLib;
 using MelonLoader;
-using Menace.ModpackLoader;
+#if JIANGYU
+using MenaceModSettings;
+#endif
 using Menace.SDK;
+using MenaceModSuite.Shared;
 
 namespace FieldLogistics;
 
-public sealed class Plugin : IModpackPlugin
+// Host-agnostic core. The legacy Menace.ModpackLoader binding lives in
+// Plugin.Modpack.cs; the Jiangyu binding in mods/jiangyu/FieldLogistics/code.
+public sealed partial class Plugin : IHostedPlugin
 {
     private const string ModName = "Field Logistics";
-    private const string Version = "1.0.7";
+    private const string Version = "1.0.8";
     private const string VehicleSkillId = "active.fieldlogistics_vehicle_resupply";
     private const string ShareSkillId = "active.fieldlogistics_redistribute_ammo";
     private const string ModuleId = "accessory.fieldlogistics_vehicle_ammo_supply";
     private const string TestVehicleId = "vehicle.chassis_ifv";
 
-    private static MelonLogger.Instance _log;
+    private static ModLog _log;
     private static Plugin _instance;
     private HarmonyLib.Harmony _harmony;
     private int _updateCounter;
@@ -35,8 +40,12 @@ public sealed class Plugin : IModpackPlugin
     private bool _testModuleGranted;
     private bool _testVehicleGranted;
     private bool _testLoadoutReadyLogged;
+#if JIANGYU
+    private static bool _moduleIconsApplied;
+#endif
+    private static bool _skillIconsApplied;
 
-    public void OnInitialize(MelonLogger.Instance logger, HarmonyLib.Harmony harmony)
+    public void Initialize(ModLog logger, HarmonyLib.Harmony harmony)
     {
         _log = logger;
         _instance = this;
@@ -615,6 +624,17 @@ public sealed class Plugin : IModpackPlugin
                 Templates.WriteField(module, "Rarity", GetInt("Rarity", 20));
                 Templates.WriteField(module, "BlackMarketMaxQuantity", GetInt("BlackMarketMaxQuantity", 1));
                 Templates.WriteField(module, "MinCampaignProgress", GetInt("MinimumCampaignProgress", 0));
+#if JIANGYU
+                // Jiangyu KDL cannot reference a vanilla sprite by name without shipping
+                // the file; mirror the legacy loader's by-name lookup, best effort.
+                if (!_moduleIconsApplied)
+                {
+                    var icon = Templates.FindSprite("accessory_vehicle_ammo_cases_186x186");
+                    var iconDisabled = Templates.FindSprite("accessory_vehicle_ammo_cases_inactive_186x186");
+                    if (icon != null) _moduleIconsApplied = Templates.WriteField(module, "IconEquipment", icon);
+                    if (iconDisabled != null) Templates.WriteField(module, "IconEquipmentDisabled", iconDisabled);
+                }
+#endif
             }
 
             var vehicleSkill = Templates.Find("SkillTemplate", VehicleSkillId);
@@ -630,6 +650,22 @@ public sealed class Plugin : IModpackPlugin
             {
                 Templates.WriteField(shareSkill, "ActionPointCost", GetInt("AmmoSharingAPCost", 40));
                 Templates.WriteField(shareSkill, "IsHidden", !SharingEnabled());
+#if JIANGYU
+                // The Jiangyu KDL compiler only accepts single enum members; the clone ships
+                // SkillOrder.Last / SkillTarget.AlliedActor as baselines and the exact legacy
+                // values (Last+10, AlliedActor|Self) are written here.
+                Templates.WriteField(shareSkill, "Order", 70010);
+                Templates.WriteField(shareSkill, "TargetsAllowed", 2099200);
+#endif
+            }
+
+            // Both skills are cloned from the officer whistle (lightning bolt icon); swap in
+            // vanilla ammo-themed skill-bar icons once, by sprite name.
+            if (!_skillIconsApplied && !vehicleSkill.IsNull && !shareSkill.IsNull)
+            {
+                bool ok = ApplySkillIcons(vehicleSkill, "skill_05");
+                ok &= ApplySkillIcons(shareSkill, "skill_28");
+                _skillIconsApplied = ok;
             }
 
             if (DebugEnabled())
@@ -641,6 +677,19 @@ public sealed class Plugin : IModpackPlugin
         {
             DebugWarning($"Could not apply one or more settings to templates: {ex.Message}");
         }
+    }
+
+    private static bool ApplySkillIcons(GameObj skill, string spriteName)
+    {
+        var icon = SpriteLookup.Find(spriteName);
+        var iconDisabled = SpriteLookup.Find(spriteName + "_inactive");
+        if (icon == null || iconDisabled == null)
+        {
+            DebugWarning($"Skill icon sprite '{spriteName}' not found yet; will retry.");
+            return false;
+        }
+        return Templates.WriteField(skill, "Icon", icon)
+            && Templates.WriteField(skill, "IconDisabled", iconDisabled);
     }
 
     private static void TryGrantTestLoadout()

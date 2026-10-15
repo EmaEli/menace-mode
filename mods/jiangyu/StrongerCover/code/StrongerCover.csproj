@@ -6,7 +6,7 @@
   -->
   <PropertyGroup>
     <!-- Keep in step with jiangyu.json so the DLL metadata identifies the shipped build. -->
-    <Version>3.0.0</Version>
+    <Version>3.0.1</Version>
   </PropertyGroup>
   <ItemGroup>
     <!--

@@ -1,6 +1,6 @@
 {
   "name": "StrongerCover",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "author": "Luca",
   "description": "Configurable directional cover (light/medium/heavy), inside-cover profiles (bunker, forest, open vehicle, watchtower, garrisoned building), 360-degree cover against indirect fire and squad-size scaling. Jiangyu port of the GameplaySuite StrongerCover module; options live in the MenaceModSettings window (F9).",
   "depends": [

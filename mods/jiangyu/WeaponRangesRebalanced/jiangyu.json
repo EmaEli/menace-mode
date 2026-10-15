@@ -1,0 +1,10 @@
+{
+  "name": "WeaponRangesRebalanced",
+  "version": "2.9.0",
+  "author": "Luca",
+  "description": "Realistic configurable weapon ranges, proportional secondary-range synchronization, exact overrides via UserData/WeaponRangesRebalanced/weapon-overrides.json, and the long-range indirect-fire AI positioning fix. Jiangyu port of the GameplaySuite WRR module; options live in the MenaceModSettings window (F9).",
+  "depends": [
+    "Jiangyu >= 1.4.8",
+    "MenaceModSettings >= 0.4.0"
+  ]
+}

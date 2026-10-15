@@ -1,0 +1,22 @@
+// Generated from GameplaySuite/packaging/standalone/FieldLogistics/modpack.json
+// by .tmp/gen_batch3_kdl.py. Edit the legacy manifest and regenerate.
+
+clone "AccessoryTemplate" from="accessory.vehicle_smoke_launchers" id="accessory.fieldlogistics_vehicle_ammo_supply" {
+    set "DeployCosts" {
+        set "m_Supplies" 20
+    }
+    set "Rarity" 20
+    set "MinCampaignProgress" 0
+    set "TradeValue" 40
+    set "BlackMarketMaxQuantity" 1
+    clear "SkillsGranted"
+    set "Title" { set "m_DefaultTranslation" "Field Ammunition Supply" }
+    set "ShortName" { set "m_DefaultTranslation" "Ammo Supply" }
+    set "Description" { set "m_DefaultTranslation" "Carries additional small-arms ammunition for nearby infantry, adding extra uses to the vehicle's Resupply Infantry ability." }
+    set "VisualAlterationSlot" enum="VisualAlterationSlot" "None"
+    set "VisualAlterationSlotSecondary" enum="VisualAlterationSlot" "None"
+    set "IconSkillBar" #null
+    set "IconSkillBarDisabled" #null
+    set "IconSkillBarAlternative" #null
+    set "IconSkillBarAlternativeDisabled" #null
+}

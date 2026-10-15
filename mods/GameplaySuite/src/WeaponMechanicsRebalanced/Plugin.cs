@@ -1,7 +1,10 @@
 using MelonLoader;
 using Il2CppInterop.Runtime.InteropTypes;
-using Menace.ModpackLoader;
+#if JIANGYU
+using MenaceModSettings;
+#endif
 using Menace.SDK;
+using MenaceModSuite.Shared;
 using UnityEngine;
 
 [assembly: AssemblyVersion("0.4.5.0")]
@@ -10,7 +13,9 @@ using UnityEngine;
 
 namespace MenaceWeaponMechanicsRebalanced;
 
-public sealed class Plugin : IModpackPlugin
+// Host-agnostic core. The legacy Menace.ModpackLoader binding lives in
+// Plugin.Modpack.cs; the Jiangyu binding in mods/jiangyu/WeaponMechanicsRebalanced/code.
+public sealed partial class Plugin : IHostedPlugin
 {
     private const string SettingsGroup = "Weapon Mechanics Rebalanced";
     private const string Version = "0.4.5";
@@ -134,7 +139,7 @@ public sealed class Plugin : IModpackPlugin
         "active.fire_battle_rifle_tier_2_aimed_fire",
     };
 
-    private static MelonLogger.Instance? _logger;
+    private static ModLog? _logger;
     private static bool _enabled = true;
     private static bool _debugLogging;
     private const int MortarScatterReductionPerPriorShot = 1;
@@ -175,7 +180,7 @@ public sealed class Plugin : IModpackPlugin
     private static long _mortarWorldHighlightActorKey;
     [ThreadStatic] private static MortarApplyState? _activeMortarApplyState;
 
-    public void OnInitialize(MelonLogger.Instance logger, global::HarmonyLib.Harmony harmony)
+    public void Initialize(ModLog logger, global::HarmonyLib.Harmony harmony)
     {
         _logger = logger;
 

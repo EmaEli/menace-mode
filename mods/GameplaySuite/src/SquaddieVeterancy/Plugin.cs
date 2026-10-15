@@ -1,6 +1,9 @@
-using MelonLoader;
-using Menace.ModpackLoader;
+#if JIANGYU
+using MenaceModSettings;
+#else
 using Menace.SDK;
+#endif
+using MenaceModSuite.Shared;
 using UnityEngine;
 
 [assembly: AssemblyVersion("1.10.0.0")]
@@ -8,12 +11,19 @@ using UnityEngine;
 
 namespace SquaddieProbe;
 
-public sealed class Plugin : IModpackPlugin
+// Host-agnostic core. The legacy Menace.ModpackLoader binding lives in
+// Plugin.Modpack.cs; the Jiangyu binding in mods/jiangyu/SquaddieVeterancy/code.
+public sealed partial class Plugin : IHostedPlugin
 {
     private const string Version = "1.10";
+#if JIANGYU
+    private const string SettingsGroup = "Squaddie Veterancy";
+#else
+    // Historical group name; keeps existing Modpack Loader ModSettings.json values valid.
     private const string SettingsGroup = "SquaddieProbe";
+#endif
 
-    private MelonLogger.Instance? _logger;
+    private ModLog? _logger;
     private global::HarmonyLib.Harmony? _harmony;
     private ProbeRuntime? _runtime;
     private float _bindAt;
@@ -33,7 +43,7 @@ public sealed class Plugin : IModpackPlugin
     private const int MaxDebugLogLinesPerSecond = 12;
     private Vector2 _rosterDragOffset;
 
-    public void OnInitialize(MelonLogger.Instance logger, global::HarmonyLib.Harmony harmony)
+    public void Initialize(ModLog logger, global::HarmonyLib.Harmony harmony)
     {
         _logger = logger;
         _harmony = harmony;

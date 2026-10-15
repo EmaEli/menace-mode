@@ -1,0 +1,44 @@
+// Generated from GameplaySuite/packaging/standalone/FieldLogistics/modpack.json
+// by .tmp/gen_batch3_kdl.py. Edit the legacy manifest and regenerate.
+
+clone "SkillTemplate" from="active.rogue_officer_whistle" id="active.fieldlogistics_redistribute_ammo" {
+    set "Order" enum="SkillOrder" "Last"
+    set "ActionPointCost" 40
+    set "IsLimitedUses" #false
+    set "Uses" 1
+    set "IsActive" #true
+    set "IsTargeted" #true
+    set "TargetingCursor" enum="CursorType" "Attack"
+    set "TargetsAllowed" enum="SkillTarget" "AlliedActor"
+    set "KeepSelectedIfStillUsable" #false
+    set "IsLineOfFireNeeded" #false
+    set "IsAttack" #false
+    set "IsAlwaysHitting" #true
+    set "CanHitAnotherTile" #true
+    set "IsIgnoringCover" #true
+    set "IsSilent" #true
+    set "UsabilityWhileContained" enum="UsabilityWhileContained" "AllowInsideStructures"
+    set "MarkAsActed" #true
+    set "IsHidden" #false
+    set "IsOverridingRanges" #true
+    set "MinRange" 1
+    set "IdealRange" 1
+    set "MaxRange" 1
+    set "Title" { set "m_DefaultTranslation" "Redistribute Ammo" }
+    set "Description" { set "m_DefaultTranslation" "Redistributes remaining squad-weapon ammunition between this infantry unit and an adjacent friendly infantry unit carrying a weapon of the same category. Total ammunition is conserved; special weapons and grenades are ignored." }
+    clear "Tags"
+    append "Tags" ref="TagTemplate" "infantry"
+    clear "EventHandlers"
+    append "EventHandlers" type="DisplayText" {
+        set "Event" enum="DisplayEvent" "OnUse"
+        set "LocaKey" "Ammo Redistributed"
+        set "DefaultText" "Ammo Redistributed"
+        set "Icon" #null
+    }
+    set "AIConfig" #null
+    set "IsRemovedAfterCombat" #false
+    set "AoEType" enum="SkillAoEType" "CenterOnly"
+    set "AoEFilter" #null
+    set "MuzzleEffect" #null
+    clear "SoundsOnUse"
+}

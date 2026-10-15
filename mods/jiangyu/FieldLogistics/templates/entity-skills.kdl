@@ -1,0 +1,78 @@
+// Generated from GameplaySuite/packaging/standalone/FieldLogistics/modpack.json
+// by .tmp/gen_batch3_kdl.py. Edit the legacy manifest and regenerate.
+
+patch "EntityTemplate" "player_squad.carda" {
+    append "Skills" ref="SkillTemplate" "active.fieldlogistics_redistribute_ammo"
+}
+patch "EntityTemplate" "player_squad.corlain" {
+    append "Skills" ref="SkillTemplate" "active.fieldlogistics_redistribute_ammo"
+}
+patch "EntityTemplate" "player_squad.darby" {
+    append "Skills" ref="SkillTemplate" "active.fieldlogistics_redistribute_ammo"
+}
+patch "EntityTemplate" "player_squad.greifinger" {
+    append "Skills" ref="SkillTemplate" "active.fieldlogistics_redistribute_ammo"
+}
+patch "EntityTemplate" "player_squad.kubra" {
+    append "Skills" ref="SkillTemplate" "active.fieldlogistics_redistribute_ammo"
+}
+patch "EntityTemplate" "player_squad.lim" {
+    append "Skills" ref="SkillTemplate" "active.fieldlogistics_redistribute_ammo"
+}
+patch "EntityTemplate" "player_squad.pike" {
+    append "Skills" ref="SkillTemplate" "active.fieldlogistics_redistribute_ammo"
+}
+patch "EntityTemplate" "player_squad.pike_tutorial" {
+    append "Skills" ref="SkillTemplate" "active.fieldlogistics_redistribute_ammo"
+}
+patch "EntityTemplate" "player_squad.sachin" {
+    append "Skills" ref="SkillTemplate" "active.fieldlogistics_redistribute_ammo"
+}
+patch "EntityTemplate" "player_squad.sy" {
+    append "Skills" ref="SkillTemplate" "active.fieldlogistics_redistribute_ammo"
+}
+patch "EntityTemplate" "player_squad.tech" {
+    append "Skills" ref="SkillTemplate" "active.fieldlogistics_redistribute_ammo"
+}
+patch "EntityTemplate" "player_squad.test" {
+    append "Skills" ref="SkillTemplate" "active.fieldlogistics_redistribute_ammo"
+}
+patch "EntityTemplate" "player_squad.vamplew" {
+    append "Skills" ref="SkillTemplate" "active.fieldlogistics_redistribute_ammo"
+}
+patch "EntityTemplate" "player_squad.weiwu" {
+    append "Skills" ref="SkillTemplate" "active.fieldlogistics_redistribute_ammo"
+}
+patch "EntityTemplate" "player_squad.wetteroth" {
+    append "Skills" ref="SkillTemplate" "active.fieldlogistics_redistribute_ammo"
+}
+patch "EntityTemplate" "player_squad.yaz" {
+    append "Skills" ref="SkillTemplate" "active.fieldlogistics_redistribute_ammo"
+}
+patch "EntityTemplate" "player_vehicle.cveh_heavy_tank" {
+    append "Skills" ref="SkillTemplate" "active.fieldlogistics_vehicle_resupply"
+}
+patch "EntityTemplate" "player_vehicle.generic_heavy_attack_walker" {
+    append "Skills" ref="SkillTemplate" "active.fieldlogistics_vehicle_resupply"
+}
+patch "EntityTemplate" "player_vehicle.modular_atv" {
+    append "Skills" ref="SkillTemplate" "active.fieldlogistics_vehicle_resupply"
+}
+patch "EntityTemplate" "player_vehicle.modular_ifv" {
+    append "Skills" ref="SkillTemplate" "active.fieldlogistics_vehicle_resupply"
+}
+patch "EntityTemplate" "player_vehicle.modular_light_troop_carrier" {
+    append "Skills" ref="SkillTemplate" "active.fieldlogistics_vehicle_resupply"
+}
+patch "EntityTemplate" "player_vehicle.modular_mbt_battle_tank" {
+    append "Skills" ref="SkillTemplate" "active.fieldlogistics_vehicle_resupply"
+}
+patch "EntityTemplate" "player_vehicle.modular_piratetruck" {
+    append "Skills" ref="SkillTemplate" "active.fieldlogistics_vehicle_resupply"
+}
+patch "EntityTemplate" "player_vehicle.modular_walker_light" {
+    append "Skills" ref="SkillTemplate" "active.fieldlogistics_vehicle_resupply"
+}
+patch "EntityTemplate" "player_vehicle.modular_walker_medium" {
+    append "Skills" ref="SkillTemplate" "active.fieldlogistics_vehicle_resupply"
+}

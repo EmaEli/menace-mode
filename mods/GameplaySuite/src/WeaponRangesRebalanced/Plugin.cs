@@ -1,17 +1,23 @@
 using MelonLoader;
-using Menace.ModpackLoader;
+#if JIANGYU
+using MenaceModSettings;
+#endif
 using Menace.SDK;
+using MenaceModSuite.Shared;
 using UnityEngine;
 
-[assembly: AssemblyVersion("2.8.1.0")]
-[assembly: AssemblyFileVersion("2.8.1.0")]
+[assembly: AssemblyVersion("2.9.0.0")]
+[assembly: AssemblyFileVersion("2.9.0.0")]
+[assembly: AssemblyInformationalVersion("2.9.0")]
 
 namespace MenaceWeaponRangesRebalanced;
 
-public sealed class Plugin : IModpackPlugin
+// Host-agnostic core. The legacy Menace.ModpackLoader binding lives in
+// Plugin.Modpack.cs; the Jiangyu binding in mods/jiangyu/WeaponRangesRebalanced/code.
+public sealed partial class Plugin : IHostedPlugin
 {
     private const string SettingsGroup = "Weapon Ranges Rebalanced";
-    private const string Version = "2.8.1";
+    private const string Version = "2.9.0";
     private const string OverrideFileName = "weapon-overrides.json";
     private const string ModpackId = "luca.weaponrangesrebalanced";
     private const string SuiteModpackId = "luca.menacegameplaysuite";
@@ -277,7 +283,7 @@ public sealed class Plugin : IModpackPlugin
     private static readonly List<Result> LastResults = new();
     private static readonly List<SkillResult> LastSkillResults = new();
 
-    private static MelonLogger.Instance? _logger;
+    private static ModLog? _logger;
     private static bool _enabled = true;
     private static bool _autoBalanceUnlisted = true;
     private static bool _applyWeaponTemplates = true;
@@ -314,7 +320,7 @@ public sealed class Plugin : IModpackPlugin
     private static int? _lastLoggedTableFingerprint;
     private static string _lastWriteFailureSignature = string.Empty;
 
-    public void OnInitialize(MelonLogger.Instance logger, global::HarmonyLib.Harmony harmony)
+    public void Initialize(ModLog logger, global::HarmonyLib.Harmony harmony)
     {
         _logger = logger;
 
@@ -438,6 +444,27 @@ public sealed class Plugin : IModpackPlugin
 
     private static string ResolveOverrideFilePath()
     {
+#if JIANGYU
+        // The Jiangyu package folder is replaced on every install, so user overrides live
+        // in UserData. A file left in the legacy modpack folder is migrated once.
+        string userData;
+        try { userData = MelonLoader.Utils.MelonEnvironment.UserDataDirectory; }
+        catch { userData = Path.Combine(Environment.CurrentDirectory, "UserData"); }
+        string target = Path.Combine(userData, "WeaponRangesRebalanced", OverrideFileName);
+        try
+        {
+            string legacy = Path.Combine(Environment.CurrentDirectory, "Mods", "WeaponRangesRebalanced", OverrideFileName);
+            if (!File.Exists(target) && File.Exists(legacy))
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(target)!);
+                File.Copy(legacy, target);
+            }
+        }
+        catch
+        {
+        }
+        return target;
+#else
         try
         {
             string assemblyLocation = typeof(Plugin).Assembly.Location;
@@ -483,6 +510,7 @@ public sealed class Plugin : IModpackPlugin
         }
 
         return Path.Combine(modsRoot, "WeaponRangesRebalanced", OverrideFileName);
+#endif
     }
 
     private static void EnsureOverrideFileExists()

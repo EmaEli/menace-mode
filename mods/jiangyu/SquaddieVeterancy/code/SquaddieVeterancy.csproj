@@ -1,0 +1,58 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Jiangyu host for SquaddieVeterancy. The gameplay code is shared with the legacy GameplaySuite
+    modpack and compiled from ../../../GameplaySuite/src/SquaddieVeterancy (JIANGYU defined); only
+    the host binding (SquaddieVeterancySystem.cs) lives here. Build settings and the Jiangyu.Sdk +
+    game references come from Directory.Build.props / .targets.
+
+    Note: `jiangyu compile` fingerprints only code/, so after editing the shared
+    sources run `jiangyu compile` with the clean flag.
+  -->
+  <PropertyGroup>
+    <!-- Keep in step with jiangyu.json so the DLL metadata identifies the shipped build. -->
+    <Version>1.10.0</Version>
+    <AssemblyName>SquaddieProbe</AssemblyName>
+    <RootNamespace>SquaddieProbe</RootNamespace>
+    <Nullable>enable</Nullable>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <DefineConstants>$(DefineConstants);JIANGYU</DefineConstants>
+    <SuiteSourceDir>$(MSBuildThisFileDirectory)../../../GameplaySuite/src</SuiteSourceDir>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="$(SuiteSourceDir)/SquaddieVeterancy/**/*.cs" Exclude="$(SuiteSourceDir)/SquaddieVeterancy/Plugin.Modpack.cs;$(SuiteSourceDir)/SquaddieVeterancy/bin/**;$(SuiteSourceDir)/SquaddieVeterancy/obj/**" LinkBase="Module" />
+    <Compile Include="$(SuiteSourceDir)/Shared/*.cs" LinkBase="Shared" />
+    <Compile Include="$(SuiteSourceDir)/Shared/Jiangyu/*.cs" LinkBase="Shared/Jiangyu" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Direct Harmony: the module's manual prefix/postfix patches are outside the Context.Patches surface. -->
+    <Reference Include="0Harmony">
+      <HintPath>$(MelonLoaderDir)/0Harmony.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <!-- IMGUI, for the modules' tactical HUD and DevConsole diagnostic panels (GUI/GUILayout). -->
+    <Reference Include="UnityEngine.IMGUIModule">
+      <HintPath>$(GameAssembliesDir)/UnityEngine.IMGUIModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Il2CppInterop.Common">
+      <HintPath>$(MelonLoaderDir)/Il2CppInterop.Common.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.InputLegacyModule">
+      <HintPath>$(GameAssembliesDir)/UnityEngine.InputLegacyModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.TextRenderingModule">
+      <HintPath>$(GameAssembliesDir)/UnityEngine.TextRenderingModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <!--
+      Settings companion (see ../../MenaceModSettings). Declared in jiangyu.json `depends`,
+      so the loader has already loaded it into the default context when this DLL binds.
+    -->
+    <Reference Include="MenaceModSettings">
+      <HintPath>../../MenaceModSettings/compiled/code/MenaceModSettings.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+</Project>

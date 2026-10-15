@@ -1,0 +1,34 @@
+// Generated from GameplaySuite/packaging/standalone/FieldLogistics/modpack.json
+// by .tmp/gen_batch3_kdl.py. Edit the legacy manifest and regenerate.
+
+clone "SkillTemplate" from="active.rogue_officer_whistle" id="active.fieldlogistics_vehicle_resupply" {
+    set "ActionPointCost" 60
+    set "IsLimitedUses" #true
+    set "Uses" 1
+    set "IsTargeted" #true
+    set "IsOverridingRanges" #true
+    set "MinRange" 1
+    set "IdealRange" 1
+    set "MaxRange" 1
+    set "Title" { set "m_DefaultTranslation" "Resupply Infantry" }
+    set "Description" { set "m_DefaultTranslation" "Fully refills the ammunition of an adjacent infantry unit. Player vehicles have one use by default; the Field Ammunition Supply module adds extra uses." }
+    set "IsLineOfFireNeeded" #true
+    set "IsAlwaysHitting" #true
+    set "IsRemovedAfterCombat" #false
+    set "AoEType" enum="SkillAoEType" "CenterOnly"
+    set "AoEFilter" #null
+    set "MuzzleEffect" #null
+    clear "SoundsOnUse"
+    clear "EventHandlers"
+    append "EventHandlers" type="RefillAmmo" {
+        set "RestorePct" 1.0
+        set "RestoreMinimum" 1
+        set "SkillFilter" #null
+    }
+    append "EventHandlers" type="DisplayText" {
+        set "Event" enum="DisplayEvent" "OnUse"
+        set "LocaKey" "Ammo Refilled"
+        set "DefaultText" "Ammo Refilled"
+        set "Icon" #null
+    }
+}

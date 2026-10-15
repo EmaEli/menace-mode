@@ -1,0 +1,7 @@
+// Dense Forest becomes infantry-traversable; ContainerType=Forest keeps the
+// native forest movement penalty. Vehicles remain blocked (IsTraversableByVehicle untouched).
+
+patch "EntityTemplate" "environment_backbone_forestdense" {
+    set "IsTraversableByInfantry" #true
+    set "ContainerType" enum="EntityContainerType" "Forest"
+}

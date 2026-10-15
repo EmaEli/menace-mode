@@ -1,3 +1,10 @@
+## 2.9.0
+
+- Jiangyu port. The module now builds as a Jiangyu package (`mods/jiangyu/WeaponRangesRebalanced`) sharing its gameplay source with the legacy modpack build; the host binding is split into `Plugin.Modpack.cs` (legacy) and `WeaponRangesRebalancedSystem` (Jiangyu).
+- Jiangyu build: `weapon-overrides.json` is read from `UserData/WeaponRangesRebalanced/` instead of the mod folder, which is replaced on every install. An existing file in `Mods/WeaponRangesRebalanced/` is copied there once.
+- No weapon-range or other balance changes.
+
+
 ## 2.8.1
 
 - Generalized the verified `InfluencesPositioning=false` large-map AI performance policy from only `active.launch_medium_mortar_frag` to all current long-range no-Line-of-Fire mortar/artillery/rocket-organ/indirect-fire attack skills.

@@ -57,7 +57,7 @@ Open MENACE Mod Settings and select **Weapon Ranges Rebalanced**.
 - **Enable weapon-overrides.json**;
 - diagnostics/debug options.
 
-Exact range overrides are read from `weapon-overrides.json` in the active modpack folder. Values are integer maximum ranges from 1 to 60 and reload automatically while the game is running.
+Exact range overrides are read from `weapon-overrides.json`: in the Jiangyu build from `UserData/WeaponRangesRebalanced/`, in the legacy modpack build from the active modpack folder. Values are integer maximum ranges from 1 to 60 and reload automatically while the game is running.
 
 ## Logging
 

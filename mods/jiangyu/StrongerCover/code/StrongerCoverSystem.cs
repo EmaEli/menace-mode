@@ -1,4 +1,6 @@
 using System.Collections;
+using System.Reflection;
+using System.Runtime.CompilerServices;
 using Il2CppMenace.Tactical;
 using Il2CppMenace.Tactical.Skills;
 using Jiangyu.Sdk;
@@ -30,7 +32,20 @@ public sealed class StrongerCoverSystem : JiangyuSystem
         Context.Hooks.Subscribe<MissionStartedContext>(_ => OnMissionStarted());
         Context.Hooks.Subscribe<MissionFinishedContext>(_ => _inTactical = false);
         Context.Patches.Prefix(SkillType, "GetCoverMult", GetCoverMultPrefix);
+        PrepareJit();
         Debug("initialized: directional cover, inside-cover templates, indirect-fire cover, squad-size scaling.");
+    }
+
+    // GetCoverMult is also called from MENACE's AI criterion tasks, which run on IL2CPP
+    // thread-pool threads. A lazy JIT there crashes inside MonoMod's JIT hook, so compile
+    // the whole cover path up front on the main thread.
+    private static void PrepareJit()
+    {
+        const BindingFlags all = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance | BindingFlags.DeclaredOnly;
+        foreach (var type in new[] { typeof(StrongerCoverSystem), typeof(CoverRules), typeof(Il2Cpp), typeof(CoverSettings) })
+            foreach (var method in type.GetMethods(all))
+                if (!method.IsAbstract && !method.ContainsGenericParameters)
+                    try { RuntimeHelpers.PrepareMethod(method.MethodHandle); } catch { }
     }
 
     public override void OnSceneLoaded(int buildIndex, string sceneName)
