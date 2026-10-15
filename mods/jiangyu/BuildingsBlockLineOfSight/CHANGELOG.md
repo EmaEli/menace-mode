@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.3
+
+- Fixed a crash to desktop at the start of the AI's first turn (access violation in the .NET JIT, `CEEInfo::resolveVirtualMethodHelper`). MENACE's AI tasks call hooked methods from IL2CPP worker threads, and the module's helper code was JIT-compiled there on first use. The Jiangyu host now compiles the whole module assembly on the main thread at load. No gameplay changes. GitHub issue #44.
+
 ## 0.2.2
 
 - Added the two large obstacles titled `Cargo Containers` to the explicit native LoS-blocking scope.

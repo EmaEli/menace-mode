@@ -6,8 +6,8 @@ using MenaceModSettings;
 using MenaceModSuite.Shared;
 using UnityEngine;
 
-[assembly: AssemblyVersion("3.1.9.0")]
-[assembly: AssemblyFileVersion("3.1.9.0")]
+[assembly: AssemblyVersion("3.1.10.0")]
+[assembly: AssemblyFileVersion("3.1.10.0")]
 
 namespace VisibilityOverhaul;
 
@@ -15,7 +15,7 @@ namespace VisibilityOverhaul;
 public sealed partial class Plugin : IHostedPlugin
 {
     internal const string SettingsGroup = "Visibility Overhaul";
-    internal const string Version = "3.1.9";
+    internal const string Version = "3.1.10";
 
     private ModLog? _logger;
     private float _nextSettingsRefresh;

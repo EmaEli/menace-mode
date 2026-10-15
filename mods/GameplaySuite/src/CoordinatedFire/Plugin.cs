@@ -8,9 +8,9 @@ using MenaceModSuite.Shared;
 using UnityEngine;
 using Path = global::System.IO.Path;
 
-[assembly: AssemblyVersion("1.6.8.0")]
-[assembly: AssemblyFileVersion("1.6.8.0")]
-[assembly: AssemblyInformationalVersion("1.6.8")]
+[assembly: AssemblyVersion("1.6.9.0")]
+[assembly: AssemblyFileVersion("1.6.9.0")]
+[assembly: AssemblyInformationalVersion("1.6.9")]
 
 namespace CoordinatedFire;
 
@@ -18,7 +18,7 @@ namespace CoordinatedFire;
 public sealed partial class Plugin : IHostedPlugin
 {
     private const string SettingsGroup = "Coordinated Fire";
-    private const string Version = "1.6.8";
+    private const string Version = "1.6.9";
     private ModLog? _logger;
     private global::HarmonyLib.Harmony? _harmony;
     private Runtime? _runtime;

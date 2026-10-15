@@ -1,4 +1,4 @@
-# Weapon Ranges Rebalanced 2.8.1
+# Weapon Ranges Rebalanced 2.9.2
 
 Weapon Ranges Rebalanced (WRR) now has a deliberately narrow scope: **weapon ranges plus the verified long-range indirect-fire AI turn-performance fix**.
 

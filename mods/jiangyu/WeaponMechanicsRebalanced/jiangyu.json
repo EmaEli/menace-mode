@@ -1,6 +1,6 @@
 {
   "name": "WeaponMechanicsRebalanced",
-  "version": "0.4.5",
+  "version": "0.4.7",
   "author": "Luca",
   "description": "Weapon gameplay mechanics separated from WRR: mortar action economy, dispersion, suppression and cumulative mortar ranging, plus fire-mode economy. Jiangyu port of the legacy GameplaySuite module; options live in the MenaceModSettings window (F9).",
   "depends": [

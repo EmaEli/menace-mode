@@ -1,3 +1,11 @@
+## 0.4.7
+
+- Fixed `SkillTemplate` lookups silently failing under Jiangyu, so runtime skill adjustments that depend on them were not applied. The Jiangyu host resolved template types only in `Il2Cpp*` proxy assemblies, but the game's own proxy keeps its original name (`Assembly-CSharp.dll`), so no game template type could be resolved. The host now also searches `Assembly-CSharp` and reads templates through `DataTemplateLoader.GetAll<T>()` / `TryGet<T>()`, the per-type cache the game itself uses. No balance changes.
+
+## 0.4.6
+
+- Fixed a crash to desktop at the start of the AI's first turn (access violation in the .NET JIT, `CEEInfo::resolveVirtualMethodHelper`). MENACE's AI tasks call hooked methods from IL2CPP worker threads, and the module's helper code was JIT-compiled there on first use. The Jiangyu host now compiles the whole module assembly on the main thread at load. No gameplay changes. GitHub issue #44.
+
 ## 0.4.5 — MEN-004 opt-in ammunition tracing
 
 - Added **one debug-only `[MEN-004 AMMO]` entry per high-volume alternate-fire `Skill.Use`** (never per projectile, frame, or turn), including unit/weapon identity, usage flags, success/guard result, and ammo/use/charge counters at **before -> native -> after WMR** stages.

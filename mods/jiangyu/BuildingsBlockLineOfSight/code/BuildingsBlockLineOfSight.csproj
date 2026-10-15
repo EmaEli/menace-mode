@@ -9,7 +9,7 @@
   -->
   <PropertyGroup>
     <!-- Keep in step with jiangyu.json so the DLL metadata identifies the shipped build. -->
-    <Version>0.2.2</Version>
+    <Version>0.2.3</Version>
     <AssemblyName>BuildingsBlockLineOfSight</AssemblyName>
     <RootNamespace>BuildingsBlockLineOfSight</RootNamespace>
     <Nullable>disable</Nullable>

@@ -1,4 +1,4 @@
-# Field Logistics 1.0.8
+# Field Logistics 1.0.10
 
 Field Logistics adds battlefield ammunition support for MENACE vehicles and an optional experimental infantry ammo-sharing system.
 

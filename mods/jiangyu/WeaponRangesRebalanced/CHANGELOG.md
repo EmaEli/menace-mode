@@ -1,3 +1,11 @@
+## 2.9.2
+
+- Fixed weapon ranges staying vanilla under Jiangyu: the range pass found zero `WeaponTemplate` / `ModularVehicleWeaponTemplate` objects on every scene load (`Weapon templates are not loaded yet` in the debug log) and never wrote a `MaxRange`. The Jiangyu host resolved template types only in `Il2Cpp*` proxy assemblies, but the game's own proxy keeps its original name (`Assembly-CSharp.dll`), so no game template type could be resolved. The host now also searches `Assembly-CSharp` and reads templates through `DataTemplateLoader.GetAll<T>()` / `TryGet<T>()`, the per-type cache the game itself uses. No balance changes.
+
+## 2.9.1
+
+- Fixed a crash to desktop at the start of the AI's first turn (access violation in the .NET JIT, `CEEInfo::resolveVirtualMethodHelper`). MENACE's AI tasks call hooked methods from IL2CPP worker threads, and the module's helper code was JIT-compiled there on first use. The Jiangyu host now compiles the whole module assembly on the main thread at load. No gameplay changes. GitHub issue #44.
+
 ## 2.9.0
 
 - Jiangyu port. The module now builds as a Jiangyu package (`mods/jiangyu/WeaponRangesRebalanced`) sharing its gameplay source with the legacy modpack build; the host binding is split into `Plugin.Modpack.cs` (legacy) and `WeaponRangesRebalancedSystem` (Jiangyu).

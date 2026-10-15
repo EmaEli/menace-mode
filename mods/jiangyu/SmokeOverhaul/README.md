@@ -1,4 +1,4 @@
-# Smoke Overhaul 0.5.2
+# Smoke Overhaul 0.5.3
 
 Smoke Overhaul changes MENACE smoke from a hard line-of-sight wall into a longer-lasting soft obstruction and gives smoke-delivery systems distinct tactical footprints.
 

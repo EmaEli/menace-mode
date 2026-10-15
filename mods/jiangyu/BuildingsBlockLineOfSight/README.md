@@ -1,4 +1,4 @@
-# Buildings Block Line of Sight 0.2.2
+# Buildings Block Line of Sight 0.2.3
 
 MENACE mod that makes enclosed buildings and enterable building/tower containers block line of sight using the game's native structure/LoS system.
 

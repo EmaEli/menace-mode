@@ -1,6 +1,6 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: Overwatch 0.32.3.1\n"
+"Project-Id-Version: Overwatch 0.32.3.2\n"
 "Language: de\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"

@@ -9,9 +9,9 @@ using MenaceModSettings;
 using MenaceModSuite.Shared;
 using UnityEngine;
 
-[assembly: AssemblyVersion("0.1.4.0")]
-[assembly: AssemblyFileVersion("0.1.4.0")]
-[assembly: AssemblyInformationalVersion("0.1.4")]
+[assembly: AssemblyVersion("0.1.5.0")]
+[assembly: AssemblyFileVersion("0.1.5.0")]
+[assembly: AssemblyInformationalVersion("0.1.5")]
 
 namespace MenaceBuildingCombatRules;
 
@@ -19,7 +19,7 @@ namespace MenaceBuildingCombatRules;
 public sealed partial class Plugin : IHostedPlugin
 {
     private const string SettingsGroup = "Building Combat Rules";
-    private const string Version = "0.1.4";
+    private const string Version = "0.1.5";
     private const int CollapseResumeGraceFrames = 6;
     private const int CollapseEjectRetryFrames = 15;
     private const int CollapseStallReportFrames = 600;

@@ -9,7 +9,7 @@
   -->
   <PropertyGroup>
     <!-- Keep in step with jiangyu.json so the DLL metadata identifies the shipped build. -->
-    <Version>0.5.6</Version>
+    <Version>0.5.7</Version>
     <AssemblyName>InfantryAssault</AssemblyName>
     <RootNamespace>MenaceInfantryAssault</RootNamespace>
     <Nullable>enable</Nullable>

@@ -4,9 +4,9 @@ using Menace.SDK;
 using MenaceModSuite.Shared;
 using UnityEngine;
 
-[assembly: AssemblyVersion("2.9.0.0")]
-[assembly: AssemblyFileVersion("2.9.0.0")]
-[assembly: AssemblyInformationalVersion("2.9.0")]
+[assembly: AssemblyVersion("2.9.2.0")]
+[assembly: AssemblyFileVersion("2.9.2.0")]
+[assembly: AssemblyInformationalVersion("2.9.2")]
 
 namespace MenaceWeaponRangesRebalanced;
 
@@ -14,7 +14,7 @@ namespace MenaceWeaponRangesRebalanced;
 public sealed partial class Plugin : IHostedPlugin
 {
     private const string SettingsGroup = "Weapon Ranges Rebalanced";
-    private const string Version = "2.9.0";
+    private const string Version = "2.9.2";
     private const string OverrideFileName = "weapon-overrides.json";
 
     private enum WeaponFamily
@@ -733,7 +733,7 @@ public sealed partial class Plugin : IHostedPlugin
 
             if (!_templatesSeen)
             {
-                DebugLog("Weapon templates are not loaded yet; retrying on a later scene load.");
+                DebugLog("Weapon templates are not loaded yet; retrying on a later scene load. Lookup: " + (Templates.LastLookupError ?? "no error"));
                 return;
             }
 
@@ -759,6 +759,8 @@ public sealed partial class Plugin : IHostedPlugin
     private static void ProcessType(string typeName, Dictionary<string, int> realisticTargets, bool isVehicleType, HashSet<string>? excludedNames = null)
     {
         var templates = Templates.FindAll(typeName);
+        if (_debugLogging)
+            DebugLog($"FindAll({typeName}) -> {templates?.Length ?? 0} templates" + (templates == null || templates.Length == 0 ? $" ({Templates.LastLookupError ?? "no error"})" : $"; first: {templates[0].GetName() ?? "<null id>"} [{templates[0].GetTypeName() ?? "?"}]"));
         if (templates == null || templates.Length == 0) return;
 
         int processedCount = 0;

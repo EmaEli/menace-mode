@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using HarmonyLib;
 using Il2CppInterop.Runtime;
+using Il2CppInterop.Runtime.InteropTypes;
 using Il2CppMenace.Tactical;
 using Il2CppMenace.Tactical.Objectives;
 using Il2CppMenace.Tactical.Skills;
@@ -229,11 +230,24 @@ internal static class Templates
 {
     private static readonly Dictionary<string, Type?> TypeCache = new(StringComparer.Ordinal);
 
+    // DataTemplate subtypes live in DataTemplateLoader's per-type cache, which the Unity
+    // asset registry does not expose: Resources.FindObjectsOfTypeAll returns nothing for
+    // them. They are read through the loader (TryGet<T> / GetAll<T>); the Resources scan
+    // remains as the path for ScriptableObject-only template types.
     public static GameObj Find(string templateTypeName, string instanceName)
     {
         if (string.IsNullOrWhiteSpace(instanceName)) return GameObj.Null;
         Type? type = ResolveTemplateType(templateTypeName);
         if (type == null) return GameObj.Null;
+
+        GameObj byId = LoaderTryGet(type, instanceName);
+        if (!byId.IsNull) return byId;
+
+        foreach (IntPtr pointer in LoaderGetAll(type))
+        {
+            if (MatchesName(pointer, instanceName)) return new GameObj(pointer);
+        }
+
         try
         {
             foreach (UnityEngine.Object? obj in Resources.FindObjectsOfTypeAll(Il2CppType.From(type)))
@@ -252,8 +266,13 @@ internal static class Templates
     public static GameObj[] FindAll(string templateTypeName)
     {
         Type? type = ResolveTemplateType(templateTypeName);
-        if (type == null) return Array.Empty<GameObj>();
+        if (type == null) { LastLookupError = $"{templateTypeName}: no Il2Cpp proxy type found"; return Array.Empty<GameObj>(); }
         var result = new List<GameObj>();
+
+        foreach (IntPtr pointer in LoaderGetAll(type))
+            result.Add(new GameObj(pointer));
+        if (result.Count > 0) return result.ToArray();
+
         try
         {
             foreach (UnityEngine.Object? obj in Resources.FindObjectsOfTypeAll(Il2CppType.From(type)))
@@ -264,6 +283,84 @@ internal static class Templates
         }
         catch { }
         return result.ToArray();
+    }
+
+    private static bool MatchesName(IntPtr pointer, string instanceName)
+    {
+        try
+        {
+            var template = new DataTemplate(pointer);
+            return string.Equals(template.GetID(), instanceName, StringComparison.OrdinalIgnoreCase)
+                || string.Equals(template.name, instanceName, StringComparison.OrdinalIgnoreCase);
+        }
+        catch { return false; }
+    }
+
+    private static MethodInfo? _getAllDefinition;
+    private static MethodInfo? _tryGetDefinition;
+    private static bool _loaderMethodsResolved;
+
+    // Reason the last DataTemplateLoader lookup produced nothing; for callers' debug logs.
+    public static string? LastLookupError { get; private set; }
+
+    private static void ResolveLoaderMethods()
+    {
+        if (_loaderMethodsResolved) return;
+        MethodInfo[] methods = typeof(DataTemplateLoader).GetMethods(BindingFlags.Public | BindingFlags.Static);
+        _getAllDefinition = methods.FirstOrDefault(m => m.Name == "GetAll" && m.IsGenericMethodDefinition && m.GetParameters().Length == 0);
+        _tryGetDefinition = methods.FirstOrDefault(m => m.Name == "TryGet" && m.IsGenericMethodDefinition && m.GetParameters().Length == 2);
+        _loaderMethodsResolved = true;
+    }
+
+    private static GameObj LoaderTryGet(Type type, string instanceName)
+    {
+        if (!typeof(DataTemplate).IsAssignableFrom(type)) return GameObj.Null;
+        ResolveLoaderMethods();
+        if (_tryGetDefinition == null) return GameObj.Null;
+        try
+        {
+            object?[] args = { instanceName, null };
+            bool found = (bool)_tryGetDefinition.MakeGenericMethod(type).Invoke(null, args)!;
+            return found && args[1] is Il2CppObjectBase template ? new GameObj(template.Pointer) : GameObj.Null;
+        }
+        catch { return GameObj.Null; }
+    }
+
+    private static List<IntPtr> LoaderGetAll(Type type)
+    {
+        var pointers = new List<IntPtr>();
+        if (!typeof(DataTemplate).IsAssignableFrom(type)) { LastLookupError = $"{type.Name}: not a DataTemplate"; return pointers; }
+        ResolveLoaderMethods();
+        if (_getAllDefinition == null) { LastLookupError = "DataTemplateLoader.GetAll<T> not found"; return pointers; }
+        try
+        {
+            object? raw = _getAllDefinition.MakeGenericMethod(type).Invoke(null, null);
+            if (raw is not Il2CppObjectBase collection)
+            {
+                LastLookupError = $"{type.Name}: GetAll returned {(raw == null ? "null" : raw.GetType().FullName)}";
+                return pointers;
+            }
+            Il2CppSystem.Collections.IEnumerable? enumerable = collection.TryCast<Il2CppSystem.Collections.IEnumerable>();
+            if (enumerable == null)
+            {
+                LastLookupError = $"{type.Name}: {raw.GetType().FullName} is not IEnumerable";
+                return pointers;
+            }
+            Il2CppSystem.Collections.IEnumerator enumerator = enumerable.GetEnumerator();
+            while (enumerator.MoveNext())
+            {
+                Il2CppSystem.Object? item = enumerator.Current;
+                if (item != null && item.Pointer != IntPtr.Zero) pointers.Add(item.Pointer);
+            }
+            LastLookupError = pointers.Count == 0 ? $"{type.Name}: GetAll enumerated 0 items ({raw.GetType().Name})" : null;
+        }
+        catch (Exception ex)
+        {
+            LastLookupError = $"{type.Name}: {ex.GetType().Name}: {ex.Message}";
+            Exception? inner = ex.InnerException;
+            if (inner != null) LastLookupError += $" <- {inner.GetType().Name}: {inner.Message}";
+        }
+        return pointers;
     }
 
     public static Sprite? FindSprite(string spriteName) => MenaceModSuite.Shared.SpriteLookup.Find(spriteName);
@@ -329,15 +426,22 @@ internal static class Templates
     }
 }
 
-// Lookup of Il2CppInterop proxy types across the loaded Il2Cpp* assemblies.
+// Lookup of Il2CppInterop proxy types across the loaded proxy assemblies. Il2CppInterop
+// prefixes only the namespaces: the game's own proxy keeps its original assembly name
+// (Assembly-CSharp.dll), while engine/system proxies are Il2Cpp*.dll.
 internal static class Il2CppTypes
 {
     private static readonly Dictionary<string, Type?> FullNameCache = new(StringComparer.Ordinal);
 
     public static IEnumerable<Type> All()
         => AppDomain.CurrentDomain.GetAssemblies()
-            .Where(a => a.GetName().Name?.StartsWith("Il2Cpp", StringComparison.Ordinal) == true)
+            .Where(a => a == typeof(DataTemplate).Assembly || IsProxyAssemblyName(a.GetName().Name))
             .SelectMany(SafeTypes);
+
+    private static bool IsProxyAssemblyName(string? name)
+        => name != null
+           && (name.StartsWith("Il2Cpp", StringComparison.Ordinal)
+               || name.StartsWith("Assembly-CSharp", StringComparison.Ordinal));
 
     public static Type? Resolve(string fullName)
     {

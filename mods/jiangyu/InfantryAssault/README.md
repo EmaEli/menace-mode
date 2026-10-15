@@ -1,4 +1,4 @@
-# Infantry Assault 0.5.5
+# Infantry Assault 0.5.7
 
 ## 0.5.4 MENACE 0.7.16 compatibility (#41)
 

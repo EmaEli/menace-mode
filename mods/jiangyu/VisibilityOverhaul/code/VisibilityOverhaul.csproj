@@ -9,7 +9,7 @@
   -->
   <PropertyGroup>
     <!-- Keep in step with jiangyu.json so the DLL metadata identifies the shipped build. -->
-    <Version>3.1.9</Version>
+    <Version>3.1.10</Version>
     <AssemblyName>VisibilityOverhaul</AssemblyName>
     <RootNamespace>VisibilityOverhaul</RootNamespace>
     <Nullable>enable</Nullable>

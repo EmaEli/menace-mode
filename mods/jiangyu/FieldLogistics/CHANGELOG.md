@@ -1,3 +1,11 @@
+## 1.0.10
+
+- Fixed `SkillTemplate` / `AccessoryTemplate` lookups silently failing under Jiangyu, so the runtime wiring of the resupply module and skills could not find its templates. The Jiangyu host resolved template types only in `Il2Cpp*` proxy assemblies, but the game's own proxy keeps its original name (`Assembly-CSharp.dll`), so no game template type could be resolved. The host now also searches `Assembly-CSharp` and reads templates through `DataTemplateLoader.GetAll<T>()` / `TryGet<T>()`, the per-type cache the game itself uses. No balance changes.
+
+## 1.0.9
+
+- Fixed a crash to desktop at the start of the AI's first turn (access violation in the .NET JIT, `CEEInfo::resolveVirtualMethodHelper`). MENACE's AI tasks call hooked methods from IL2CPP worker threads, and the module's helper code was JIT-compiled there on first use. The Jiangyu host now compiles the whole module assembly on the main thread at load. No gameplay changes. GitHub issue #44.
+
 ## 1.0.8 - Skill icons
 
 - `Resupply Infantry` and `Redistribute Ammo` no longer show the lightning-bolt icon inherited from the `active.rogue_officer_whistle` clone source. They now use the vanilla skill-bar sprites `skill_05` / `skill_05_inactive` (three cartridges) and `skill_28` / `skill_28_inactive` (exchange arrows), assigned at runtime by sprite name in both the legacy and the Jiangyu build.

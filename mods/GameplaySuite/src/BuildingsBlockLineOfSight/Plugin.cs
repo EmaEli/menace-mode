@@ -12,7 +12,7 @@ namespace BuildingsBlockLineOfSight;
 public sealed partial class Plugin : IHostedPlugin
 {
     private const string ModName = "Buildings Block Line of Sight";
-    private const string Version = "0.2.2";
+    private const string Version = "0.2.3";
     private const int RetryEveryUpdates = 120;
     private const int MaxAttempts = 30;
 

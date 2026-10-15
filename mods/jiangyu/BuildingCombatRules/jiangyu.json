@@ -1,6 +1,6 @@
 {
   "name": "BuildingCombatRules",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "author": "Luca",
   "description": "Prevents direct-fire small arms from damaging buildings and defers occupied multi-tile collapse until native ejection movement has finished. Jiangyu port of the legacy GameplaySuite module; options live in the MenaceModSettings window (F9).",
   "depends": [

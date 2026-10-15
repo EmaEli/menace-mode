@@ -2,6 +2,7 @@
 using System;
 using System.Collections;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using Jiangyu.Sdk;
 
 namespace MenaceModSuite.Shared;
@@ -27,6 +28,7 @@ public abstract class SuiteSystem<TPlugin> : JiangyuSystem where TPlugin : class
         _harmony = new HarmonyLib.Harmony(HarmonyId);
         var log = new ModLog(Context.Log.Info, Context.Log.Warn, Context.Log.Error);
         _plugin.Initialize(log, _harmony);
+        PrepareJit();
         _pollHandle = Context.Coroutines.Start(PollEveryFrame());
         if (typeof(TPlugin).GetMethod("OnGUI", BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly, null, Type.EmptyTypes, null) != null)
         {
@@ -53,6 +55,31 @@ public abstract class SuiteSystem<TPlugin> : JiangyuSystem where TPlugin : class
         _plugin.OnUnload();
         try { _harmony?.UnpatchSelf(); }
         catch (Exception e) { Context.Log.Warn("Harmony unpatch failed: " + e.Message); }
+    }
+
+    // MENACE calls hooked methods (Actor.SetActionPoints, Skill.GetCoverMult, ...) from its AI
+    // tasks, which run on IL2CPP thread-pool threads. A lazy JIT there crashes inside MonoMod's
+    // JIT hook (access violation in CEEInfo::resolveVirtualMethodHelper), so compile the whole
+    // module assembly up front on the main thread. Preparing the hook bodies alone is not
+    // enough: helpers with try/catch are never inlined and would still JIT on their first call.
+    private static void PrepareJit()
+    {
+        const BindingFlags all = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance | BindingFlags.DeclaredOnly;
+        Type?[] types;
+        try { types = typeof(TPlugin).Assembly.GetTypes(); }
+        catch (ReflectionTypeLoadException e) { types = e.Types; }
+        foreach (var type in types)
+        {
+            if (type == null || type.ContainsGenericParameters) continue;
+            foreach (var method in type.GetMethods(all)) Prepare(method);
+            foreach (var ctor in type.GetConstructors(all)) Prepare(ctor);
+        }
+    }
+
+    private static void Prepare(MethodBase method)
+    {
+        if (method.IsAbstract || method.ContainsGenericParameters) return;
+        try { RuntimeHelpers.PrepareMethod(method.MethodHandle); } catch { }
     }
 
     private IEnumerator PollEveryFrame()

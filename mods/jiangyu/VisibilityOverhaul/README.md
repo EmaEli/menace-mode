@@ -1,4 +1,4 @@
-# Visibility Overhaul 3.1.9
+# Visibility Overhaul 3.1.10
 
 Visibility Overhaul increases tactical vision and adds movement-based infantry concealment.
 

@@ -1,6 +1,6 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: FieldLogistics 1.0.8\n"
+"Project-Id-Version: FieldLogistics 1.0.10\n"
 "Language: de\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"

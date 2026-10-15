@@ -9,7 +9,7 @@
   -->
   <PropertyGroup>
     <!-- Keep in step with jiangyu.json so the DLL metadata identifies the shipped build. -->
-    <Version>1.0.8</Version>
+    <Version>1.0.10</Version>
     <AssemblyName>FieldLogistics</AssemblyName>
     <RootNamespace>FieldLogistics</RootNamespace>
     <Nullable>enable</Nullable>

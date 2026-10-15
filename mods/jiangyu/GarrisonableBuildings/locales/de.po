@@ -1,6 +1,6 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: GarrisonableBuildings 1.0.4\n"
+"Project-Id-Version: GarrisonableBuildings 1.0.5\n"
 "Language: de\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"

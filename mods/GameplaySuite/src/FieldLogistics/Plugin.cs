@@ -16,7 +16,7 @@ namespace FieldLogistics;
 public sealed partial class Plugin : IHostedPlugin
 {
     private const string ModName = "Field Logistics";
-    private const string Version = "1.0.8";
+    private const string Version = "1.0.10";
     private const string VehicleSkillId = "active.fieldlogistics_vehicle_resupply";
     private const string ShareSkillId = "active.fieldlogistics_redistribute_ammo";
     private const string ModuleId = "accessory.fieldlogistics_vehicle_ammo_supply";

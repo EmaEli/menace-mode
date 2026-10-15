@@ -9,7 +9,7 @@
   -->
   <PropertyGroup>
     <!-- Keep in step with jiangyu.json so the DLL metadata identifies the shipped build. -->
-    <Version>0.1.0</Version>
+    <Version>0.1.1</Version>
     <AssemblyName>StartingOptions</AssemblyName>
     <RootNamespace>MenaceStartingOptions</RootNamespace>
     <Nullable>enable</Nullable>

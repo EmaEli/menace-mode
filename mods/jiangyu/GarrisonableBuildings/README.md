@@ -1,4 +1,4 @@
-# Garrisonable Buildings 1.0.4
+# Garrisonable Buildings 1.0.5
 
 MENACE mod that reuses the game's native `Building` container system so infantry can garrison selected small map structures.
 

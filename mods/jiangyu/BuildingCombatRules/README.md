@@ -1,4 +1,4 @@
-# Building Combat Rules 0.1.4
+# Building Combat Rules 0.1.5
 
 A focused MENACE combat-structure rules module.
 

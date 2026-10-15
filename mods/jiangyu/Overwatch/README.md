@@ -1,4 +1,4 @@
-# Overwatch 0.32.3.1
+# Overwatch 0.32.3.2
 
 ## Alpha 32.1 changes
 
@@ -109,6 +109,10 @@ If attack triggers, vehicle selection, Alpha Strike, ammo or turn flow behave un
 
 The native Overwatch indicator uses MENACE's own overhead UnitHUD and hitpoint-bar layout. Public **TacticalHUDCustomizer** research by **pylkij** and public **WOMENACE** source by **antistrategie** were useful references for confirming the current UnitHUD lifecycle, HUD-list lookup and `UnitHUD.GetActor()` matching pattern. Overwatch uses its own marker state and artwork and includes no external assets.
 
+
+## 0.32.3.2
+
+- Fixed a crash to desktop at the start of the AI's first turn (access violation in the .NET JIT, `CEEInfo::resolveVirtualMethodHelper`). MENACE's AI tasks call hooked methods from IL2CPP worker threads, and the module's helper code was JIT-compiled there on first use. The Jiangyu host now compiles the whole module assembly on the main thread at load. No gameplay changes. GitHub issue #44.
 
 ## 0.32.3.1
 

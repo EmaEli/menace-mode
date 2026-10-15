@@ -1,3 +1,7 @@
+## 1.6.9
+
+- Fixed a crash to desktop at the start of the AI's first turn (access violation in the .NET JIT, `CEEInfo::resolveVirtualMethodHelper`). MENACE's AI tasks call hooked methods from IL2CPP worker threads, and the module's helper code was JIT-compiled there on first use. The Jiangyu host now compiles the whole module assembly on the main thread at load. No gameplay changes. GitHub issue #44.
+
 ## 1.6.8
 
 - Fixed Berserk and other clamped AP gains losing part of their refund when a kill happens during Coordinated Fire. Native child attacks still use `NoApConsumed`; the combined AP fee is charged once at settlement, with only the clipped positive grants restored afterward (bounded by the fee).
