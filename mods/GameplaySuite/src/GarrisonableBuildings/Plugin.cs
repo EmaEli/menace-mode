@@ -13,7 +13,7 @@ namespace GarrisonableBuildings;
 public sealed partial class Plugin : IHostedPlugin
 {
     private const string ModName = "Garrisonable Buildings";
-    private const string Version = "1.0.5";
+    private const string Version = "1.1.0";
     private const string BuildingCoverProfileName = "cover_inside_building";
     private const string StrongerCoverSettingsGroup = "StrongerCover";
     private const int VanillaContainerAP = 30;
@@ -118,6 +118,12 @@ public sealed partial class Plugin : IHostedPlugin
             settings.AddSlider("BuildingSuppression", "Building suppression multiplier (%)", 5f, 100f, 60f);
             settings.AddSlider("BuildingConcealment", "Building concealment bonus", 0f, 10f, 2f);
 
+            settings.AddHeader("Building collapse");
+            settings.AddToggle(
+                "SafeOccupiedCollapse",
+                "Safely eject occupants before a multi-tile garrison collapses (ON by default)",
+                true);
+
             settings.AddHeader("Diagnostics");
             settings.AddToggle(
                 "DebugLogging",
@@ -126,22 +132,27 @@ public sealed partial class Plugin : IHostedPlugin
         });
 
         _debugLogging = ReadBool("DebugLogging", false);
+        ReloadSafeCollapseSetting();
         ModSettings.OnSettingChanged += OnSettingChanged;
-        DebugMsg($"{ModName} {Version}: initializing. 3x3 enabled={Enable3x3Buildings()}.");
+        DebugMsg($"{ModName} {Version}: initializing. 3x3 enabled={Enable3x3Buildings()}, safe collapse={_safeCollapse}.");
 
         ResolveTypes();
         InstallAPCostHooks(harmony);
+        InstallSafeCollapseHooks(harmony);
         TryApply("initialize");
     }
 
     public void OnSceneLoaded(int buildIndex, string sceneName)
     {
+        // Deferred collapse references are valid only inside the current tactical scene.
+        ClearPendingCollapses();
         if (_finished) return;
         TryApply($"scene:{sceneName}");
     }
 
     public void OnUpdate()
     {
+        ProcessPendingCollapses();
         if (_finished) return;
 
         _updateCounter++;
@@ -155,6 +166,7 @@ public sealed partial class Plugin : IHostedPlugin
     public void OnUnload()
     {
         ModSettings.OnSettingChanged -= OnSettingChanged;
+        ClearPendingCollapses();
     }
 
     private static void ResolveTypes()
@@ -431,6 +443,14 @@ public sealed partial class Plugin : IHostedPlugin
 
             if (_debugLogging)
                 DebugMsg($"{ModName}: debug logging enabled.");
+            return;
+        }
+
+        if (string.Equals(modName, ModName, StringComparison.Ordinal) &&
+            string.Equals(key, "SafeOccupiedCollapse", StringComparison.Ordinal))
+        {
+            ReloadSafeCollapseSetting();
+            DebugMsg($"{ModName}: safe occupied collapse={_safeCollapse}.");
             return;
         }
 

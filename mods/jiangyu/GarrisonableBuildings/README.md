@@ -1,4 +1,4 @@
-# Garrisonable Buildings 1.0.5
+# Garrisonable Buildings 1.1.0
 
 MENACE mod that reuses the game's native `Building` container system so infantry can garrison selected small map structures.
 
@@ -75,6 +75,16 @@ With vanilla infantry costs:
 - 3x3: **70 AP** when enabled
 
 The surcharge applies both when entering and when leaving. The mod temporarily changes `APEnterCost` / `APLeaveCost` only while MENACE calculates or executes the relevant movement, then restores the unit's original values.
+
+## Safe garrison collapse
+
+MENACE's native collapse path was reproduced hard-crashing the process when one of the multi-tile buildings made enterable by this mod died, with or without a live occupant. Since 1.1.0 the guard is part of this mod (it lived in Building Combat Rules 0.1.2-0.2.0, GitHub #50):
+
+- For the exact multi-tile whitelist, an occupied lethal collapse is deferred instead of destroying the structure in the same call stack as occupant ejection. The mod uses MENACE's native ejection path when needed, waits until the occupant is detached and its movement has finished, then resumes the original native `Structure.Die()` call. Repeated lethal hits during the pending exit do not restart ejection or death.
+- While `Structure.Die()` executes, only those multi-tile templates temporarily restore the two vanilla fields changed by this mod (`ContainerType=None`, no inside-cover profile). The garrison template is restored immediately afterward, so other live structures stay garrisonable.
+- A narrow finalizer on `Actor.GetCurrentProperties()` treats a read that fails because MENACE invalidated the actor between this mod's reflection probe and the call as unavailable (`null`) instead of a `TargetInvocationException`. Calls from the base game and other mods keep vanilla exception behavior.
+
+Option `Safely eject occupants before a multi-tile garrison collapses` (ON by default) under the Building collapse header.
 
 ## Explicit exclusions
 

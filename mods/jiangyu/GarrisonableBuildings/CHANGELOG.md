@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.1.0
+
+- Safe collapse of occupied multi-tile garrisons is now part of this mod (moved from Building Combat Rules 0.1.2-0.2.0, GitHub issue #50). Installing Garrisonable Buildings alone no longer leaves the reproduced hard crash on `Structure.Die()` of an enterable 1x2/1x3/2x2/2x3/3x3 building unguarded.
+- An occupied lethal collapse is deferred until the occupant has been ejected through MENACE's native path and has finished moving, then the native `Structure.Die()` call resumes. Repeated lethal hits during the pending exit do not restart ejection or death.
+- While `Structure.Die()` runs, only the multi-tile templates changed by this mod temporarily go back to their vanilla `ContainerType` / inside-cover values; the garrison template is restored right after.
+- Added the `Actor.GetCurrentProperties()` invalid-actor guard for this mod's own reflection probes (previously in Building Combat Rules).
+- New option `Safely eject occupants before a multi-tile garrison collapses`, ON by default. Building Combat Rules 0.3.0 no longer contains this logic; update both mods together.
+
 ## 1.0.5
 
 - Fixed a crash to desktop at the start of the AI's first turn (access violation in the .NET JIT, `CEEInfo::resolveVirtualMethodHelper`). MENACE's AI tasks call hooked methods from IL2CPP worker threads, and the module's helper code was JIT-compiled there on first use. The Jiangyu host now compiles the whole module assembly on the main thread at load. No gameplay changes. GitHub issue #44.

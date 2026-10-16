@@ -1,4 +1,4 @@
-# Building Combat Rules 0.2.0
+# Building Combat Rules 0.3.0
 
 A focused MENACE combat-structure rules module.
 
@@ -18,19 +18,12 @@ Explosives, launchers, mortars, rockets/RPGs, grenades, flamethrowers, tripod/cr
 Those exclusions also apply to trees. Explosive/heavy skill identifiers take priority
 over an item's rifle tag, including rifle-grenade modes. Ordinary props are unchanged.
 
-## Safe garrison collapse
-
-For the exact multi-tile civilian structures made enterable by Garrisonable Buildings, an occupied lethal collapse is deferred instead of destroying the structure in the same call stack as occupant ejection. The module uses MENACE's native ejection path when needed, waits until the occupant is detached and its movement has finished, then resumes the original native `Structure.Die()` call.
-
-After the occupant exit has completed, or immediately for an empty structure, only those exact multi-tile templates temporarily restore the two vanilla template fields changed by Garrisonable Buildings (`ContainerType=None` and no inside-cover profile) while `Structure.Die()` executes. The garrison template is restored immediately afterward. This specifically targets the reproduced `building_civilian_shelter_1x2_01` hard crash without changing vanilla building-container behavior globally.
-
 ## Compatibility
 
-This does not replace Cover Destruction Rebalance. CDR can continue to rebalance normal cover destruction separately; Building Combat Rules only guards `Structure` damage/collapse behavior.
+This does not replace Cover Destruction Rebalance. CDR can continue to rebalance normal cover destruction separately; Building Combat Rules only guards `Structure` damage behavior.
 
 Debug logging is OFF by default.
 
+### Garrisonable Buildings
 
-### Garrisonable Buildings compatibility
-
-0.1.2 added a narrow exception guard for `Actor.GetCurrentProperties()` calls originating from Garrisonable Buildings. If MENACE invalidates an actor between the mod's reflection probe and invocation, the failed read is treated as unavailable (`null`) instead of propagating a `TargetInvocationException`. Calls from the base game and other mods retain normal exception behavior.
+Versions 0.1.2 to 0.2.0 also contained the safe-collapse logic for occupied multi-tile garrisons (deferred `Structure.Die()`, native occupant ejection, template normalization) and the `Actor.GetCurrentProperties()` exception guard. Since 0.3.0 that logic lives in Garrisonable Buildings 1.1.0 (GitHub #50), where the crash it prevents originates. Building Combat Rules no longer patches `Structure.Die`, so it can be installed with or without Garrisonable Buildings.

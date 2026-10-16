@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.3.0
+
+- Moved the safe collapse of occupied multi-tile garrisons (deferred `Structure.Die()`, native occupant ejection, temporary template normalization) and the `Actor.GetCurrentProperties()` exception guard to Garrisonable Buildings 1.1.0, where the crash they prevent originates. GitHub issue #50.
+- Removed the `Safely eject occupants before building collapse` option and the `Structure.Die` / `GetCurrentProperties` patches. The mod now only guards small-arms damage against buildings, trees and forest.
+- No change to the small-arms rules.
+
+## 0.2.0
+
+- Small-arms immunity extended to native vegetation structures (trees and forest), including the attack's half-cover destruction path. New option `Small arms cannot damage trees and forest`, ON by default. GitHub issue #48.
+- Explosive / heavy skill identifiers take priority over an item's rifle tag, so rifle-grenade modes still fell trees and damage buildings.
+
 ## 0.1.5
 
 - Fixed a crash to desktop at the start of the AI's first turn (access violation in the .NET JIT, `CEEInfo::resolveVirtualMethodHelper`). MENACE's AI tasks call hooked methods from IL2CPP worker threads, and the module's helper code was JIT-compiled there on first use. The Jiangyu host now compiles the whole module assembly on the main thread at load. No gameplay changes. GitHub issue #44.

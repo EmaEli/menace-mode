@@ -1,8 +1,8 @@
 {
   "name": "BuildingCombatRules",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "author": "Luca",
-  "description": "Prevents direct-fire small arms from damaging buildings, trees and forest, and defers occupied multi-tile building collapse until native ejection movement has finished. Options live in the MenaceModSettings window (F9).",
+  "description": "Prevents direct-fire small arms from damaging buildings, trees and forest. Options live in the MenaceModSettings window (F9).",
   "depends": [
     "Jiangyu >= 1.4.8",
     "MenaceModSettings >= 0.3.0"
