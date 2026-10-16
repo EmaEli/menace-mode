@@ -57,8 +57,8 @@ class ConservativeRuntimeContractTest(unittest.TestCase):
 
     def test_version_consistency(self):
         meta=json.loads((ROOT/'../jiangyu/LargerMaps/jiangyu.json').read_text())
-        self.assertEqual(meta['version'],'2.0.1')
-        self.assertIn('<Version>2.0.1</Version>',(ROOT/'../jiangyu/LargerMaps/code/LargerMaps.csproj').read_text())
+        self.assertEqual(meta['version'],'2.1.0')
+        self.assertIn('<Version>2.1.0</Version>',(ROOT/'../jiangyu/LargerMaps/code/LargerMaps.csproj').read_text())
 
     def test_pathfinder_and_profiler_not_modified(self):
         old=Path('/mnt/data/lm_work/v1412/LargerMaps-1.4.12-area-regression-diagnostic-authoring/src/LargerMaps')

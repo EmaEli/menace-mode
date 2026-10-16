@@ -19,8 +19,9 @@ assert 'ModSettings.Register(MenuName, settings =>' in ui
 assert 'using Menace.SDK;' in ui
 assert 'using Menace.ModpackLoader;' in ui
 # The standalone camera reflection reader must look in the *same* namespace.
-assert 'assembly.GetType("Menace.SDK.ModSettings", false)' in cam
-assert 'api = assembly.GetType("Menace.SDK.ModSettings", false)' in cam
+assert '"Menace.SDK.ModSettings"' in cam
+assert 'api = assembly.GetType(typeName, false)' in cam
+assert cam.index('"MenaceModSettings.ModSettings"') < cam.index('"Menace.SDK.ModSettings"')
 assert 'private object ReadMenuValue(string key)' in cam
 assert 'Menace.SDK.ModSettings' in script
 assert r'using\s+Menace\.SDK' in script
@@ -36,7 +37,7 @@ assert not re.search(r'\bModSettings\.Register\s*\(', re.sub(r'//[^\n]*', '', ca
 assert 'TryAttachInGameSettings();' in cam
 assert '_menuRegistered = true' in cam and '_menuGet = candidate' in cam
 assert 'private object ReadMenuValue(string key)' in cam
-assert manifest['name']=='Third Person Camera' and manifest['version']=='0.3.3'
+assert manifest['name']=='Cinematic Action Camera' and manifest['version']=='1.0.0'
 assert manifest['code']['prebuiltDlls']==['ThirdPersonCameraSettings.dll']
 assert 'Menace.ModpackLoader' in manifest['code']['references']
 assert 'Menace.ModpackLoader.dll' in p

@@ -13,9 +13,9 @@ MANIFEST = json.loads((ROOT/'../jiangyu/LargerMaps/jiangyu.json').read_text())
 
 class PreviewGeometry147Tests(unittest.TestCase):
     def test_version_alignment(self):
-        self.assertEqual(MANIFEST['version'],'2.0.1')
+        self.assertEqual(MANIFEST['version'],'2.1.0')
         self.assertNotIn('private const string Version', SRC)
-        self.assertIn('<Version>2.0.1</Version>', (ROOT/'../jiangyu/LargerMaps/code/LargerMaps.csproj').read_text())
+        self.assertIn('<Version>2.1.0</Version>', (ROOT/'../jiangyu/LargerMaps/code/LargerMaps.csproj').read_text())
 
     def test_only_native_border_short_axis_is_scaled_after_bounds_fix(self):
         body = (ROOT/'src/LargerMaps/ConservativeMissionAreas.cs').read_text()

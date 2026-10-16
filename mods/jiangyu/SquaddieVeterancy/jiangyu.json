@@ -1,6 +1,6 @@
 {
   "name": "SquaddieVeterancy",
-  "version": "1.10.1",
+  "version": "1.10.2",
   "author": "Luca",
   "description": "Persistent infantry and vehicle-crew veterancy with seven ranks, symmetric combat modifiers, NPC ranks, reliability, HUD markers and a save-aware XP store. Jiangyu port of the legacy GameplaySuite module; options live in the MenaceModSettings window (F9).",
   "depends": [

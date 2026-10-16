@@ -18,10 +18,21 @@ controls past the window edge (Starting Options' stepper was clipped), verified 
 `AssemblyVersion` to 1.0.0.0 (0.3.1 briefly shipped 0.3.1.0 and every consumer failed to bind) and
 adds a near-opaque backing under the window frame. 0.4.0 adds `ModGui.Add/Remove(Action)`: an IMGUI
 frame hook driven by one injected `[JiangyuType]` MonoBehaviour, for mods that draw a GUI/GUILayout
-HUD (Jiangyu systems have no OnGUI callback); 0.3.2 and 0.4.0 not yet verified in game.
+HUD (Jiangyu systems have no OnGUI callback); 0.3.2 and 0.4.0 not yet verified in game. 0.5.1
+makes End the default toggle key (F9 is the game's bug-report key). 0.6.0 scrolls the tab column
+when more groups are registered than fit the window and adds an optional `step` to `AddNumber`
+(Custom Supply Sliders moves its percentages by 100). 0.6.1 restores the 5-argument `AddNumber`
+overload: 0.6.0 replaced it with an optional parameter, which is bound at compile time, so every
+consumer built against 0.5.x (Field Logistics, Starting Options) failed `OnInit` with
+`MissingMethodException`. Never change an existing public signature; add an overload.
 
 ## What it does
 
+- 0.4.1 adds a shared tactical HUD input guard (#43). IMGUI consumers register a live
+  rectangle provider with `HudInputGuard.Register(owner, provider)` (GUI coordinates, null
+  when hidden) and call `Unregister(owner)` on unload. One companion-owned Harmony guard
+  blocks native map/camera mouse paths and captures HUD-origin presses through release.
+  Keyboard input is untouched. Offline build/tests passed; in-game interception is pending.
 - `ModSettings.Register(group, builder)` declares a group of settings: headers, toggles,
   sliders (float), numbers (int) and dropdowns. Same shape as the legacy builder, so a module
   ports by swapping `using`.
@@ -31,9 +42,12 @@ HUD (Jiangyu systems have no OnGUI callback); 0.3.2 and 0.4.0 not yet verified i
 - Values persist in **one file for the whole install**:
   `UserData/MenaceModSettings/settings.json` (`{ "Group": { "Key": value } }`).
   They are not tied to a save slot, which matches the legacy behaviour.
-- **F9** opens the window on any screen: one tab per group, one row per setting, `RESET GROUP`,
+- **End** opens the window on any screen (configurable; F9 is avoided because it is the game's
+  bug-report key): one tab per group, one row per setting, `RESET GROUP`,
   `CLOSE`, or click the dimmed backdrop. Every control is button-driven (`ON/OFF`, `-`/`+`,
   `<`/`>`), built from the SDK's native `TextButton` and `Flyout`, so no Unity bundle is needed.
+  Both the tab column and the settings list scroll vertically when they overflow.
+- `AddNumber(key, label, min, max, default, step = 1)`: `-`/`+` move the value by `step`.
 - The companion registers its own `MenaceModSettings` group with the toggle key
   (F8–F12, Insert, Home, End; F10 is used by SquaddieFieldPromotions), so the window is never
   empty and the key can be changed in game.
@@ -99,6 +113,6 @@ jiangyu package --output dist
 ## Install (manual test)
 
 Unzip `dist/MenaceModSettings-<version>.zip` into `Mods/` (gives `Mods/MenaceModSettings/`),
-start the game, press **F9**. With no consumer mod installed the window shows a single
+start the game, press **End**. With no consumer mod installed the window shows a single
 `MenaceModSettings` tab with the toggle-key dropdown. `Latest.log` should contain a
 `[MenaceModSettings]` load line and no errors.

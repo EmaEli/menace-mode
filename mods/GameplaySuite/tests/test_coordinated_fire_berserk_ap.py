@@ -101,10 +101,10 @@ class BerserkApRefundTests(unittest.TestCase):
         self.assertIn("return After(current, cost) + Math.Min(cost, carried);", RULES)
 
     def test_versions_and_debug_default(self):
-        self.assertIn('AssemblyVersion("1.6.8.0")', PLUGIN)
-        self.assertIn('private const string Version = "1.6.8";', PLUGIN)
-        self.assertEqual(MANIFEST["version"], "1.6.8")
-        self.assertIn("<Version>1.6.8</Version>", CSPROJ)
+        version = MANIFEST["version"]
+        self.assertIn(f'AssemblyVersion("{version}.0")', PLUGIN)
+        self.assertIn(f'private const string Version = "{version}";', PLUGIN)
+        self.assertIn(f"<Version>{version}</Version>", CSPROJ)
         self.assertIn('AddToggle("VerboseLogging", "Debug logging", false)', PLUGIN)
 
 

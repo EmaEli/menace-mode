@@ -103,12 +103,17 @@ public sealed class SettingsBuilder
         return this;
     }
 
+    // Keep the 5-argument overload: optional parameters are bound at compile time, so
+    // consumers built against older versions still resolve this exact signature.
     public SettingsBuilder AddNumber(string key, string label, int min, int max, int defaultValue)
+        => AddNumber(key, label, min, max, defaultValue, 1);
+
+    public SettingsBuilder AddNumber(string key, string label, int min, int max, int defaultValue, int step)
     {
         Items.Add(new SettingDefinition
         {
             Kind = SettingKind.Number, Key = key, Label = label,
-            Min = min, Max = max, Default = Math.Clamp(defaultValue, min, max), Step = 1f,
+            Min = min, Max = max, Default = Math.Clamp(defaultValue, min, max), Step = Math.Max(1, step),
         });
         return this;
     }

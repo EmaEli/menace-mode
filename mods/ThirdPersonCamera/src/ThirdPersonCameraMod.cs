@@ -11,7 +11,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 
 [assembly: MelonInfo(typeof(MenaceThirdPersonCamera.ThirdPersonCameraMod),
-    "MENACE Third Person Camera", "0.3.3", "MENACE Community")]
+    "Cinematic Action Camera", "1.0.0", "MENACE Community")]
 
 namespace MenaceThirdPersonCamera
 {
@@ -19,7 +19,7 @@ namespace MenaceThirdPersonCamera
     public sealed class ThirdPersonCameraMod : MelonMod
     {
         private const string SettingsCategory = "MenaceThirdPersonCamera";
-        private const string MenuName = "Third Person Camera";
+        private const string MenuName = "Cinematic Action Camera";
         private const float TransitionSpeed = 8f;
 
         private enum EventKind { Movement = 0, Firing = 1 }
@@ -28,6 +28,26 @@ namespace MenaceThirdPersonCamera
         private enum AutoHook { Movement, MovementFinished, AttackStarted }
 
         private static ThirdPersonCameraMod s_instance;
+        // MEN-006 / 0.3.4 compatibility contract, retained from PR #16.
+        public static bool IsCinematicViewActive => s_instance != null && s_instance._active;
+
+        // Read-only migration bridge. The historical MelonPreferences category and all
+        // advanced entries remain unchanged; only the seven menu values are seeded once.
+        public static Dictionary<string, object> GetLegacySettingsValues()
+        {
+            var c = s_instance;
+            if (c == null || c._orbitSensitivity == null) return null;
+            return new Dictionary<string, object>
+            {
+                ["AutomaticMode"] = c._automaticMode.Value,
+                ["MovementChance"] = c._movementChance.Value,
+                ["FiringChance"] = c._firingChance.Value,
+                ["FollowVisibleEnemyMovement"] = c._enemyMovements.Value,
+                ["VehicleDistance"] = c._vehicleDistance.Value,
+                ["VehicleHeight"] = c._vehicleHeight.Value,
+                ["OrbitSensitivity"] = c._orbitSensitivity.Value,
+            };
+        }
         private HarmonyLib.Harmony _harmony;
         private bool _movementHookInstalled;
         private bool _shotHookInstalled;
@@ -107,7 +127,7 @@ namespace MenaceThirdPersonCamera
         {
             s_instance = this;
             var category = MelonPreferences.CreateCategory(SettingsCategory,
-                "MENACE Third Person Camera");
+                "Cinematic Action Camera");
             _toggleKey = category.CreateEntry("ToggleKey", "F6");
             _autoToggleKey = category.CreateEntry("AutoToggleKey", "F7");
             _automaticMode = category.CreateEntry("AutomaticMode", false);
@@ -771,16 +791,21 @@ namespace MenaceThirdPersonCamera
         // the loader or its companion settings modpack.
         private void TryAttachInGameSettings()
         {
-            if (_menuRegistered || _menuAttempts >= 12 || Time.realtimeSinceStartup < _menuRetryAt) return;
+            if ((_menuRegistered && _menuGet?.DeclaringType?.FullName == "MenaceModSettings.ModSettings")
+                || _menuAttempts >= 12 || Time.realtimeSinceStartup < _menuRetryAt) return;
             _menuAttempts++;
             _menuRetryAt = Time.realtimeSinceStartup + 3f;
             try
             {
                 Type api = null;
-                foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
+                // Prefer Jiangyu even when both loaders coexist, independent of assembly order.
+                foreach (string typeName in new[] { "MenaceModSettings.ModSettings", "Menace.SDK.ModSettings", "Menace.ModpackLoader.ModSettings" })
                 {
-                    api = assembly.GetType("Menace.SDK.ModSettings", false)
-                        ?? assembly.GetType("Menace.ModpackLoader.ModSettings", false);
+                    foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
+                    {
+                        api = assembly.GetType(typeName, false);
+                        if (api != null) break;
+                    }
                     if (api != null) break;
                 }
                 if (api == null) return;
@@ -796,7 +821,7 @@ namespace MenaceThirdPersonCamera
                         _menuGet = candidate;
                         _menuRegistered = true;
                         _nextSettingsRefresh = 0f;
-                        DebugLog("ModpackLoader settings reader attached");
+                        DebugLog("Camera settings reader attached");
                         return;
                     }
                 }
@@ -827,8 +852,12 @@ namespace MenaceThirdPersonCamera
         private object ReadMenuValue(string key)
         {
             if (!_menuRegistered || _menuGet == null) return null;
-            try { return _menuGet.Invoke(null, CompleteArguments(_menuGet.GetParameters(), MenuName, key)); }
-            catch { return null; }
+            foreach (string group in new[] { MenuName, "Third Person Camera" })
+            {
+                try { return _menuGet.Invoke(null, CompleteArguments(_menuGet.GetParameters(), group, key)); }
+                catch { }
+            }
+            return null;
         }
 
         private bool MenuBoolean(string key, bool fallback)

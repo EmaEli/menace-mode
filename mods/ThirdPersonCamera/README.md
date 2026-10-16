@@ -1,4 +1,26 @@
-# MENACE Third Person Camera 0.3.3
+# Cinematic Action Camera 1.0.0 — offline candidate
+
+## Jiangyu-compatible distribution (#33 / #15)
+
+The camera remains the **single** `MenaceThirdPersonCamera.dll` MelonLoader entry point.
+Its seven menu controls now have a Jiangyu companion in `mods/jiangyu/CinematicActionCamera`,
+using MenaceModSettings 0.6.0 (End key). The settings companion does not start another camera or
+patch combat. Keep MelonLoader and Jiangyu; do not install the legacy settings modpack too.
+
+The historical assembly/type names, `MenaceThirdPersonCamera` MelonPreferences category,
+advanced offsets/FOV/keybindings and the confirmed MEN-006 HUD compatibility accessor are
+preserved. Preference priority: existing modern JSON, recognized legacy group values,
+then the camera's existing MelonPreferences. Migration never rewrites old preference files.
+Only the known group-to-scalar JSON schema is imported; other legacy formats remain intact
+and need explicit inspection, not guessed conversion.
+
+Both new DLLs compile locally against the cached game proxies. This is **not** a Windows
+startup/deployment or gameplay verification. Keep #15/#33 open for F6/F7, infantry/vehicles,
+visibility, orbit, HUD restore and settings persistence checks. Packaging uses the shared
+installer under `mods/GameplaySuite/tools/Install-IntegratedSuite.ps1`.
+
+The following sections describe the historical 0.3.3 behavior and controls; the new shared
+installer supersedes the old manual deployment steps.
 
 A **camera-only** MelonLoader mod. Watch infantry and vehicles from a chase/orbit camera while MENACE still handles orders, movement, combat, AI and action points. The camera does not change combat outcomes or reveal currently hidden enemies.
 

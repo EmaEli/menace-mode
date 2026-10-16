@@ -12,7 +12,8 @@ project = (root/'ThirdPersonCamera.csproj').read_text(encoding='utf-8')
 builder = (root/'tools/build-and-deploy.ps1').read_text(encoding='utf-8')
 
 checks = {
-    'patch version 0.3.3': '"MENACE Third Person Camera", "0.3.3"' in src and '<Version>0.3.3</Version>' in project,
+    'release identity 1.0.0': '"Cinematic Action Camera", "1.0.0"' in src and '<Version>1.0.0</Version>' in project,
+    'MEN-006 compatibility contract': 'public static bool IsCinematicViewActive' in src,
     'native tactical UI visibility used': 'UITactical.SetUIVisibility(false)' in src and 'UITactical.SetUIVisibility(true)' in src,
     'UI restored by exit even when camera fails': re.search(r'private void ExitThirdPerson\(.*?finally\s*\{.*?RestoreTacticalUi\(\);', src, re.S) is not None,
     'UI restored on scene exit': 'override void OnSceneWasUnloaded' in src and 'ExitThirdPerson(false)' in src,

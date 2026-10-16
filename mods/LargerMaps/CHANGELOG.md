@@ -1,3 +1,13 @@
+## 2.1.0 - Terrain stamp footprint kept at vanilla world size (MEN-008)
+
+- MEN-008 (#14): `ScatterStamps` writes each landform stamp texture 1:1 into the fixed 513x513 heightmap / 1024x1024 alphamaps, so on enlarged maps every basin, hill and plateau grew with the world size (about 1.3x at 64x64, 1.7x at 96x96) while the stamp prefab (water plane, rocks) kept its authored size. A lake therefore rendered as a flat slab hanging inside a much larger basin, with a visible step down to the lake floor at its edge.
+- New `PreserveTerrainStampFootprint` toggle (default **ON**, restart required): for the duration of `SpawnStampsFromList` the stamp `HeightMap`, `BlendMask` and `AlphaMaps` are swapped for area-averaged copies scaled by the vanilla/enlarged world-unit ratio, then restored. Placement radius, rotated bounds, grid blockage and terrain points follow the smaller textures automatically. Scaled copies are cached per template; ScriptableObject assets are never modified permanently.
+- Scale is derived from the live `MapBlueprint` (width, total and border world units); vanilla-width maps are untouched. All-or-nothing per stamp: if any texture cannot be scaled the template is left vanilla. Normal logging is one line per session; failures warn once.
+- Offline build and source guards only in this revision; in-game visual confirmation (lake shoreline, 64 vs 96) still required before closing #14.
+
+---
+
+
 ## 1.8 - Adjustable high terrain stamp density (experimental)
 
 - MEN-003: expand optional terrain-stamp **attempt** multiplier on enlarged maps from 1.0-1.5x to **1.0-5.0x**; new slider default 1.5x, feature toggle remains OFF for new settings.

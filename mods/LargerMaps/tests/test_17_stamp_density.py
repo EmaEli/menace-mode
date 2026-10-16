@@ -4,6 +4,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 PLUGIN = (ROOT / 'src/LargerMaps/Plugin.cs').read_text()
 STAMP = (ROOT / 'src/LargerMaps/TerrainStampDensity.cs').read_text()
+FOOTPRINT = (ROOT / 'src/LargerMaps/TerrainStampFootprint.cs').read_text()
 
 class StampDensityTests(unittest.TestCase):
     def test_default_off_and_optional_diagnostics(self):
@@ -61,6 +62,49 @@ class StampDensityTests(unittest.TestCase):
         self.assertIn('Math.Clamp(configuredMultiplier, 1f, 5f)', STAMP)
         self.assertIn('Math.Clamp(configured, 1f, 5f)', STAMP)
         self.assertIn('MaximumStampDensityDiagnosticLines = 10', STAMP)
+
+
+class StampFootprintTests(unittest.TestCase):
+    """MEN-008 (#14): stamp textures scaled to the vanilla world footprint during placement."""
+
+    def test_registered_default_on_and_restored_after_placement(self):
+        self.assertIn('AddToggle("PreserveTerrainStampFootprint"', PLUGIN)
+        self.assertIn('(fixes raised lakes)", true);', PLUGIN)
+        self.assertIn('PatchTerrainStampFootprint(harmony);', PLUGIN)
+        self.assertIn('ReadBool("PreserveTerrainStampFootprint", true)', FOOTPRINT)
+        self.assertIn('TargetSize > VanillaSize &&', FOOTPRINT)
+        # Swap only around SpawnStampsFromList; restore in the postfix and before every prefix.
+        self.assertIn('m.Name != "SpawnStampsFromList"', FOOTPRINT)
+        self.assertIn('private static void StampFootprintPostfix() => RestoreStampTextures();', FOOTPRINT)
+        self.assertEqual(FOOTPRINT.count('RestoreStampTextures();'), 3)
+        self.assertNotIn('DestroyImmediate', FOOTPRINT)
+
+    def test_all_or_nothing_and_cached_per_template(self):
+        self.assertIn('Dictionary<IntPtr, ScaledStampTextures> _scaledStamps', FOOTPRINT)
+        self.assertIn('if (!ok || (result.HeightMap == null && result.BlendMask == null && result.AlphaMaps == null))', FOOTPRINT)
+        self.assertIn('if (scaled == null) continue;', FOOTPRINT)
+        self.assertIn('MinimumStampFootprintScale = 0.25f', FOOTPRINT)
+        self.assertIn('if (scale >= 0.999f) return;', FOOTPRINT)
+
+    def test_scale_reference_arithmetic(self):
+        # Mirrors ComputeStampFootprintScale: vanilla pixel world size over enlarged pixel
+        # world size at equal heightmap resolution, fixed 88-unit border, 42-tile vanilla.
+        def scale(width, total, border=88.0, vanilla=42):
+            if width <= vanilla or total <= 0.001:
+                return 1.0
+            playable = total - 2 * border
+            if playable <= 0.001:
+                return 1.0
+            return max(0.25, min(1.0, (2 * border + playable * vanilla / width) / total))
+
+        tile = 512.0 / 96.0
+        self.assertAlmostEqual(scale(96, 2 * 88 + 96 * tile), 400.0 / 688.0, places=4)
+        self.assertAlmostEqual(scale(64, 2 * 88 + 64 * tile), 400.0 / (176 + 64 * tile), places=4)
+        self.assertEqual(scale(42, 400.0), 1.0)
+        self.assertEqual(scale(32, 2 * 88 + 32 * tile), 1.0)
+        self.assertEqual(scale(96, 0.0), 1.0)
+        self.assertIn('float vanillaTotal = 2f * borderWorldUnits + playable * VanillaSize / width;', FOOTPRINT)
+        self.assertIn('Math.Clamp(vanillaTotal / totalWorldUnits, MinimumStampFootprintScale, 1f)', FOOTPRINT)
 
 if __name__ == '__main__':
     unittest.main()

@@ -1,3 +1,82 @@
+# Offline batch 1 — final candidate, not deployed
+
+| Module | Manifest / file version | Assembly identity |
+| --- | --- | --- |
+| MenaceModSettings | 0.4.1 / 0.4.1.0 | 1.0.0.0 (stable) |
+| Coordinated Fire | 1.6.10 / 1.6.10.0 | 1.6.10.0 |
+| Overwatch | 0.32.3.5 / 0.32.3.5 | 0.32.3.5 |
+| Squaddie Veterancy | 1.10.2 / 1.10.2.0 | 1.10.2.0 |
+
+Local Jiangyu release builds only; no Windows build, deployment, startup or gameplay test.
+Overwatch .3/.4 below are intermediate implementation steps included in final .5, not
+separate packages to install. Use one coordinated distribution with the settings companion;
+the canonical installer/packaging work is still pending under #34. Test commands and the
+metadata-only artifact verifier are in [tests/README.md](../tests/README.md).
+
+# #23 — Native vehicle firing sector (in-game verification pending)
+
+Overwatch 0.32.3.5 combines #43/#24 with an explicit native `IsInRange(tile, source, true)`
+check for vehicle reactions, both before queueing and before firing. Binary evidence and
+the limitations of this API are recorded in [OVERWATCH_NATIVE_CHECKS.md](OVERWATCH_NATIVE_CHECKS.md).
+
+Use the captured heavy tank/short-barrel gun, a hull-fixed weapon and a rotating turret;
+compare normal shots with Overwatch at front/side/rear and just inside/outside native limits.
+Repeat for hostile AI, movement and attack provocations, and Both/Alpha Strike modes. If
+facing changes while a reaction is queued, revalidation must reject an illegal shot without
+extra ammo/AP/reaction charges or a stuck pending watch. No free hull turn should be added.
+Native circle-range guns and visual-only turret stops require explicit observation; no
+additional guessed angle restrictions were introduced. Debug reasons already use the
+existing opt-in logging path; leave Debug OFF normally. Keep #23 open until live validation.
+
+# #24 — K-PAC tag classification, partial fix (in-game verification pending)
+
+Overwatch 0.32.3.4 carries PR #28's skill-scoped indirect-fire fix together with #43's HUD
+guard. The available asset export confirms K-PAC grants direct normal/sustained rifle modes
+and an indirect underbarrel frag launcher; fixture/model and source-wiring tests cover that
+distinction. Direct weapon indirect tags still exclude attacks; metadata exceptions fail closed.
+
+Test discovering, reserving and actually firing each mode for player and AI. The two rifle
+modes should be eligible; the launcher and genuine indirect-fire/indirect ATGM attacks must
+remain excluded. Verify direct ATGM and native built-in vehicle attacks, range/LOS, ammo/AP
+and Squad/Leader/Both modes. Distinguish using a weapon for a reaction from provoking enemy
+Overwatch by firing it. ARC Range and PPP CQB remain undiagnosed: no speculative SourceSkill
+or role fallback was added. Keep #24 open, and PR #28 draft, until live validation.
+
+# #35 — Leader display names (in-game verification pending)
+
+Squaddie Veterancy 1.10.2 changes display resolution only. Compare vanilla leaders and SFP
+dynamic leaders in the deployment/roster overlay, then after deployment and another scene
+change. The native localized nickname should win, followed by speaker full name/title.
+GUIDs and dynamic template IDs must never appear as names; missing data shows `Unknown Squad
+Leader`. Verify punctuation/casing/accents, squad numbers, member IDs, existing XP and save
+contents remain unchanged. No SFP promotion/save integration is included in this fix.
+
+The offline C# runner tests the actual resolver with managed stand-ins for localized fields,
+missing/throwing members, dynamic IDs, fallback sources and an untouched identity getter.
+This does not exercise real IL2CPP localized proxies; keep #35 open until tested in game.
+
+# #43 — Shared tactical HUD input guard (in-game verification pending)
+
+Offline build: MenaceModSettings 0.4.1, Coordinated Fire 1.6.10, Overwatch 0.32.3.3.
+The companion retains assembly identity 1.0.0.0; both HUD mods require companion >=0.4.1.
+
+1. In a tactical player turn, select an infantry squad. Click/double-click each panel's main
+   button and weapon-mode chips, including disabled controls and panel background. No move,
+   native attack, map selection or camera drag should result from these HUD clicks.
+2. Press in either panel, drag onto the map and release. The release must not act on the map;
+   the next independent click outside must work. Repeat left/right/middle buttons.
+3. Repeat with both mods together, each alone, compact/normal CF HUD, all anchors, scale/offset
+   changes and different resolutions. Input geometry must match visible panels immediately.
+4. Hide HUDs, disable gameplay, pause, enter an enemy turn, change scenes and unload modules.
+   Hidden panels must not leave blocked rectangles; release from an already captured press is
+   still swallowed. Normal keyboard/camera keys and CF Escape cancellation must remain native.
+5. Verify each HUD mod with no valid selection/plan, and CF during its locked volley. The shared
+   guard has no runtime-bound or unlocked requirement; only genuinely visible HUDs block input.
+
+Offline checks execute the actual C# capture policy and inspect shared-registry wiring. The
+0.7.16 native mouse dispatcher/camera/double-click path was inspected. None of that proves
+successful Harmony registration or click interception in a running IL2CPP game. Keep #43 open.
+
 # MEN-019 — Coordinated Fire 1.6.8 / Gameplay Suite 0.32.3 (in-game verification pending)
 
 1. Deploy **one** copy of Coordinated Fire 1.6.8, either standalone or within Gameplay Suite 0.32.3. Do not load two copies. Leave Debug logging OFF initially.

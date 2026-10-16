@@ -23,9 +23,9 @@ def block(start: str, end: str) -> str:
 
 class FastSmokeSelectionTests(unittest.TestCase):
     def test_versions_and_manifests(self):
-        self.assertIn('internal const string Version = "0.5.2"', PLUGIN)
-        self.assertIn('<Version>0.5.2</Version>', CONFIG)
-        self.assertEqual(SMOKE_MANIFEST['version'], '0.5.2')
+        version = SMOKE_MANIFEST['version']
+        self.assertIn(f'internal const string Version = "{version}"', PLUGIN)
+        self.assertIn(f'<Version>{version}</Version>', CONFIG)
 
     def test_disabled_performance_search_by_default(self):
         self.assertIn('s.AddToggle("FastAISmokeSelection"', PLUGIN)

@@ -1,8 +1,8 @@
 {
   "name": "LargerMaps",
-  "version": "2.0.1",
+  "version": "2.1.0",
   "author": "Luca",
-  "description": "Selectable 64/72/80/88/96 tactical maps with verified native pathfinding and mission-bounds patches (MENACE 0.7.15 and 0.7.16). Optional terrain stamp density on enlarged maps. Jiangyu port of the legacy Larger Maps modpack; options live in the MenaceModSettings window (F9).",
+  "description": "Selectable 64/72/80/88/96 tactical maps with verified native pathfinding and mission-bounds patches (MENACE 0.7.15 and 0.7.16). Terrain landmark stamps keep their vanilla world size (fixes raised lakes); optional terrain stamp density on enlarged maps. Jiangyu port of the legacy Larger Maps modpack; options live in the MenaceModSettings window (End key).",
   "depends": [
     "Jiangyu >= 1.4.8",
     "MenaceModSettings >= 0.2.0"

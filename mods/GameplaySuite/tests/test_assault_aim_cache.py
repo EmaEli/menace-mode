@@ -21,10 +21,10 @@ def between(start, end):
 
 class AssaultAimCacheTests(unittest.TestCase):
     def test_patch_versions(self):
-        self.assertIn('AssemblyVersion("0.5.6.0")', PLUGIN)
-        self.assertIn('private const string Version = "0.5.6";', PLUGIN)
-        self.assertEqual(MANIFEST["version"], "0.5.6")
-        self.assertIn("<Version>0.5.6</Version>", CSPROJ)
+        version = MANIFEST["version"]
+        self.assertIn(f'AssemblyVersion("{version}.0")', PLUGIN)
+        self.assertIn(f'private const string Version = "{version}";', PLUGIN)
+        self.assertIn(f"<Version>{version}</Version>", CSPROJ)
 
     def test_no_patch_on_members_removed_in_menace_0_7_16(self):
         self.assertNotIn('"GetDescription"', PLUGIN)

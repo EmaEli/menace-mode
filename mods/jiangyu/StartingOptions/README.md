@@ -14,7 +14,7 @@ The leader cap is also constrained to the number of pickable leader templates av
 
 ## Build / installation
 
-Jiangyu package. Build with `jiangyu compile --release --clean` from this directory and copy `compiled/` into `Mods\StartingOptions\`. Requires MelonLoader, the Jiangyu loader and MenaceModSettings (options are shown in the F9 window).
+Jiangyu package. Build with `jiangyu compile --release --clean` from this directory and copy `compiled/` into `Mods\StartingOptions\`. Requires MelonLoader, the Jiangyu loader and MenaceModSettings (options are shown in the settings window, End key).
 
 Remove any legacy Modpack Loader copy of Starting Options (`modpack.json` + `dlls\`) so the module is loaded only once.
 

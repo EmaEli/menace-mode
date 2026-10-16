@@ -1,3 +1,23 @@
+## MEN-004 root cause — Weapon Mechanics Rebalanced 0.4.9
+
+- **Weapon Mechanics Rebalanced 0.4.8 → 0.4.9:** the alternate-fire extra-ammo postfix ran on the
+  game's simulated `Skill.Use` calls (`Fake | Free`, issued during the enemy turn) and removed
+  2 rounds per call; the 0.4.8 ledger showed a squad going 22 → 0 in one AI phase. Usages flagged
+  `Fake` / `NoUsesConsumed` are now skipped. Real shots unchanged. GitHub issue #4.
+
+## Offline Jiangyu batch 1 — #43, #35, partial #24 and native gate #23
+
+- **MenaceModSettings 0.4.1**, **Coordinated Fire 1.6.10**, **Overwatch 0.32.3.5**: companion-owned
+  tactical HUD input guard, live visible geometry shared with drawing, mouse press capture
+  through release, unload/scene cleanup. Keyboard paths and CF Escape/locked-volley guards remain.
+- **Squaddie Veterancy 1.10.2**: localized nickname/speaker display resolution; reject GUIDs and
+  internal IDs, preserve user-facing spelling. No ID, squad mapping, XP or persistence changes.
+- **Overwatch**: classify indirect fire by executed skill/direct item tags rather than sibling
+  launcher modes; restore native angle-inclusive vehicle range checks at queue and execution.
+  ARC Range/PPP CQB and model-specific visual turret constraints remain unconfirmed.
+- Release builds and offline regressions passed locally. No Windows deployment or game tests;
+  issues remain open. This is not a suite-wide release, installer or gameplay validation.
+
 ## Repository / Suite 0.32.5 — MENACE 0.7.16 compatibility, Field Logistics (#41)
 
 - **Field Logistics 1.0.6 → 1.0.7:** MENACE v0.7.16 removed `active.rogue_ammo_runner_refill_ammo`, the clone source of `Resupply Infantry` and `Redistribute Ammo`; the Modpack Loader logged `Clone: source ... not found` and neither skill existed in game. Both clones now derive from `active.rogue_officer_whistle` and the manifest resets the fields that differ from the old base (targeting, line of fire, always-hit, AoE, muzzle effect, sounds, `RefillAmmo`/`DisplayText` handlers).

@@ -8,9 +8,9 @@ using MenaceModSuite.Shared;
 using UnityEngine;
 using Path = global::System.IO.Path;
 
-[assembly: AssemblyVersion("1.6.9.0")]
-[assembly: AssemblyFileVersion("1.6.9.0")]
-[assembly: AssemblyInformationalVersion("1.6.9")]
+[assembly: AssemblyVersion("1.6.10.0")]
+[assembly: AssemblyFileVersion("1.6.10.0")]
+[assembly: AssemblyInformationalVersion("1.6.10")]
 
 namespace CoordinatedFire;
 
@@ -18,7 +18,7 @@ namespace CoordinatedFire;
 public sealed partial class Plugin : IHostedPlugin
 {
     private const string SettingsGroup = "Coordinated Fire";
-    private const string Version = "1.6.9";
+    private const string Version = "1.6.10";
     private ModLog? _logger;
     private global::HarmonyLib.Harmony? _harmony;
     private Runtime? _runtime;
@@ -63,6 +63,7 @@ public sealed partial class Plugin : IHostedPlugin
         });
         ModSettings.OnSettingChanged += OnSettingChanged;
         DevConsole.RegisterPanel("Coordinated Fire", DrawDebugPanel);
+        HudInputGuard.Register(this, GetInputRect);
 
         _bindAt = Time.realtimeSinceStartup + 2f;
         Log($"{Version}: initialized. Compact tactical UI and ModSettings enabled.");
@@ -99,8 +100,6 @@ public sealed partial class Plugin : IHostedPlugin
             {
                 if (_harmony == null) throw new InvalidOperationException("Modpack Loader Harmony instance is unavailable.");
                 _runtime = new Runtime(45, Setting("EnableAICombinedFire", true), Setting("EnableVehicleCombinedFire", false), Setting("SynchronizedPlayerFire", false), Log, Error, _harmony);
-                _runtime.PointerOverPanel = () => Setting("ShowHUD", true) && _runtime.InMission &&
-                    _hudRect.Contains(new Vector2(Input.mousePosition.x, Screen.height - Input.mousePosition.y));
                 _status = "Ready";
             }
             catch (Exception e)
@@ -126,23 +125,36 @@ public sealed partial class Plugin : IHostedPlugin
         }
     }
 
-    public void OnGUI()
+    private HudRect? GetHudLayout()
     {
-        if (_runtime == null || !_runtime.InMission || !Setting("ShowHUD", true)) return;
+        if (_runtime == null || !Setting("EnableGameplay", true) || !Setting("ShowHUD", true) || !TacticalManager.IsMissionRunning()) return null;
         var manager = TacticalManager.Get();
-        if (!Native.Valid(manager) || !manager.IsPlayerTurn() || manager.IsPaused()) return;
+        if (!Native.Valid(manager) || !manager.IsPlayerTurn() || manager.IsPaused()) return null;
 
         bool hasPair = _runtime.SquadName != "-" && _runtime.LeaderName != "-";
-        if (!hasPair && !Setting("ShowUnavailableHUD", true)) return;
+        if (!hasPair && !Setting("ShowUnavailableHUD", true)) return null;
 
-        bool compact = Setting("CompactHUD", false);
-        var layout = HudLayout.Compute(
+        return HudLayout.Compute(
             Screen.width, Screen.height,
             Setting("HUDScale", 1.0f),
-            compact,
+            Setting("CompactHUD", false),
             ParseAnchor(Setting("HUDPosition", "Bottom Center")),
             Setting("HUDOffsetX", 0f),
             Setting("HUDOffsetY", 0f));
+    }
+
+    private Rect? GetInputRect()
+    {
+        var layout = GetHudLayout();
+        return layout.HasValue ? new Rect(layout.Value.X, layout.Value.Y, layout.Value.Width, layout.Value.Height) : null;
+    }
+
+    public void OnGUI()
+    {
+        var currentLayout = GetHudLayout();
+        if (!currentLayout.HasValue) return;
+        var layout = currentLayout.Value;
+        bool compact = Setting("CompactHUD", false);
         float scale = layout.Scale;
         float width = layout.Width;
         float height = layout.Height;
@@ -228,6 +240,7 @@ public sealed partial class Plugin : IHostedPlugin
 
     public void OnUnload()
     {
+        HudInputGuard.Unregister(this);
         ModSettings.OnSettingChanged -= OnSettingChanged;
         DevConsole.RemovePanel("Coordinated Fire");
         _runtime?.Dispose();

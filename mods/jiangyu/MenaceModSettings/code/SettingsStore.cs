@@ -15,6 +15,18 @@ namespace MenaceModSettings;
 internal static class SettingsStore
 {
     private static readonly JsonSerializerOptions WriteOptions = new() { WriteIndented = true };
+    private static bool _readFailed;
+
+    public static Dictionary<string, object> LegacyValues(string group)
+    {
+        try
+        {
+            string userData = Path.GetDirectoryName(Path.GetDirectoryName(FilePath));
+            string path = Path.Combine(userData, "ModSettings.json");
+            return File.Exists(path) ? LegacySettings.Read(File.ReadAllText(path), group) : new();
+        }
+        catch { return new(); } // Unknown schemas/files remain untouched; defaults are not migrations.
+    }
 
     public static string FilePath
     {
@@ -45,7 +57,10 @@ internal static class SettingsStore
         {
             var root = JsonNode.Parse(File.ReadAllText(path)) as JsonObject;
             if (root == null)
+            {
+                _readFailed = true;
                 return result;
+            }
             foreach (var (group, node) in root)
             {
                 if (node is not JsonObject values)
@@ -58,6 +73,7 @@ internal static class SettingsStore
         }
         catch (Exception ex)
         {
+            _readFailed = true;
             Log.Warn($"settings.json could not be read, defaults will be used: {ex.Message}");
         }
         return result;
@@ -66,6 +82,8 @@ internal static class SettingsStore
     /// <summary>Write the whole map back, atomically (temp file + move).</summary>
     public static void Save(Dictionary<string, Dictionary<string, object>> data)
     {
+        // Never replace an unreadable original with an empty/default map.
+        if (_readFailed) return;
         var path = FilePath;
         try
         {

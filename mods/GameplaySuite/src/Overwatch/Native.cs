@@ -199,15 +199,31 @@ internal static class Native
 
     public static bool IsIndirectFire(Skill skill)
     {
-        if (!Valid(skill)) return false;
+        if (!Valid(skill)) return true;
         try
         {
+            // Classify the executed attack, not sibling attacks granted by its item.
+            // Recursive item tags misclassify the K-PAC rifle when its launcher is indirect.
+            var attackTemplate = skill.GetTemplate();
+            if (!Valid(attackTemplate)) return true;
+            var tags = attackTemplate.Tags;
+            if (tags != null)
+            {
+                for (int i = 0; i < tags.Count; i++)
+                {
+                    var tag = tags[i];
+                    if (Valid(tag) && tag.TagType == TagType.INDIRECT_FIRE) return true;
+                }
+            }
+
             var item = skill.GetItem();
+            // Native built-in vehicle/turret attacks may have no conventional item.
             if (!Valid(item)) return false;
-            var template = item.GetTemplate();
-            return Valid(template) && template.HasTag(TagType.INDIRECT_FIRE);
+            var itemTemplate = item.GetTemplate();
+            if (!Valid(itemTemplate)) return true;
+            return itemTemplate.HasTag(TagType.INDIRECT_FIRE, false);
         }
-        catch { return false; }
+        catch { return true; } // Metadata errors must not admit an unknown attack.
     }
 
     private static bool SupportedBase(Skill skill)
@@ -341,6 +357,24 @@ internal static class Native
         int maxRange = Math.Max(minRange, skill.GetMaxRange());
         if (distance < minRange || distance > maxRange)
         { reason = $"out of range (distance={distance}, allowed={minRange}-{maxRange})"; return false; }
+
+        if (IsVehicleActor(shooter))
+        {
+            try
+            {
+                // v0.7.16 IsApplicableTo only queries handlers; it does NOT perform this
+                // native range/cone check. Use the game's actual facing and ConeAngle,
+                // not a guessed hull/turret angle or a free pre-shot rotation.
+                // CanReact runs both when queueing and immediately before Skill.Use.
+                if (!skill.IsInRange(tile, source, true))
+                { reason = "outside native vehicle weapon range/firing sector"; return false; }
+            }
+            catch (Exception e)
+            {
+                reason = "native vehicle firing-sector check unavailable: " + e.GetType().Name;
+                return false;
+            }
+        }
 
         if (!source.HasLineOfSightTo(tile, LineOfSightFlags.Default))
         { reason = "no tile line of sight"; return false; }
