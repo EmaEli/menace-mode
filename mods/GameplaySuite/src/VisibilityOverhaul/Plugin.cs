@@ -6,8 +6,8 @@ using MenaceModSettings;
 using MenaceModSuite.Shared;
 using UnityEngine;
 
-[assembly: AssemblyVersion("3.1.10.0")]
-[assembly: AssemblyFileVersion("3.1.10.0")]
+[assembly: AssemblyVersion("3.2.0.0")]
+[assembly: AssemblyFileVersion("3.2.0.0")]
 
 namespace VisibilityOverhaul;
 
@@ -15,7 +15,7 @@ namespace VisibilityOverhaul;
 public sealed partial class Plugin : IHostedPlugin
 {
     internal const string SettingsGroup = "Visibility Overhaul";
-    internal const string Version = "3.1.10";
+    internal const string Version = "3.2.0";
 
     private ModLog? _logger;
     private float _nextSettingsRefresh;
@@ -24,6 +24,7 @@ public sealed partial class Plugin : IHostedPlugin
     public void Initialize(ModLog logger, global::HarmonyLib.Harmony harmony)
     {
         _logger = logger;
+        PirateVisibilityDiagnostics.SetLogger(message => LogDebug(message));
         RegisterSettings();
         RefreshSettings(force: true);
 
@@ -42,15 +43,33 @@ public sealed partial class Plugin : IHostedPlugin
             postfix: nameof(Patches.Skill_OnUpdate_Postfix),
             label: "Skill.OnUpdate(EntityProperties)");
 
+        applied += TryPatch(
+            harmony,
+            AccessTools.Method(typeof(Actor), nameof(Actor.HasLineOfSightTo), new[] { typeof(Entity), typeof(Tile), typeof(Tile) }),
+            prefix: null,
+            postfix: nameof(Patches.Actor_HasLineOfSightTo_Postfix),
+            label: "Actor.HasLineOfSightTo(Entity, Tile, Tile)");
+
+        applied += TryPatch(
+            harmony,
+            AccessTools.Method(typeof(Actor), "IsHiddenToPlayerAtTile", new[] { typeof(Tile) }),
+            prefix: null,
+            postfix: nameof(Patches.Actor_IsHiddenToPlayerAtTile_Postfix),
+            label: "Actor.IsHiddenToPlayerAtTile(Tile)");
+
         DevConsole.RegisterPanel("Visibility Overhaul", DrawDebug);
-        LogDebug($"Visibility Overhaul v{Version} initialized. {applied}/2 runtime hooks applied. Vision now participates in MENACE's native EntityProperties rebuild; no direct map-visibility hooks are used.");
-        if (applied < 2)
+        LogDebug($"Visibility Overhaul v{Version} initialized. {applied}/4 runtime hooks applied. Vision now participates in MENACE's native EntityProperties rebuild; no direct map-visibility hooks are used.");
+        if (applied < 4)
             LogDebug("One or more hooks could not be resolved. The remaining features will continue to run where possible.", error: true);
     }
 
     public void OnSceneLoaded(int buildIndex, string sceneName)
     {
+        Patches.LogDiagnosticSummary();
         Patches.ResetRuntimeState();
+
+        if (PirateVisibilityDiagnostics.Enabled)
+            Patches.StartDiagnostics(Version, Application.version, RuntimeSettings.Summary);
 
         if (RuntimeSettings.DebugLogging)
             LogDebug($"Scene loaded: {sceneName} (build {buildIndex}). Runtime counters reset.");
@@ -86,6 +105,7 @@ public sealed partial class Plugin : IHostedPlugin
 
             s.AddHeader("Diagnostics");
             s.AddToggle("DebugLogging", "Debug logging", false);
+            s.AddToggle("PirateVisibilityDiagnostics", "Pirate visibility diagnostics", false);
         });
     }
 
@@ -98,6 +118,11 @@ public sealed partial class Plugin : IHostedPlugin
         int lossPerTile = SliderInt("ConcealmentLossPerTile", 1, 0, 3);
         int maxPenalty = SliderInt("MaxBelowVanillaPenalty", 10, 0, 20);
         bool debug = Setting("DebugLogging", false);
+        bool pirateDiagnostics = Setting("PirateVisibilityDiagnostics", false);
+        bool diagnosticsWereEnabled = PirateVisibilityDiagnostics.Enabled;
+
+        if (diagnosticsWereEnabled && !(debug && pirateDiagnostics))
+            Patches.LogDiagnosticSummary();
 
         RuntimeSettings.Configure(
             enabled,
@@ -106,7 +131,14 @@ public sealed partial class Plugin : IHostedPlugin
             stationaryBonus,
             lossPerTile,
             maxPenalty,
-            debug);
+            debug,
+            pirateDiagnostics);
+
+        bool diagnosticsEnabled = PirateVisibilityDiagnostics.Enabled;
+        if (diagnosticsEnabled && (force || !diagnosticsWereEnabled))
+            Patches.StartDiagnostics(Version, Application.version, RuntimeSettings.Summary);
+        else if (diagnosticsWereEnabled && !diagnosticsEnabled)
+            Patches.ResetDiagnostics();
 
         string summary = RuntimeSettings.Summary;
         bool changed = !string.Equals(summary, _lastSettingsSummary, StringComparison.Ordinal);
@@ -171,6 +203,7 @@ public sealed partial class Plugin : IHostedPlugin
         Line("Vision property rebuilds adjusted: " + Patches.VisionAdjustments);
         Line("Concealment recalculations adjusted: " + Patches.ConcealmentAdjustments);
         Line("Last movement modifier: " + Patches.LastConcealmentModifier);
+        Line("Pirate visibility diagnostics: " + (PirateVisibilityDiagnostics.Enabled ? "on" : "off"));
     }
 
     private void LogDebug(string message, bool error = false)
@@ -190,11 +223,13 @@ internal static class RuntimeSettings
     public static int ConcealmentLossPerTile { get; private set; } = 1;
     public static int MaxBelowVanillaPenalty { get; private set; } = 10;
     public static bool DebugLogging { get; private set; }
+    public static bool PirateVisibilityDiagnostics { get; private set; }
 
     public static string Summary =>
         $"enabled={Enabled}, vision=+{VisionBonus}, " +
         $"movementConcealment={MovementConcealmentEnabled}, stationary=+{StationaryConcealmentBonus}, " +
-        $"lossPerTile={ConcealmentLossPerTile}, maxBelowVanilla=-{MaxBelowVanillaPenalty}, debug={DebugLogging}";
+        $"lossPerTile={ConcealmentLossPerTile}, maxBelowVanilla=-{MaxBelowVanillaPenalty}, " +
+        $"debug={DebugLogging}, pirateDiagnostics={PirateVisibilityDiagnostics}";
 
     public static void Configure(
         bool enabled,
@@ -203,7 +238,8 @@ internal static class RuntimeSettings
         int stationaryConcealmentBonus,
         int concealmentLossPerTile,
         int maxBelowVanillaPenalty,
-        bool debugLogging)
+        bool debugLogging,
+        bool pirateVisibilityDiagnostics)
     {
         Enabled = enabled;
         VisionBonus = Math.Clamp(visionBonus, 0, 30);
@@ -212,5 +248,6 @@ internal static class RuntimeSettings
         ConcealmentLossPerTile = Math.Clamp(concealmentLossPerTile, 0, 3);
         MaxBelowVanillaPenalty = Math.Clamp(maxBelowVanillaPenalty, 0, 20);
         DebugLogging = debugLogging;
+        PirateVisibilityDiagnostics = pirateVisibilityDiagnostics;
     }
 }

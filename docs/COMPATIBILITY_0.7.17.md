@@ -1,7 +1,12 @@
 # MENACE 0.7.17 — candidate compatibility evidence (#45)
 
-**Not gameplay-verified. Not a release.** The earlier 0.7.16 acceptance does not
+**Partial gameplay verification. Not a release.** The earlier 0.7.16 acceptance does not
 carry over. No README/CHANGELOG verified-on line has been advanced.
+
+**16 October:** [long-mission report](MISSION_VALIDATION_2026-10-16.md) adds real
+rounds 1–18 / 459 AI activations and user acceptance of #43/#46. This supersedes the
+older limited tactical coverage below, not the remaining feature/installer gates.
+The new #47/#48/#49 source fixes were prepared afterward and were not in that mission.
 
 ## Actual inputs
 

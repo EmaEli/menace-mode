@@ -49,6 +49,7 @@ SettingsChecks.Run(Check);
 CoverSettingsChecks.Run(Check);
 CoordinatedFireChecks.Run(Check);
 SmokeAiChecks.Run(Check);
+AssaultDefenseChecks.Run(Check);
 LargerMaps.Plugin.RunPlanningChecks(Check);
 if (args.Length > 0) ArtifactChecks.Run(Check, args[0]);
 Console.WriteLine($"Offline C# regression checks: {checks} passed.");

@@ -11,7 +11,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 
 [assembly: MelonInfo(typeof(MenaceThirdPersonCamera.ThirdPersonCameraMod),
-    "Cinematic Action Camera", "1.0.0", "MENACE Community")]
+    "Cinematic Action Camera", "1.1.0", "MENACE Community")]
 
 namespace MenaceThirdPersonCamera
 {
@@ -59,6 +59,7 @@ namespace MenaceThirdPersonCamera
         private bool _manual;
         private bool _movementFinished;
         private EventKind _autoKind;
+        private Vector3? _autoAttackTarget;
         private float _autoUntil;
         private float _muteAutomaticUntil;
         private float _nextAutoSwitchAllowed;
@@ -273,14 +274,17 @@ namespace MenaceThirdPersonCamera
 
         private void HandleAttack(Actor attacker, Skill skill, Tile tile, float duration)
         {
-            // Follow friendly fire only; NEVER focus the friendly unit receiving
-            // incoming shots. The unused target tile is kept for Harmony signature.
+            // Stay with the friendly shooter, but frame along the actual attack axis,
+            // not the leader's facing. Snapshot the tile; never retain a victim entity.
             if (!IsPlayerUnit(attacker) || skill == null || !skill.IsAttack()) return;
+            Map map = TacticalManager.Get()?.GetMap();
+            Vector3? target = tile != null && map != null
+                ? map.TileCenterToWorldPos(tile.GetTilePos(), true) : (Vector3?)null;
             float clip = Mathf.Clamp(duration + 1.0f, 2.2f, 10f);
-            ConsiderAutoCamera(attacker, EventKind.Firing, clip);
+            ConsiderAutoCamera(attacker, EventKind.Firing, clip, target);
         }
 
-        private void ConsiderAutoCamera(Actor actor, EventKind kind, float clipDuration)
+        private void ConsiderAutoCamera(Actor actor, EventKind kind, float clipDuration, Vector3? attackTarget = null)
         {
             if (_autoFailed || !AutomaticEnabled() || !IsEligibleAutoActor(actor, kind)) return;
             TacticalManager manager = TacticalManager.Get();
@@ -296,6 +300,7 @@ namespace MenaceThirdPersonCamera
             {
                 // The original accepted action is already on screen. Do not re-roll.
                 _autoUntil = Mathf.Max(_autoUntil, now + clipDuration);
+                SetAutoAttackTarget(kind, attackTarget);
                 if (kind == EventKind.Movement) _movementFinished = false;
                 return;
             }
@@ -322,6 +327,7 @@ namespace MenaceThirdPersonCamera
             if (_active && _actorId == actor.ID)
             {
                 _autoKind = kind;
+                SetAutoAttackTarget(kind, attackTarget);
                 _autoUntil = Mathf.Max(_autoUntil, now + clipDuration);
                 _movementFinished = kind != EventKind.Movement;
                 return;
@@ -329,10 +335,18 @@ namespace MenaceThirdPersonCamera
             if (_active) ExitThirdPerson(false);
             if (!TryEnterThirdPerson(actor, false, kind)) return;
             _autoKind = kind;
+            SetAutoAttackTarget(kind, attackTarget);
             _autoUntil = now + clipDuration;
             _movementFinished = false;
             _nextAutoSwitchAllowed = now + 1.25f;
             DebugLog("Auto camera " + kind + " actor=" + actor.ID);
+        }
+
+        private void SetAutoAttackTarget(EventKind kind, Vector3? target)
+        {
+            _autoAttackTarget = kind == EventKind.Firing ? target : null;
+            if (_autoAttackTarget.HasValue)
+                _heading = FlatDirection(_autoAttackTarget.Value - _trackedActor.GetPos(), _heading);
         }
 
         private bool RollChance(EventKind kind)
@@ -592,6 +606,7 @@ namespace MenaceThirdPersonCamera
             _trackedElement = element;
             _actorId = actor.ID;
             _manual = manual;
+            _autoAttackTarget = null;
             _savedPosition = camera.transform.position;
             _savedRotation = camera.transform.rotation;
             _savedFov = camera.fieldOfView;
@@ -615,12 +630,16 @@ namespace MenaceThirdPersonCamera
 
         private void UpdateThirdPersonCamera()
         {
-            Vector3 position = _trackedElement.transform.position;
-            Vector3 movement = position - _lastElementPosition;
+            Vector3 elementPosition = _trackedElement.transform.position;
+            Vector3 movement = elementPosition - _lastElementPosition;
             movement.y = 0f;
-            _lastElementPosition = position;
+            _lastElementPosition = elementPosition;
+            bool attackView = !_manual && _autoKind == EventKind.Firing && _autoAttackTarget.HasValue;
+            Vector3 position = attackView ? _trackedActor.GetPos() : elementPosition;
             Vector3 nextHeading = FlatDirection(_trackedActor.GetForward(), _heading);
-            if (_trackedActor.IsMoving() && movement.sqrMagnitude > 0.000025f)
+            if (attackView)
+                nextHeading = FlatDirection(_autoAttackTarget.Value - position, _heading);
+            else if (_trackedActor.IsMoving() && movement.sqrMagnitude > 0.000025f)
                 nextHeading = movement.normalized;
 
             float dt = Mathf.Clamp(Time.unscaledDeltaTime, 0.001f, 0.1f);
@@ -644,6 +663,8 @@ namespace MenaceThirdPersonCamera
             float lookHeight = vehicle ? Mathf.Max(1.75f, height * 0.55f) : 1.38f;
             float lookLead = vehicle ? 2.5f : 1.25f;
             Vector3 lookPoint = position + Vector3.up * lookHeight + _heading * (lookLead * lead);
+            if (attackView)
+                lookPoint = Vector3.Lerp(lookPoint, _autoAttackTarget.Value + Vector3.up * lookHeight, lead);
             Vector3 lookDirection = lookPoint - desiredPosition;
             if (lookDirection.sqrMagnitude < 0.01f) return;
             Quaternion desiredRotation = Quaternion.LookRotation(lookDirection, Vector3.up);
@@ -733,6 +754,7 @@ namespace MenaceThirdPersonCamera
                 _unityCamera = null;
                 _trackedActor = null;
                 _trackedElement = null;
+                _autoAttackTarget = null;
                 _manual = false;
                 _eventDecisions.Clear();
             }

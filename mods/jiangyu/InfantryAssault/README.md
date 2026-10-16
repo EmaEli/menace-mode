@@ -1,4 +1,11 @@
-# Infantry Assault 0.5.8
+# Infantry Assault 0.5.9
+
+## 0.5.9 defensive suppression correction (#47)
+
+Suppressed defenders may fire with half CQB accuracy/cover-reduction bonuses;
+Pinned Down defenders cannot fire. Dead/dying or genuinely stunned defenders still
+cannot react. Attacker restrictions, weapon eligibility, AI targets, 40 AP and ammo
+rules are unchanged. Locally compiled against 0.7.17; in-game acceptance pending.
 
 ## 0.5.8 requested icon (#31)
 
@@ -25,27 +32,27 @@
 
 Adds a new adjacent infantry assault action.
 
-## Rules in 0.5.1
+## Current rules (0.5.9)
 
 - Infantry can assault adjacent enemy infantry only while in the normal mobile stance. **Deployed/kneeling**, **Suppressed**, and **Pinned Down** attackers cannot initiate Assault. The same gate applies to player and AI usage.
 - Works against infantry in the open and infantry contained in structures such as bunkers, towers, and garrisonable buildings.
 - Assault costs a flat 40 AP. Weapon AP and movement/entry AP do not add to that cost.
-- If the defender can fire with eligible direct-fire small arms, it performs defensive fire first. Ready defenders receive the full configured CQB bonuses. **Pinned Down** defenders may still return fire, but receive half of both the configured CQB accuracy bonus and the CQB cover-reduction benefit. **Suppressed** defenders cannot return fire.
-- Surviving assaulters then fire with eligible direct-fire small arms under the full CQB hit-chance bonus and cover-reduction rule. Defaults remain +20 percentage points and 50% retained cover protection; if CQB bonus is set to +50pp, a ready defender and the assaulter receive +50pp while a Pinned Down defender receives +25pp.
+- If the defender can fire with eligible direct-fire small arms, it performs defensive fire first. Ready defenders receive full configured CQB bonuses. **Suppressed** defenders may return fire with half CQB accuracy and cover-reduction bonuses. **Pinned Down** defenders cannot return fire.
+- Surviving assaulters fire with full CQB bonuses. Defaults remain +20 percentage points and 50% retained cover protection; at +50pp a ready defender and the assaulter receive +50pp, while a Suppressed defender receives +25pp.
 - Tripod/AT/ATGM/cannon/launcher/mortar and other crew-served heavy modes remain excluded as CQB weapons.
 - If the defender is destroyed, the attacker advances into the target tile/container. If the defender survives, the attacker remains where it started.
 - AI infantry still considers Assault only against adjacent enemies whose native MENACE suppression state is `Suppressed` or `PinnedDown`, and now also obeys the attacker's own stance/suppression gate.
 - Player targeting cleanup now also blocks native mouse-move aiming on the exact committed Assault `SkillAction`, closing the remaining stale-action path after CQB casualties.
 
-## 0.5.1 test focus
+## Current test focus
 
 1. Ready/default-stance attacker vs ready defender: Assault is usable and both get full CQB bonuses.
 2. Deployed/kneeling attacker: Assault is unavailable.
 3. Suppressed attacker: Assault is unavailable.
 4. Pinned Down attacker: Assault is unavailable.
 5. Ready defender: defensive fire uses full configured CQB bonuses.
-6. Pinned Down defender: defensive fire still occurs but uses half accuracy and half cover-reduction bonus.
-7. Suppressed defender: no defensive fire.
+6. Pinned Down defender: no defensive fire (also when only the stance is pinned).
+7. Suppressed defender: defensive fire with half CQB bonuses, unless genuinely stunned.
 8. Failed assault: defender survives, attacker remains on origin tile, and mouse movement does not produce stale `Actor.AimAt` errors.
 9. Successful assault: attacker advances into the target tile/container.
 10. AI adjacent to an eligible suppressed/pinned target can Assault only when the AI attacker itself is not deployed, Suppressed, or Pinned Down.

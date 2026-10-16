@@ -6,8 +6,8 @@ using Menace.SDK;
 using MenaceModSuite.Shared;
 using UnityEngine;
 
-[assembly: AssemblyVersion("0.5.8.0")]
-[assembly: AssemblyFileVersion("0.5.8.0")]
+[assembly: AssemblyVersion("0.5.9.0")]
+[assembly: AssemblyFileVersion("0.5.9.0")]
 
 namespace MenaceInfantryAssault;
 
@@ -15,7 +15,7 @@ namespace MenaceInfantryAssault;
 public sealed partial class Plugin : IHostedPlugin
 {
     private const string SettingsGroup = "Infantry Assault";
-    private const string Version = "0.5.8";
+    private const string Version = "0.5.9";
     private const int AssaultApCost = 40;
     private const string AssaultSkillId = "mod.infantry_assault";
 
@@ -905,7 +905,7 @@ public sealed partial class Plugin : IHostedPlugin
         float baseKeepProtection = Math.Clamp(_assaultCoverPercent / 100f, 0f, 1f);
         float bonusScale = Math.Clamp(_phaseCqbBonusScale, 0f, 1f);
         // Scaling the CQB cover bonus means scaling how much protection is removed.
-        // Example: AssaultCover=50% normally removes half of cover protection; a Pinned Down
+        // Example: AssaultCover=50% normally removes half of cover protection; a Suppressed
         // defender uses a 0.5 bonus scale, so only one quarter is removed (75% protection kept).
         float keepProtection = 1f - ((1f - baseKeepProtection) * bonusScale);
         float protection = 1f - normal;
@@ -1075,8 +1075,6 @@ public sealed partial class Plugin : IHostedPlugin
         catch { return 0; }
     }
 
-    private static bool IsSuppressed(object actor) => GetSuppressionStateValue(actor) == 1;
-    private static bool IsPinnedDown(object actor) => GetSuppressionStateValue(actor) == 2 || GetStanceValue(actor) == 2;
     private static bool IsSuppressedOrPinned(object actor)
     {
         int suppression = GetSuppressionStateValue(actor);
@@ -1174,7 +1172,7 @@ public sealed partial class Plugin : IHostedPlugin
             {
                 _lastStatus = "Defensive fire";
                 _phase = AssaultPhase.DefensiveFire;
-                float defenderCqbBonusScale = IsPinnedDown(defender) ? 0.5f : 1f;
+                float defenderCqbBonusScale = AssaultDefenseRules.CqbBonusScale(GetSuppressionStateValue(defender));
                 _phaseCqbBonusScale = defenderCqbBonusScale;
                 _phaseWeaponKey = Key(defenderWeapon);
 
@@ -1198,7 +1196,7 @@ public sealed partial class Plugin : IHostedPlugin
 
                 cqbAccuracyApplied = TryApplyCqbAccuracyBonus(defender, defenderCqbBonusScale, out cqbAccuracyTarget, out cqbAccuracyOriginal);
                 bool used = UseWeaponReaction(defenderWeapon, attackerTileBefore);
-                if (_verbose) Log($"Defensive fire: weapon={GetSkillId(defenderWeapon)}, used={used}, cqbBonus={_cqbAccuracyBonusPercent * defenderCqbBonusScale:0.#}pp, pinned={defenderCqbBonusScale < 1f}.");
+                if (_verbose) Log($"Defensive fire: weapon={GetSkillId(defenderWeapon)}, used={used}, cqbBonus={_cqbAccuracyBonusPercent * defenderCqbBonusScale:0.#}pp, suppressed={defenderCqbBonusScale < 1f}.");
 
                 if (used)
                 {
@@ -1539,13 +1537,11 @@ public sealed partial class Plugin : IHostedPlugin
     private static bool CanDefensiveFire(object defender, object attacker, out object? weapon)
     {
         weapon = null;
-        // Suppressed infantry cannot return defensive fire. Pinned Down infantry may still
-        // fire, but their CQB accuracy and cover-reduction bonuses are halved by AssaultRoutine.
-        // Some MENACE builds can also surface PinnedDown through IsStunned(); explicitly allow
-        // that pinned state while keeping every other stun incapable of reaction fire.
-        if (!IsAlive(defender) || IsDying(defender) || IsSuppressed(defender)) return false;
-        bool pinned = IsPinnedDown(defender);
-        if (IsStunned(defender) && !pinned) return false;
+        // Suppressed defenders may react with half CQB bonuses; Pinned Down cannot.
+        // A genuine stun still vetoes fire. Do not exempt pinned/stunned actors.
+        if (!AssaultDefenseRules.CanReact(IsAlive(defender), IsDying(defender),
+                GetSuppressionStateValue(defender), GetStanceValue(defender), IsStunned(defender)))
+            return false;
         weapon = SelectSmallArms(defender, attacker);
         return weapon != null;
     }

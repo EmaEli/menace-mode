@@ -15,6 +15,14 @@ From the repository root:
 - BuildKit ZIP/clean-source checks: see [INSTALLING.md](../docs/INSTALLING.md). The Python
   distribution tests exercise actual ZIP generation/integrity and inspect PowerShell wiring;
   they do **not** execute PowerShell, installer filesystem transactions or Windows rollback.
+- Mission-feedback checks execute the actual Assault defensive policy (100 cases
+  inside the offline runner), plus extracted production building/tree guards (86)
+  and camera framing methods (99) against managed stand-ins. The latter two use the
+  installed .NET 10 SDK and skip explicitly if absent; no external packages needed.
+  They do not test native damage dispatch or Unity rendering/smoothing.
+- Private log aggregates: `python3 mods/GameplaySuite/tools/analyze_mission_log.py`
+  followed by the private log path. It emits allowlisted counts/identifiers only,
+  not raw messages, settings or actor/save names. Quiet modules are not action tests.
 
 The runner targets .NET 10 (also used by the local Jiangyu CLI), has no external packages
 and does not load game assemblies. Name tests use managed stand-ins for native localized

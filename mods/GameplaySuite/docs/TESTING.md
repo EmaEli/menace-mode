@@ -478,8 +478,8 @@ State-gate checks:
 2. Deployed/kneeling attacker: Assault must be unavailable.
 3. Suppressed attacker: Assault must be unavailable.
 4. Pinned Down attacker: Assault must be unavailable.
-5. Pinned Down defender: defensive fire is allowed with half CQB bonuses.
-6. Suppressed defender: defensive fire is skipped.
+5. Pinned Down defender: defensive fire is skipped (suppression or pinned stance).
+6. Suppressed defender: defensive fire is allowed with half CQB bonuses, unless genuinely stunned.
 
 
 1. Select infantry with at least 40 AP adjacent to enemy infantry.

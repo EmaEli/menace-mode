@@ -9,9 +9,9 @@ using MenaceModSettings;
 using MenaceModSuite.Shared;
 using UnityEngine;
 
-[assembly: AssemblyVersion("0.1.5.0")]
-[assembly: AssemblyFileVersion("0.1.5.0")]
-[assembly: AssemblyInformationalVersion("0.1.5")]
+[assembly: AssemblyVersion("0.2.0.0")]
+[assembly: AssemblyFileVersion("0.2.0.0")]
+[assembly: AssemblyInformationalVersion("0.2.0")]
 
 namespace MenaceBuildingCombatRules;
 
@@ -19,7 +19,7 @@ namespace MenaceBuildingCombatRules;
 public sealed partial class Plugin : IHostedPlugin
 {
     private const string SettingsGroup = "Building Combat Rules";
-    private const string Version = "0.1.5";
+    private const string Version = "0.2.0";
     private const int CollapseResumeGraceFrames = 6;
     private const int CollapseEjectRetryFrames = 15;
     private const int CollapseStallReportFrames = 600;
@@ -28,6 +28,7 @@ public sealed partial class Plugin : IHostedPlugin
     private static global::HarmonyLib.Harmony? _harmony;
     private static bool _patchesApplied;
     private static bool _protectBuildings = true;
+    private static bool _protectVegetation = true;
     private static bool _safeCollapse = true;
     private static bool _debug;
 
@@ -85,6 +86,7 @@ public sealed partial class Plugin : IHostedPlugin
         {
             s.AddHeader("Gameplay");
             s.AddToggle("ProtectBuildingsFromSmallArms", "Small arms cannot damage buildings", true);
+            s.AddToggle("ProtectVegetationFromSmallArms", "Small arms cannot damage trees and forest", true);
             s.AddToggle("SafeOccupiedCollapse", "Safely eject occupants before building collapse", true);
             s.AddHeader("Diagnostics");
             s.AddToggle("DebugLogging", "Debug logging", false);
@@ -202,12 +204,12 @@ public sealed partial class Plugin : IHostedPlugin
 
     private static void OnStructureDamage(Structure structure, Skill? skill, DamageInfo? damageInfo)
     {
-        if (!_protectBuildings || structure == null || skill == null || damageInfo == null) return;
-        if (!SafeIsBuilding(structure) || !IsSmallArmsSkill(skill)) return;
+        if (structure == null || skill == null || damageInfo == null) return;
+        if (!IsProtectedStructure(structure) || !IsSmallArmsSkill(skill)) return;
 
         // DamageInfo is a reference type. Mutating it here preserves the attack against any
         // contained infantry but removes the collateral structural component before the
-        // native Structure.OnDamageReceived path gets a chance to consume building HP.
+        // native Structure.OnDamageReceived path gets a chance to consume structure HP.
         int oldDamage = damageInfo.Damage;
         int oldArmorDamage = damageInfo.ArmorDamage;
         if (oldDamage <= 0 && oldArmorDamage <= 0) return;
@@ -220,7 +222,7 @@ public sealed partial class Plugin : IHostedPlugin
         damageInfo.IsTargetDestroyed = false;
         damageInfo.IsContainerDestroyed = false;
 
-        DebugLog($"Blocked small-arms structural damage: building={EntityId(structure)}, skill={SkillId(skill)}, damage={oldDamage}, armorDamage={oldArmorDamage}.");
+        DebugLog($"Blocked small-arms structural damage: structure={EntityId(structure)}, skill={SkillId(skill)}, damage={oldDamage}, armorDamage={oldArmorDamage}.");
     }
 
 
@@ -240,20 +242,20 @@ public sealed partial class Plugin : IHostedPlugin
 
     private static CoverDestructionState BeforeAttackTileHit(AttackHandler handler, Skill? skill, Tile? tile)
     {
-        if (!_protectBuildings || handler == null || skill == null || !Valid(tile) || !IsSmallArmsSkill(skill))
+        if ((!_protectBuildings && !_protectVegetation) || handler == null || skill == null || !Valid(tile) || !IsSmallArmsSkill(skill))
             return default;
 
         try
         {
             Entity? target = tile!.GetEntity();
-            if (!Valid(target) || !target!.IsBuilding()) return default;
+            if (!IsProtectedStructure(target)) return default;
 
             Attack? template = handler.GetTemplate();
             if (!Valid(template) || template!.DestroyHalfCover == HalfCoverClass.None) return default;
 
             HalfCoverClass original = template.DestroyHalfCover;
             template.DestroyHalfCover = HalfCoverClass.None;
-            DebugLog($"Suppressed small-arms cover-destruction effect on building tile: building={EntityId(target)}, skill={SkillId(skill)}, destroyHalfCover={original}->None.");
+            DebugLog($"Suppressed small-arms cover-destruction effect on protected tile: structure={EntityId(target!)}, skill={SkillId(skill)}, destroyHalfCover={original}->None.");
             return new CoverDestructionState(template, original);
         }
         catch (Exception e)
@@ -582,6 +584,11 @@ public sealed partial class Plugin : IHostedPlugin
         }
         catch { }
 
+        // A rifle-backed grenade/launcher mode is not a personal-weapon bullet.
+        // Reject its explicit heavy/explosive ID before accepting the item's rifle tag.
+        string id = skillId + " " + itemId;
+        if (HeavyOrStructuralTokens.Any(id.Contains)) return false;
+
         // Prefer MENACE's native weapon tags when an item-backed skill provides them.
         // Explicit structural/explosive tags always win over the name fallback.
         try
@@ -607,8 +614,6 @@ public sealed partial class Plugin : IHostedPlugin
         }
         catch { }
 
-        string id = skillId + " " + itemId;
-        if (HeavyOrStructuralTokens.Any(id.Contains)) return false;
         return SmallArmsTokens.Any(id.Contains);
     }
 
@@ -634,6 +639,17 @@ public sealed partial class Plugin : IHostedPlugin
         catch { return false; }
     }
 
+    private static bool IsProtectedStructure(Entity? entity)
+    {
+        if (!Valid(entity)) return false;
+        try
+        {
+            return entity!.IsStructure() &&
+                ((_protectBuildings && entity.IsBuilding()) || (_protectVegetation && entity.IsVegetation()));
+        }
+        catch { return false; }
+    }
+
     private static bool Valid(Il2CppObjectBase? obj)
     {
         if (obj == null) return false;
@@ -651,6 +667,7 @@ public sealed partial class Plugin : IHostedPlugin
     private static void ReloadSettings()
     {
         _protectBuildings = Setting("ProtectBuildingsFromSmallArms", true);
+        _protectVegetation = Setting("ProtectVegetationFromSmallArms", true);
         _safeCollapse = Setting("SafeOccupiedCollapse", true);
         _debug = Setting("DebugLogging", false);
     }
@@ -669,7 +686,7 @@ public sealed partial class Plugin : IHostedPlugin
     private static void DrawDebug(Rect area)
     {
         GUI.Label(new Rect(area.x + 8, area.y + 8, Math.Max(120, area.width - 16), 22),
-            $"Building Combat Rules {Version} | small-arms immunity={_protectBuildings} | safe collapse={_safeCollapse}");
+            $"Building Combat Rules {Version} | buildings={_protectBuildings} | trees={_protectVegetation} | safe collapse={_safeCollapse}");
     }
 
     private static void DebugLog(string message)

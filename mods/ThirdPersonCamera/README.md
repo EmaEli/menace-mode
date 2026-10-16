@@ -1,4 +1,13 @@
-# Cinematic Action Camera 1.0.0 — offline candidate
+# Cinematic Action Camera 1.1.0 — local candidate
+
+## Automatic firing direction (#49)
+
+The firing view now frames from the attacking squad toward the attacked tile, not
+the leader's facing/back. Accepted repeated attacks refresh the target; manual and
+movement cameras retain their existing behavior. 1.0.0 received positive user
+feedback during the long 16 October mission, with no camera errors in its log.
+**1.1.0 is locally built, not deployed or game-accepted.** Standalone/install/settings
+acceptance remains separate; see `docs/MISSION_VALIDATION_2026-10-16.md`.
 
 ## Jiangyu-compatible distribution (#33 / #15)
 
