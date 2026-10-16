@@ -42,6 +42,14 @@ def rva_to_file_offset(raw, rva):
 
 
 class ExtendedPathfindingTests(unittest.TestCase):
+    def test_v0717_uses_new_dump_rvas_not_old_pathfinding_addresses(self):
+        previous = next(b for b in DATA['builds'] if b['game_version'] == 'v0.7.16+22323')
+        current = next(b for b in DATA['builds'] if b['game_version'] == 'v0.7.17+22362')
+        self.assertEqual(current['sha256'], '871b4c3468c68dae3d75e7b5e29fcc9b0a8a253fcebf64045af348f0aec75111')
+        self.assertEqual(current['method_rvas']['MissionTemplateGetBounds'], previous['method_rvas']['MissionTemplateGetBounds'])
+        for method in METHODS[1:]:
+            self.assertEqual(int(current['method_rvas'][method], 16) - int(previous['method_rvas'][method], 16), 0x3A0)
+
     def test_builds_match_source_table(self):
         pattern = r'new\("([^"]+)", "([0-9a-f]{64})",\s*((?:0x[0-9A-F]+,?\s*){7})\)'
         parsed = re.findall(pattern, SOURCE)

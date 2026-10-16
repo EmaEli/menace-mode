@@ -1,8 +1,10 @@
 # Offline work handoff — 15 October 2026
 
-**Historical snapshot:** the user subsequently requested resumption. See
-[MIGRATION_STATUS.md](MIGRATION_STATUS.md) for the continuing work. This ZIP does not
-contain the later Field Logistics 1.0.11 / Infantry Assault 0.5.8 icon changes.
+**Historical snapshot:** superseded by the
+[daily wrap-up](DAILY_WRAP_UP_2026-10-15.md) and
+[0.7.17 Windows/game evidence](COMPATIBILITY_0.7.17.md). Source has since been pushed
+and the new candidate installed/tested within the scopes recorded there. This old
+ZIP does not contain the later Field Logistics 1.0.11 / Infantry Assault 0.5.8 fixes.
 
 Latest local continuation artifact: `.tmp/MENACE-Suite-migration-followup.zip`.
 SHA256: `a2f4369e355ea1758b486162bbcf42974691f4d1e50942402d499ad0a0d572b9`.

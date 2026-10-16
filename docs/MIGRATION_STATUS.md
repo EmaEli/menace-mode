@@ -1,4 +1,4 @@
-# MENACE migration status — offline follow-up, 15 October 2026
+# MENACE migration status — 15 October 2026
 
 Tracks [#29](https://github.com/EmaEli/menace-mode/issues/29),
 [#31](https://github.com/EmaEli/menace-mode/issues/31),
@@ -6,9 +6,16 @@ Tracks [#29](https://github.com/EmaEli/menace-mode/issues/29),
 [#34](https://github.com/EmaEli/menace-mode/issues/34) and
 [#38](https://github.com/EmaEli/menace-mode/issues/38).
 
-**Not a release approval.** The earlier handoff is a historical snapshot. Work has
-resumed; its ZIP does not contain the new Field Logistics/Infantry Assault icon fixes.
-This branch remains local/uncommitted. No game PC access or deployment was performed.
+**Current checkpoint:** [daily wrap-up](DAILY_WRAP_UP_2026-10-15.md) and
+[0.7.17 evidence](COMPATIBILITY_0.7.17.md). Source is committed/pushed on the offline
+branch; the fresh-proxy candidate is installed on Windows. Canonical build/install,
+synthetic rollback, title/native 96x96 activation and tactical rounds 1→4 passed their
+scoped checks. Full feature/save/installer acceptance remains open. **Not a release.**
+
+The package inventory below remains current. The earlier offline evidence and
+remaining-gate descriptions are a historical checkpoint, superseded where the two
+linked documents record subsequent Windows/game checks. Older ZIPs are not the
+current installation target; use the exact 0.7.17 candidate recorded in the wrap-up.
 
 ## Current source/package inventory
 

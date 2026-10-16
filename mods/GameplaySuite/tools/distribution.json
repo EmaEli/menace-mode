@@ -1,11 +1,21 @@
 {
   "format": 1,
-  "gameVersion": "0.7.16+22323",
-  "gameAssemblySha256": "bd2266957504db63dbf6fbef63e2e0f53085e9f0cc17e2d2dd3352d04e960b32",
+  "gameVersion": "0.7.17+22362",
+  "gameAssemblySha256": "871b4c3468c68dae3d75e7b5e29fcc9b0a8a253fcebf64045af348f0aec75111",
   "jiangyuVersion": "1.4.8",
   "cliUrl": "https://github.com/antistrategie/jiangyu/releases/download/v1.4.8/jiangyu-cli-win-x64.zip",
   "cliSha256": "1e20baababacae8c93d30a701d6f78d24666374b9dad400403bdd29633e5e51b",
   "loaderSha256": "9c6e5a447e2e3b6bde6be53fa4323bf930a563914aa0ca5dc58287247509998f",
+  "dotnetSdk": {
+    "channel": "10.0",
+    "version": "10.0.113",
+    "metadataUrl": "https://builds.dotnet.microsoft.com/dotnet/release-metadata/10.0/releases.json",
+    "archiveUrl": "https://builds.dotnet.microsoft.com/dotnet/Sdk/10.0.113/dotnet-sdk-10.0.113-win-x64.zip",
+    "archiveSha512": "4db6d0a3d91dedaaf2ce9bb3d4648e833bb8966648c1fb271c10d344a86f05ec8b811cca120049fa06cf1397b03ade17285b4f0600d2d484a3a1e1dae14cc2dc",
+    "installScriptUrl": "https://raw.githubusercontent.com/dotnet/install-scripts/e5cf1dd2d1540ed05ac84f8eb8c5cdec2807621e/src/dotnet-install.ps1",
+    "installScriptSha256": "3bb07bc8025211836c1e4f9d3f6a044e55b1fb6eec518a6c78851d04e210442b",
+    "minimumFreeBytes": 2147483648
+  },
   "modules": [
     "MenaceModSettings", "BuildingCombatRules", "BuildingsBlockLineOfSight",
     "CoordinatedFire", "CoverDestructionRebalance", "CustomSupplySliders", "FieldLogistics", "ForestTraversal",

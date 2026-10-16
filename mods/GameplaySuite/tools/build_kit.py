@@ -98,7 +98,8 @@ def collect(root):
     payload["README.txt"] = (
         "MENACE Suite - OFFLINE CANDIDATE, not Windows/game-verified.\r\n"
         "INSTALL-SUITE.cmd builds and INSTALLS all components, including the camera.\r\n"
-        "Requires the pinned MENACE build, existing MelonLoader/proxies and .NET 10 SDK.\r\n"
+        "Requires the pinned MENACE build and existing MelonLoader/proxies.\r\n"
+        "Downloads a hash-verified pinned .NET 10 SDK privately under tools/dotnet.\r\n"
         "Jiangyu 1.4.8 SDK/loader are downloaded with SHA256 checks; no Unity Editor needed.\r\n"
         "Known conflicting copies are backed up outside Mods; unrelated mods, loaders,\r\n"
         "UserData and saves are not removed. Failure triggers rollback.\r\n"
@@ -107,11 +108,13 @@ def collect(root):
     return payload, versions
 
 
-def make_archive(payload, versions, base_revision):
+def make_archive(payload, versions, base_revision, dotnet_sdk=None):
     files = [{"path": name, "sha256": digest(data)} for name, data in sorted(payload.items())]
     tree_hash = digest(json.dumps(files, sort_keys=True, separators=(",", ":")).encode())
     kit = {"format": 1, "status": "offline-candidate", "gitBaseRevision": base_revision,
            "snapshotSha256": tree_hash, "modules": versions, "files": files}
+    if dotnet_sdk is not None:
+        kit["dotnetSdk"] = dotnet_sdk
     content = dict(payload)
     content["kit.json"] = json.dumps(kit, indent=2).encode() + b"\n"
     output = io.BytesIO()
@@ -137,7 +140,8 @@ def main():
                     "-c", "Release", "--", str(ROOT)], cwd=ROOT, check=True)
     payload, versions = collect(ROOT)
     revision = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
-    archive, kit = make_archive(payload, versions, revision)
+    sdk = json.loads((ROOT / TOOLS / "distribution.json").read_text())["dotnetSdk"]
+    archive, kit = make_archive(payload, versions, revision, sdk)
     with args.output.open("xb") as target:
         target.write(archive)
     print(f"Offline candidate: {args.output}; {len(versions)} packages; {len(kit['files'])} inventoried files")

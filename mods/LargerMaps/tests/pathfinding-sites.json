@@ -25,6 +25,19 @@
         "PathfindingProcessProcessNode": "0x6b1470",
         "PathfindingProcessClear": "0x6aef30"
       }
+    },
+    {
+      "game_version": "v0.7.17+22362",
+      "sha256": "871b4c3468c68dae3d75e7b5e29fcc9b0a8a253fcebf64045af348f0aec75111",
+      "method_rvas": {
+        "MissionTemplateGetBounds": "0x60f630",
+        "PathfindingProcessCtor": "0x6b1ea0",
+        "PathfindingProcessInit": "0x6b11e0",
+        "PathfindingManagerInit": "0x6aee00",
+        "PathfindingProcessFindPath": "0x6af680",
+        "PathfindingProcessProcessNode": "0x6b1810",
+        "PathfindingProcessClear": "0x6af2d0"
+      }
     }
   ],
   "internal_stride": 128,

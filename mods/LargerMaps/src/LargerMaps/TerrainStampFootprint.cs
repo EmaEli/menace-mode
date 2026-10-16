@@ -220,7 +220,8 @@ public sealed partial class Plugin
             if (set.AlphaMaps[i] != null) UnityEngine.Object.Destroy(set.AlphaMaps[i]);
     }
 
-    // Null source => null result (success). Non-null source that cannot be scaled => false.
+    // Null result with true => keep the original texture (missing or already at the
+    // minimum size). Non-null source that cannot be scaled => false.
     private static bool TryDownscaleStampTexture(Texture2D source, float scale, out Texture2D scaled)
     {
         scaled = null;
@@ -229,11 +230,7 @@ public sealed partial class Plugin
         {
             int width = Math.Max(MinimumScaledStampPixels, (int)Math.Round(source.width * scale));
             int height = Math.Max(MinimumScaledStampPixels, (int)Math.Round(source.height * scale));
-            if (width >= source.width || height >= source.height)
-            {
-                scaled = source;
-                return true;
-            }
+            if (width >= source.width || height >= source.height) return true;
 
             // Float formats keep the full heightmap range; reads stay format-agnostic
             // for GetPixel / GetPixelBilinear / GetPixels on the native side.
