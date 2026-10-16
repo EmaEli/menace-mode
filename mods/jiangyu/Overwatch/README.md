@@ -1,4 +1,4 @@
-# Overwatch 0.32.3.2
+# Overwatch 0.32.3.6
 
 ## Alpha 32.1 changes
 
@@ -109,6 +109,10 @@ If attack triggers, vehicle selection, Alpha Strike, ammo or turn flow behave un
 
 The native Overwatch indicator uses MENACE's own overhead UnitHUD and hitpoint-bar layout. Public **TacticalHUDCustomizer** research by **pylkij** and public **WOMENACE** source by **antistrategie** were useful references for confirming the current UnitHUD lifecycle, HUD-list lookup and `UnitHUD.GetActor()` matching pattern. Overwatch uses its own marker state and artwork and includes no external assets.
 
+
+## 0.32.3.6
+
+- Fixed sibling fire modes of the same weapon (e.g. assault rifle normal / sustained fire) drifting apart by one round after a reaction shot. Reactions fire with `Free` usage so the game consumes nothing; the module then deducts one use with `Skill.SetUses`, which writes only that skill's counter. It now also calls `Skill.SynchronizeUses()`, the native per-item synchronization that `ConsumeUse` triggers, so both modes show the same ammo. GitHub issue #4.
 
 ## 0.32.3.2
 

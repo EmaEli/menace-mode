@@ -10,7 +10,8 @@ namespace MenaceModSettings;
 
 /// <summary>
 /// The settings window: a full-screen overlay holding a native window frame, one tab per
-/// registered group and one row per setting. Toggled with a configurable key (F9 by default),
+/// registered group and one row per setting. Toggled with a configurable key (End by default;
+/// F9 is the game's bug-report key),
 /// closed by the CLOSE button or a click on the dimmed backdrop. Injected once; the loader
 /// re-applies it per screen.
 /// </summary>
@@ -18,6 +19,7 @@ public sealed class SettingsWindowSystem : JiangyuSystem
 {
     public const string OwnGroup = "MenaceModSettings";
     public const string ToggleKeySetting = "ToggleKey";
+    private const string DefaultToggleKey = "End";
     private static readonly string[] ToggleKeyOptions = { "F8", "F9", "F10", "F11", "F12", "Insert", "Home", "End" };
 
     private UiInjection _injection;
@@ -39,7 +41,7 @@ public sealed class SettingsWindowSystem : JiangyuSystem
         ModSettings.Register(OwnGroup, s =>
         {
             s.AddHeader("Window");
-            s.AddDropdown(ToggleKeySetting, "Key that opens and closes this window", ToggleKeyOptions, "F9");
+            s.AddDropdown(ToggleKeySetting, "Key that opens and closes this window", ToggleKeyOptions, DefaultToggleKey);
         });
         ModSettings.Changed += OnSettingChanged;
         BindHotkey();
@@ -68,7 +70,7 @@ public sealed class SettingsWindowSystem : JiangyuSystem
     private void BindHotkey()
     {
         var name = ModSettings.TryGet<string>(OwnGroup, ToggleKeySetting, out var v) ? v : null;
-        _toggleKey = Enum.TryParse<KeyCode>(name, out var key) ? key : KeyCode.F9;
+        _toggleKey = Enum.TryParse<KeyCode>(name, out var key) ? key : KeyCode.End;
         _hotkey?.Dispose();
         _hotkey = Hotkeys.OnKeyDown(_toggleKey, Toggle);
     }
@@ -124,10 +126,17 @@ public sealed class SettingsWindowSystem : JiangyuSystem
         body.style.minHeight = new StyleLength(0f);
         body.style.marginTop = new StyleLength(10f);
         body.style.alignItems = new StyleEnum<Align>(Align.Stretch);
-        _tabs = new VisualElement();
-        _tabs.style.width = new StyleLength(200f);
-        _tabs.style.marginRight = new StyleLength(14f);
-        body.Add(_tabs);
+        var tabScroll = new ScrollView(ScrollViewMode.Vertical);
+        tabScroll.style.width = new StyleLength(200f);
+        tabScroll.style.flexShrink = new StyleFloat(0f);
+        tabScroll.style.minHeight = new StyleLength(0f);
+        tabScroll.style.marginRight = new StyleLength(14f);
+        tabScroll.horizontalScrollerVisibility = ScrollerVisibility.Hidden;
+        tabScroll.verticalScrollerVisibility = ScrollerVisibility.Auto;
+        tabScroll.contentContainer.style.flexDirection = new StyleEnum<FlexDirection>(FlexDirection.Column);
+        StyleScroller(tabScroll.verticalScroller);
+        _tabs = tabScroll;
+        body.Add(tabScroll);
         var scroll = new ScrollView(ScrollViewMode.Vertical);
         scroll.style.flexGrow = new StyleFloat(1f);
         scroll.style.flexShrink = new StyleFloat(1f);

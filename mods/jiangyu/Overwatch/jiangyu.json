@@ -1,6 +1,6 @@
 {
   "name": "Overwatch",
-  "version": "0.32.3.5",
+  "version": "0.32.3.6",
   "author": "Luca",
   "description": "Overwatch reaction fire for infantry, leaders and vehicles (player and AI), with a tactical button and healthbar indicators. Jiangyu port of the legacy GameplaySuite module; options live in the MenaceModSettings window (F9).",
   "depends": [

@@ -1,3 +1,10 @@
+## MEN-004 root cause — Weapon Mechanics Rebalanced 0.4.9
+
+- **Weapon Mechanics Rebalanced 0.4.8 → 0.4.9:** the alternate-fire extra-ammo postfix ran on the
+  game's simulated `Skill.Use` calls (`Fake | Free`, issued during the enemy turn) and removed
+  2 rounds per call; the 0.4.8 ledger showed a squad going 22 → 0 in one AI phase. Usages flagged
+  `Fake` / `NoUsesConsumed` are now skipped. Real shots unchanged. GitHub issue #4.
+
 ## Offline AI follow-up — #1 / #2 (not game-verified)
 
 - **Larger Maps 2.1.0**: ports PR #18 commit `3f50705dffe21fa729813001ac2fe5378d30b33f`.

@@ -1,3 +1,11 @@
+## 0.4.9 — MEN-004 ammo drain fix
+
+- Fixed the alternate-fire ammo drain (GitHub issue #4). The `Skill.Use` postfix that charges the extra round for Sustained Fire / Spray ignored the usage flags and also ran on the game's simulated usages (`Fake | LowerAudioVolume | Free`, native ammo delta 0), which MENACE issues repeatedly during the enemy turn. Each simulated call removed 2 rounds and synchronized the loss to the sibling fire mode; the 0.4.8 ledger recorded a squad going 22 → 0 across one AI phase without firing. Usages flagged `Fake` or `NoUsesConsumed` are now left untouched by both the pre-use guard and the extra-cost postfix. Real player shots are unchanged (native 1 + extra 1).
+
+## 0.4.8 — MEN-004 ammo ledger
+
+- Added a **debug-only `[MEN-004 LEDGER]`** trace for limited-use skills: `Skill.SetUses` and `Skill.ConsumeUse` (with the managed caller chain, so mod-driven changes such as Overwatch reconciliation are attributable), plus `OnTurnStart`/`OnTurnEnd`/`OnMissionStarted` when the counter changes across the callback (native turn-boundary handlers). Hooks return immediately with Debug logging OFF. No gameplay change. GitHub issue #4.
+
 ## 0.4.7
 
 - Fixed `SkillTemplate` lookups silently failing under Jiangyu, so runtime skill adjustments that depend on them were not applied. The Jiangyu host resolved template types only in `Il2Cpp*` proxy assemblies, but the game's own proxy keeps its original name (`Assembly-CSharp.dll`), so no game template type could be resolved. The host now also searches `Assembly-CSharp` and reads templates through `DataTemplateLoader.GetAll<T>()` / `TryGet<T>()`, the per-type cache the game itself uses. No balance changes.

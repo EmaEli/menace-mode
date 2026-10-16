@@ -1,4 +1,4 @@
-# Larger Maps 2.1.0 — offline Jiangyu candidate
+# Larger Maps 2.2.0 — offline Jiangyu candidate
 
 The current host compiles the shared `mods/LargerMaps/src/LargerMaps` sources.
 Use the canonical Suite installer in `mods/GameplaySuite`; do not revive the old
@@ -32,7 +32,7 @@ cover-and-fire controller or implementation of #13/#17.
 
 1. Validate #1 smoke first. For this test hold all Smoke Overhaul / Infantry Assault
    settings identical; preferably keep proactive smoke OFF to isolate positioning.
-2. Use the same save/seed, mission, mod set and 2.1.0 binary. Restart between OFF/ON
+2. Use the same save/seed, mission, mod set and 2.2.0 binary. Restart between OFF/ON
    runs. `SimplifyCombatAIPlanning=ON`, `UseLocalTacticalRouting=OFF`; all three deep
    AI diagnostic flags OFF. Saved settings may override new-install defaults.
 3. Test 64x64 as an inert control, then 96x96; offensive and sleeping/defensive missions

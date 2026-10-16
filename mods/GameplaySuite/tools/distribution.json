@@ -8,7 +8,7 @@
   "loaderSha256": "9c6e5a447e2e3b6bde6be53fa4323bf930a563914aa0ca5dc58287247509998f",
   "modules": [
     "MenaceModSettings", "BuildingCombatRules", "BuildingsBlockLineOfSight",
-    "CoordinatedFire", "CoverDestructionRebalance", "FieldLogistics", "ForestTraversal",
+    "CoordinatedFire", "CoverDestructionRebalance", "CustomSupplySliders", "FieldLogistics", "ForestTraversal",
     "GarrisonableBuildings", "InfantryAssault", "LargerMaps", "Overwatch", "SmokeOverhaul",
     "SquaddieVeterancy", "StartingOptions", "StrongerCover", "VisibilityOverhaul",
     "WeaponMechanicsRebalanced", "WeaponRangesRebalanced", "CinematicActionCamera"

@@ -233,6 +233,7 @@ public sealed partial class Plugin
             settings.AddSlider("TacticalMapSize", "Tactical map size 64-96 (restart required)", 64f, 96f, 80f);
             settings.AddSlider("MissionRoundMultiplier", "Round limit multiplier for timed objectives", 1f, 3f, 2f);
             settings.AddHeader("Terrain landmarks (restart required)");
+            settings.AddToggle("PreserveTerrainStampFootprint", "Keep landmark stamps at vanilla world size (fixes raised lakes)", true);
             settings.AddToggle("IncreaseTerrainStampDensity", "More terrain stamps on maps above 64x64", false);
             settings.AddSlider("TerrainStampDensityMultiplier", "Stamp attempt multiplier at 96x96", 1f, 5f, 1.5f);
             settings.AddHeader("AI on large maps (restart required)");
@@ -382,6 +383,7 @@ public sealed partial class Plugin
             PatchTerrainHoleIndexing(harmony);
             PatchTerrainGenerateStateMachine(harmony);
             PatchTerrainStampDensity(harmony);
+            PatchTerrainStampFootprint(harmony);
             PatchWorldHeightBilinearSafety(harmony);
             PatchGameplayPointReprojection(harmony);
             PatchTerrainPointSpawnerHeightFix(harmony);

@@ -1443,7 +1443,10 @@ internal sealed class Runtime : IDisposable
             int afterAmmo = skill.GetUses();
             if (ok && !Native.IsAlphaStrikeSkill(skill) && skill.HasLimitedUses() && beforeAmmo > 0 && afterAmmo == beforeAmmo)
             {
+                // SetUses only writes this skill's counter; the native per-item handler that
+                // keeps sibling fire modes aligned runs from ConsumeUse/SynchronizeUses.
                 skill.SetUses(Math.Max(0, beforeAmmo - 1));
+                skill.SynchronizeUses();
                 w.Shooter.GetSkills().ScheduleUpdate();
                 w.Shooter.GetSkills().UiNeedsUpdate = true;
                 afterAmmo = skill.GetUses();

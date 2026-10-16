@@ -1,3 +1,9 @@
+## 2.2 - Landmark stamps keep their vanilla footprint (MEN-008)
+
+On enlarged maps the native stamp pass pasted each landform texture 1:1 into the fixed 513x513 heightmap, so basins grew with the map while the lake prefab did not: the water showed as a raised slab inside a larger hole (#14). `PreserveTerrainStampFootprint` (default ON, restart required) scales the stamp heightmap/blend/alphamap textures by the vanilla/enlarged world-unit ratio during placement only, so shoreline, grid blockage and prefab line up again. Turn it OFF to compare with the previous behaviour on the same seed.
+
+---
+
 ## 2.1.0 - Selective infantry positioning (offline candidate)
 
 Ports the OFF-by-default PR #18 experiment to the current Jiangyu host; the option
@@ -8,9 +14,11 @@ orders, sleep changes or blanket enabling. Native CPU cost may increase when ON.
 See [current package instructions and A/B acceptance](../jiangyu/LargerMaps/README.md).
 Build/offline checks do not validate native gameplay or performance; #2 remains open.
 
+---
+
 ## 2.0 - Jiangyu package
 
-Larger Maps is built and installed as the Jiangyu package in [`../jiangyu/LargerMaps`](../jiangyu/LargerMaps) (`jiangyu compile --release --clean` from that directory, then copy `compiled/` into `Mods\LargerMaps\`). Options live in the MenaceModSettings window (F9). This directory keeps the gameplay sources (`src/LargerMaps`), the offline regression tests (`run-tests.bat` / `python3 -m unittest discover -s tests`) and the technical notes. The legacy Modpack Loader build (`build-and-deploy.bat`, `modpack.json`) has been removed; references to it in the version notes below are historical.
+Larger Maps is built and installed as the Jiangyu package in [`../jiangyu/LargerMaps`](../jiangyu/LargerMaps) (`jiangyu compile --release --clean` from that directory, then copy `compiled/` into `Mods\LargerMaps\`). Options live in the MenaceModSettings window (End key). This directory keeps the gameplay sources (`src/LargerMaps`), the offline regression tests (`run-tests.bat` / `python3 -m unittest discover -s tests`) and the technical notes. The legacy Modpack Loader build (`build-and-deploy.bat`, `modpack.json`) has been removed; references to it in the version notes below are historical.
 
 ---
 

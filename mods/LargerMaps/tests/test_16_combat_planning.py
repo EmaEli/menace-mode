@@ -50,7 +50,7 @@ class TestCombatPlanning(unittest.TestCase):
 
     def test_versions_and_native_backend_unchanged(self):
         self.assertNotIn('private const string Version', PLUGIN)
-        self.assertEqual(json.loads((ROOT/'../jiangyu/LargerMaps/jiangyu.json').read_text())['version'],'2.1.0')
+        self.assertEqual(json.loads((ROOT/'../jiangyu/LargerMaps/jiangyu.json').read_text())['version'],'2.2.0')
         reference=Path('/mnt/data/local_routing_work/LargerMaps-1.5-local-tactical-routing-authoring/src/LargerMaps/ExtendedPathfinding.cs')
         if reference.exists(): self.assertEqual(NATIVE,reference.read_text())
 

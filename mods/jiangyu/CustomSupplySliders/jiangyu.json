@@ -1,0 +1,10 @@
+{
+  "name": "CustomSupplySliders",
+  "version": "0.2.1",
+  "author": "Luca",
+  "description": "Widens the Player/Enemy Supply Points sliders of New Game -> Customize Difficulty (default 0%-2000%, configurable up to 10000%). Normal/Hard/Expert templates are untouched. Jiangyu port of the legacy Modpack Loader mod; options live in the MenaceModSettings window (End key).",
+  "depends": [
+    "Jiangyu >= 1.4.8",
+    "MenaceModSettings >= 0.6.0"
+  ]
+}

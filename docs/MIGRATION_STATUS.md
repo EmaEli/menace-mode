@@ -20,23 +20,24 @@ KDL counts below are **source files**, not patch-operation counts.
 
 | Package | Version | Runtime / data authoring |
 | --- | --- | --- |
-| MenaceModSettings | 0.5.0 | Jiangyu settings/UI system; stable assembly identity 1.0.0.0 |
+| MenaceModSettings | 0.6.1 | Jiangyu settings/UI system; stable assembly identity 1.0.0.0 |
 | BuildingCombatRules | 0.1.5 | Shared SuiteSystem host, Harmony/runtime |
 | BuildingsBlockLineOfSight | 0.2.3 | Shared SuiteSystem host, Harmony/runtime |
 | CoordinatedFire | 1.6.10 | Shared SuiteSystem host, native attacks/HUD |
 | CoverDestructionRebalance | 0.4.0 | KDL only, 1 source file |
+| CustomSupplySliders | 0.2.1 | Shared SuiteSystem host; difficulty-menu slider ranges |
 | FieldLogistics | 1.0.11 | Shared SuiteSystem host + 4 KDL files; ammo support |
 | ForestTraversal | 0.2.0 | KDL only, 1 source file |
 | GarrisonableBuildings | 1.0.5 | Shared SuiteSystem host, templates/runtime |
 | InfantryAssault | 0.5.8 | Shared SuiteSystem host + 2 KDL files; native combat/AI |
-| LargerMaps | 2.1.0 | Jiangyu system; PR #18 selective positioning OFF by default, runtime pending |
-| Overwatch | 0.32.3.5 | Shared SuiteSystem host, native reactions/HUD |
+| LargerMaps | 2.2.0 | Jiangyu system; PR #18 selective positioning OFF by default, runtime pending; MEN-008 stamp footprint ON, visual check pending |
+| Overwatch | 0.32.3.6 | Shared SuiteSystem host, native reactions/HUD |
 | SmokeOverhaul | 0.6.4 | Shared SuiteSystem host; PR #12 bounded smoke rules ported, runtime pending |
 | SquaddieVeterancy | 1.10.2 | Shared SuiteSystem host, native hooks/HUD/save sidecars |
 | StartingOptions | 0.1.1 | Shared SuiteSystem host, new-campaign settings |
 | StrongerCover | 3.0.1 | Jiangyu system, SDK prefix + runtime inside-cover settings |
 | VisibilityOverhaul | 3.1.10 | Shared SuiteSystem host, native visibility hooks |
-| WeaponMechanicsRebalanced | 0.4.7 | Shared SuiteSystem host, skill/ammo/mortar hooks |
+| WeaponMechanicsRebalanced | 0.4.9 | Shared SuiteSystem host, skill/ammo/mortar hooks |
 | WeaponRangesRebalanced | 2.9.2 | Shared SuiteSystem host, ranges/linked skills/override JSON |
 | CinematicActionCamera | 1.0.0 | Jiangyu menu + separate MenaceThirdPersonCamera MelonMod |
 

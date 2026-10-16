@@ -4,7 +4,7 @@
 
 The camera remains the **single** `MenaceThirdPersonCamera.dll` MelonLoader entry point.
 Its seven menu controls now have a Jiangyu companion in `mods/jiangyu/CinematicActionCamera`,
-using MenaceModSettings 0.5.0 (F9). The settings companion does not start another camera or
+using MenaceModSettings 0.6.0 (End key). The settings companion does not start another camera or
 patch combat. Keep MelonLoader and Jiangyu; do not install the legacy settings modpack too.
 
 The historical assembly/type names, `MenaceThirdPersonCamera` MelonPreferences category,

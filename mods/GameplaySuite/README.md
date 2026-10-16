@@ -134,7 +134,7 @@ This repository is the common authoring tree for Luca's MENACE gameplay mods.
 
 ## Distribution model
 
-Every module ships as its own [Jiangyu](https://github.com/antistrategie/jiangyu) package under `../jiangyu/<Module>/`. This directory holds only the shared C# gameplay sources; each Jiangyu package's `code/<Module>.csproj` compiles them together with its host binding (`<Module>System.cs`). Data changes (template clones and patches) are authored as KDL under the package's `templates/`. Options live in the MenaceModSettings window (F9).
+Every module ships as its own [Jiangyu](https://github.com/antistrategie/jiangyu) package under `../jiangyu/<Module>/`. This directory holds only the shared C# gameplay sources; each Jiangyu package's `code/<Module>.csproj` compiles them together with its host binding (`<Module>System.cs`). Data changes (template clones and patches) are authored as KDL under the package's `templates/`. Options live in the MenaceModSettings window (End key).
 
 Modules stay isolated in separate DLLs rather than one monolithic gameplay DLL. That keeps failures contained, preserves existing save/runtime behavior and lets each feature retain its own version.
 
@@ -147,6 +147,7 @@ src/
   CoordinatedFire/        coordinated-fire feature + pure Core
   Overwatch/              reaction-fire feature
   StartingOptions/        new campaign leader/Headstart reward settings
+  CustomSupplySliders/    wider Player/Enemy Supply Points sliders (Customize Difficulty)
   FieldLogistics/         vehicle resupply + infantry ammo sharing feature
   InfantryAssault/        adjacent assault feature
   StrongerCover/          configurable cover feature

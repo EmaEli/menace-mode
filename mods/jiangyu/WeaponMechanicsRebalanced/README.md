@@ -1,4 +1,8 @@
-# Weapon Mechanics Rebalanced 0.4.7
+# Weapon Mechanics Rebalanced 0.4.9
+
+**0.4.9 MEN-004 fix:** the extra ammunition cost of high-volume alternate fire (Sustained Fire / Spray) is no longer applied to simulated or free `Skill.Use` calls (`Fake` / `NoUsesConsumed` usage flags). The game issues such calls during the enemy turn; each one silently removed 2 rounds from the squad weapon, draining a full magazine in one AI phase.
+
+**0.4.8 MEN-004 ammo ledger (debug only):** with **Debug logging** ON, every change to a limited-use skill's counter that bypasses `Skill.Use` is logged as `[MEN-004 LEDGER]`: direct `SetUses`/`ConsumeUse` calls (with the managed caller, e.g. Overwatch), and `OnTurnStart`/`OnTurnEnd`/`OnMissionStarted` only when the counter actually changed. OFF by default; no gameplay change.
 
 **0.4.5 MEN-004 diagnostic build:** In **Mod Options -> Weapon Mechanics Rebalanced -> Debug logging**, enable debug before firing the assault rifle's **Sustained Fire (ability 2)**. In `MelonLoader/Latest.log`, search for `[MEN-004 AMMO]`. Each high-volume activation logs ammo uses/charges **before -> after native MENACE -> after WMR**, `consumedPerUse` and extra `ConsumeUse()` calls, together with actor/weapon and flags. Compare the values with the UI counter before/after a shot, then switch debug OFF. This version contains **diagnostics only**, not an ammo fix; MEN-004 remains open.
 

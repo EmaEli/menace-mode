@@ -5,9 +5,9 @@ using Menace.SDK;
 using MenaceModSuite.Shared;
 using UnityEngine;
 
-[assembly: AssemblyVersion("0.4.7.0")]
-[assembly: AssemblyFileVersion("0.4.7.0")]
-[assembly: AssemblyInformationalVersion("0.4.7")]
+[assembly: AssemblyVersion("0.4.9.0")]
+[assembly: AssemblyFileVersion("0.4.9.0")]
+[assembly: AssemblyInformationalVersion("0.4.9")]
 
 namespace MenaceWeaponMechanicsRebalanced;
 
@@ -15,7 +15,7 @@ namespace MenaceWeaponMechanicsRebalanced;
 public sealed partial class Plugin : IHostedPlugin
 {
     private const string SettingsGroup = "Weapon Mechanics Rebalanced";
-    private const string Version = "0.4.7";
+    private const string Version = "0.4.9";
 
     private sealed class MortarSkillSpec
     {
@@ -344,10 +344,93 @@ public sealed partial class Plugin : IHostedPlugin
             }
 
             DebugLog($"Alternate-fire economy patches installed: Skill.Use + {usabilityHooks} IsUsable overload(s).");
+            InstallAmmoLedgerPatches(harmony, skillType);
         }
         catch (Exception ex)
         {
             Warn($"Alternate-fire economy patch failed: {ex.GetType().Name}: {ex.Message}");
+        }
+    }
+
+    // MEN-004 ledger: debug-only trace of every change to a limited-use skill's counter that
+    // does not go through Skill.Use (direct SetUses/ConsumeUse callers, turn-boundary handlers).
+    // The hooks are installed once; with Debug logging OFF they return immediately.
+    private static readonly string[] AmmoLedgerMethods = { "SetUses", "ConsumeUse", "OnTurnStart", "OnTurnEnd", "OnMissionStarted" };
+
+    private static void InstallAmmoLedgerPatches(global::HarmonyLib.Harmony harmony, Type skillType)
+    {
+        int hooks = 0;
+        foreach (MethodInfo method in global::HarmonyLib.AccessTools.GetDeclaredMethods(skillType))
+        {
+            if (Array.IndexOf(AmmoLedgerMethods, method.Name) < 0) continue;
+            if (method.Name == "SetUses" ? method.GetParameters().Length != 1 : method.GetParameters().Length != 0) continue;
+
+            harmony.Patch(
+                method,
+                prefix: new global::HarmonyLib.HarmonyMethod(typeof(Plugin), nameof(AmmoLedgerPrefix)),
+                postfix: new global::HarmonyLib.HarmonyMethod(typeof(Plugin), nameof(AmmoLedgerPostfix)));
+            hooks++;
+        }
+        DebugLog($"Ammo ledger hooks installed: {hooks}.");
+    }
+
+    private static void AmmoLedgerPrefix(Il2CppMenace.Tactical.Skills.Skill __instance, ref int __state)
+    {
+        __state = int.MinValue;
+        if (!_debugLogging || __instance == null) return;
+        try
+        {
+            if (__instance.HasLimitedUses()) __state = __instance.GetUses();
+        }
+        catch { }
+    }
+
+    private static void AmmoLedgerPostfix(
+        Il2CppMenace.Tactical.Skills.Skill __instance,
+        int __state,
+        MethodBase __originalMethod)
+    {
+        if (__state == int.MinValue || !_debugLogging || __instance == null) return;
+        try
+        {
+            int after = __instance.GetUses();
+            string op = __originalMethod?.Name ?? "?";
+            // Turn/mission callbacks run for every skill; only report them when ammo changed.
+            if (after == __state && op != "SetUses" && op != "ConsumeUse") return;
+
+            string actorName = "?";
+            long actorKey = 0;
+            try
+            {
+                Il2CppMenace.Tactical.Actor? actor = __instance.GetActor();
+                if (actor != null) { actorName = actor.DebugName; actorKey = NativeKey(actor); }
+            }
+            catch { }
+
+            string callers = "native";
+            if (op == "SetUses" || op == "ConsumeUse")
+            {
+                var frames = new System.Diagnostics.StackTrace(2, false).GetFrames() ?? Array.Empty<System.Diagnostics.StackFrame>();
+                var managed = frames
+                    .Select(f => f.GetMethod())
+                    .Where(m => m?.DeclaringType != null)
+                    .Select(m => m!.DeclaringType!.FullName + "." + m.Name)
+                    .Where(n => !n.StartsWith("Il2Cpp", StringComparison.Ordinal)
+                             && !n.StartsWith("System.", StringComparison.Ordinal)
+                             && !n.StartsWith("HarmonyLib.", StringComparison.Ordinal)
+                             && !n.StartsWith("MonoMod.", StringComparison.Ordinal)
+                             && !n.Contains("AmmoLedger", StringComparison.Ordinal)
+                             && !n.StartsWith("DMD<", StringComparison.Ordinal))
+                    .Take(3)
+                    .ToList();
+                if (managed.Count > 0) callers = string.Join(" <- ", managed);
+            }
+
+            DebugLog($"[MEN-004 LEDGER] op={op} actor='{actorName}' actorPtr=0x{actorKey:X} skill={__instance.GetID()} uses={__state}->{after} max={__instance.GetMaxUses()} callers={callers}");
+        }
+        catch (Exception ex)
+        {
+            Warn($"Ammo ledger failed: {ex.GetType().Name}: {ex.Message}");
         }
     }
 
@@ -368,6 +451,12 @@ public sealed partial class Plugin : IHostedPlugin
         public long ActorKey;
         public long ItemKey;
     }
+
+    // Simulated or free usages (AI evaluation, previews, scripted fire) never spend
+    // ammunition natively, so the extra alternate-fire cost must not apply either.
+    private const Il2CppMenace.Tactical.Skills.UsageParameter NoAmmoUsageMask =
+        Il2CppMenace.Tactical.Skills.UsageParameter.Fake |
+        Il2CppMenace.Tactical.Skills.UsageParameter.NoUsesConsumed;
 
     private static void CaptureHighVolumeAmmoBefore(
         Il2CppMenace.Tactical.Skills.Skill skill,
@@ -427,6 +516,7 @@ public sealed partial class Plugin : IHostedPlugin
             string skillId = __instance.GetID();
             if (!HighVolumeFireSkillIds.Contains(skillId)) return true;
             if (!__instance.HasLimitedUses()) return true;
+            if ((__1 & NoAmmoUsageMask) != 0) return true;
 
             int before = __instance.GetUses();
             __state.BeforeUses = before;
