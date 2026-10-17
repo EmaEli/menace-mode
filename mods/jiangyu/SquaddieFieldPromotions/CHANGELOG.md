@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.9.2
+
+- Fix: a redemption after a save load failed with `NullReferenceException` in
+  `UnityEngine.Sprite.get_texture`. Portrait/badge textures and sprites created at runtime
+  were destroyed by the engine's unused-asset unload on the next scene change (rehydration
+  runs before the Strategy scene loads). They are now flagged `DontUnloadUnusedAsset`, and a
+  cached portrait set whose Unity objects are gone is reloaded from `runtime_assets/`.
+
 ## 0.9.1
 
 - Fix: promotion failed with "Native collection IReadOnlyCollection`1: cannot read item 0 of 22".

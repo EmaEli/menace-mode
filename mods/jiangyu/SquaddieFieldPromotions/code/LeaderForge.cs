@@ -145,6 +145,7 @@ internal sealed class LeaderForge
             var voiceDonor = female ? sy : lim;
             string gender = female ? "female" : "male";
             var art = female ? _femaleArt : _maleArt;
+            if (art != null && !art.IsAlive) art = null;
             if (art == null)
             {
                 art = StandalonePortraitAssets.Load(_modFolder, gender, _pinned);

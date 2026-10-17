@@ -58,10 +58,14 @@ internal sealed class StandalonePortraitAssets
                 throw new InvalidOperationException("PNG could not be decoded by Unity IL2CPP: " + gender + "/" + name);
             texture.name = "sfp.embedded." + gender + "." + name;
             texture.filterMode = FilterMode.Bilinear;
+            // Runtime-created assets are otherwise destroyed by the scene-change
+            // Resources.UnloadUnusedAssets (rehydration runs before Strategy loads).
+            texture.hideFlags = HideFlags.DontUnloadUnusedAsset;
             Sprite sprite = Sprite.Create(texture,
                 new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0.5f));
             if (sprite == null)
                 throw new InvalidOperationException("Sprite.Create failed: " + gender + "/" + name);
+            sprite.hideFlags = HideFlags.DontUnloadUnusedAsset;
             pinned.Add(texture);
             pinned.Add(sprite);
             loaded[name] = sprite;
@@ -101,6 +105,20 @@ internal sealed class StandalonePortraitAssets
             catch { /* Try the alternate Unity proxy overload, if present. */ }
         }
         return false;
+    }
+
+    internal bool IsAlive
+    {
+        get
+        {
+            try
+            {
+                foreach (Sprite sprite in _sprites.Values)
+                    if (sprite == null || sprite.texture == null) return false;
+                return true;
+            }
+            catch { return false; }
+        }
     }
 
     internal void ApplyTo(UnitLeaderTemplate leader, SpeakerTemplate speaker)

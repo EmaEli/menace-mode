@@ -1,6 +1,6 @@
 {
   "name": "SquaddieFieldPromotions",
-  "version": "0.9.1",
+  "version": "0.9.2",
   "author": "Luca / OpenAI",
   "description": "Field Promotion Dossier in the native Black Market: promotes the best living squaddie to a hirable squad leader (bundled portraits, lettered badge, John/Jane voices). Promoted leaders persist across save/load. No gameplay hotkeys. Optional Veterancy XP integration.",
   "depends": ["Jiangyu >= 1.4.8", "MenaceModSettings >= 0.6.1"]

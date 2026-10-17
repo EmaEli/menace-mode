@@ -132,10 +132,12 @@ internal static class DynamicBadgeFactory
             var texture = new Texture2D(w, h, TextureFormat.RGBA32, false);
             texture.SetPixels32(new Il2CppStructArray<Color32>(output));
             texture.Apply(false, true);
+            texture.hideFlags = HideFlags.DontUnloadUnusedAsset;
             Vector2 originalPivot = source.pivot;
             var pivot = new Vector2(originalPivot.x / w, originalPivot.y / h);
             Sprite result = Sprite.Create(texture, new Rect(0, 0, w, h), pivot);
             if (result == null) return null;
+            result.hideFlags = HideFlags.DontUnloadUnusedAsset;
             pinned.Add(texture);
             pinned.Add(result);
             created++;
