@@ -1,3 +1,8 @@
+## 0.7.0
+
+- Free smoke and Tier 2 frag grenade grants for infantry are now opt-in and OFF by default; both settings remain independently configurable.
+- Existing AI smoke-use probabilities and decision rules are unchanged.
+
 ## 0.5.3
 
 - Fixed a crash to desktop at the start of the AI's first turn (access violation in the .NET JIT, `CEEInfo::resolveVirtualMethodHelper`). MENACE's AI tasks call hooked methods from IL2CPP worker threads, and the module's helper code was JIT-compiled there on first use. The Jiangyu host now compiles the whole module assembly on the main thread at load. No gameplay changes. GitHub issue #44.
