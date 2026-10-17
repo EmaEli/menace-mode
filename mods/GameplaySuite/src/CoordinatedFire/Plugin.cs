@@ -8,9 +8,9 @@ using MenaceModSuite.Shared;
 using UnityEngine;
 using Path = global::System.IO.Path;
 
-[assembly: AssemblyVersion("1.6.10.0")]
-[assembly: AssemblyFileVersion("1.6.10.0")]
-[assembly: AssemblyInformationalVersion("1.6.10")]
+[assembly: AssemblyVersion("1.6.11.0")]
+[assembly: AssemblyFileVersion("1.6.11.0")]
+[assembly: AssemblyInformationalVersion("1.6.11")]
 
 namespace CoordinatedFire;
 
@@ -18,7 +18,7 @@ namespace CoordinatedFire;
 public sealed partial class Plugin : IHostedPlugin
 {
     private const string SettingsGroup = "Coordinated Fire";
-    private const string Version = "1.6.10";
+    private const string Version = "1.6.11";
     private ModLog? _logger;
     private global::HarmonyLib.Harmony? _harmony;
     private Runtime? _runtime;
@@ -128,6 +128,8 @@ public sealed partial class Plugin : IHostedPlugin
     private HudRect? GetHudLayout()
     {
         if (_runtime == null || !Setting("EnableGameplay", true) || !Setting("ShowHUD", true) || !TacticalManager.IsMissionRunning()) return null;
+        // One visibility decision for drawing AND mouse interception (MEN-006 / #43).
+        if (ThirdPersonCameraBridge.IsActive) return null;
         var manager = TacticalManager.Get();
         if (!Native.Valid(manager) || !manager.IsPlayerTurn() || manager.IsPaused()) return null;
 

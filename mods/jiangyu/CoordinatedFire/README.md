@@ -1,6 +1,8 @@
 # Coordinated Fire
 
-**Version 1.6.9** for MENACE.
+**Version 1.6.11** for MENACE.
+
+Version 1.6.11 restores cinematic HUD hiding lost in the Jiangyu migration (MEN-006 / #7). Both drawing and mouse interception use the same optional Cinematic Action Camera state. The shared click-through guard and all combat rules are unchanged. Local build/offline tests passed; in-game acceptance is pending.
 
 Version 1.6.8 corrects Berserk AP refunds during coordinated kills: gains clipped to the unit's AP cap are preserved up to the unpaid combined-fire fee and restored when that fee is settled. The fix applies with synchronized volleys ON or OFF. In-game verification is pending.
 

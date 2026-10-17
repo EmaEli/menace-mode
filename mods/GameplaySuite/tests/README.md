@@ -5,6 +5,9 @@ From the repository root:
 - Python source-wiring and data-model checks: `python3 -m unittest discover -s mods/GameplaySuite/tests -v`.
 - Execute actual HUD pointer-capture, leader-name resolver and settings/cover-contract C# sources:
   `dotnet run --project mods/GameplaySuite/tests/OfflineChecks/OfflineChecks.csproj -c Release`.
+- The runner also executes the production optional cinematic-camera bridge with a fake clock
+  and a dynamically loaded managed camera contract: absent/delayed camera, repeated entry/exit,
+  immediate state changes, throwing getter and recovery (15 assertions). This is not a game test.
 - After compiling the catalogued Jiangyu packages and camera, append `-- .` to the C# command to also
   validate source/project/compiled manifests, actual DLL file/assembly versions, dependency
   minimums, pinned payload SDK and binary references. MenaceModSettings must keep assembly

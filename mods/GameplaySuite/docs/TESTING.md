@@ -147,6 +147,37 @@ The offline C# runner tests the actual resolver with managed stand-ins for local
 missing/throwing members, dynamic IDs, fallback sources and an untouched identity getter.
 This does not exercise real IL2CPP localized proxies; keep #35 open until tested in game.
 
+# #7 / MEN-006 — Cinematic HUD regression after Jiangyu migration
+
+Candidate: Overwatch **0.32.3.7**, Coordinated Fire **1.6.11**. No camera/settings upgrade
+required for the inspected PC (Cinematic Action Camera **1.1.0**, MenaceModSettings **0.6.1**).
+
+Source finding (16 October 2026): the original camera-state fix commit `bfe699e` is not
+an ancestor of current main. The Jiangyu migration (`55c9658`) already lacks the bridge
+and panel visibility checks, before #43's input-geometry refactor. The camera still exposes
+`MenaceThirdPersonCamera.ThirdPersonCameraMod.IsCinematicViewActive`. This is a missing
+managed compatibility contract, not evidence of a new native game-patch failure.
+
+The restored optional bridge caches the getter delegate, retries missing bindings at most
+once per five seconds, and adds no hooks/logging/dependency. Both panels check it in the
+same provider used for rendering and input geometry. Existing press/release capture stays intact.
+
+1. Verify installed DLL/manifest versions, then start a tactical player turn with both panels visible.
+2. Trigger automatic movement and firing views; neither panel may remain visible/usable.
+3. Enter/exit manually with F6. On returning, panels must follow selection/turn/pause settings,
+   not be forced visible. Repeat transitions, interrupted clips and scene/mission changes.
+4. Check mouse/camera interaction where the panels used to be: no invisible idle hitbox.
+   A press that began on a visible panel must still be consumed through its release.
+5. Recheck #43: double-click visible controls/backgrounds without moving the selected unit;
+   normal map clicks, keyboard shortcuts and CF Escape cancellation must still work.
+6. Check each HUD mod alone and with the camera absent; no hard dependency or stale suppression.
+
+Validation so far: new source-wiring test failed against both original panels, then passed
+after the fix; 9 focused Python tests and 15,507 C# assertions passed. Both Jiangyu release
+builds succeeded and compiled manifest/file versions match. The PC was inspected read-only:
+Overwatch 0.32.3.6 / CF 1.6.10, Camera 1.1.0, settings 0.6.1, no legacy Suite/Camera folders.
+**No candidate deployment or in-game acceptance yet. Keep #7 open until verified.**
+
 # #43 — Shared tactical HUD input guard (in-game verification pending)
 
 Offline build: MenaceModSettings 0.4.1, Coordinated Fire 1.6.10, Overwatch 0.32.3.3.

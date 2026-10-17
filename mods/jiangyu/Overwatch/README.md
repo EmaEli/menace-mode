@@ -1,4 +1,10 @@
-# Overwatch 0.32.3.6
+# Overwatch 0.32.3.7
+
+## 0.32.3.7
+
+- Restores MEN-006 cinematic HUD suppression lost in the Jiangyu migration. Uses Cinematic Action Camera's existing optional managed state for both automatic and manual F6 views.
+- Hidden panels also have no mouse-blocking rectangle; the shared click-through protection remains unchanged for visible panels. No combat/AP/AI changes or new default logging.
+- Local build and offline regression checks passed. Deployment and in-game hide/restore acceptance are still pending; see issue #7.
 
 ## Alpha 32.1 changes
 

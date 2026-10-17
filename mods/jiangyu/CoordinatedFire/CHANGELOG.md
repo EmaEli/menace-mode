@@ -1,3 +1,9 @@
+## 1.6.11
+
+- Restores the optional camera-state bridge from MEN-006, omitted from the Jiangyu source lineage. Hides the HUD during both automatic and F6 cinematic views.
+- The same layout provider now suppresses drawing and input geometry, avoiding invisible mouse-blocking panels while retaining #43's click capture for visible controls.
+- No combat, AP, targeting, AI or logging changes. Local build and offline regression checks passed; deployment and gameplay verification remain pending (#7).
+
 ## 1.6.9
 
 - Fixed a crash to desktop at the start of the AI's first turn (access violation in the .NET JIT, `CEEInfo::resolveVirtualMethodHelper`). MENACE's AI tasks call hooked methods from IL2CPP worker threads, and the module's helper code was JIT-compiled there on first use. The Jiangyu host now compiles the whole module assembly on the main thread at load. No gameplay changes. GitHub issue #44.

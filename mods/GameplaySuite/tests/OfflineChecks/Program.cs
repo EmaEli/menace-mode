@@ -44,6 +44,7 @@ for (int frame = 30; frame < 40; frame += 2)
 capture.Sample(40, true, 1, 1);
 capture.Reset();
 Check(!capture.Sample(41, false, 0, 0), "scene/focus reset clears capture");
+CinematicHudChecks.Run(Check);
 LeaderNameChecks.Run(Check);
 SettingsChecks.Run(Check);
 CoverSettingsChecks.Run(Check);

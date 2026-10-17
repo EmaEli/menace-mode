@@ -6,6 +6,7 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="../../src/Shared/ThirdPersonCameraBridge.cs" Link="ThirdPersonCameraBridge.cs" />
     <Compile Include="../../../jiangyu/MenaceModSettings/code/HudPointerCapture.cs" Link="HudPointerCapture.cs" />
     <Compile Include="../../src/SquaddieVeterancy/LeaderDisplayName.cs" Link="LeaderDisplayName.cs" />
     <Compile Include="../../../jiangyu/MenaceModSettings/code/ModSettings.cs" Link="ModSettings.cs" />

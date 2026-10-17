@@ -5,9 +5,9 @@ using MenaceModSuite.Shared;
 using UnityEngine;
 using Path = global::System.IO.Path;
 
-[assembly: AssemblyVersion("0.32.3.6")]
-[assembly: AssemblyFileVersion("0.32.3.6")]
-[assembly: AssemblyInformationalVersion("0.32.3.6")]
+[assembly: AssemblyVersion("0.32.3.7")]
+[assembly: AssemblyFileVersion("0.32.3.7")]
+[assembly: AssemblyInformationalVersion("0.32.3.7")]
 
 namespace MenaceOverwatch;
 
@@ -15,7 +15,7 @@ namespace MenaceOverwatch;
 public sealed partial class Plugin : IHostedPlugin
 {
     private const string SettingsGroup = "Overwatch";
-    private const string Version = "0.32.3.6";
+    private const string Version = "0.32.3.7";
     private Runtime? _runtime;
     private global::HarmonyLib.Harmony? _harmony;
     private ModLog? _logger;
@@ -116,6 +116,8 @@ public sealed partial class Plugin : IHostedPlugin
     private Rect? GetHudRect()
     {
         if (_guiErrorLogged || _runtime == null || !Setting("EnableGameplay", true) || !Setting("ShowHUD", true) || !TacticalManager.IsMissionRunning()) return null;
+        // One visibility decision for drawing AND mouse interception (MEN-006 / #43).
+        if (ThirdPersonCameraBridge.IsActive) return null;
         var manager = TacticalManager.Get();
         if (!Native.Valid(manager) || !manager.IsPlayerTurn() || manager.IsPaused()) return null;
 
