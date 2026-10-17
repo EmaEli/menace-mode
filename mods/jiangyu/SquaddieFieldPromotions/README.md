@@ -1,4 +1,4 @@
-# Squaddie Field Promotions 0.9.0
+# Squaddie Field Promotions 0.9.1
 
 **Experimental: promotes real squaddies to hirable leaders and persists them across save/load.**
 Tracked in [#27](https://github.com/EmaEli/menace-mode/issues/27).
@@ -57,7 +57,8 @@ the compiled package because `jiangyu compile --clean` does not preserve them.
 
 Versions 0.8.0-0.8.4 verified in game that the native dossier is stocked, visible at
 1 credit, redeemable and restocked. Version 0.9.0 reconnects the recovered 0.6.1 leader
-creation (templates, portraits, badges, John/Jane voices) and adds save/load persistence.
+creation (templates, portraits, badges, John/Jane voices) and adds save/load persistence;
+0.9.1 fixes the `IReadOnlyCollection` enumeration failure seen on the first 0.9.0 redemption.
 
 1. Launch a **throwaway non-Ironman** campaign. Note the living soldier count and Hire list.
 2. In Menace Mod Settings -> **Squaddie Field Promotions**, enable

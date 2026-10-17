@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.9.1
+
+- Fix: promotion failed with "Native collection IReadOnlyCollection`1: cannot read item 0 of 22".
+  `DataTemplateLoader.GetAll<T>()` returns an `IReadOnlyCollection<T>` without an indexer;
+  `PrivateMember.Enumerate` now falls back to the native IL2CPP enumerator for such collections.
+
 ## 0.9.0
 
 - Dossier redemption now promotes the selected living squaddie to a hirable squad leader:

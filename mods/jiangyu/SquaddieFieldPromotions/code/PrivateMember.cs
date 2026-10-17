@@ -50,10 +50,24 @@ internal static class PrivateMember
             for (int i = 0; i < count; i++)
             {
                 if (!TryGetCollectionItem(collection, i, out object value))
+                {
+                    // IReadOnlyCollection<T> (DataTemplateLoader.GetAll<T>) has
+                    // Count but no indexer: walk the native enumerator instead.
+                    if (i == 0 && TryEnumerateNative(collection, out List<object> items))
+                    {
+                        foreach (object item in items) yield return item;
+                        yield break;
+                    }
                     throw new InvalidOperationException(
                         $"Native collection {collection.GetType().Name}: cannot read item {i} of {count}.");
+                }
                 if (value != null) yield return value;
             }
+            yield break;
+        }
+        if (TryEnumerateNative(collection, out List<object> enumerated))
+        {
+            foreach (object item in enumerated) yield return item;
             yield break;
         }
 
@@ -72,6 +86,31 @@ internal static class PrivateMember
         }
         throw new InvalidOperationException(
             "Unsupported collection type for native list reader: " + collection.GetType().FullName);
+    }
+
+    private static bool TryEnumerateNative(object collection, out List<object> items)
+    {
+        items = null;
+        if (collection is not Il2CppObjectBase native || native.Pointer == IntPtr.Zero) return false;
+        try
+        {
+            Il2CppSystem.Collections.IEnumerable enumerable =
+                native.TryCast<Il2CppSystem.Collections.IEnumerable>();
+            if (enumerable == null) return false;
+            Il2CppSystem.Collections.IEnumerator enumerator = enumerable.GetEnumerator();
+            if (enumerator == null) return false;
+            var result = new List<object>();
+            Type listType = collection.GetType();
+            while (enumerator.MoveNext())
+            {
+                Il2CppSystem.Object item = enumerator.Current;
+                if (item != null && item.Pointer != IntPtr.Zero)
+                    result.Add(CreateTypedElement(item, listType));
+            }
+            items = result;
+            return true;
+        }
+        catch { return false; }
     }
 
     private static bool IsNativeReadOnlyList(Type type)
