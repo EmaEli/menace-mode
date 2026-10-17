@@ -9,7 +9,7 @@
   -->
   <PropertyGroup>
     <!-- Keep in step with jiangyu.json so the DLL metadata identifies the shipped build. -->
-    <Version>0.6.4</Version>
+    <Version>0.7.0</Version>
     <AssemblyName>SmokeOverhaul</AssemblyName>
     <RootNamespace>SmokeOverhaul</RootNamespace>
     <Nullable>enable</Nullable>

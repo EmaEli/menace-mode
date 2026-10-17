@@ -1,9 +1,10 @@
-# Smoke Overhaul 0.6.4 — offline Jiangyu candidate
+# Smoke Overhaul 0.7.0 — offline Jiangyu candidate
 
 Smoke Overhaul changes MENACE smoke from a hard line-of-sight wall into a longer-lasting soft obstruction and gives smoke-delivery systems distinct tactical footprints.
 
-**0.6.4:** ports PR #12's 0.6.3 proactive rules to the current Jiangyu host. Not verified
-in game: native execution, ammo/AP/cooldown, AI coexistence and 64/96-map timing remain
+**0.7.0:** free infantry smoke and Tier 2 frag grants are now OFF by default; their settings
+remain independently configurable. Existing AI smoke-use probabilities are unchanged. Not
+verified in game: native execution, ammo/AP/cooldown, AI coexistence and 64/96-map timing remain
 acceptance gates. The earlier migration ZIP remains an unchanged historical candidate.
 
 **0.5.2 AI performance fix:** MENACE's native `CreateLOSBlocker.Collect` was spending excessive time evaluating hypothetical positions for smoke on 80x80 maps. By default, `FastAISmokeSelection` changes only the existing AI profile flag `InfluencesPositioning` to false for smoke grenades and mortar smoke shells. The AI can still choose valid smoke targets from its current position; it no longer looks for better positions *specifically to use smoke*. Full native smoke decision making, smoke footprints, AI smoke use, and the two-round mortar AI cooldown remain in place. A single log line verifies activation, with no per-turn logging. Turn this setting OFF to restore vanilla speculative smoke positioning.
@@ -17,7 +18,7 @@ acceptance gates. The earlier migration ZIP remains an unchanged historical cand
 - Shooter and target tiles are excluded from this extra line penalty; vanilla `effect.smoke` modifiers on units standing inside smoke remain authoritative.
 - Timed smoke lasts **2x vanilla duration** by default (configurable 1x-4x).
 - All hand-thrown `active.throw_*` grenade/bomb skills cost **20 AP** by default. Grenade launchers, mortars, off-map bombs and deployable charges keep their own AP economy.
-- Normal humanoid infantry receives the vanilla three-use smoke grenade and Tier 2 frag grenade by default. Existing equivalent skills/equipment are detected to avoid duplicate buttons.
+- Free infantry smoke and Tier 2 frag grenade grants are **off by default**; enable either grant in Mod Settings to give normal humanoid infantry the vanilla three-use grenade. Existing equivalent skills/equipment are detected to avoid duplicate buttons.
 
 ## Caliber-based smoke footprints
 
