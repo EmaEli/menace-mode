@@ -1,0 +1,8 @@
+.jiangyu/
+compiled/
+code/bin/
+code/obj/
+code/local.props
+code/Directory.Build.props
+code/Directory.Build.targets
+*.log

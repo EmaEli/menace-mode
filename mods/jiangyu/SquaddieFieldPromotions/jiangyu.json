@@ -1,0 +1,7 @@
+{
+  "name": "SquaddieFieldPromotions",
+  "version": "0.1",
+  "author": "Luca / OpenAI",
+  "description": "Experimental field-promotion lab: one dynamically created leader in Hire, no persistent promotions yet.",
+  "depends": ["Jiangyu >= 1.4.7"]
+}

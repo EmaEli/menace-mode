@@ -1,0 +1,4 @@
+// Read-only reference proving Jiangyu can register a UnitLeaderTemplate clone.
+// The control is NEVER added to Hire and is NOT the pool for real promotions.
+// Future promotions are generated with unique runtime IDs as needed.
+clone "UnitLeaderTemplate" from="squad_leader.sachin" id="mod.squaddiefieldpromotions.control" {}
