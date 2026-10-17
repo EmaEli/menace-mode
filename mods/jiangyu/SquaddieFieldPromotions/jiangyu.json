@@ -1,7 +1,7 @@
 {
   "name": "SquaddieFieldPromotions",
-  "version": "0.1",
+  "version": "0.8.4",
   "author": "Luca / OpenAI",
-  "description": "Experimental field-promotion lab: one dynamically created leader in Hire, no persistent promotions yet.",
-  "depends": ["Jiangyu >= 1.4.7"]
+  "description": "Native Black Market promotion-dossier preview. Read-only candidate review; permanent recruitment remains locked. No gameplay hotkeys. Optional Veterancy XP integration.",
+  "depends": ["Jiangyu >= 1.4.8", "MenaceModSettings >= 0.6.1"]
 }

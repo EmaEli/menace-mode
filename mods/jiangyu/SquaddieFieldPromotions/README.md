@@ -1,91 +1,87 @@
-# Squaddie Field Promotions 0.1 - Jiangyu authoring project
+# Squaddie Field Promotions 0.8.4
 
-**Status: EXPERIMENTAL SOURCE. Not compiled or tested in-game.**
-
-This is a **real Jiangyu code mod**, not an `IModpackPlugin` for Menace Modpack Loader.
-The old `SquaddieFieldPromotions-0.1-authoring.zip` is obsolete; do not install both.
-
-## Scope of version 0.1
-
-- Jiangyu template cloning through `templates/control.kdl` with a harmless, **unrecruited** control template.
-- F8: inspect whether the Jiangyu control clone and the runtime dynamic-clone methods exist. Read-only.
-- F9: explicitly authorised test. Create **one unique dynamic leader and speaker template**, assign that leader a selected existing squaddie's name, nickname, gender and skin, and add to the native **Hire** candidate list.
-- When **Squaddie Veterancy** is installed, read XP via the existing optional `SquaddieProbe.CompatibilityApi.GetSquaddieXp(int)` API. When unavailable, use competent low-level leader attributes.
-- No automatic changes; no per-turn/per-frame logging. Explicit F8/F9 output only.
-
-**Not included:** promotion dossier in the Black Market; removing the squaddie from the pool; permanent promotions; save/load support; silent voice/neutral portraits; new training or perk trees; unlimited recruitment limit. The newly created candidate has a unique identity, but **saving it is unsafe in 0.1**. Static control clone is diagnostic ONLY and is **not** a cap on later dynamic generation.
-
-This lab invokes Jiangyu.Loader's **internal** template clone methods by reflection, with runtime signature checks. They are not public SDK APIs. It is designed to fail closed and report an incompatibility if a Jiangyu update changes them. Source is not guaranteed to compile or run until verified with your exact game/Jiangyu versions.
+**Experimental native dossier REVIEW, not a permanent-recruitment release.**
+Tracked in [#27](https://github.com/EmaEli/menace-mode/issues/27).
 
 ## Requirements
 
-- MENACE Windows with MelonLoader, and Jiangyu.Loader installed.
-- Jiangyu CLI configured (the `jiangyu` command works at a terminal).
-- .NET SDK and Jiangyu SDK/game references configured through Jiangyu CLI.
-- A disposable **non-Ironman** campaign and a backup of any save folder before testing.
+- MENACE **0.7.17+22362**, MelonLoader and Jiangyu **1.4.8**.
+- **Menace Mod Settings >= 0.6.1** is the only additional required mod.
+- Squaddie Veterancy is **optional**. No Custom Leaders loader or legacy Modpack Loader.
 
-## Build and deploy (Windows)
+## What can be tested now
 
-1. Extract the **authoring ZIP**, not directly inside MENACE/Mods.
-2. Double-click `Build-and-Deploy.cmd` from the extracted project directory. It calls:
+- Opt-in **Field Promotion Dossier (PREVIEW)** in the normal Black Market grid.
+- A native dossier transaction opens a native game dialog, not a permanent custom panel.
+- Price is **1 credit**, the minimum the native merchant list displays (items priced
+  below 1 are hidden by `BlackMarketUIScreen.FilterItems`). This test intentionally
+  does not validate final dossier balance/costs.
+- Fresh selection across all living squaddies, assigned and unassigned:
+  - Complete Veterancy XP coverage: highest XP, ties use lowest native soldier ID.
+  - No/incomplete XP coverage: most native missions, same deterministic tie-break.
+  - Unknown XP is never fabricated as zero or compared against mission count.
+- Review includes identity, gender/skin, criterion and provisional attributes.
+- **No leader is created or recruited; no source squaddie is consumed.**
+- No recruitment/debug hotkeys, marker files, polling or automatic voice setup.
+- Preview and diagnostic logging are both **OFF by default** in Menace Mod Settings.
 
-   ```powershell
-   jiangyu code sync
-   jiangyu compile
-   jiangyu deploy
-   jiangyu package --output artifacts
-   ```
+The native transaction may consume the test dossier and change market stock.
+This is not a promise that native market/save interactions are game-verified.
+Use a disposable campaign; do not test on a save containing old lab-generated leaders.
 
-3. If unsuccessful, share `artifacts/build-and-deploy.log` from this project.
-4. On success, Jiangyu deploys the compiled output to `MENACE/Mods/SquaddieFieldPromotions/` (game path comes from Jiangyu's global config).
+## Windows installation
 
-You do **not** install the files under `code/` or `templates/` as a standalone compiled mod. Jiangyu builds a `compiled/` directory and deploys **that**.
+Use the canonical bundled-source kit's **INSTALL-SquaddieFieldPromotions.cmd**.
+It bootstraps the pinned private .NET SDK, builds from inventoried bundled sources,
+validates real DLL/manifest versions, backs up the old SFP folder outside Mods,
+then installs only SFP with rollback on failure. Menace Mod Settings and Jiangyu
+are validated and **not overwritten**. No global CLI/Unity Editor setup is required.
+Close the game before installation. The console remains open; failures open the
+persistent **%TEMP%\MENACE-install.log** automatically.
 
-## In-game lab procedure
+The old authoring-only Build-and-Deploy.cmd and unsafe hotkey lab are retired;
+their tracked source remains recoverable from Git history.
 
-1. Enter a fresh **throwaway** non-Ironman campaign. Do not use an important campaign.
-2. Press **F8** while in the strategic layer. The output should include `[SFP 0.1] PRECHECK OK` in `MelonLoader/Latest.log`.
-3. If F8 reports an error, **stop** and send the log. Do not attempt F9.
-4. Manually create an empty file named `ENABLE_UNSAFE_LAB_TEST.txt` in the **deployed** `MENACE/Mods/SquaddieFieldPromotions/` folder. Be careful: Windows Explorer may hide `.txt` file extensions.
-5. Press **F9**. It tries to register a new identity and add it to Hire. Check `MelonLoader/Latest.log` for `[SFP 0.1] TRIAL CREATED` or `[SFP 0.1] TRIAL FAILED`.
-6. Close and reopen the normal **Hire** screen. Inspect whether the candidate is present; a borrowed vanilla portrait/voice is expected during this lab.
-7. **QUIT WITHOUT SAVING.** The generated runtime template will NOT be reconstructed on restart yet. Disable the marker by deleting it.
+## Acceptance test (not yet performed in MENACE)
 
-**Warning:** automatic saves can still happen in some game modes. Run this only on a disposable campaign you will never rely on; exclude Ironman. Reopening any save containing a trial leader may fail.
+The 0.8.0 startup was observed after the player played a normal mission with preview
+OFF; this did not exercise the dossier. Version 0.8.1 replaces the three rejected raw
+text patches with fresh native localized objects. Version 0.8.2 gives manually stocked
+preview items the normal three-restock timeout. Version 0.8.3 refreshes the native
+market window after stocking. Version 0.8.4 fixes the actual cause of the invisible
+dossier: the native merchant list hides items priced below 1, so the preview now costs 1.
 
-## Debug and fallback stat rules
+1. Launch a **throwaway non-Ironman** campaign. Note the living soldier count and Hire list.
+2. In Menace Mod Settings -> **Squaddie Field Promotions**, enable
+   **Offer 1-credit promotion-review dossier in Black Market**. Open Black Market.
+3. Confirm exactly one preview dossier appears, valued at **1**, alongside unchanged vanilla stock.
+4. Complete its normal native trade/redemption. Expect the **PREVIEW ONLY** review dialog.
+5. Check the candidate/criterion. Close the dialog; soldier count and Hire list must be unchanged.
+6. Restock once and reopen the market: the preview should remain visible and must never stack on repeated opens.
+7. Disable the option: only preview stock should disappear; vanilla dossiers must still work normally.
+8. Leave the test campaign without relying on its save. Send observations; the agent can pull Latest.log.
 
-Fallback (with no Squaddie Veterancy XP) in game attribute order:
+Ironman is excluded. Save/restart, restock/duplicate-cleanup behavior, keyboard dismissal,
+native dialog readability and coexistence with other mods remain in-game acceptance gates.
 
-| Agility | Weapon Skill | Valour | Toughness | Vitality | Precision | Positioning |
-| ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 65 | 65 | 62 | 50 | 50 | 5 | 45 |
+## Remaining gates before permanent promotion
 
-With XP available, add the following conservative bonus to each non-Precision attribute; Precision receives half the bonus, and all values are capped at 85:
+1. Native dossier/review acceptance above, with and without optional Veterancy.
+2. Early reconstruction of unique runtime leader/speaker templates **before native roster load**;
+   versioned campaign/slot records, missing/corrupt/mismatched data must fail safely.
+3. Confirm/revalidate the chosen identity; remove **that exact** source from alive/assignment
+   collections, never random deletion or marking the soldier killed. Roll back partial failures.
+4. Restore the recovered 0.6.1 portrait/badge and John/Jane voice paths, without donor stat/perk leakage.
+5. Connect confirmed dossier use to real Hire/recruitment, then mission/save/restart/rollback tests.
 
-| XP | Bonus |
-| ---: | ---: |
-| 0-24 | 0 |
-| 25-49 | +2 |
-| 50-99 | +4 |
-| 100-149 | +6 |
-| 150-249 | +8 |
-| 250-499 | +10 |
-| 500+ | +12 |
+Baseline AGI/WS/VAL/TOU/VIT/PRE/POS: **65/65/62/50/50/5/45**.
+Complete XP adds **0/2/4/6/8/10/12** at **0/25/50/100/150/250/500** XP;
+Precision receives half, cap 85. These remain provisional review values, not balanced recruitment.
 
-These are **provisional design values**, not a proven conversion between Squaddie Veterancy XP and MENACE leader attributes.
+## Developer checks
 
-## Troubleshooting and next iteration
-
-- Missing `jiangyu` command: install/configure the Jiangyu CLI first.
-- F8 baseline clone missing: inspect `MelonLoader/Latest.log` and Jiangyu's compile/deploy output.
-- F8 bridge missing: Jiangyu internals differ; send the log and Jiangyu version, don't patch blind.
-- F9 succeeded but Hire missing: inspect the normal Hire UI state and provide `Latest.log`.
-- No save/load tests in 0.1. Next iteration must establish **pre-roster** rehydration, because Jiangyu's `Context.State` load hook is after `SaveSystem.ExecLoad`, and may be too late to register the IDs saved in vanilla leader fields.
-
-Related issue: https://github.com/EmaEli/menace-mode/issues/27
-
-Research references:
-- https://github.com/antistrategie/jiangyu/blob/main/site/sdk/index.md
-- https://github.com/antistrategie/jiangyu/blob/main/site/sdk/hotkeys.md
-- https://github.com/antistrategie/jiangyu/blob/main/docs/research/verified/template-cloning.md
+Run the module's `tests/OfflineChecks` C# executable for production rules/callbacks
+against explicitly simulated native APIs; `tests/verify_authoring.py` checks source/template contracts.
+Use shared `build_kit.py --module SquaddieFieldPromotions --use-installed-settings --output <zip>`
+after a real code/template build. It inventories source/artifacts and derives the launcher
+from the shared Suite launcher. Never call an unbacked global CLI deploy for this test.

@@ -11,7 +11,8 @@ namespace SquaddieFieldPromotions;
 /// It does NOT duplicate IL2CPP pointer writes or native-array allocation.
 /// All entrypoints are private in Jiangyu 1.x, so their exact signatures are
 /// checked before we mutate any MENACE roster. If Jiangyu changes them, fail
-/// closed and report the missing member on explicit F8 / F9 testing.
+/// closed on incompatibility. Reserved for the later, save-safe recruitment gate;
+/// the 0.8 preview never invokes this bridge or registers runtime leaders.
 /// </summary>
 internal sealed class JiangyuCloneBridge
 {

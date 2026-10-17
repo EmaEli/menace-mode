@@ -3,6 +3,8 @@ compiled/
 code/bin/
 code/obj/
 code/local.props
-code/Directory.Build.props
-code/Directory.Build.targets
+tests/OfflineChecks/bin/
+tests/OfflineChecks/obj/
+artifacts/
+__pycache__/
 *.log

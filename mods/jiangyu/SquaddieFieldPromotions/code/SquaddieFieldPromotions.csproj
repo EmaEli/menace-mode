@@ -1,9 +1,21 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
-    <Nullable>enable</Nullable>
+    <Nullable>disable</Nullable>
     <ImplicitUsings>disable</ImplicitUsings>
     <LangVersion>latest</LangVersion>
     <AssemblyName>SquaddieFieldPromotions</AssemblyName>
+    <Version>0.8.4</Version>
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <MenaceModSettingsPath Condition="'$(MenaceModSettingsPath)' == ''">../../MenaceModSettings/compiled/code/MenaceModSettings.dll</MenaceModSettingsPath>
   </PropertyGroup>
+  <ItemGroup>
+    <!-- Not part of the safe preview; retained as research for the persistence gate. -->
+    <Compile Remove="JiangyuCloneBridge.cs" />
+    <Reference Include="MenaceModSettings">
+      <HintPath>$(MenaceModSettingsPath)</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
 </Project>
