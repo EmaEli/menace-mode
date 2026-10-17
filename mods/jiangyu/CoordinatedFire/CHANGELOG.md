@@ -2,7 +2,7 @@
 
 - Restores the optional camera-state bridge from MEN-006, omitted from the Jiangyu source lineage. Hides the HUD during both automatic and F6 cinematic views.
 - The same layout provider now suppresses drawing and input geometry, avoiding invisible mouse-blocking panels while retaining #43's click capture for visible controls.
-- No combat, AP, targeting, AI or logging changes. Local build and offline regression checks passed; deployment and gameplay verification remain pending (#7).
+- No combat, AP, targeting, AI or logging changes. Local build and offline regression checks passed; installed on the test PC with the previous version backed up. In-game acceptance remains pending (#7).
 
 ## 1.6.9
 

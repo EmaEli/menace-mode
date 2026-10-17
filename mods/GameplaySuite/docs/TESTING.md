@@ -176,7 +176,10 @@ Validation so far: new source-wiring test failed against both original panels, t
 after the fix; 9 focused Python tests and 15,507 C# assertions passed. Both Jiangyu release
 builds succeeded and compiled manifest/file versions match. The PC was inspected read-only:
 Overwatch 0.32.3.6 / CF 1.6.10, Camera 1.1.0, settings 0.6.1, no legacy Suite/Camera folders.
-**No candidate deployment or in-game acceptance yet. Keep #7 open until verified.**
+Candidate installed after confirming MENACE was closed. The backup at
+`_MENACE_Backups\20261016-220541-MEN006` contains the previous Overwatch 0.32.3.6 and
+Coordinated Fire 1.6.10; backup and installed manifest/assembly/file versions were verified.
+**In-game acceptance is still pending. Keep #7 open until automatic and F6 hide/restore are verified.**
 
 # #43 — Shared tactical HUD input guard (in-game verification pending)
 
