@@ -1,6 +1,6 @@
-# Squaddie Field Promotions 0.8.4
+# Squaddie Field Promotions 0.9.0
 
-**Experimental native dossier REVIEW, not a permanent-recruitment release.**
+**Experimental: promotes real squaddies to hirable leaders and persists them across save/load.**
 Tracked in [#27](https://github.com/EmaEli/menace-mode/issues/27).
 
 ## Requirements
@@ -9,24 +9,34 @@ Tracked in [#27](https://github.com/EmaEli/menace-mode/issues/27).
 - **Menace Mod Settings >= 0.6.1** is the only additional required mod.
 - Squaddie Veterancy is **optional**. No Custom Leaders loader or legacy Modpack Loader.
 
-## What can be tested now
+## What the mod does
 
-- Opt-in **Field Promotion Dossier (PREVIEW)** in the normal Black Market grid.
-- A native dossier transaction opens a native game dialog, not a permanent custom panel.
-- Price is **1 credit**, the minimum the native merchant list displays (items priced
-  below 1 are hidden by `BlackMarketUIScreen.FilterItems`). This test intentionally
-  does not validate final dossier balance/costs.
-- Fresh selection across all living squaddies, assigned and unassigned:
+- Opt-in **Field Promotion Dossier** in the normal Black Market grid, priced **1 credit**
+  (the minimum the native merchant list displays; items below 1 are hidden by
+  `BlackMarketUIScreen.FilterItems`). Dossier cost is provisional, not balanced.
+- Redeeming the dossier selects the best living squaddie (assigned or unassigned):
   - Complete Veterancy XP coverage: highest XP, ties use lowest native soldier ID.
   - No/incomplete XP coverage: most native missions, same deterministic tie-break.
-  - Unknown XP is never fabricated as zero or compared against mission count.
-- Review includes identity, gender/skin, criterion and provisional attributes.
-- **No leader is created or recruited; no source squaddie is consumed.**
-- No recruitment/debug hotkeys, marker files, polling or automatic voice setup.
-- Preview and diagnostic logging are both **OFF by default** in Menace Mod Settings.
+  - Soldiers already promoted are skipped; unknown XP is never fabricated as zero.
+- The chosen squaddie becomes a **new squad leader in the Hire list (0 credits)**: a
+  unique `UnitLeaderTemplate`/`SpeakerTemplate` cloned from the matching vanilla
+  gendered leader, with the soldier's name, nickname, skin, bundled portraits from
+  `runtime_assets/<gender>/`, a lettered badge (A, B, C, ...) and the John/Jane voice
+  bank from `runtime_assets/voice/` when it loads; otherwise the native donor voice stays.
+- Attributes: baseline **65/65/62/50/50/5/45** (AGI/WS/VAL/TOU/VIT/PRE/POS) plus a
+  Veterancy XP bonus; perks/stats of the donor template are not inherited.
+- **The source soldier is not removed** from the roster in this version; the promotion
+  is recorded so the same soldier is never promoted twice.
+- Promotions are stored through Jiangyu mod state in a sidecar next to each save
+  (`<save>.jiangyu.SquaddieFieldPromotions.json`). On load, an early prefix on
+  `SaveSystem.ExecLoad` rebuilds every recorded leader **before native roster load**,
+  so hired leaders deserialize against an existing template. A missing sidecar loads
+  silently; a corrupt sidecar or a single broken record warns once and never blocks
+  the other records or the native load.
+- No recruitment/debug hotkeys, marker files or polling. Voice setup runs once, after
+  the strategy layer exists, only when the option is on or promoted leaders exist.
+- The option and diagnostic logging are both **OFF by default** in Menace Mod Settings.
 
-The native transaction may consume the test dossier and change market stock.
-This is not a promise that native market/save interactions are game-verified.
 Use a disposable campaign; do not test on a save containing old lab-generated leaders.
 
 ## Windows installation
@@ -39,44 +49,42 @@ are validated and **not overwritten**. No global CLI/Unity Editor setup is requi
 Close the game before installation. The console remains open; failures open the
 persistent **%TEMP%\MENACE-install.log** automatically.
 
-The old authoring-only Build-and-Deploy.cmd and unsafe hotkey lab are retired;
-their tracked source remains recoverable from Git history.
+The kit also ships the module's raw `runtime_assets/` (portraits, prebuilt John/Jane
+voice bundle with its build receipt, voice routes); the installer stages them next to
+the compiled package because `jiangyu compile --clean` does not preserve them.
 
 ## Acceptance test (not yet performed in MENACE)
 
-The 0.8.0 startup was observed after the player played a normal mission with preview
-OFF; this did not exercise the dossier. Version 0.8.1 replaces the three rejected raw
-text patches with fresh native localized objects. Version 0.8.2 gives manually stocked
-preview items the normal three-restock timeout. Version 0.8.3 refreshes the native
-market window after stocking. Version 0.8.4 fixes the actual cause of the invisible
-dossier: the native merchant list hides items priced below 1, so the preview now costs 1.
+Versions 0.8.0-0.8.4 verified in game that the native dossier is stocked, visible at
+1 credit, redeemable and restocked. Version 0.9.0 reconnects the recovered 0.6.1 leader
+creation (templates, portraits, badges, John/Jane voices) and adds save/load persistence.
 
 1. Launch a **throwaway non-Ironman** campaign. Note the living soldier count and Hire list.
 2. In Menace Mod Settings -> **Squaddie Field Promotions**, enable
-   **Offer 1-credit promotion-review dossier in Black Market**. Open Black Market.
-3. Confirm exactly one preview dossier appears, valued at **1**, alongside unchanged vanilla stock.
-4. Complete its normal native trade/redemption. Expect the **PREVIEW ONLY** review dialog.
-5. Check the candidate/criterion. Close the dialog; soldier count and Hire list must be unchanged.
-6. Restock once and reopen the market: the preview should remain visible and must never stack on repeated opens.
-7. Disable the option: only preview stock should disappear; vanilla dossiers must still work normally.
-8. Leave the test campaign without relying on its save. Send observations; the agent can pull Latest.log.
+   **Offer 1-credit Field Promotion Dossier in Black Market**. Open Black Market.
+3. Confirm exactly one dossier appears, valued at **1**, alongside unchanged vanilla stock.
+4. Redeem it. Expect the **FIELD PROMOTION** dialog naming the soldier and criterion.
+5. Open Hire: the new leader (soldier's name, lettered badge, portraits) is listed at 0 credits.
+   Hire and assign it; the living soldier count must be unchanged (source is not removed yet).
+6. Redeem a second dossier: a different soldier is promoted (badge B); the first is skipped.
+7. **Save, quit to desktop, relaunch, load**: both leaders must still be present in the
+   roster/Hire with name, badge and portraits; confirm the voice bark in a mission.
+8. Disable the option: only the dossier stock should disappear; vanilla dossiers must still work.
+9. Send observations; the agent can pull `Latest.log` (enable **Diagnostic logging** for detail).
 
-Ironman is excluded. Save/restart, restock/duplicate-cleanup behavior, keyboard dismissal,
-native dialog readability and coexistence with other mods remain in-game acceptance gates.
+Ironman is excluded. Coexistence with other mods, keyboard dismissal and native dialog
+readability remain in-game acceptance gates.
 
-## Remaining gates before permanent promotion
+## Remaining gates
 
-1. Native dossier/review acceptance above, with and without optional Veterancy.
-2. Early reconstruction of unique runtime leader/speaker templates **before native roster load**;
-   versioned campaign/slot records, missing/corrupt/mismatched data must fail safely.
-3. Confirm/revalidate the chosen identity; remove **that exact** source from alive/assignment
-   collections, never random deletion or marking the soldier killed. Roll back partial failures.
-4. Restore the recovered 0.6.1 portrait/badge and John/Jane voice paths, without donor stat/perk leakage.
-5. Connect confirmed dossier use to real Hire/recruitment, then mission/save/restart/rollback tests.
+1. Save/load persistence acceptance above, with and without optional Veterancy.
+2. Remove **that exact** source soldier from alive/assignment collections after a confirmed
+   promotion, never random deletion or marking the soldier killed. Roll back partial failures.
+3. Dossier cost/attribute balance.
 
 Baseline AGI/WS/VAL/TOU/VIT/PRE/POS: **65/65/62/50/50/5/45**.
 Complete XP adds **0/2/4/6/8/10/12** at **0/25/50/100/150/250/500** XP;
-Precision receives half, cap 85. These remain provisional review values, not balanced recruitment.
+Precision receives half, cap 85. These remain provisional values, not balanced recruitment.
 
 ## Developer checks
 

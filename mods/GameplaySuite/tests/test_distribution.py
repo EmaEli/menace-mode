@@ -94,9 +94,47 @@ class DistributionTests(unittest.TestCase):
     def test_catalog_covers_all_current_modules(self):
         catalog = json.loads((TOOLS / "distribution.json").read_text())
         actual = {p.parent.name for p in (ROOT / "mods/jiangyu").glob("*/jiangyu.json")}
-        self.assertEqual(set(catalog["modules"]), actual)
+        self.assertEqual(set(catalog["modules"] + catalog.get("experimentalModules", [])), actual)
         self.assertEqual(catalog["modules"][0], "MenaceModSettings")
         self.assertIn("CinematicActionCamera", actual)
+        self.assertNotIn("SquaddieFieldPromotions", catalog["modules"])
+
+    def test_preview_uses_canonical_standalone_launcher_without_replacing_settings(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder).resolve()
+            self.fixture(root)
+            catalog_path = root / "mods/GameplaySuite/tools/distribution.json"
+            catalog = json.loads(catalog_path.read_text())
+            catalog["experimentalModules"] = ["SquaddieFieldPromotions"]
+            catalog_path.write_text(json.dumps(catalog))
+            preview = root / "mods/jiangyu/SquaddieFieldPromotions"
+            (preview / "compiled").mkdir(parents=True)
+            manifest = json.dumps({"name": "SquaddieFieldPromotions", "version": "0.8.0"})
+            (preview / "jiangyu.json").write_text(manifest)
+            (preview / "compiled/jiangyu.json").write_text(manifest)
+            (root / "mods/GameplaySuite/INSTALL-SUITE.cmd").write_text('cmd.exe /k\npowershell -BundleRoot "%~dp0."\n')
+            with self.assertRaisesRegex(ValueError, "use-installed-settings"):
+                BUILDER.collect(root, "SquaddieFieldPromotions")
+            payload, versions = BUILDER.collect(root, "SquaddieFieldPromotions", True)
+            self.assertEqual(versions, {"SquaddieFieldPromotions": "0.8.0"})
+            launcher = payload["INSTALL-SquaddieFieldPromotions.cmd"].decode()
+            self.assertIn("-Product Standalone -Modules SquaddieFieldPromotions -UseInstalledSettings", launcher)
+            self.assertNotIn("INSTALL-SUITE.cmd", payload)
+            self.assertFalse(any("/Example/" in path or "/MenaceModSettings/" in path for path in payload))
+            with self.assertRaisesRegex(ValueError, "Unknown requested"):
+                BUILDER.collect(root, "Unknown")
+            with self.assertRaisesRegex(ValueError, "only by"):
+                BUILDER.collect(root, "Example", True)
+
+    def test_installed_settings_are_validated_without_being_staged(self):
+        source = (TOOLS / "Install-IntegratedSuite.ps1").read_text()
+        helper = (TOOLS / "Install.Common.ps1").read_text()
+        self.assertIn("Get-InstalledSettingsReference $GamePath $minimum", source)
+        self.assertIn("if (-not $UseInstalledSettings)", source)
+        self.assertIn("if ($UseInstalledSettings) { Assert-Hash $settingsDll $settingsHash }", source)
+        self.assertIn("-p:MenaceModSettingsPath=$settingsDll", source)
+        self.assertIn("Assert-Dll $dll $manifest.version '1.0.0.0'", helper)
+        self.assertIn("[version]$manifest.version -lt [version]$MinimumVersion", helper)
 
     def test_bootstrap_requires_all_three_hashes_before_execution(self):
         launcher = (ROOT / "mods/GameplaySuite/INSTALL-SUITE.cmd").read_text()
@@ -117,6 +155,8 @@ class DistributionTests(unittest.TestCase):
         self.assertIn("SelectSingleNode('/Project/PropertyGroup/Version')", source)
         self.assertIn("Missing project Version", source)
         self.assertNotIn("Menace.ModpackLoader.dll", source)
+        self.assertIn("if (-not $BuildOnly -or $RollbackPath) { Assert-GameClosed }", source)
+        self.assertIn("if ($BuildOnly -and -not $RollbackPath) { $lockRoot = $BundleRoot }", source)
 
     def test_private_sdk_pins_are_recorded_in_kit_manifest(self):
         pin = json.loads((TOOLS / "distribution.json").read_text())["dotnetSdk"]

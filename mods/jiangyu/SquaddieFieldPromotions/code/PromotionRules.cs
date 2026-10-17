@@ -29,35 +29,39 @@ internal sealed class Selection
 {
     internal Candidate Soldier { get; }
     internal int LivingCount { get; }
+    internal int ExcludedCount { get; }
     internal bool UsesXp { get; }
     internal bool PartialXp { get; }
     internal string Criterion => UsesXp ? "highest Veterancy XP" : "most native missions completed";
 
-    internal Selection(Candidate soldier, int livingCount, bool usesXp, bool partialXp)
+    internal Selection(Candidate soldier, int livingCount, bool usesXp, bool partialXp, int excludedCount = 0)
     {
         Soldier = soldier; LivingCount = livingCount; UsesXp = usesXp; PartialXp = partialXp;
+        ExcludedCount = excludedCount;
     }
 }
 
 internal static class PromotionRules
 {
-    internal static Selection Choose(IEnumerable<Candidate> candidates)
+    /// <summary>Best eligible living squaddie; <paramref name="excluded"/> holds already promoted IDs.</summary>
+    internal static Selection Choose(IEnumerable<Candidate> candidates, ISet<int> excluded = null)
     {
-        var soldiers = candidates.ToArray();
+        var all = candidates.ToArray();
         var ids = new HashSet<int>();
-        foreach (var soldier in soldiers)
+        foreach (var soldier in all)
         {
             if (soldier.Id < 0 || !ids.Add(soldier.Id) || soldier.Missions < 0 || soldier.Xp < 0 ||
                 soldier.Gender < 0 || soldier.Gender > 1 || soldier.SkinColor < 0 || soldier.SkinColor > 2)
-                throw new InvalidDataException("Invalid or duplicate living squaddie data; review cancelled.");
+                throw new InvalidDataException("Invalid or duplicate living squaddie data; promotion cancelled.");
         }
+        var soldiers = excluded == null ? all : all.Where(s => !excluded.Contains(s.Id)).ToArray();
         if (soldiers.Length == 0) return null;
         // Never rank unknown XP as zero or compare partial XP against a different metric.
         bool allXp = soldiers.All(s => s.Xp.HasValue);
         bool partialXp = !allXp && soldiers.Any(s => s.Xp.HasValue);
         var chosen = soldiers.OrderByDescending(s => allXp ? s.Xp!.Value : s.Missions)
             .ThenBy(s => s.Id).First();
-        return new Selection(chosen, soldiers.Length, allXp, partialXp);
+        return new Selection(chosen, soldiers.Length, allXp, partialXp, all.Length - soldiers.Length);
     }
 
     internal static byte[] Attributes(int? xp)
@@ -71,21 +75,24 @@ internal static class PromotionRules
         return values;
     }
 
-    internal static string Describe(Selection selection)
+    internal static string Describe(Selection selection, PromotionRecord record)
     {
-        const string locked = "PREVIEW ONLY - no soldier is removed and no leader is created.\n" +
-            "Permanent promotion is locked until save/load reconstruction and exact source removal are verified.";
-        if (selection == null) return "No living squaddie is available.\n\n" + locked;
+        const string footer = "The source soldier stays in the roster (this version never removes squaddies). " +
+            "Promoted leaders are restored when the save is loaded.";
+        if (selection == null)
+            return "No eligible living squaddie is available. Soldiers already promoted are skipped.\n" +
+                "No leader or soldier was changed.";
+        if (record == null) throw new ArgumentNullException(nameof(record));
         var soldier = selection.Soldier;
-        var attributes = Attributes(selection.UsesXp ? soldier.Xp : null);
         string xp = soldier.Xp?.ToString() ?? "unavailable (Veterancy is optional)";
-        return $"{Clean(soldier.Name, "Squaddie")} '{Clean(soldier.Nickname, "Field")}' (ID {soldier.Id})\n" +
+        return $"{Clean(soldier.Name, "Squaddie")} '{Clean(soldier.Nickname, "Field")}' (ID {soldier.Id}) " +
+            "is now a squad leader. Recruit the new leader in Hire (0 credits).\n" +
             $"Selection: {selection.Criterion}; ties use lowest native ID.\n" +
-            $"Living soldiers reviewed: {selection.LivingCount} (assigned and unassigned).\n" +
+            $"Eligible living soldiers: {selection.LivingCount}" +
+            (selection.ExcludedCount > 0 ? $" ({selection.ExcludedCount} already promoted skipped).\n" : ".\n") +
             $"Missions: {soldier.Missions}; XP: {xp}; assigned: {(soldier.Assigned ? "yes" : "no")}.\n" +
-            $"Gender: {(soldier.Gender == 0 ? "male" : "female")}; native skin: {soldier.SkinColor}.\n" +
             (selection.PartialXp ? "Incomplete XP coverage: native missions used for EVERY candidate.\n" : "") +
-            $"Provisional AGI/WS/VAL/TOU/VIT/PRE/POS: {string.Join(" / ", attributes)}.\n\n" + locked;
+            $"Leader AGI/WS/VAL/TOU/VIT/PRE/POS: {string.Join(" / ", record.InitialAttributes)}.\n\n" + footer;
     }
 
     private static string Clean(string value, string fallback)

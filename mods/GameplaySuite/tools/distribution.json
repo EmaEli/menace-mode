@@ -23,6 +23,7 @@
     "SquaddieVeterancy", "StartingOptions", "StrongerCover", "VisibilityOverhaul",
     "WeaponMechanicsRebalanced", "WeaponRangesRebalanced", "CinematicActionCamera"
   ],
+  "experimentalModules": ["SquaddieFieldPromotions"],
   "legacyAliases": {
     "SquaddieVeterancy": ["SquaddieProbe", "Squaddie Veterancy"],
     "CinematicActionCamera": ["ThirdPersonCamera", "ThirdPersonCameraSettings.dll", "MenaceThirdPersonCamera.dll"]

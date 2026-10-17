@@ -44,6 +44,22 @@ namespace Il2CppMenace.Strategy
         public void GetInstances(Il2CppSystem.Collections.Generic.List<Il2CppMenace.Items.BaseItem> result, bool special)
         { if (!special) result.AddRange(Items); }
     }
+    public class SpeakerTemplate { }
+    public class UnitLeaderTemplate { public SpeakerTemplate SpeakerTemplate; }
+    public class Roster
+    {
+        public readonly List<UnitLeaderTemplate> Hirable = new();
+        public void AddHirableLeader(UnitLeaderTemplate leader) => Hirable.Add(leader);
+    }
+    public class SaveState
+    {
+        public string FilePath;
+        public string GetFilePath() => FilePath;
+    }
+    public static class SaveSystem
+    {
+        private static void ExecLoad(SaveState state) { }
+    }
 }
 namespace Il2CppMenace.States
 {
@@ -51,6 +67,7 @@ namespace Il2CppMenace.States
     {
         public static StrategyState Current;
         public object Squaddies = new();
+        public Il2CppMenace.Strategy.Roster Roster = new();
         public Il2CppMenace.Strategy.BlackMarket BlackMarket = new();
         public bool Ironman;
         public bool IsIronman() => Ironman;
@@ -137,16 +154,44 @@ namespace Jiangyu.Sdk
         public ModContext Context = new();
         public virtual void OnInit() { }
         public virtual void OnTemplatesApplied() { }
+        public virtual void OnSceneLoaded(int buildIndex, string sceneName) { }
         public virtual void OnUnload() { }
     }
-    public class ModContext { public FakePatches Patches = new(); }
+    public class ModContext
+    {
+        public FakePatches Patches = new();
+        public FakeState State = new();
+        public FakeCoroutines Coroutines = new();
+        public string ModFolder = Path.GetTempPath();
+    }
     public class FakePatches
     {
         public Dictionary<string, Action<PatchInfo>> Prefixes = new(), Postfixes = new();
         public void Prefix(string type, string method, int count, Action<PatchInfo> callback) => Prefixes[method] = callback;
         public void Postfix(string type, string method, int count, Action<PatchInfo> callback) => Postfixes[method] = callback;
     }
-    public class PatchInfo { public object Instance; public object Result; public bool Skip; }
+    public class FakeState
+    {
+        public readonly Dictionary<Type, object> Blobs = new();
+        public int Saves;
+        public T Get<T>() where T : class, new()
+        {
+            if (!Blobs.TryGetValue(typeof(T), out var blob)) Blobs[typeof(T)] = blob = new T();
+            return (T)blob;
+        }
+        public void Save() => Saves++;
+    }
+    public class FakeCoroutines
+    {
+        public readonly List<System.Collections.IEnumerator> Started = new();
+        public void Start(System.Collections.IEnumerator routine) => Started.Add(routine);
+        public void RunAll() { foreach (var routine in Started) while (routine.MoveNext()) { } Started.Clear(); }
+    }
+    public class PatchInfo
+    {
+        public object Instance; public object Result; public bool Skip;
+        public IReadOnlyList<object> Args = Array.Empty<object>();
+    }
     public static class Log
     {
         public static List<string> Warnings = new(), InfoLines = new();
@@ -177,6 +222,62 @@ namespace SquaddieFieldPromotions
     {
         internal static bool Fail;
         internal static Selection Value;
-        internal static Selection Read(Il2CppMenace.States.StrategyState state) => Fail ? throw new IOException("simulated read error") : Value;
+        internal static ISet<int> LastExcluded;
+        internal static Selection Read(Il2CppMenace.States.StrategyState state, ISet<int> excluded)
+        {
+            LastExcluded = excluded;
+            if (Fail) throw new IOException("simulated read error");
+            return Value != null && excluded.Contains(Value.Soldier.Id) ? null : Value;
+        }
+    }
+    // Simulates the native template forge: records every install/rehydrate, never touches the engine.
+    internal sealed class LeaderForge
+    {
+        internal static bool FailInstall;
+        internal static int NextGuid = 1000;
+        internal readonly List<string> Installed = new(), Rehydrated = new();
+        internal int VoicePrepareCalls;
+        internal bool VoiceSucceeds = true;
+        internal bool Unloaded;
+        internal readonly string ModFolder;
+        internal static LeaderForge Last;
+        internal LeaderForge(string modFolder) { ModFolder = modFolder; Last = this; }
+        internal bool AssetsPresent = true;
+        internal bool HasPendingVoices => Installed.Count + Rehydrated.Count > 0 && VoicePrepareCalls == 0;
+        internal void Unload() => Unloaded = true;
+        internal static PromotionRecord CreateRecord(Il2CppMenace.States.StrategyState state, Selection selection, int badgeIndex)
+        {
+            string token = Guid.NewGuid().ToString("N");
+            var record = new PromotionRecord
+            {
+                LeaderId = PromotionRecord.LeaderPrefix + token, SpeakerId = PromotionRecord.SpeakerPrefix + token,
+                NumericGuid = NextGuid++, SourceSquaddieId = selection.Soldier.Id, Name = selection.Soldier.Name,
+                Nickname = selection.Soldier.Nickname, Gender = selection.Soldier.Gender, SkinColor = selection.Soldier.SkinColor,
+                BadgeIndex = badgeIndex, InitialAttributes = PromotionRules.Attributes(selection.UsesXp ? selection.Soldier.Xp : null),
+            };
+            record.Validate();
+            return record;
+        }
+        internal string Install(Il2CppMenace.States.StrategyState state, PromotionRecord record)
+        {
+            record.Validate();
+            if (FailInstall) throw new InvalidOperationException("simulated native clone failure");
+            state.Roster.AddHirableLeader(new Il2CppMenace.Strategy.UnitLeaderTemplate());
+            Installed.Add(record.LeaderId);
+            return "fake-install";
+        }
+        internal string Rehydrate(PromotionRecord record)
+        {
+            record.Validate();
+            if (record.Name == "Broken") throw new InvalidOperationException("simulated rehydrate failure");
+            Rehydrated.Add(record.LeaderId);
+            return "fake-rehydrate";
+        }
+        internal bool TryPrepareVoices(out string status)
+        {
+            VoicePrepareCalls++;
+            status = VoiceSucceeds ? "ok" : "bundle missing";
+            return VoiceSucceeds;
+        }
     }
 }

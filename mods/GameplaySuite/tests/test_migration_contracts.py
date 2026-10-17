@@ -12,7 +12,9 @@ class MigrationContractTests(unittest.TestCase):
         matrix = (ROOT / "docs/MIGRATION_STATUS.md").read_text()
         catalog = json.loads((ROOT / "mods/GameplaySuite/tools/distribution.json").read_text())
         packages = ROOT / "mods/jiangyu"
-        self.assertEqual(set(catalog["modules"]), {p.parent.name for p in packages.glob("*/jiangyu.json")})
+        experimental = catalog.get("experimentalModules", [])
+        self.assertFalse(set(catalog["modules"]) & set(experimental))
+        self.assertEqual(set(catalog["modules"]) | set(experimental), {p.parent.name for p in packages.glob("*/jiangyu.json")})
         for name in catalog["modules"]:
             manifest = json.loads((packages / name / "jiangyu.json").read_text())
             self.assertIn(f'| {name} | {manifest["version"]} |', matrix)
@@ -21,7 +23,10 @@ class MigrationContractTests(unittest.TestCase):
         source = (ROOT / "mods/GameplaySuite/tools/Install-IntegratedSuite.ps1").read_text()
         self.assertIn("$selected = @($catalog.modules)", source)
         self.assertIn("$selected = @('MenaceModSettings') + @($Modules", source)
-        self.assertIn("$catalog.modules -notcontains $name", source)
+        self.assertIn("$available = @($catalog.modules)", source)
+        self.assertIn("$available += @($catalog.experimentalModules)", source)
+        self.assertIn("$available -notcontains $name", source)
+        self.assertIn("Join-Path $root 'runtime_assets'", source)
         self.assertIn("if ($selected -contains 'CinematicActionCamera')", source)
         self.assertIn("MenaceThirdPersonCamera.dll", source)
         self.assertIn("Legacy monolithic Suite detected", source)

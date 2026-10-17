@@ -8,7 +8,7 @@ namespace SquaddieFieldPromotions;
 
 internal static class NativeCandidates
 {
-    internal static Selection Read(StrategyState state)
+    internal static Selection Read(StrategyState state, ISet<int> excluded)
     {
         var list = state.Squaddies.GetAllAlive()
             ?? throw new InvalidOperationException("Living squaddie collection unavailable.");
@@ -32,7 +32,7 @@ internal static class NativeCandidates
         }
         if (count != collection.Count)
             throw new InvalidOperationException("Living squaddie count changed during review.");
-        return PromotionRules.Choose(snapshots);
+        return PromotionRules.Choose(snapshots, excluded);
     }
 
     private static MethodInfo FindXpApi()

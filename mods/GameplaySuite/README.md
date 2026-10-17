@@ -157,7 +157,7 @@ src/
   WeaponRangesRebalanced/ realistic weapon-range rebalance feature
   GarrisonableBuildings/   native-style building garrison feature
   BuildingsBlockLineOfSight/ native LoS blocking for enterable buildings
-  SmokeOverhaul/            soft-obstruction smoke + free infantry smoke/frag grenades
+  SmokeOverhaul/            soft-obstruction smoke + optional infantry smoke/frag grants
   VisibilityOverhaul/      configurable vision/concealment overhaul
 tests/                     offline authoring regression checks (python3 -m unittest discover -s tests)
 docs/                      testing notes and investigations

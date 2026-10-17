@@ -1,0 +1,3873 @@
+{
+    "schemaVersion": 2,
+    "unityVersion": "6000.0.82f1",
+    "buildTarget": "StandaloneWindows64",
+    "bundleFile": "sfp_john_jane_voice.sfpbundle",
+    "bundleSha256": "0504995f30420e8e79697e5d2f269fc120b3bc1e4c641aab0f677141c2a65a16",
+    "builderSha256": "5ee177a1dbc5920ec85fdb37b2e88684bad8ca23c5a7a464e56692b600caaf25",
+    "packagesManifestSha256": "86577de3e8b3b1d8925d7d77df7880352ee16a5ed0d4e06447d1a54c19b9e76d",
+    "crc": 591996139,
+    "clips": [
+        {
+            "assetName": "cl2_john_after_kills_01_01",
+            "sourceFile": "john\\v2\\after_kills_01_01.wav",
+            "sourceSha256": "c1cf8863e28d8c4201371686be931f2fb102f75945a9e17b7c5af68f7c02c084",
+            "frames": 38340,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.995697021484375
+        },
+        {
+            "assetName": "cl2_john_after_kills_02_01",
+            "sourceFile": "john\\v2\\after_kills_02_01.wav",
+            "sourceSha256": "04ff7b368ee27766cf0bce347d5e6171925d75c08c6ddf3175cdfb746bf68bac",
+            "frames": 33634,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_after_kills_03_01",
+            "sourceFile": "john\\v2\\after_kills_03_01.wav",
+            "sourceSha256": "6f27c4b69d799f4ff26e5ab4f1f7c011fa7e5916a68cb2abc8cab4ed131cd5aa",
+            "frames": 41162,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_after_kills_04_01",
+            "sourceFile": "john\\v2\\after_kills_04_01.wav",
+            "sourceSha256": "20a932c5b5b604eb5fc1f6d516ab9f839f56480c84f04ee90aeea6754649c7dc",
+            "frames": 45866,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_after_kills_05_01",
+            "sourceFile": "john\\v2\\after_kills_05_01.wav",
+            "sourceSha256": "dd7fb9294d4ec97405b45a258e27712e6fa372dc3c93b698ab2f24bdd6f9ff0e",
+            "frames": 77854,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_john_after_kills_06_01",
+            "sourceFile": "john\\v2\\after_kills_06_01.wav",
+            "sourceSha256": "f2f3708a9bee43115ba25f38ac0985f8d0363fa6854c28d591db555edfdf5ded",
+            "frames": 78884,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.994171142578125
+        },
+        {
+            "assetName": "cl2_john_after_kills_07_01",
+            "sourceFile": "john\\v2\\after_kills_07_01.wav",
+            "sourceSha256": "98016a7be979e7c592eef51dbc5c5d7211c372553ae3816ae40d243256907f9b",
+            "frames": 34228,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_john_ally_dead_01_01",
+            "sourceFile": "john\\v2\\ally_dead_01_01.wav",
+            "sourceSha256": "5193f92812d300a3e1bedd7d58a08ed5e21b20e5ef30ea2c2a6b35c702f66666",
+            "frames": 36928,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_ally_dead_01_02",
+            "sourceFile": "john\\v2\\ally_dead_01_02.wav",
+            "sourceSha256": "995d7cf0a037bf1186de8aa6fd2f23e87f552acb21ef85d0eced6d5c02a8a75b",
+            "frames": 23286,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_ally_dead_01_03",
+            "sourceFile": "john\\v2\\ally_dead_01_03.wav",
+            "sourceSha256": "7502dc52e70ac3114489ec0372014b3813290a0a79f3258e06cc6e162c879351",
+            "frames": 27990,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_ally_suppressed_01_01",
+            "sourceFile": "john\\v2\\ally_suppressed_01_01.wav",
+            "sourceSha256": "7eed3ff87733b07360c68208e0c9a2f9f23f47a91f3a143e068a0060d9ac25e3",
+            "frames": 46336,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_ally_suppressed_02_01",
+            "sourceFile": "john\\v2\\ally_suppressed_02_01.wav",
+            "sourceSha256": "3250b4e63704105e572c091fdc85edb1e4cb204f5742c4b6c99dfa2a72455a04",
+            "frames": 51980,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_ally_taking_fire_01_01",
+            "sourceFile": "john\\v2\\ally_taking_fire_01_01.wav",
+            "sourceSha256": "4431782d20039e1eaa6f90a08f6433016954ad3077b26ca369b6ad7d83dee986",
+            "frames": 30754,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_ally_taking_fire_01_02",
+            "sourceFile": "john\\v2\\ally_taking_fire_01_02.wav",
+            "sourceSha256": "3790ec5fe96844de4219b1c48f7b23ae76df1812c14f3a359bf7cbeeaba1df84",
+            "frames": 27520,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_ally_taking_fire_02_01",
+            "sourceFile": "john\\v2\\ally_taking_fire_02_01.wav",
+            "sourceSha256": "8af0896fb9b67d38cf8b527505ca0729c54cb42f3f6208b4f3fb983279f7382f",
+            "frames": 35988,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_arrival_01_01",
+            "sourceFile": "john\\v2\\arrival_01_01.wav",
+            "sourceSha256": "7784998676b6e569c3436e953fd510fe275b8b1658f932d56409887ad9800518",
+            "frames": 43514,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_arrival_02_01",
+            "sourceFile": "john\\v2\\arrival_02_01.wav",
+            "sourceSha256": "42fc48c671f0f595ebe5c9cc25f6764fa13ba02c6e96fe66825499211c516942",
+            "frames": 83076,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_building_destroyed_01_01",
+            "sourceFile": "john\\v2\\building_destroyed_01_01.wav",
+            "sourceSha256": "9581a1029ef481f78da1772b529ac8163451f9d72cb9c2b91382efc6c36e5db2",
+            "frames": 41744,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_john_building_destroyed_02_01",
+            "sourceFile": "john\\v2\\building_destroyed_02_01.wav",
+            "sourceSha256": "ec1865ad3d1c6e8c516846aa6cb256ed1ee7cf248952893009bfa06fc452878b",
+            "frames": 43514,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_building_destroyed_03_01",
+            "sourceFile": "john\\v2\\building_destroyed_03_01.wav",
+            "sourceSha256": "0c10e8d71c0cb03e86d29c0f8e95e15cb236e867eb4c52101c132c67a1719324",
+            "frames": 25168,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_john_construct_boss_01_01",
+            "sourceFile": "john\\v2\\construct_boss_01_01.wav",
+            "sourceSha256": "104634aa02581d82a79a0564e46765a47b142e1974dd4dd7d84352b223f697ba",
+            "frames": 28462,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_construct_damaged_01_01",
+            "sourceFile": "john\\v2\\construct_damaged_01_01.wav",
+            "sourceSha256": "1256e5ff6d3a994794c52b998f587558da9ca45de230f0f64558d5113741e281",
+            "frames": 49778,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_john_construct_damaged_02_01",
+            "sourceFile": "john\\v2\\construct_damaged_02_01.wav",
+            "sourceSha256": "6c84a0aee84cddb8d6f0b748ba98175ae045db90ef91219f98918b5a6fe07b2f",
+            "frames": 41152,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_john_construct_killed_01_01",
+            "sourceFile": "john\\v2\\construct_killed_01_01.wav",
+            "sourceSha256": "9faf3b9efbd6afb4720f7d4e6917b7f6530b5a1cb9e4e35feb3514212d81ac87",
+            "frames": 39310,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.99090576171875
+        },
+        {
+            "assetName": "cl2_john_construct_killed_02_01",
+            "sourceFile": "john\\v2\\construct_killed_02_01.wav",
+            "sourceSha256": "9581a1029ef481f78da1772b529ac8163451f9d72cb9c2b91382efc6c36e5db2",
+            "frames": 41744,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_john_construct_killed_03_01",
+            "sourceFile": "john\\v2\\construct_killed_03_01.wav",
+            "sourceSha256": "053127e4b0420dae9a4710237502d4dc45972e81c6211d3c9ca79cf75abfc79f",
+            "frames": 34480,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_construct_killed_04_01",
+            "sourceFile": "john\\v2\\construct_killed_04_01.wav",
+            "sourceSha256": "98016a7be979e7c592eef51dbc5c5d7211c372553ae3816ae40d243256907f9b",
+            "frames": 34228,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_john_construct_killed_boss_01_01",
+            "sourceFile": "john\\v2\\construct_killed_boss_01_01.wav",
+            "sourceSha256": "9581a1029ef481f78da1772b529ac8163451f9d72cb9c2b91382efc6c36e5db2",
+            "frames": 41744,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_john_construct_killed_master_01_01",
+            "sourceFile": "john\\v2\\construct_killed_master_01_01.wav",
+            "sourceSha256": "9581a1029ef481f78da1772b529ac8163451f9d72cb9c2b91382efc6c36e5db2",
+            "frames": 41744,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_john_construct_master_01_01",
+            "sourceFile": "john\\v2\\construct_master_01_01.wav",
+            "sourceSha256": "104634aa02581d82a79a0564e46765a47b142e1974dd4dd7d84352b223f697ba",
+            "frames": 28462,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_construct_spotted_01_01",
+            "sourceFile": "john\\v2\\construct_spotted_01_01.wav",
+            "sourceSha256": "f538ed47f08f1f031f389c439f2c1d7d453e4eadf9777be963af99d36054a249",
+            "frames": 47644,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_construct_spotted_02_01",
+            "sourceFile": "john\\v2\\construct_spotted_02_01.wav",
+            "sourceSha256": "6e7cbed4179a1b89603419a99c25fd5fb7f38212245a431b1bca8b01f435e7b6",
+            "frames": 43568,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_construct_spotted_03_01",
+            "sourceFile": "john\\v2\\construct_spotted_03_01.wav",
+            "sourceSha256": "104634aa02581d82a79a0564e46765a47b142e1974dd4dd7d84352b223f697ba",
+            "frames": 28462,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_construct_spotted_04_01",
+            "sourceFile": "john\\v2\\construct_spotted_04_01.wav",
+            "sourceSha256": "35062eba13bd8d8d36baf4dda6fa051f861c588b3fe83dd06a0f937fa2b34715",
+            "frames": 33954,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_construct_spotted_04_02",
+            "sourceFile": "john\\v2\\construct_spotted_04_02.wav",
+            "sourceSha256": "ea5f9ca34231063b2636b1ca1540914afd43a22a7a2417a01a02ad6cd6fecbb6",
+            "frames": 37870,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_danger_close_01_01",
+            "sourceFile": "john\\v2\\danger_close_01_01.wav",
+            "sourceSha256": "e165df00aa8757caa5ebe3985662a7f5300afd0667af895f59bb4939288255cb",
+            "frames": 67034,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_emp_failed_01_01",
+            "sourceFile": "john\\v2\\emp_failed_01_01.wav",
+            "sourceSha256": "dc368b24d458d8f5f9170e8d7b0f8474d7f49cfea9725d1e0b7064062b09f4b3",
+            "frames": 33724,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.996429443359375
+        },
+        {
+            "assetName": "cl2_john_emp_success_01_01",
+            "sourceFile": "john\\v2\\emp_success_01_01.wav",
+            "sourceSha256": "9581a1029ef481f78da1772b529ac8163451f9d72cb9c2b91382efc6c36e5db2",
+            "frames": 41744,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_john_enemy_blocked_01_01",
+            "sourceFile": "john\\v2\\enemy_blocked_01_01.wav",
+            "sourceSha256": "58e3f45a048ccf35530d08cfaeb082a7f11b50b652c18cf637ca205b3c7db570",
+            "frames": 69856,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_enemy_blocked_02_01",
+            "sourceFile": "john\\v2\\enemy_blocked_02_01.wav",
+            "sourceSha256": "407d9cff302aac69cf9f4fbcb0ea39322ace136cc15e60648258f005afce8c8c",
+            "frames": 18582,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_enemy_blocked_02_02",
+            "sourceFile": "john\\v2\\enemy_blocked_02_02.wav",
+            "sourceSha256": "68615e82b5f36a902202c20c713d586b9bf656c08f902f175e80b901df1577f7",
+            "frames": 20464,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_enemy_blocked_02_03",
+            "sourceFile": "john\\v2\\enemy_blocked_02_03.wav",
+            "sourceSha256": "e7d5a7f262f51a905d7d4124ce33490db9592955e9cca4bfdb25ee9790a852de",
+            "frames": 17952,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_enemy_damaged_01_01",
+            "sourceFile": "john\\v2\\enemy_damaged_01_01.wav",
+            "sourceSha256": "6c84a0aee84cddb8d6f0b748ba98175ae045db90ef91219f98918b5a6fe07b2f",
+            "frames": 41152,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_john_enemy_damaged_02_01",
+            "sourceFile": "john\\v2\\enemy_damaged_02_01.wav",
+            "sourceSha256": "1256e5ff6d3a994794c52b998f587558da9ca45de230f0f64558d5113741e281",
+            "frames": 49778,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_john_enemy_damaged_03_01",
+            "sourceFile": "john\\v2\\enemy_damaged_03_01.wav",
+            "sourceSha256": "5179bc2cc992f15cdf3985aa2a69df122607665c94474b590d918eb0cf175bc4",
+            "frames": 107018,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_enemy_damaged_04_01",
+            "sourceFile": "john\\v2\\enemy_damaged_04_01.wav",
+            "sourceSha256": "6c84a0aee84cddb8d6f0b748ba98175ae045db90ef91219f98918b5a6fe07b2f",
+            "frames": 41152,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_john_enemy_damaged_05_01",
+            "sourceFile": "john\\v2\\enemy_damaged_05_01.wav",
+            "sourceSha256": "1256e5ff6d3a994794c52b998f587558da9ca45de230f0f64558d5113741e281",
+            "frames": 49778,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_john_enemy_fleeing_01_01",
+            "sourceFile": "john\\v2\\enemy_fleeing_01_01.wav",
+            "sourceSha256": "04ff7b368ee27766cf0bce347d5e6171925d75c08c6ddf3175cdfb746bf68bac",
+            "frames": 33634,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_enemy_hidden_01_01",
+            "sourceFile": "john\\v2\\enemy_hidden_01_01.wav",
+            "sourceSha256": "60ed9c7d60852ba8eecc70bb6e9b3b8ec697f1a482888629155127de3f4cba18",
+            "frames": 32694,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.99859619140625
+        },
+        {
+            "assetName": "cl2_john_enemy_hidden_02_01",
+            "sourceFile": "john\\v2\\enemy_hidden_02_01.wav",
+            "sourceSha256": "cb2053ddad83e1d9937c9f8b1c10054a544c3602149e6009e83b56229ccb086f",
+            "frames": 52450,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_enemy_suppressed_01_01",
+            "sourceFile": "john\\v2\\enemy_suppressed_01_01.wav",
+            "sourceSha256": "1256e5ff6d3a994794c52b998f587558da9ca45de230f0f64558d5113741e281",
+            "frames": 49778,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_john_enemy_suppressed_02_01",
+            "sourceFile": "john\\v2\\enemy_suppressed_02_01.wav",
+            "sourceSha256": "db5ede7efaf8f40f44535ee5c6df4b92360eaf633aeb4d24b6c17648fd420e6a",
+            "frames": 87732,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_enemy_suppressed_03_01",
+            "sourceFile": "john\\v2\\enemy_suppressed_03_01.wav",
+            "sourceSha256": "1256e5ff6d3a994794c52b998f587558da9ca45de230f0f64558d5113741e281",
+            "frames": 49778,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_john_enemy_trees_01_01",
+            "sourceFile": "john\\v2\\enemy_trees_01_01.wav",
+            "sourceSha256": "f538ed47f08f1f031f389c439f2c1d7d453e4eadf9777be963af99d36054a249",
+            "frames": 47644,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_enemy_trees_02_01",
+            "sourceFile": "john\\v2\\enemy_trees_02_01.wav",
+            "sourceSha256": "6e7cbed4179a1b89603419a99c25fd5fb7f38212245a431b1bca8b01f435e7b6",
+            "frames": 43568,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_enemy_vehicle_damaged_01_01",
+            "sourceFile": "john\\v2\\enemy_vehicle_damaged_01_01.wav",
+            "sourceSha256": "1256e5ff6d3a994794c52b998f587558da9ca45de230f0f64558d5113741e281",
+            "frames": 49778,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_john_enemy_vehicle_damaged_02_01",
+            "sourceFile": "john\\v2\\enemy_vehicle_damaged_02_01.wav",
+            "sourceSha256": "6c84a0aee84cddb8d6f0b748ba98175ae045db90ef91219f98918b5a6fe07b2f",
+            "frames": 41152,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_john_enemy_vehicle_damaged_03_01",
+            "sourceFile": "john\\v2\\enemy_vehicle_damaged_03_01.wav",
+            "sourceSha256": "1256e5ff6d3a994794c52b998f587558da9ca45de230f0f64558d5113741e281",
+            "frames": 49778,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_john_grenade_frag_01_01",
+            "sourceFile": "john\\v2\\grenade_frag_01_01.wav",
+            "sourceSha256": "6e4e8ba9ac586ac2c590f44a663e22d3f0904f031ca0cafc5e7667f101debf8f",
+            "frames": 37842,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_idle_combat2_01_01",
+            "sourceFile": "john\\v2\\idle_combat2_01_01.wav",
+            "sourceSha256": "7784998676b6e569c3436e953fd510fe275b8b1658f932d56409887ad9800518",
+            "frames": 43514,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_idle_combat_01_01",
+            "sourceFile": "john\\v2\\idle_combat_01_01.wav",
+            "sourceSha256": "7e7115e2542606b6ac2e7dc98c8fe85a75124c6f9909fecb9ab35e876970ebee",
+            "frames": 38340,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_john_kill_01_01",
+            "sourceFile": "john\\v2\\kill_01_01.wav",
+            "sourceSha256": "dbad2ba724e9b040aae9434cf1880c768c7165702a36ca60e6738b4685210ba0",
+            "frames": 20464,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_john_kill_02_01",
+            "sourceFile": "john\\v2\\kill_02_01.wav",
+            "sourceSha256": "adbd878ef5ef89ab3878a0ed2b598444a09876c709ca4c0689474a551e1f7116",
+            "frames": 25650,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_john_kill_03_01",
+            "sourceFile": "john\\v2\\kill_03_01.wav",
+            "sourceSha256": "9faf3b9efbd6afb4720f7d4e6917b7f6530b5a1cb9e4e35feb3514212d81ac87",
+            "frames": 39310,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.99090576171875
+        },
+        {
+            "assetName": "cl2_john_kill_04_01",
+            "sourceFile": "john\\v2\\kill_04_01.wav",
+            "sourceSha256": "053127e4b0420dae9a4710237502d4dc45972e81c6211d3c9ca79cf75abfc79f",
+            "frames": 34480,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_kill_05_01",
+            "sourceFile": "john\\v2\\kill_05_01.wav",
+            "sourceSha256": "98016a7be979e7c592eef51dbc5c5d7211c372553ae3816ae40d243256907f9b",
+            "frames": 34228,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_john_kill_06_01",
+            "sourceFile": "john\\v2\\kill_06_01.wav",
+            "sourceSha256": "3b8d8558a812b8d29eb5d80e3e4fba7bbba63041c2ddeed60779736ad946c138",
+            "frames": 56686,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_kill_bugs_01_01",
+            "sourceFile": "john\\v2\\kill_bugs_01_01.wav",
+            "sourceSha256": "9faf3b9efbd6afb4720f7d4e6917b7f6530b5a1cb9e4e35feb3514212d81ac87",
+            "frames": 39310,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.99090576171875
+        },
+        {
+            "assetName": "cl2_john_kill_bugs_02_01",
+            "sourceFile": "john\\v2\\kill_bugs_02_01.wav",
+            "sourceSha256": "dbad2ba724e9b040aae9434cf1880c768c7165702a36ca60e6738b4685210ba0",
+            "frames": 20464,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_john_kill_bugs_03_01",
+            "sourceFile": "john\\v2\\kill_bugs_03_01.wav",
+            "sourceSha256": "053127e4b0420dae9a4710237502d4dc45972e81c6211d3c9ca79cf75abfc79f",
+            "frames": 34480,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_kill_bugs_04_01",
+            "sourceFile": "john\\v2\\kill_bugs_04_01.wav",
+            "sourceSha256": "9faf3b9efbd6afb4720f7d4e6917b7f6530b5a1cb9e4e35feb3514212d81ac87",
+            "frames": 39310,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.99090576171875
+        },
+        {
+            "assetName": "cl2_john_kill_heavy_01_01",
+            "sourceFile": "john\\v2\\kill_heavy_01_01.wav",
+            "sourceSha256": "053127e4b0420dae9a4710237502d4dc45972e81c6211d3c9ca79cf75abfc79f",
+            "frames": 34480,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_kill_hurt_01_01",
+            "sourceFile": "john\\v2\\kill_hurt_01_01.wav",
+            "sourceSha256": "f2f3708a9bee43115ba25f38ac0985f8d0363fa6854c28d591db555edfdf5ded",
+            "frames": 78884,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.994171142578125
+        },
+        {
+            "assetName": "cl2_john_kill_hurt_02_01",
+            "sourceFile": "john\\v2\\kill_hurt_02_01.wav",
+            "sourceSha256": "9faf3b9efbd6afb4720f7d4e6917b7f6530b5a1cb9e4e35feb3514212d81ac87",
+            "frames": 39310,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.99090576171875
+        },
+        {
+            "assetName": "cl2_john_kill_sniper_01_01",
+            "sourceFile": "john\\v2\\kill_sniper_01_01.wav",
+            "sourceSha256": "adbd878ef5ef89ab3878a0ed2b598444a09876c709ca4c0689474a551e1f7116",
+            "frames": 25650,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_john_kill_turret_01_01",
+            "sourceFile": "john\\v2\\kill_turret_01_01.wav",
+            "sourceSha256": "053127e4b0420dae9a4710237502d4dc45972e81c6211d3c9ca79cf75abfc79f",
+            "frames": 34480,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_kill_vehicle_01_01",
+            "sourceFile": "john\\v2\\kill_vehicle_01_01.wav",
+            "sourceSha256": "9581a1029ef481f78da1772b529ac8163451f9d72cb9c2b91382efc6c36e5db2",
+            "frames": 41744,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_john_kill_weapons_01_01",
+            "sourceFile": "john\\v2\\kill_weapons_01_01.wav",
+            "sourceSha256": "98016a7be979e7c592eef51dbc5c5d7211c372553ae3816ae40d243256907f9b",
+            "frames": 34228,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_john_last_click_01_01",
+            "sourceFile": "john\\v2\\last_click_01_01.wav",
+            "sourceSha256": "4f2e842b05a8776e9c4da7144732126a557aea8d32f013df082d08353e93a2ed",
+            "frames": 28194,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999847412109375
+        },
+        {
+            "assetName": "cl2_john_last_man_01_01",
+            "sourceFile": "john\\v2\\last_man_01_01.wav",
+            "sourceSha256": "6880ccc5627a8649ed96663c9696d8f995b8d58939e56b9c7ea815503edd51b0",
+            "frames": 46806,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_last_man_01_02",
+            "sourceFile": "john\\v2\\last_man_01_02.wav",
+            "sourceSha256": "6b14760314bbb01bc4d98055103f2ffceef083fa253aaf56cf3b970cb847ac16",
+            "frames": 43042,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_many_enemies_01_01",
+            "sourceFile": "john\\v2\\many_enemies_01_01.wav",
+            "sourceSha256": "2011d9b73116e9fe169f1460f62505262a780669c7bad0bbc8d4275c24157217",
+            "frames": 68948,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_massive_explosion_01_01",
+            "sourceFile": "john\\v2\\massive_explosion_01_01.wav",
+            "sourceSha256": "0c10e8d71c0cb03e86d29c0f8e95e15cb236e867eb4c52101c132c67a1719324",
+            "frames": 25168,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_john_miss_01_01",
+            "sourceFile": "john\\v2\\miss_01_01.wav",
+            "sourceSha256": "58e3f45a048ccf35530d08cfaeb082a7f11b50b652c18cf637ca205b3c7db570",
+            "frames": 69856,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_miss_02_01",
+            "sourceFile": "john\\v2\\miss_02_01.wav",
+            "sourceSha256": "407d9cff302aac69cf9f4fbcb0ea39322ace136cc15e60648258f005afce8c8c",
+            "frames": 18582,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_miss_02_02",
+            "sourceFile": "john\\v2\\miss_02_02.wav",
+            "sourceSha256": "68615e82b5f36a902202c20c713d586b9bf656c08f902f175e80b901df1577f7",
+            "frames": 20464,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_miss_02_03",
+            "sourceFile": "john\\v2\\miss_02_03.wav",
+            "sourceSha256": "e7d5a7f262f51a905d7d4124ce33490db9592955e9cca4bfdb25ee9790a852de",
+            "frames": 17952,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_miss_03_01",
+            "sourceFile": "john\\v2\\miss_03_01.wav",
+            "sourceSha256": "407d9cff302aac69cf9f4fbcb0ea39322ace136cc15e60648258f005afce8c8c",
+            "frames": 18582,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_miss_03_02",
+            "sourceFile": "john\\v2\\miss_03_02.wav",
+            "sourceSha256": "68615e82b5f36a902202c20c713d586b9bf656c08f902f175e80b901df1577f7",
+            "frames": 20464,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_miss_03_03",
+            "sourceFile": "john\\v2\\miss_03_03.wav",
+            "sourceSha256": "e7d5a7f262f51a905d7d4124ce33490db9592955e9cca4bfdb25ee9790a852de",
+            "frames": 17952,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_miss_cover_01_01",
+            "sourceFile": "john\\v2\\miss_cover_01_01.wav",
+            "sourceSha256": "58e3f45a048ccf35530d08cfaeb082a7f11b50b652c18cf637ca205b3c7db570",
+            "frames": 69856,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_miss_cover_02_01",
+            "sourceFile": "john\\v2\\miss_cover_02_01.wav",
+            "sourceSha256": "dc368b24d458d8f5f9170e8d7b0f8474d7f49cfea9725d1e0b7064062b09f4b3",
+            "frames": 33724,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.996429443359375
+        },
+        {
+            "assetName": "cl2_john_miss_cover_03_01",
+            "sourceFile": "john\\v2\\miss_cover_03_01.wav",
+            "sourceSha256": "407d9cff302aac69cf9f4fbcb0ea39322ace136cc15e60648258f005afce8c8c",
+            "frames": 18582,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_miss_cover_03_02",
+            "sourceFile": "john\\v2\\miss_cover_03_02.wav",
+            "sourceSha256": "68615e82b5f36a902202c20c713d586b9bf656c08f902f175e80b901df1577f7",
+            "frames": 20464,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_miss_cover_03_03",
+            "sourceFile": "john\\v2\\miss_cover_03_03.wav",
+            "sourceSha256": "e7d5a7f262f51a905d7d4124ce33490db9592955e9cca4bfdb25ee9790a852de",
+            "frames": 17952,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_miss_twice_01_01",
+            "sourceFile": "john\\v2\\miss_twice_01_01.wav",
+            "sourceSha256": "407d9cff302aac69cf9f4fbcb0ea39322ace136cc15e60648258f005afce8c8c",
+            "frames": 18582,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_miss_twice_01_02",
+            "sourceFile": "john\\v2\\miss_twice_01_02.wav",
+            "sourceSha256": "68615e82b5f36a902202c20c713d586b9bf656c08f902f175e80b901df1577f7",
+            "frames": 20464,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_miss_twice_01_03",
+            "sourceFile": "john\\v2\\miss_twice_01_03.wav",
+            "sourceSha256": "e7d5a7f262f51a905d7d4124ce33490db9592955e9cca4bfdb25ee9790a852de",
+            "frames": 17952,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_morale_fleeing_01_01",
+            "sourceFile": "john\\v2\\morale_fleeing_01_01.wav",
+            "sourceSha256": "2261d419f92e78ebfc5c491ca41dfc95e2542c2ff21a07087c838cf811dc5f4a",
+            "frames": 67504,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_morale_fleeing_02_01",
+            "sourceFile": "john\\v2\\morale_fleeing_02_01.wav",
+            "sourceSha256": "582c44ec58adb41a751c08c20f82327fb41c0cf85f5330ce6432f38a8cc61061",
+            "frames": 75502,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_morale_recovery_01_01",
+            "sourceFile": "john\\v2\\morale_recovery_01_01.wav",
+            "sourceSha256": "b5bd592a9a839194d39de403bef40853b8dfb6938a33e91417041172d1eb6429",
+            "frames": 28974,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_morale_recovery_02_01",
+            "sourceFile": "john\\v2\\morale_recovery_02_01.wav",
+            "sourceSha256": "dfc4c4aa14a1ad2b2260518dc1bc78b6008996c9bfc773e34090d447d5de668d",
+            "frames": 33368,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_morale_wavering_01_01",
+            "sourceFile": "john\\v2\\morale_wavering_01_01.wav",
+            "sourceSha256": "43538073dcd8179b6e7dfb81077c1ba8d48b5e1b677cd063861c0bf4947f1d9e",
+            "frames": 30254,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_morale_wavering_02_01",
+            "sourceFile": "john\\v2\\morale_wavering_02_01.wav",
+            "sourceSha256": "49e9e66c48e3941a0ee1f7c931085078d1c8f23cf14ac2bd995c7796d0a5f7ee",
+            "frames": 42572,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_john_move_cover_01_01",
+            "sourceFile": "john\\v2\\move_cover_01_01.wav",
+            "sourceSha256": "facd764946d1ae65648718e384d2953ebfee6e14e76ea4f3b3d29bef3bd599c2",
+            "frames": 33702,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_move_cover_02_01",
+            "sourceFile": "john\\v2\\move_cover_02_01.wav",
+            "sourceSha256": "4431782d20039e1eaa6f90a08f6433016954ad3077b26ca369b6ad7d83dee986",
+            "frames": 30754,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_move_cover_02_02",
+            "sourceFile": "john\\v2\\move_cover_02_02.wav",
+            "sourceSha256": "3790ec5fe96844de4219b1c48f7b23ae76df1812c14f3a359bf7cbeeaba1df84",
+            "frames": 27520,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_move_cover_03_01",
+            "sourceFile": "john\\v2\\move_cover_03_01.wav",
+            "sourceSha256": "8af0896fb9b67d38cf8b527505ca0729c54cb42f3f6208b4f3fb983279f7382f",
+            "frames": 35988,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_move_cover_done_01_01",
+            "sourceFile": "john\\v2\\move_cover_done_01_01.wav",
+            "sourceSha256": "7e7115e2542606b6ac2e7dc98c8fe85a75124c6f9909fecb9ab35e876970ebee",
+            "frames": 38340,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_john_move_cover_done_02_01",
+            "sourceFile": "john\\v2\\move_cover_done_02_01.wav",
+            "sourceSha256": "7f6e432adcc1c25e1a45079f4b9c558679cb8f5444dca6797dd61a82f195710a",
+            "frames": 20936,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.9998779296875
+        },
+        {
+            "assetName": "cl2_john_move_cover_done_03_01",
+            "sourceFile": "john\\v2\\move_cover_done_03_01.wav",
+            "sourceSha256": "6880ccc5627a8649ed96663c9696d8f995b8d58939e56b9c7ea815503edd51b0",
+            "frames": 46806,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_move_cover_done_03_02",
+            "sourceFile": "john\\v2\\move_cover_done_03_02.wav",
+            "sourceSha256": "6b14760314bbb01bc4d98055103f2ffceef083fa253aaf56cf3b970cb847ac16",
+            "frames": 43042,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_move_done_01_01",
+            "sourceFile": "john\\v2\\move_done_01_01.wav",
+            "sourceSha256": "06dc09d5c0c4252675fc55d84b28c159765787b03c928f1669e16eafa736d88a",
+            "frames": 27520,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_john_move_done_02_01",
+            "sourceFile": "john\\v2\\move_done_02_01.wav",
+            "sourceSha256": "7e7115e2542606b6ac2e7dc98c8fe85a75124c6f9909fecb9ab35e876970ebee",
+            "frames": 38340,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_john_move_done_03_01",
+            "sourceFile": "john\\v2\\move_done_03_01.wav",
+            "sourceSha256": "6880ccc5627a8649ed96663c9696d8f995b8d58939e56b9c7ea815503edd51b0",
+            "frames": 46806,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_move_done_03_02",
+            "sourceFile": "john\\v2\\move_done_03_02.wav",
+            "sourceSha256": "6b14760314bbb01bc4d98055103f2ffceef083fa253aaf56cf3b970cb847ac16",
+            "frames": 43042,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_move_done_hurt_01_01",
+            "sourceFile": "john\\v2\\move_done_hurt_01_01.wav",
+            "sourceSha256": "b5bd592a9a839194d39de403bef40853b8dfb6938a33e91417041172d1eb6429",
+            "frames": 28974,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_move_done_hurt_02_01",
+            "sourceFile": "john\\v2\\move_done_hurt_02_01.wav",
+            "sourceSha256": "dfc4c4aa14a1ad2b2260518dc1bc78b6008996c9bfc773e34090d447d5de668d",
+            "frames": 33368,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_move_done_quiet_01_01",
+            "sourceFile": "john\\v2\\move_done_quiet_01_01.wav",
+            "sourceSha256": "7e7115e2542606b6ac2e7dc98c8fe85a75124c6f9909fecb9ab35e876970ebee",
+            "frames": 38340,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_john_move_done_quiet_02_01",
+            "sourceFile": "john\\v2\\move_done_quiet_02_01.wav",
+            "sourceSha256": "5b2d5929723b22f7237874feb9ce085f389fc814fb55bbbdee5ff098f22666fd",
+            "frames": 32096,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_john_move_hurt_01_01",
+            "sourceFile": "john\\v2\\move_hurt_01_01.wav",
+            "sourceSha256": "d2373f5a6da9045bb8b028e26890755bad5252e263d2e65c82c09bb9e0350aae",
+            "frames": 91024,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.7928466796875
+        },
+        {
+            "assetName": "cl2_john_move_hurt_02_01",
+            "sourceFile": "john\\v2\\move_hurt_02_01.wav",
+            "sourceSha256": "ee97646760bea15a6908ff6fd93cf92cdcdc0e0f7b019d9757b4024ecf536893",
+            "frames": 21796,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_john_move_quiet_01_01",
+            "sourceFile": "john\\v2\\move_quiet_01_01.wav",
+            "sourceSha256": "509cca324d78da91fc3ebeffc126e9360f7868ce4e51b4a77b72268f212380c7",
+            "frames": 32224,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_john_move_quiet_01_02",
+            "sourceFile": "john\\v2\\move_quiet_01_02.wav",
+            "sourceSha256": "26404bcb9cf0363f10ca93e1d215b1ac44833f12468605edf68264db725b6d26",
+            "frames": 28462,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_john_move_quiet_02_01",
+            "sourceFile": "john\\v2\\move_quiet_02_01.wav",
+            "sourceSha256": "42f78b21e53c5672e4020d723dc746d9d06ec1d40e15a3a34365457e22eb82c9",
+            "frames": 34192,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_john_move_shout_01_01",
+            "sourceFile": "john\\v2\\move_shout_01_01.wav",
+            "sourceSha256": "6182b3001725392e48aeb171071dfcb7a239cd6ec99fd13ec517bc8e6838cd95",
+            "frames": 46336,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_move_shout_02_01",
+            "sourceFile": "john\\v2\\move_shout_02_01.wav",
+            "sourceSha256": "6182b3001725392e48aeb171071dfcb7a239cd6ec99fd13ec517bc8e6838cd95",
+            "frames": 46336,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_move_shout_03_01",
+            "sourceFile": "john\\v2\\move_shout_03_01.wav",
+            "sourceSha256": "c1e13858e80bb11f59d629c973c03638432e7e57984c40fe0c67af686bf92908",
+            "frames": 51510,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_move_shout_04_01",
+            "sourceFile": "john\\v2\\move_shout_04_01.wav",
+            "sourceSha256": "05b52b201f17614e57ca58d26ad10c086ed7bff7495ec918bb29d627023ea100",
+            "frames": 42572,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_john_move_shout_05_01",
+            "sourceFile": "john\\v2\\move_shout_05_01.wav",
+            "sourceSha256": "f77f72b109cab5157c234af715240b516c3fc302bb258d28dfd814b20f4c4187",
+            "frames": 54332,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_move_shout_06_01",
+            "sourceFile": "john\\v2\\move_shout_06_01.wav",
+            "sourceSha256": "aa8fdab1fcd3a3ab8fcc15812840daeba9d2aa02a63dccc124499e2f67d5d6ba",
+            "frames": 44942,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_john_move_shout_07_01",
+            "sourceFile": "john\\v2\\move_shout_07_01.wav",
+            "sourceSha256": "b14e7f6263b002d0c8195fcb47a23d71348694dffaf778b5b048919675e7f694",
+            "frames": 60448,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_moving_01_01",
+            "sourceFile": "john\\v2\\moving_01_01.wav",
+            "sourceSha256": "abb5767a2c593509e4ea40cb320af92be6ed14cea1c5a9d4cb51ef38355507e9",
+            "frames": 68916,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_moving_01_02",
+            "sourceFile": "john\\v2\\moving_01_02.wav",
+            "sourceSha256": "c6b404114723a34bfe572751369d992cafd8b152637aa3b139e2e8558fb53bf2",
+            "frames": 76932,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_moving_02_01",
+            "sourceFile": "john\\v2\\moving_02_01.wav",
+            "sourceSha256": "abb5767a2c593509e4ea40cb320af92be6ed14cea1c5a9d4cb51ef38355507e9",
+            "frames": 68916,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_moving_02_02",
+            "sourceFile": "john\\v2\\moving_02_02.wav",
+            "sourceSha256": "c6b404114723a34bfe572751369d992cafd8b152637aa3b139e2e8558fb53bf2",
+            "frames": 76932,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_moving_03_01",
+            "sourceFile": "john\\v2\\moving_03_01.wav",
+            "sourceSha256": "ed54f0d09365bb02b8e12b92c0098e24de2fdb6061009b4074e42a89b1d0428e",
+            "frames": 28932,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_john_moving_03_02",
+            "sourceFile": "john\\v2\\moving_03_02.wav",
+            "sourceSha256": "0575f3ea9f33aeb50c4cc1b1ed7ea228d4d26c7f785294ce41d3ec68eca0b3c2",
+            "frames": 27990,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_john_moving_03_03",
+            "sourceFile": "john\\v2\\moving_03_03.wav",
+            "sourceSha256": "0a701574b3b880281a8624390fedd2f78ae5970253f98ab64ef1eeb49bab3a32",
+            "frames": 27990,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_objective_threat_01_01",
+            "sourceFile": "john\\v2\\objective_threat_01_01.wav",
+            "sourceSha256": "9002a0ead5dc7b2a044b9d3d47287936892af0abcad8745ac774744d43893aad",
+            "frames": 75972,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_offmap_01_01",
+            "sourceFile": "john\\v2\\offmap_01_01.wav",
+            "sourceSha256": "677ee59a220b94083d0fc88ddfa98b640605f1cd1219865ee6fb03188f083158",
+            "frames": 33164,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_offmap_02_01",
+            "sourceFile": "john\\v2\\offmap_02_01.wav",
+            "sourceSha256": "02d33305222277f2995cbe703c3567ebbaa325b6a3a25f5bba44f1eae5d98926",
+            "frames": 25236,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_offmap_02_02",
+            "sourceFile": "john\\v2\\offmap_02_02.wav",
+            "sourceSha256": "c3ccf988b85501947899fb0c823c8a56a7ae983ed6bbd7411c0e1e80613e8754",
+            "frames": 23380,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_john_offmap_02_03",
+            "sourceFile": "john\\v2\\offmap_02_03.wav",
+            "sourceSha256": "1baa32fc74c158e5c0b4a6f9062feb00463769e5e58699f044097e5987c6520a",
+            "frames": 20936,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_ready_01_01",
+            "sourceFile": "john\\v2\\ready_01_01.wav",
+            "sourceSha256": "b1cb60d9b82be747862278b977150bf5e164409644ff54fccd68587f945cbfac",
+            "frames": 32694,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_ready_hurt_01_01",
+            "sourceFile": "john\\v2\\ready_hurt_01_01.wav",
+            "sourceSha256": "ee97646760bea15a6908ff6fd93cf92cdcdc0e0f7b019d9757b4024ecf536893",
+            "frames": 21796,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_john_ready_hurt_02_01",
+            "sourceFile": "john\\v2\\ready_hurt_02_01.wav",
+            "sourceSha256": "4232afa803eb352087d12e8e758c357d13856052c40efec825c1e4202fd7c91e",
+            "frames": 27990,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_ready_hurt_02_02",
+            "sourceFile": "john\\v2\\ready_hurt_02_02.wav",
+            "sourceSha256": "63e52d619993dc75aa893b0291a71fb82272ec1b8748091742de7b8ac27992b4",
+            "frames": 27520,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_ready_hurt_03_01",
+            "sourceFile": "john\\v2\\ready_hurt_03_01.wav",
+            "sourceSha256": "69bee80dccc0d40bf44ee58741f0b2cdea14d86cff4f83df6b1491a6cd1ad670",
+            "frames": 22346,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_ready_hurt_03_02",
+            "sourceFile": "john\\v2\\ready_hurt_03_02.wav",
+            "sourceSha256": "57ebb7f348be8eeca3e9a7fc03256f7b06f091c6c7dc512c2d64aa84a9b4cd97",
+            "frames": 26108,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_john_ready_quiet_01_01",
+            "sourceFile": "john\\v2\\ready_quiet_01_01.wav",
+            "sourceSha256": "585f3ff108417ac52fb6779d0a7a6ee49bd6fab1a8057ce16b0a9447947f671e",
+            "frames": 27050,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_ready_quiet_02_01",
+            "sourceFile": "john\\v2\\ready_quiet_02_01.wav",
+            "sourceSha256": "7e7115e2542606b6ac2e7dc98c8fe85a75124c6f9909fecb9ab35e876970ebee",
+            "frames": 38340,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_john_ready_quiet_03_01",
+            "sourceFile": "john\\v2\\ready_quiet_03_01.wav",
+            "sourceSha256": "5b2d5929723b22f7237874feb9ce085f389fc814fb55bbbdee5ff098f22666fd",
+            "frames": 32096,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_john_ready_shouty_01_01",
+            "sourceFile": "john\\v2\\ready_shouty_01_01.wav",
+            "sourceSha256": "5d59533aa176ad4e0dbde738d2b2fdc2f47388e4f0cb3246d3576c83d1ebf5ce",
+            "frames": 39752,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.97930908203125
+        },
+        {
+            "assetName": "cl2_john_ready_shouty_02_01",
+            "sourceFile": "john\\v2\\ready_shouty_02_01.wav",
+            "sourceSha256": "7784998676b6e569c3436e953fd510fe275b8b1658f932d56409887ad9800518",
+            "frames": 43514,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_ready_shouty_03_01",
+            "sourceFile": "john\\v2\\ready_shouty_03_01.wav",
+            "sourceSha256": "6880ccc5627a8649ed96663c9696d8f995b8d58939e56b9c7ea815503edd51b0",
+            "frames": 46806,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_ready_shouty_03_02",
+            "sourceFile": "john\\v2\\ready_shouty_03_02.wav",
+            "sourceSha256": "6b14760314bbb01bc4d98055103f2ffceef083fa253aaf56cf3b970cb847ac16",
+            "frames": 43042,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_ready_shouty_04_01",
+            "sourceFile": "john\\v2\\ready_shouty_04_01.wav",
+            "sourceSha256": "40102235ac78733d4e86f7cb35cef10dc021e2b861f278ad7342c36b283e1778",
+            "frames": 30344,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_ready_shouty_04_02",
+            "sourceFile": "john\\v2\\ready_shouty_04_02.wav",
+            "sourceSha256": "475166c5e83d428fa27a10f49065c8b67ee70283da41ffbfb9ec2b2018f8230c",
+            "frames": 31754,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_john_ready_shouty_05_01",
+            "sourceFile": "john\\v2\\ready_shouty_05_01.wav",
+            "sourceSha256": "fca2a7194c9c345d59b38bb8540da290b78f38000938bcaf6ebc7bb12e3f037e",
+            "frames": 90678,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_ready_shouty_06_01",
+            "sourceFile": "john\\v2\\ready_shouty_06_01.wav",
+            "sourceSha256": "372183393b7ea11e86a929719614b5bbb54217dc2f4ca7f871f9787d34d0eb35",
+            "frames": 45866,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_john_ready_shouty_07_01",
+            "sourceFile": "john\\v2\\ready_shouty_07_01.wav",
+            "sourceSha256": "5b2d5929723b22f7237874feb9ce085f389fc814fb55bbbdee5ff098f22666fd",
+            "frames": 32096,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_john_ready_shouty_08_01",
+            "sourceFile": "john\\v2\\ready_shouty_08_01.wav",
+            "sourceSha256": "7e7115e2542606b6ac2e7dc98c8fe85a75124c6f9909fecb9ab35e876970ebee",
+            "frames": 38340,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_john_ready_shouty_09_01",
+            "sourceFile": "john\\v2\\ready_shouty_09_01.wav",
+            "sourceSha256": "bd2ca684a5ad2e4fc1476b73fce11214ce47a48b7dc90caf7718f0b92740121d",
+            "frames": 20464,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_ready_shouty_10_01",
+            "sourceFile": "john\\v2\\ready_shouty_10_01.wav",
+            "sourceSha256": "7784998676b6e569c3436e953fd510fe275b8b1658f932d56409887ad9800518",
+            "frames": 43514,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_ready_suppressed_01_01",
+            "sourceFile": "john\\v2\\ready_suppressed_01_01.wav",
+            "sourceSha256": "1da5abec90c331bb80dd35870b3d79e8f194fd40afe578dc3648f0a1cbef5df8",
+            "frames": 37334,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_ready_suppressed_02_01",
+            "sourceFile": "john\\v2\\ready_suppressed_02_01.wav",
+            "sourceSha256": "a74309e6b64fe3959b7421047e3e288d1a86e4cb65a2f0e14a72b13b3939bd7a",
+            "frames": 44062,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_john_rescue_01_01",
+            "sourceFile": "john\\v2\\rescue_01_01.wav",
+            "sourceSha256": "4753840e7569634fc9ff9169c6e11e9a21ccc104fa22af3d47827b5d8b1e6921",
+            "frames": 48218,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_rocket_01_01",
+            "sourceFile": "john\\v2\\rocket_01_01.wav",
+            "sourceSha256": "6a2492ec0ca22a864f6c38cffcfc84c3159a061400ef296d1203fe85444d74f6",
+            "frames": 79064,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_john_spotted_01_01",
+            "sourceFile": "john\\v2\\spotted_01_01.wav",
+            "sourceSha256": "f538ed47f08f1f031f389c439f2c1d7d453e4eadf9777be963af99d36054a249",
+            "frames": 47644,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_spotted_02_01",
+            "sourceFile": "john\\v2\\spotted_02_01.wav",
+            "sourceSha256": "6e7cbed4179a1b89603419a99c25fd5fb7f38212245a431b1bca8b01f435e7b6",
+            "frames": 43568,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_spotted_03_01",
+            "sourceFile": "john\\v2\\spotted_03_01.wav",
+            "sourceSha256": "104634aa02581d82a79a0564e46765a47b142e1974dd4dd7d84352b223f697ba",
+            "frames": 28462,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_spotted_04_01",
+            "sourceFile": "john\\v2\\spotted_04_01.wav",
+            "sourceSha256": "f538ed47f08f1f031f389c439f2c1d7d453e4eadf9777be963af99d36054a249",
+            "frames": 47644,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_spotted_bug_01_01",
+            "sourceFile": "john\\v2\\spotted_bug_01_01.wav",
+            "sourceSha256": "6e7cbed4179a1b89603419a99c25fd5fb7f38212245a431b1bca8b01f435e7b6",
+            "frames": 43568,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_spotted_bug_02_01",
+            "sourceFile": "john\\v2\\spotted_bug_02_01.wav",
+            "sourceSha256": "f538ed47f08f1f031f389c439f2c1d7d453e4eadf9777be963af99d36054a249",
+            "frames": 47644,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_spotted_emp_01_01",
+            "sourceFile": "john\\v2\\spotted_emp_01_01.wav",
+            "sourceSha256": "104634aa02581d82a79a0564e46765a47b142e1974dd4dd7d84352b223f697ba",
+            "frames": 28462,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_spotted_heavy_01_01",
+            "sourceFile": "john\\v2\\spotted_heavy_01_01.wav",
+            "sourceSha256": "104634aa02581d82a79a0564e46765a47b142e1974dd4dd7d84352b223f697ba",
+            "frames": 28462,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_spotted_hurt_01_01",
+            "sourceFile": "john\\v2\\spotted_hurt_01_01.wav",
+            "sourceSha256": "f538ed47f08f1f031f389c439f2c1d7d453e4eadf9777be963af99d36054a249",
+            "frames": 47644,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_spotted_hurt_02_01",
+            "sourceFile": "john\\v2\\spotted_hurt_02_01.wav",
+            "sourceSha256": "104634aa02581d82a79a0564e46765a47b142e1974dd4dd7d84352b223f697ba",
+            "frames": 28462,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_spotted_quiet_01_01",
+            "sourceFile": "john\\v2\\spotted_quiet_01_01.wav",
+            "sourceSha256": "f538ed47f08f1f031f389c439f2c1d7d453e4eadf9777be963af99d36054a249",
+            "frames": 47644,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_spotted_sniper_01_01",
+            "sourceFile": "john\\v2\\spotted_sniper_01_01.wav",
+            "sourceSha256": "f538ed47f08f1f031f389c439f2c1d7d453e4eadf9777be963af99d36054a249",
+            "frames": 47644,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_spotted_turret_01_01",
+            "sourceFile": "john\\v2\\spotted_turret_01_01.wav",
+            "sourceSha256": "f538ed47f08f1f031f389c439f2c1d7d453e4eadf9777be963af99d36054a249",
+            "frames": 47644,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_spotted_vehicle_01_01",
+            "sourceFile": "john\\v2\\spotted_vehicle_01_01.wav",
+            "sourceSha256": "6e7cbed4179a1b89603419a99c25fd5fb7f38212245a431b1bca8b01f435e7b6",
+            "frames": 43568,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_spotted_weapons_01_01",
+            "sourceFile": "john\\v2\\spotted_weapons_01_01.wav",
+            "sourceSha256": "f538ed47f08f1f031f389c439f2c1d7d453e4eadf9777be963af99d36054a249",
+            "frames": 47644,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_squad_casualty_01_01",
+            "sourceFile": "john\\v2\\squad_casualty_01_01.wav",
+            "sourceSha256": "5193f92812d300a3e1bedd7d58a08ed5e21b20e5ef30ea2c2a6b35c702f66666",
+            "frames": 36928,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_squad_casualty_01_02",
+            "sourceFile": "john\\v2\\squad_casualty_01_02.wav",
+            "sourceSha256": "995d7cf0a037bf1186de8aa6fd2f23e87f552acb21ef85d0eced6d5c02a8a75b",
+            "frames": 23286,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_squad_casualty_01_03",
+            "sourceFile": "john\\v2\\squad_casualty_01_03.wav",
+            "sourceSha256": "7502dc52e70ac3114489ec0372014b3813290a0a79f3258e06cc6e162c879351",
+            "frames": 27990,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_squad_casualty_02_01",
+            "sourceFile": "john\\v2\\squad_casualty_02_01.wav",
+            "sourceSha256": "407d9cff302aac69cf9f4fbcb0ea39322ace136cc15e60648258f005afce8c8c",
+            "frames": 18582,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_squad_casualty_02_02",
+            "sourceFile": "john\\v2\\squad_casualty_02_02.wav",
+            "sourceSha256": "68615e82b5f36a902202c20c713d586b9bf656c08f902f175e80b901df1577f7",
+            "frames": 20464,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_squad_casualty_02_03",
+            "sourceFile": "john\\v2\\squad_casualty_02_03.wav",
+            "sourceSha256": "e7d5a7f262f51a905d7d4124ce33490db9592955e9cca4bfdb25ee9790a852de",
+            "frames": 17952,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_squad_casualty_03_01",
+            "sourceFile": "john\\v2\\squad_casualty_03_01.wav",
+            "sourceSha256": "9c52cd5e5fc0f69eeb150d40fac191cf85398e4655bb9b2712953b8fc46eaeec",
+            "frames": 18330,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_squad_casualty_03_02",
+            "sourceFile": "john\\v2\\squad_casualty_03_02.wav",
+            "sourceSha256": "e92b7591844c65abbb9bece1e6f41b5effe38c8d214dd45eb1220eacc18c1497",
+            "frames": 21876,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_squad_casualty_03_03",
+            "sourceFile": "john\\v2\\squad_casualty_03_03.wav",
+            "sourceSha256": "d279e77d657f61f8c9cd94665fe857083980cd3d0b805b46a3cd1160ec88930f",
+            "frames": 22142,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_john_squad_casualty_04_01",
+            "sourceFile": "john\\v2\\squad_casualty_04_01.wav",
+            "sourceSha256": "860ec62c12c07b01fb57f5f3b38fc3179ac22c9343cab4319f81d2259265a4a1",
+            "frames": 42572,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_squad_casualty_05_01",
+            "sourceFile": "john\\v2\\squad_casualty_05_01.wav",
+            "sourceSha256": "5193f92812d300a3e1bedd7d58a08ed5e21b20e5ef30ea2c2a6b35c702f66666",
+            "frames": 36928,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_squad_casualty_05_02",
+            "sourceFile": "john\\v2\\squad_casualty_05_02.wav",
+            "sourceSha256": "995d7cf0a037bf1186de8aa6fd2f23e87f552acb21ef85d0eced6d5c02a8a75b",
+            "frames": 23286,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_squad_casualty_05_03",
+            "sourceFile": "john\\v2\\squad_casualty_05_03.wav",
+            "sourceSha256": "7502dc52e70ac3114489ec0372014b3813290a0a79f3258e06cc6e162c879351",
+            "frames": 27990,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_success_01_01",
+            "sourceFile": "john\\v2\\success_01_01.wav",
+            "sourceSha256": "ec1865ad3d1c6e8c516846aa6cb256ed1ee7cf248952893009bfa06fc452878b",
+            "frames": 43514,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_success_02_01",
+            "sourceFile": "john\\v2\\success_02_01.wav",
+            "sourceSha256": "9581a1029ef481f78da1772b529ac8163451f9d72cb9c2b91382efc6c36e5db2",
+            "frames": 41744,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_john_success_03_01",
+            "sourceFile": "john\\v2\\success_03_01.wav",
+            "sourceSha256": "ec1865ad3d1c6e8c516846aa6cb256ed1ee7cf248952893009bfa06fc452878b",
+            "frames": 43514,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_success_04_01",
+            "sourceFile": "john\\v2\\success_04_01.wav",
+            "sourceSha256": "9581a1029ef481f78da1772b529ac8163451f9d72cb9c2b91382efc6c36e5db2",
+            "frames": 41744,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_john_success_05_01",
+            "sourceFile": "john\\v2\\success_05_01.wav",
+            "sourceSha256": "ec1865ad3d1c6e8c516846aa6cb256ed1ee7cf248952893009bfa06fc452878b",
+            "frames": 43514,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_suppress_fire_01_01",
+            "sourceFile": "john\\v2\\suppress_fire_01_01.wav",
+            "sourceSha256": "58ddc07c9edcdae7095aff896b8da4b983db4b3f7c4bb8b4c2c5bdfeb8a1ee53",
+            "frames": 28462,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_suppress_fire_01_02",
+            "sourceFile": "john\\v2\\suppress_fire_01_02.wav",
+            "sourceSha256": "b50baae55a7e9c6bf102b447cc2e071b35d3113d739a6efa980d060f2273e62f",
+            "frames": 21876,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_suppress_fire_01_03",
+            "sourceFile": "john\\v2\\suppress_fire_01_03.wav",
+            "sourceSha256": "167eefbcf7137efe28e31a551cacc82ce473c25f423f7464e4d4a9d026c65ed4",
+            "frames": 30344,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_suppressed_01_01",
+            "sourceFile": "john\\v2\\suppressed_01_01.wav",
+            "sourceSha256": "49a169e50bcd56fd98015f7f7523ed03e2b43cbba5fc8d30f6eeb1723b402867",
+            "frames": 47832,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_john_suppressed_02_01",
+            "sourceFile": "john\\v2\\suppressed_02_01.wav",
+            "sourceSha256": "81fe2cbcc73dd63d02b490beb75b6d25768d04bef8bcd9249f7ce463ca3657c0",
+            "frames": 83782,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_suppressed_03_01",
+            "sourceFile": "john\\v2\\suppressed_03_01.wav",
+            "sourceSha256": "a74309e6b64fe3959b7421047e3e288d1a86e4cb65a2f0e14a72b13b3939bd7a",
+            "frames": 44062,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_john_taking_fire_01_01",
+            "sourceFile": "john\\v2\\taking_fire_01_01.wav",
+            "sourceSha256": "1da5abec90c331bb80dd35870b3d79e8f194fd40afe578dc3648f0a1cbef5df8",
+            "frames": 37334,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_taking_fire_02_01",
+            "sourceFile": "john\\v2\\taking_fire_02_01.wav",
+            "sourceSha256": "a74309e6b64fe3959b7421047e3e288d1a86e4cb65a2f0e14a72b13b3939bd7a",
+            "frames": 44062,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_john_taking_fire_03_01",
+            "sourceFile": "john\\v2\\taking_fire_03_01.wav",
+            "sourceSha256": "a74309e6b64fe3959b7421047e3e288d1a86e4cb65a2f0e14a72b13b3939bd7a",
+            "frames": 44062,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_john_taking_fire_04_01",
+            "sourceFile": "john\\v2\\taking_fire_04_01.wav",
+            "sourceSha256": "4431782d20039e1eaa6f90a08f6433016954ad3077b26ca369b6ad7d83dee986",
+            "frames": 30754,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_taking_fire_04_02",
+            "sourceFile": "john\\v2\\taking_fire_04_02.wav",
+            "sourceSha256": "3790ec5fe96844de4219b1c48f7b23ae76df1812c14f3a359bf7cbeeaba1df84",
+            "frames": 27520,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_john_taking_fire_hurt_01_01",
+            "sourceFile": "john\\v2\\taking_fire_hurt_01_01.wav",
+            "sourceSha256": "ee97646760bea15a6908ff6fd93cf92cdcdc0e0f7b019d9757b4024ecf536893",
+            "frames": 21796,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_john_taking_fire_hurt_02_01",
+            "sourceFile": "john\\v2\\taking_fire_hurt_02_01.wav",
+            "sourceSha256": "1da5abec90c331bb80dd35870b3d79e8f194fd40afe578dc3648f0a1cbef5df8",
+            "frames": 37334,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_after_kills_01_01",
+            "sourceFile": "jane\\v2\\after_kills_01_01.wav",
+            "sourceSha256": "8e20e231566b4442a60f7f76d7a7277fae77e2f2d423133d86cfab16a5a7ed98",
+            "frames": 30344,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_after_kills_02_01",
+            "sourceFile": "jane\\v2\\after_kills_02_01.wav",
+            "sourceSha256": "c7858a0be68106e67dde73a00b476f7b0276de01381549522b43567eb2d0377a",
+            "frames": 30344,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_jane_after_kills_03_01",
+            "sourceFile": "jane\\v2\\after_kills_03_01.wav",
+            "sourceSha256": "110d1e40d31975d7e4792bda63af898ac6c8680ef365b62bf2973fe51225d4f4",
+            "frames": 36458,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_after_kills_04_01",
+            "sourceFile": "jane\\v2\\after_kills_04_01.wav",
+            "sourceSha256": "813e94ffe1fa64447e895aabae8c336f90c38e9c8fd70056b5bb090309cc5ccd",
+            "frames": 58096,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_jane_after_kills_05_01",
+            "sourceFile": "jane\\v2\\after_kills_05_01.wav",
+            "sourceSha256": "ce6b3d36596091f30d0bf1d5dfe771dbbb01dbfa1ffc4705b55fe6bfdda659b9",
+            "frames": 82556,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_after_kills_06_01",
+            "sourceFile": "jane\\v2\\after_kills_06_01.wav",
+            "sourceSha256": "5a9d7e2b155d9461c763e7f89d44f407721f199e326018cc4347364ee156af19",
+            "frames": 73302,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.996490478515625
+        },
+        {
+            "assetName": "cl2_jane_after_kills_07_01",
+            "sourceFile": "jane\\v2\\after_kills_07_01.wav",
+            "sourceSha256": "94bf7d7b8579430041e2b24251fa9d1d38b8459eacf05c457c7eba0780a1b52b",
+            "frames": 38526,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_jane_ally_dead_01_01",
+            "sourceFile": "jane\\v2\\ally_dead_01_01.wav",
+            "sourceSha256": "cdea3c8fbc785add1e25b9079da38a022ab84b7fd794f9c48a9b7464085c4649",
+            "frames": 16700,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_ally_dead_01_02",
+            "sourceFile": "jane\\v2\\ally_dead_01_02.wav",
+            "sourceSha256": "fe382da5f85932de865ab8ac4a479ad7095c2ce960fca1cd099f4d158c631b8c",
+            "frames": 21406,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_ally_dead_01_03",
+            "sourceFile": "jane\\v2\\ally_dead_01_03.wav",
+            "sourceSha256": "42bec02499e21eda387dc1323664350b3091958b527b592aea2905d3d70f8c99",
+            "frames": 23286,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_ally_suppressed_01_01",
+            "sourceFile": "jane\\v2\\ally_suppressed_01_01.wav",
+            "sourceSha256": "3a371bf17f27079721b1c3e05e01a8eda4ec1cdd21bc52885a3b4fb2274c25f4",
+            "frames": 46806,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_ally_suppressed_02_01",
+            "sourceFile": "jane\\v2\\ally_suppressed_02_01.wav",
+            "sourceSha256": "c48ddf307263bcb371cc75e8c3cef4e698e0af12e505ea36dd559016fe988a71",
+            "frames": 51040,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_ally_taking_fire_01_01",
+            "sourceFile": "jane\\v2\\ally_taking_fire_01_01.wav",
+            "sourceSha256": "379800a1c0673df3448720ba36b699a1929c2d6c9015b021b31c902ee1a9721a",
+            "frames": 28762,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_jane_ally_taking_fire_01_02",
+            "sourceFile": "jane\\v2\\ally_taking_fire_01_02.wav",
+            "sourceSha256": "b5f197a5fcd2a889aaafcbb36cdc8c500b180b36e018acc73a22ec677a2935c4",
+            "frames": 31284,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_jane_ally_taking_fire_02_01",
+            "sourceFile": "jane\\v2\\ally_taking_fire_02_01.wav",
+            "sourceSha256": "d6caa2ebc3072aa6bc86413b079e18f0352a9b61f8f1c87fcd332d3903d706d1",
+            "frames": 35046,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_arrival_01_01",
+            "sourceFile": "jane\\v2\\arrival_01_01.wav",
+            "sourceSha256": "5e01ee7d03dc560a97bace83a4b6da67802745fe7525d62c8e71e1a26b3b1cab",
+            "frames": 44924,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.96148681640625
+        },
+        {
+            "assetName": "cl2_jane_arrival_02_01",
+            "sourceFile": "jane\\v2\\arrival_02_01.wav",
+            "sourceSha256": "8d3a5065c1871ca4ddf71f59882503dd090bde63b81e8ce000bd85e5c329b1d5",
+            "frames": 80130,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_building_destroyed_01_01",
+            "sourceFile": "jane\\v2\\building_destroyed_01_01.wav",
+            "sourceSha256": "7fd7c92dfb73b83db7722c492ee7a60ce13f082d0b8d0a02e854077db5973a3d",
+            "frames": 34920,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_building_destroyed_02_01",
+            "sourceFile": "jane\\v2\\building_destroyed_02_01.wav",
+            "sourceSha256": "2d3eab44a851488aa691f7f6bda82eb489b1239fddd0e20b53b2b214a450a4dc",
+            "frames": 43984,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_building_destroyed_03_01",
+            "sourceFile": "jane\\v2\\building_destroyed_03_01.wav",
+            "sourceSha256": "a04ff0d8f6a5ee7e5d4e8015c2220487345f5ebae3b210f64a77917efd6be752",
+            "frames": 31754,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.995513916015625
+        },
+        {
+            "assetName": "cl2_jane_construct_boss_01_01",
+            "sourceFile": "jane\\v2\\construct_boss_01_01.wav",
+            "sourceSha256": "785d21174929a73344dbf467f8c19b97522bbefbee49e2d7740dae8a6e17eed9",
+            "frames": 23756,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_construct_damaged_01_01",
+            "sourceFile": "jane\\v2\\construct_damaged_01_01.wav",
+            "sourceSha256": "08c0a6ab8ae120e173e2b6fcfddb2a2f6fefc8a41a2b9c924bb084e2b5bbe755",
+            "frames": 54982,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_jane_construct_damaged_02_01",
+            "sourceFile": "jane\\v2\\construct_damaged_02_01.wav",
+            "sourceSha256": "08c0a6ab8ae120e173e2b6fcfddb2a2f6fefc8a41a2b9c924bb084e2b5bbe755",
+            "frames": 54982,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_jane_construct_killed_01_01",
+            "sourceFile": "jane\\v2\\construct_killed_01_01.wav",
+            "sourceSha256": "62c43468404ff001b42b1db812070e97423e4626e0b5b88010f7a07dc9396cfa",
+            "frames": 44312,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.919647216796875
+        },
+        {
+            "assetName": "cl2_jane_construct_killed_02_01",
+            "sourceFile": "jane\\v2\\construct_killed_02_01.wav",
+            "sourceSha256": "7fd7c92dfb73b83db7722c492ee7a60ce13f082d0b8d0a02e854077db5973a3d",
+            "frames": 34920,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_construct_killed_03_01",
+            "sourceFile": "jane\\v2\\construct_killed_03_01.wav",
+            "sourceSha256": "4e1b4f228ca032bec6a186c3b40740c313b9c1ee3aed54680682c58248d86057",
+            "frames": 33430,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_jane_construct_killed_04_01",
+            "sourceFile": "jane\\v2\\construct_killed_04_01.wav",
+            "sourceSha256": "94bf7d7b8579430041e2b24251fa9d1d38b8459eacf05c457c7eba0780a1b52b",
+            "frames": 38526,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_jane_construct_killed_boss_01_01",
+            "sourceFile": "jane\\v2\\construct_killed_boss_01_01.wav",
+            "sourceSha256": "7fd7c92dfb73b83db7722c492ee7a60ce13f082d0b8d0a02e854077db5973a3d",
+            "frames": 34920,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_construct_killed_master_01_01",
+            "sourceFile": "jane\\v2\\construct_killed_master_01_01.wav",
+            "sourceSha256": "7fd7c92dfb73b83db7722c492ee7a60ce13f082d0b8d0a02e854077db5973a3d",
+            "frames": 34920,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_construct_master_01_01",
+            "sourceFile": "jane\\v2\\construct_master_01_01.wav",
+            "sourceSha256": "785d21174929a73344dbf467f8c19b97522bbefbee49e2d7740dae8a6e17eed9",
+            "frames": 23756,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_construct_spotted_01_01",
+            "sourceFile": "jane\\v2\\construct_spotted_01_01.wav",
+            "sourceSha256": "56159a2e75c82329c8ed75e01b9eca3a3489d39ec6f70a5d0c7648e84bca3ea7",
+            "frames": 44910,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_construct_spotted_02_01",
+            "sourceFile": "jane\\v2\\construct_spotted_02_01.wav",
+            "sourceSha256": "69253158c3098d01b809e0601c42ce59d9d61df0949643824d81c034fa7492c5",
+            "frames": 44668,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_construct_spotted_03_01",
+            "sourceFile": "jane\\v2\\construct_spotted_03_01.wav",
+            "sourceSha256": "785d21174929a73344dbf467f8c19b97522bbefbee49e2d7740dae8a6e17eed9",
+            "frames": 23756,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_construct_spotted_04_01",
+            "sourceFile": "jane\\v2\\construct_spotted_04_01.wav",
+            "sourceSha256": "813a9132d2a005fc33a4519cb8e6f22500b762affca2a52c9609ba097fb51c81",
+            "frames": 27014,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_construct_spotted_04_02",
+            "sourceFile": "jane\\v2\\construct_spotted_04_02.wav",
+            "sourceSha256": "f122cab16cd5fe52565093f3166d322d3a9ecc02db11562f0c3f24b034dcc97e",
+            "frames": 27520,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_danger_close_01_01",
+            "sourceFile": "jane\\v2\\danger_close_01_01.wav",
+            "sourceSha256": "d520744a1715f938bed89d5b4215504f394cc31b9f82b674ecccd997446b3aa3",
+            "frames": 73148,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_emp_failed_01_01",
+            "sourceFile": "jane\\v2\\emp_failed_01_01.wav",
+            "sourceSha256": "bef1408c6199ffd428ba2f3d6c542ce885b13e9ef6c8836772ccae61cfed18b3",
+            "frames": 38390,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_emp_success_01_01",
+            "sourceFile": "jane\\v2\\emp_success_01_01.wav",
+            "sourceSha256": "7fd7c92dfb73b83db7722c492ee7a60ce13f082d0b8d0a02e854077db5973a3d",
+            "frames": 34920,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_enemy_blocked_01_01",
+            "sourceFile": "jane\\v2\\enemy_blocked_01_01.wav",
+            "sourceSha256": "a57859df2b2b5f0ba2c91fa7a16d8482b1118f28883c32eeeb67e867a210011f",
+            "frames": 68916,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_enemy_blocked_02_01",
+            "sourceFile": "jane\\v2\\enemy_blocked_02_01.wav",
+            "sourceSha256": "f8bef8f2b2295c852e20b2ff391b81bc8f112b7d2f78742da2bab947d1d46e72",
+            "frames": 22816,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_enemy_blocked_02_02",
+            "sourceFile": "jane\\v2\\enemy_blocked_02_02.wav",
+            "sourceSha256": "51b6e4859155158c9fbad927cd072826aabee9729378804fe14ec84ff180d72f",
+            "frames": 23286,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_jane_enemy_blocked_02_03",
+            "sourceFile": "jane\\v2\\enemy_blocked_02_03.wav",
+            "sourceSha256": "b7f332f6d68ae6777c64d91b3524ee68d882f94c1981e38ff6bba6223e1b4fa8",
+            "frames": 17684,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_enemy_damaged_01_01",
+            "sourceFile": "jane\\v2\\enemy_damaged_01_01.wav",
+            "sourceSha256": "ed3b47ba6e6f05fca5f8df0ac59c75e6eaa3ec0602fb516fc4a47a36a05f1316",
+            "frames": 120660,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_enemy_damaged_02_01",
+            "sourceFile": "jane\\v2\\enemy_damaged_02_01.wav",
+            "sourceSha256": "ed3b47ba6e6f05fca5f8df0ac59c75e6eaa3ec0602fb516fc4a47a36a05f1316",
+            "frames": 120660,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_enemy_damaged_03_01",
+            "sourceFile": "jane\\v2\\enemy_damaged_03_01.wav",
+            "sourceSha256": "ed3b47ba6e6f05fca5f8df0ac59c75e6eaa3ec0602fb516fc4a47a36a05f1316",
+            "frames": 120660,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_enemy_damaged_04_01",
+            "sourceFile": "jane\\v2\\enemy_damaged_04_01.wav",
+            "sourceSha256": "ed3b47ba6e6f05fca5f8df0ac59c75e6eaa3ec0602fb516fc4a47a36a05f1316",
+            "frames": 120660,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_enemy_damaged_05_01",
+            "sourceFile": "jane\\v2\\enemy_damaged_05_01.wav",
+            "sourceSha256": "ed3b47ba6e6f05fca5f8df0ac59c75e6eaa3ec0602fb516fc4a47a36a05f1316",
+            "frames": 120660,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_enemy_fleeing_01_01",
+            "sourceFile": "jane\\v2\\enemy_fleeing_01_01.wav",
+            "sourceSha256": "c7858a0be68106e67dde73a00b476f7b0276de01381549522b43567eb2d0377a",
+            "frames": 30344,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_jane_enemy_hidden_01_01",
+            "sourceFile": "jane\\v2\\enemy_hidden_01_01.wav",
+            "sourceSha256": "8b747ae6a86cff2af090007e981ec2c90350288ad0ff31d2b7b8d311d7549cef",
+            "frames": 29872,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.987060546875
+        },
+        {
+            "assetName": "cl2_jane_enemy_hidden_02_01",
+            "sourceFile": "jane\\v2\\enemy_hidden_02_01.wav",
+            "sourceSha256": "9c1796aae743703513507e3c36f4ea78188cbf53c4210c13cc9b5008e533037e",
+            "frames": 48218,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_enemy_suppressed_01_01",
+            "sourceFile": "jane\\v2\\enemy_suppressed_01_01.wav",
+            "sourceSha256": "08c0a6ab8ae120e173e2b6fcfddb2a2f6fefc8a41a2b9c924bb084e2b5bbe755",
+            "frames": 54982,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_jane_enemy_suppressed_02_01",
+            "sourceFile": "jane\\v2\\enemy_suppressed_02_01.wav",
+            "sourceSha256": "30459e85407026a8ab9a2da8c6c9a2959b7731203325a5bf8ee643daadab9e11",
+            "frames": 88672,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_enemy_suppressed_03_01",
+            "sourceFile": "jane\\v2\\enemy_suppressed_03_01.wav",
+            "sourceSha256": "08c0a6ab8ae120e173e2b6fcfddb2a2f6fefc8a41a2b9c924bb084e2b5bbe755",
+            "frames": 54982,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_jane_enemy_trees_01_01",
+            "sourceFile": "jane\\v2\\enemy_trees_01_01.wav",
+            "sourceSha256": "56159a2e75c82329c8ed75e01b9eca3a3489d39ec6f70a5d0c7648e84bca3ea7",
+            "frames": 44910,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_enemy_trees_02_01",
+            "sourceFile": "jane\\v2\\enemy_trees_02_01.wav",
+            "sourceSha256": "69253158c3098d01b809e0601c42ce59d9d61df0949643824d81c034fa7492c5",
+            "frames": 44668,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_enemy_vehicle_damaged_01_01",
+            "sourceFile": "jane\\v2\\enemy_vehicle_damaged_01_01.wav",
+            "sourceSha256": "08c0a6ab8ae120e173e2b6fcfddb2a2f6fefc8a41a2b9c924bb084e2b5bbe755",
+            "frames": 54982,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_jane_enemy_vehicle_damaged_02_01",
+            "sourceFile": "jane\\v2\\enemy_vehicle_damaged_02_01.wav",
+            "sourceSha256": "08c0a6ab8ae120e173e2b6fcfddb2a2f6fefc8a41a2b9c924bb084e2b5bbe755",
+            "frames": 54982,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_jane_enemy_vehicle_damaged_03_01",
+            "sourceFile": "jane\\v2\\enemy_vehicle_damaged_03_01.wav",
+            "sourceSha256": "08c0a6ab8ae120e173e2b6fcfddb2a2f6fefc8a41a2b9c924bb084e2b5bbe755",
+            "frames": 54982,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_jane_grenade_frag_01_01",
+            "sourceFile": "jane\\v2\\grenade_frag_01_01.wav",
+            "sourceSha256": "b025d5c325985c428965cc932782a30edfdbf77c5b8af27b3127afd877d20870",
+            "frames": 34286,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_jane_idle_combat2_01_01",
+            "sourceFile": "jane\\v2\\idle_combat2_01_01.wav",
+            "sourceSha256": "5e01ee7d03dc560a97bace83a4b6da67802745fe7525d62c8e71e1a26b3b1cab",
+            "frames": 44924,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.96148681640625
+        },
+        {
+            "assetName": "cl2_jane_idle_combat_01_01",
+            "sourceFile": "jane\\v2\\idle_combat_01_01.wav",
+            "sourceSha256": "6a4a3029ab6dbcb0025231249693daea1bd8043909086f2ebb899cf230dd507b",
+            "frames": 32694,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_jane_kill_01_01",
+            "sourceFile": "jane\\v2\\kill_01_01.wav",
+            "sourceSha256": "a797a39828bdd50bb8a14852f8289782545506464f6e27761c266a1c2e979bd1",
+            "frames": 15760,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_jane_kill_02_01",
+            "sourceFile": "jane\\v2\\kill_02_01.wav",
+            "sourceSha256": "691029e9e371d1e9d7dbe222517bf464a86e3dc8d4da2b1b8b0b6876a15ba829",
+            "frames": 25260,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_jane_kill_03_01",
+            "sourceFile": "jane\\v2\\kill_03_01.wav",
+            "sourceSha256": "62c43468404ff001b42b1db812070e97423e4626e0b5b88010f7a07dc9396cfa",
+            "frames": 44312,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.919647216796875
+        },
+        {
+            "assetName": "cl2_jane_kill_04_01",
+            "sourceFile": "jane\\v2\\kill_04_01.wav",
+            "sourceSha256": "4e1b4f228ca032bec6a186c3b40740c313b9c1ee3aed54680682c58248d86057",
+            "frames": 33430,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_jane_kill_05_01",
+            "sourceFile": "jane\\v2\\kill_05_01.wav",
+            "sourceSha256": "94bf7d7b8579430041e2b24251fa9d1d38b8459eacf05c457c7eba0780a1b52b",
+            "frames": 38526,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_jane_kill_06_01",
+            "sourceFile": "jane\\v2\\kill_06_01.wav",
+            "sourceSha256": "2da7ecbfc0fd00e31c6c58c8180f603de88c9488e32034cdc34e414bfd6a306d",
+            "frames": 58096,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_kill_bugs_01_01",
+            "sourceFile": "jane\\v2\\kill_bugs_01_01.wav",
+            "sourceSha256": "62c43468404ff001b42b1db812070e97423e4626e0b5b88010f7a07dc9396cfa",
+            "frames": 44312,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.919647216796875
+        },
+        {
+            "assetName": "cl2_jane_kill_bugs_02_01",
+            "sourceFile": "jane\\v2\\kill_bugs_02_01.wav",
+            "sourceSha256": "a797a39828bdd50bb8a14852f8289782545506464f6e27761c266a1c2e979bd1",
+            "frames": 15760,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_jane_kill_bugs_03_01",
+            "sourceFile": "jane\\v2\\kill_bugs_03_01.wav",
+            "sourceSha256": "4e1b4f228ca032bec6a186c3b40740c313b9c1ee3aed54680682c58248d86057",
+            "frames": 33430,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_jane_kill_bugs_04_01",
+            "sourceFile": "jane\\v2\\kill_bugs_04_01.wav",
+            "sourceSha256": "62c43468404ff001b42b1db812070e97423e4626e0b5b88010f7a07dc9396cfa",
+            "frames": 44312,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.919647216796875
+        },
+        {
+            "assetName": "cl2_jane_kill_heavy_01_01",
+            "sourceFile": "jane\\v2\\kill_heavy_01_01.wav",
+            "sourceSha256": "a797a39828bdd50bb8a14852f8289782545506464f6e27761c266a1c2e979bd1",
+            "frames": 15760,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_jane_kill_hurt_01_01",
+            "sourceFile": "jane\\v2\\kill_hurt_01_01.wav",
+            "sourceSha256": "a797a39828bdd50bb8a14852f8289782545506464f6e27761c266a1c2e979bd1",
+            "frames": 15760,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_jane_kill_hurt_02_01",
+            "sourceFile": "jane\\v2\\kill_hurt_02_01.wav",
+            "sourceSha256": "5a9d7e2b155d9461c763e7f89d44f407721f199e326018cc4347364ee156af19",
+            "frames": 73302,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.996490478515625
+        },
+        {
+            "assetName": "cl2_jane_kill_sniper_01_01",
+            "sourceFile": "jane\\v2\\kill_sniper_01_01.wav",
+            "sourceSha256": "a797a39828bdd50bb8a14852f8289782545506464f6e27761c266a1c2e979bd1",
+            "frames": 15760,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_jane_kill_turret_01_01",
+            "sourceFile": "jane\\v2\\kill_turret_01_01.wav",
+            "sourceSha256": "4e1b4f228ca032bec6a186c3b40740c313b9c1ee3aed54680682c58248d86057",
+            "frames": 33430,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_jane_kill_vehicle_01_01",
+            "sourceFile": "jane\\v2\\kill_vehicle_01_01.wav",
+            "sourceSha256": "7fd7c92dfb73b83db7722c492ee7a60ce13f082d0b8d0a02e854077db5973a3d",
+            "frames": 34920,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_kill_weapons_01_01",
+            "sourceFile": "jane\\v2\\kill_weapons_01_01.wav",
+            "sourceSha256": "a797a39828bdd50bb8a14852f8289782545506464f6e27761c266a1c2e979bd1",
+            "frames": 15760,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_jane_last_click_01_01",
+            "sourceFile": "jane\\v2\\last_click_01_01.wav",
+            "sourceSha256": "8391833a2612036b762eeaedcd0638723a31b2dd9fd1a97c1c3f109e3a491c25",
+            "frames": 27622,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_jane_last_man_01_01",
+            "sourceFile": "jane\\v2\\last_man_01_01.wav",
+            "sourceSha256": "c2a92315fdeec6bc5c27fbeef73e45b1fc228b50cb80cba64004cf8b0e17e1bd",
+            "frames": 38810,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_last_man_01_02",
+            "sourceFile": "jane\\v2\\last_man_01_02.wav",
+            "sourceSha256": "6f969c146846c6980aeb9d5a301c785a289394f0dfaa7af25cb16cfa3b9b9400",
+            "frames": 37398,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_many_enemies_01_01",
+            "sourceFile": "jane\\v2\\many_enemies_01_01.wav",
+            "sourceSha256": "242a5d51763439fd3f897c0455315893801d2027431ff165f4db44e5fe5de014",
+            "frames": 63290,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_massive_explosion_01_01",
+            "sourceFile": "jane\\v2\\massive_explosion_01_01.wav",
+            "sourceSha256": "a04ff0d8f6a5ee7e5d4e8015c2220487345f5ebae3b210f64a77917efd6be752",
+            "frames": 31754,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.995513916015625
+        },
+        {
+            "assetName": "cl2_jane_miss_01_01",
+            "sourceFile": "jane\\v2\\miss_01_01.wav",
+            "sourceSha256": "a57859df2b2b5f0ba2c91fa7a16d8482b1118f28883c32eeeb67e867a210011f",
+            "frames": 68916,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_miss_02_01",
+            "sourceFile": "jane\\v2\\miss_02_01.wav",
+            "sourceSha256": "f8bef8f2b2295c852e20b2ff391b81bc8f112b7d2f78742da2bab947d1d46e72",
+            "frames": 22816,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_miss_02_02",
+            "sourceFile": "jane\\v2\\miss_02_02.wav",
+            "sourceSha256": "51b6e4859155158c9fbad927cd072826aabee9729378804fe14ec84ff180d72f",
+            "frames": 23286,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_jane_miss_02_03",
+            "sourceFile": "jane\\v2\\miss_02_03.wav",
+            "sourceSha256": "b7f332f6d68ae6777c64d91b3524ee68d882f94c1981e38ff6bba6223e1b4fa8",
+            "frames": 17684,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_miss_03_01",
+            "sourceFile": "jane\\v2\\miss_03_01.wav",
+            "sourceSha256": "f8bef8f2b2295c852e20b2ff391b81bc8f112b7d2f78742da2bab947d1d46e72",
+            "frames": 22816,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_miss_03_02",
+            "sourceFile": "jane\\v2\\miss_03_02.wav",
+            "sourceSha256": "51b6e4859155158c9fbad927cd072826aabee9729378804fe14ec84ff180d72f",
+            "frames": 23286,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_jane_miss_03_03",
+            "sourceFile": "jane\\v2\\miss_03_03.wav",
+            "sourceSha256": "b7f332f6d68ae6777c64d91b3524ee68d882f94c1981e38ff6bba6223e1b4fa8",
+            "frames": 17684,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_miss_cover_01_01",
+            "sourceFile": "jane\\v2\\miss_cover_01_01.wav",
+            "sourceSha256": "a57859df2b2b5f0ba2c91fa7a16d8482b1118f28883c32eeeb67e867a210011f",
+            "frames": 68916,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_miss_cover_02_01",
+            "sourceFile": "jane\\v2\\miss_cover_02_01.wav",
+            "sourceSha256": "bef1408c6199ffd428ba2f3d6c542ce885b13e9ef6c8836772ccae61cfed18b3",
+            "frames": 38390,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_miss_cover_03_01",
+            "sourceFile": "jane\\v2\\miss_cover_03_01.wav",
+            "sourceSha256": "f8bef8f2b2295c852e20b2ff391b81bc8f112b7d2f78742da2bab947d1d46e72",
+            "frames": 22816,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_miss_cover_03_02",
+            "sourceFile": "jane\\v2\\miss_cover_03_02.wav",
+            "sourceSha256": "51b6e4859155158c9fbad927cd072826aabee9729378804fe14ec84ff180d72f",
+            "frames": 23286,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_jane_miss_cover_03_03",
+            "sourceFile": "jane\\v2\\miss_cover_03_03.wav",
+            "sourceSha256": "b7f332f6d68ae6777c64d91b3524ee68d882f94c1981e38ff6bba6223e1b4fa8",
+            "frames": 17684,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_miss_twice_01_01",
+            "sourceFile": "jane\\v2\\miss_twice_01_01.wav",
+            "sourceSha256": "f8bef8f2b2295c852e20b2ff391b81bc8f112b7d2f78742da2bab947d1d46e72",
+            "frames": 22816,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_miss_twice_01_02",
+            "sourceFile": "jane\\v2\\miss_twice_01_02.wav",
+            "sourceSha256": "51b6e4859155158c9fbad927cd072826aabee9729378804fe14ec84ff180d72f",
+            "frames": 23286,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_jane_miss_twice_01_03",
+            "sourceFile": "jane\\v2\\miss_twice_01_03.wav",
+            "sourceSha256": "b7f332f6d68ae6777c64d91b3524ee68d882f94c1981e38ff6bba6223e1b4fa8",
+            "frames": 17684,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_morale_fleeing_01_01",
+            "sourceFile": "jane\\v2\\morale_fleeing_01_01.wav",
+            "sourceSha256": "eeab35389e5a69eacd343ca334fa2ab8ab7aabcb467e6e01679c3ad5024e65be",
+            "frames": 75030,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_morale_fleeing_02_01",
+            "sourceFile": "jane\\v2\\morale_fleeing_02_01.wav",
+            "sourceSha256": "6678c1723b79eda9813ca2e2fa9715322d32d5d5fb93bf6448a2f1f0ec15f7d0",
+            "frames": 75972,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_morale_recovery_01_01",
+            "sourceFile": "jane\\v2\\morale_recovery_01_01.wav",
+            "sourceSha256": "0766ae385032eadcbe1ef74e31e9153415698c411203067652706d74cb4b926a",
+            "frames": 27810,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_morale_recovery_02_01",
+            "sourceFile": "jane\\v2\\morale_recovery_02_01.wav",
+            "sourceSha256": "0253ffe3ab72a8de5055d3a701c7733579dc801b3ebc32e1ca19f0320718d7aa",
+            "frames": 25218,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_morale_wavering_01_01",
+            "sourceFile": "jane\\v2\\morale_wavering_01_01.wav",
+            "sourceSha256": "945d9df2c6ffa5e363ef200d70130cf29583eb5c4334225b22205951f8fbfd5b",
+            "frames": 35606,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.991180419921875
+        },
+        {
+            "assetName": "cl2_jane_morale_wavering_02_01",
+            "sourceFile": "jane\\v2\\morale_wavering_02_01.wav",
+            "sourceSha256": "989ce177e8b4ea204b81678fdbfab8ae898b7990dc5a2c185530f0233e083064",
+            "frames": 38810,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_move_cover_01_01",
+            "sourceFile": "jane\\v2\\move_cover_01_01.wav",
+            "sourceSha256": "6573deae43e02f1d6577fef674d87b3f96adcdae19df09163d7b8d24e7ac242c",
+            "frames": 24932,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_move_cover_02_01",
+            "sourceFile": "jane\\v2\\move_cover_02_01.wav",
+            "sourceSha256": "379800a1c0673df3448720ba36b699a1929c2d6c9015b021b31c902ee1a9721a",
+            "frames": 28762,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_jane_move_cover_02_02",
+            "sourceFile": "jane\\v2\\move_cover_02_02.wav",
+            "sourceSha256": "b5f197a5fcd2a889aaafcbb36cdc8c500b180b36e018acc73a22ec677a2935c4",
+            "frames": 31284,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_jane_move_cover_03_01",
+            "sourceFile": "jane\\v2\\move_cover_03_01.wav",
+            "sourceSha256": "d6caa2ebc3072aa6bc86413b079e18f0352a9b61f8f1c87fcd332d3903d706d1",
+            "frames": 35046,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_move_cover_done_01_01",
+            "sourceFile": "jane\\v2\\move_cover_done_01_01.wav",
+            "sourceSha256": "6a4a3029ab6dbcb0025231249693daea1bd8043909086f2ebb899cf230dd507b",
+            "frames": 32694,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_jane_move_cover_done_02_01",
+            "sourceFile": "jane\\v2\\move_cover_done_02_01.wav",
+            "sourceSha256": "a1b806c0ccac70c24bcd4f8606e623ea32da9062d30ee36d020f9ee1fe9d1a6f",
+            "frames": 13878,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_move_cover_done_03_01",
+            "sourceFile": "jane\\v2\\move_cover_done_03_01.wav",
+            "sourceSha256": "c2a92315fdeec6bc5c27fbeef73e45b1fc228b50cb80cba64004cf8b0e17e1bd",
+            "frames": 38810,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_move_cover_done_03_02",
+            "sourceFile": "jane\\v2\\move_cover_done_03_02.wav",
+            "sourceSha256": "6f969c146846c6980aeb9d5a301c785a289394f0dfaa7af25cb16cfa3b9b9400",
+            "frames": 37398,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_move_done_01_01",
+            "sourceFile": "jane\\v2\\move_done_01_01.wav",
+            "sourceSha256": "e2142cc48f3e608051610a32e58ab0d5472de820f461a82a3f3ab10a7f581254",
+            "frames": 19054,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_jane_move_done_02_01",
+            "sourceFile": "jane\\v2\\move_done_02_01.wav",
+            "sourceSha256": "6a4a3029ab6dbcb0025231249693daea1bd8043909086f2ebb899cf230dd507b",
+            "frames": 32694,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_jane_move_done_03_01",
+            "sourceFile": "jane\\v2\\move_done_03_01.wav",
+            "sourceSha256": "c2a92315fdeec6bc5c27fbeef73e45b1fc228b50cb80cba64004cf8b0e17e1bd",
+            "frames": 38810,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_move_done_03_02",
+            "sourceFile": "jane\\v2\\move_done_03_02.wav",
+            "sourceSha256": "6f969c146846c6980aeb9d5a301c785a289394f0dfaa7af25cb16cfa3b9b9400",
+            "frames": 37398,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_move_done_hurt_01_01",
+            "sourceFile": "jane\\v2\\move_done_hurt_01_01.wav",
+            "sourceSha256": "0766ae385032eadcbe1ef74e31e9153415698c411203067652706d74cb4b926a",
+            "frames": 27810,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_move_done_hurt_02_01",
+            "sourceFile": "jane\\v2\\move_done_hurt_02_01.wav",
+            "sourceSha256": "0253ffe3ab72a8de5055d3a701c7733579dc801b3ebc32e1ca19f0320718d7aa",
+            "frames": 25218,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_move_done_quiet_01_01",
+            "sourceFile": "jane\\v2\\move_done_quiet_01_01.wav",
+            "sourceSha256": "6a4a3029ab6dbcb0025231249693daea1bd8043909086f2ebb899cf230dd507b",
+            "frames": 32694,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_jane_move_done_quiet_02_01",
+            "sourceFile": "jane\\v2\\move_done_quiet_02_01.wav",
+            "sourceSha256": "4d99ba3895c3a734038966a20ecdaf03731dd7168fb48ad1ceeaf34eb98acbb4",
+            "frames": 37028,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_move_hurt_01_01",
+            "sourceFile": "jane\\v2\\move_hurt_01_01.wav",
+            "sourceSha256": "4b603c4d336d4a645bc2bfdae0af212f393f18b9a7b595ca8ad1c51bf08d7356",
+            "frames": 17118,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_move_hurt_02_01",
+            "sourceFile": "jane\\v2\\move_hurt_02_01.wav",
+            "sourceSha256": "fa362e2117b092717ca2c042d306a12cb5b1676135f79337666060659b37ba04",
+            "frames": 16230,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_move_hurt_02_02",
+            "sourceFile": "jane\\v2\\move_hurt_02_02.wav",
+            "sourceSha256": "b00e59f06c6decfdc32171553a68b5e44efb891490f5f78edb8ccf28f8e71b71",
+            "frames": 18014,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_move_hurt_02_03",
+            "sourceFile": "jane\\v2\\move_hurt_02_03.wav",
+            "sourceSha256": "7d5ce7f5f4ec821a4c9fcc9733178817aa9a7216afe3b2cbca40800b17dd70c8",
+            "frames": 16230,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_move_quiet_01_01",
+            "sourceFile": "jane\\v2\\move_quiet_01_01.wav",
+            "sourceSha256": "e64d8e9a8cbb50ab27e3ee20d4cbd585fa81ed19f0d1a4dce0d6082aeb010803",
+            "frames": 29872,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_move_quiet_01_02",
+            "sourceFile": "jane\\v2\\move_quiet_01_02.wav",
+            "sourceSha256": "23a4151aae091018270aef83aba8de7156170d03b8511b15f6c76830018b9778",
+            "frames": 27520,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_move_quiet_02_01",
+            "sourceFile": "jane\\v2\\move_quiet_02_01.wav",
+            "sourceSha256": "a991c99a1710b51891d86d0a33dbfed2aab666157131ed8a9d8b6ab198197b89",
+            "frames": 31780,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.99945068359375
+        },
+        {
+            "assetName": "cl2_jane_move_shout_01_01",
+            "sourceFile": "jane\\v2\\move_shout_01_01.wav",
+            "sourceSha256": "b84cfd471183c3a80b0549ed5e332d57e4e92bd70e2798a530fc551921ac937e",
+            "frames": 38340,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_move_shout_02_01",
+            "sourceFile": "jane\\v2\\move_shout_02_01.wav",
+            "sourceSha256": "b84cfd471183c3a80b0549ed5e332d57e4e92bd70e2798a530fc551921ac937e",
+            "frames": 38340,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_move_shout_03_01",
+            "sourceFile": "jane\\v2\\move_shout_03_01.wav",
+            "sourceSha256": "4d8d80f28b1eb28bd0dba31139767b1577e1fb958d955f1f95e6485051b36739",
+            "frames": 42102,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_move_shout_04_01",
+            "sourceFile": "jane\\v2\\move_shout_04_01.wav",
+            "sourceSha256": "8e12982b6cc86b0672f0f2a54604851004fa3dcd62166f6466ee879c706bf70c",
+            "frames": 44924,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_move_shout_05_01",
+            "sourceFile": "jane\\v2\\move_shout_05_01.wav",
+            "sourceSha256": "1e0d575beb9e69c15d3b42ccc1ee4951d0be7a51fa0f7250f4ea81ce466f4a65",
+            "frames": 47278,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_move_shout_06_01",
+            "sourceFile": "jane\\v2\\move_shout_06_01.wav",
+            "sourceSha256": "27b751326a36ec5dcd33f18551f27e58f716aacc719997f43cbb6510fa017b7b",
+            "frames": 43652,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_move_shout_07_01",
+            "sourceFile": "jane\\v2\\move_shout_07_01.wav",
+            "sourceSha256": "899e3acad7d08d68b7dac880494e92e4585bbe9926bc304de4192220d99766a7",
+            "frames": 52450,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_moving_01_01",
+            "sourceFile": "jane\\v2\\moving_01_01.wav",
+            "sourceSha256": "ef1aa64481758d272683b4197137a9609236dffbe86be8e9613156c2b686f2ff",
+            "frames": 37006,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_jane_moving_02_01",
+            "sourceFile": "jane\\v2\\moving_02_01.wav",
+            "sourceSha256": "ef1aa64481758d272683b4197137a9609236dffbe86be8e9613156c2b686f2ff",
+            "frames": 37006,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_jane_moving_03_01",
+            "sourceFile": "jane\\v2\\moving_03_01.wav",
+            "sourceSha256": "fd759aa6104fbf2c3e227551916012947a20dbe3a048bc0f67a5c8b13c56999e",
+            "frames": 41162,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_jane_moving_03_02",
+            "sourceFile": "jane\\v2\\moving_03_02.wav",
+            "sourceSha256": "2060255275610cee19907eb44c4a96c6109b231fcd6dac2635d06c0f38d0a0eb",
+            "frames": 22816,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_jane_moving_03_03",
+            "sourceFile": "jane\\v2\\moving_03_03.wav",
+            "sourceSha256": "87cf4607e89c2226711de0a9d6fa6db48b006a3146d614a97092a9ddc3a1aa4e",
+            "frames": 25638,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_jane_objective_threat_01_01",
+            "sourceFile": "jane\\v2\\objective_threat_01_01.wav",
+            "sourceSha256": "3c3f4b2b607d9cdb39b77b69fc1e950294cce9570cb4c01152048795bf363140",
+            "frames": 34888,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_jane_offmap_01_01",
+            "sourceFile": "jane\\v2\\offmap_01_01.wav",
+            "sourceSha256": "edbe3c569f792003eef18998e10a2997b3d1b3c2caf008c4205363db5d2aea0c",
+            "frames": 32224,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_offmap_02_01",
+            "sourceFile": "jane\\v2\\offmap_02_01.wav",
+            "sourceSha256": "9472f7ef01cb429db03f252e1cca68e8956ebbc6d6ec79c71131d59ef8400dce",
+            "frames": 25222,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_offmap_02_02",
+            "sourceFile": "jane\\v2\\offmap_02_02.wav",
+            "sourceSha256": "93b657c2eeb51a1b37c25a89f26f59f0b853b5f7ef3222b829c4f0cd0243caec",
+            "frames": 18904,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_offmap_02_03",
+            "sourceFile": "jane\\v2\\offmap_02_03.wav",
+            "sourceSha256": "5023b80e158067cd6fd38c0eeedb702e9f3366bc302af79254dac021f93e7452",
+            "frames": 22816,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_ready_01_01",
+            "sourceFile": "jane\\v2\\ready_01_01.wav",
+            "sourceSha256": "dc95b8a062c9cea7340707a35615479cf4d6291e28e26ec276bbcf7a1bb93766",
+            "frames": 32694,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_ready_hurt_01_01",
+            "sourceFile": "jane\\v2\\ready_hurt_01_01.wav",
+            "sourceSha256": "4b603c4d336d4a645bc2bfdae0af212f393f18b9a7b595ca8ad1c51bf08d7356",
+            "frames": 17118,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_ready_hurt_02_01",
+            "sourceFile": "jane\\v2\\ready_hurt_02_01.wav",
+            "sourceSha256": "fa362e2117b092717ca2c042d306a12cb5b1676135f79337666060659b37ba04",
+            "frames": 16230,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_ready_hurt_02_02",
+            "sourceFile": "jane\\v2\\ready_hurt_02_02.wav",
+            "sourceSha256": "b00e59f06c6decfdc32171553a68b5e44efb891490f5f78edb8ccf28f8e71b71",
+            "frames": 18014,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_ready_hurt_03_01",
+            "sourceFile": "jane\\v2\\ready_hurt_03_01.wav",
+            "sourceSha256": "81ed1942bb6455d477dbdf07f4a6fc66bb1538587efcc347a72cde58bef68da8",
+            "frames": 19994,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_ready_quiet_01_01",
+            "sourceFile": "jane\\v2\\ready_quiet_01_01.wav",
+            "sourceSha256": "d13e720a529cce40b64ff028c829b5efb6b775020ad33732c3188a1109a0c3b4",
+            "frames": 21876,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_ready_quiet_02_01",
+            "sourceFile": "jane\\v2\\ready_quiet_02_01.wav",
+            "sourceSha256": "6a4a3029ab6dbcb0025231249693daea1bd8043909086f2ebb899cf230dd507b",
+            "frames": 32694,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_jane_ready_quiet_03_01",
+            "sourceFile": "jane\\v2\\ready_quiet_03_01.wav",
+            "sourceSha256": "4d99ba3895c3a734038966a20ecdaf03731dd7168fb48ad1ceeaf34eb98acbb4",
+            "frames": 37028,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_ready_shouty_01_01",
+            "sourceFile": "jane\\v2\\ready_shouty_01_01.wav",
+            "sourceSha256": "edde3ee207274cee9637ce880cd2eb2d9e921dce046fc06df12ec6844d72c735",
+            "frames": 35046,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_ready_shouty_02_01",
+            "sourceFile": "jane\\v2\\ready_shouty_02_01.wav",
+            "sourceSha256": "5e01ee7d03dc560a97bace83a4b6da67802745fe7525d62c8e71e1a26b3b1cab",
+            "frames": 44924,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.96148681640625
+        },
+        {
+            "assetName": "cl2_jane_ready_shouty_03_01",
+            "sourceFile": "jane\\v2\\ready_shouty_03_01.wav",
+            "sourceSha256": "c2a92315fdeec6bc5c27fbeef73e45b1fc228b50cb80cba64004cf8b0e17e1bd",
+            "frames": 38810,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_ready_shouty_03_02",
+            "sourceFile": "jane\\v2\\ready_shouty_03_02.wav",
+            "sourceSha256": "6f969c146846c6980aeb9d5a301c785a289394f0dfaa7af25cb16cfa3b9b9400",
+            "frames": 37398,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_ready_shouty_04_01",
+            "sourceFile": "jane\\v2\\ready_shouty_04_01.wav",
+            "sourceSha256": "a99c0f8afa2f7a71378f515b653831f36233bb5ff29c7687b58afdcaa4593f1c",
+            "frames": 27050,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_ready_shouty_04_02",
+            "sourceFile": "jane\\v2\\ready_shouty_04_02.wav",
+            "sourceSha256": "036d41e072a40810176335e40725e8a8dfff8790472a5fa7f3cf37a788b4b2bb",
+            "frames": 29402,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.9915771484375
+        },
+        {
+            "assetName": "cl2_jane_ready_shouty_05_01",
+            "sourceFile": "jane\\v2\\ready_shouty_05_01.wav",
+            "sourceSha256": "c86606c81c97d37d03ea4e4627c73275ab405e8bab908148e61acec955e7cc48",
+            "frames": 79176,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_ready_shouty_06_01",
+            "sourceFile": "jane\\v2\\ready_shouty_06_01.wav",
+            "sourceSha256": "b345f5fd18ad9bc2cfd0428b279877dc26125ff1ab49a45e53385876bf91b1d0",
+            "frames": 38810,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_ready_shouty_07_01",
+            "sourceFile": "jane\\v2\\ready_shouty_07_01.wav",
+            "sourceSha256": "4d99ba3895c3a734038966a20ecdaf03731dd7168fb48ad1ceeaf34eb98acbb4",
+            "frames": 37028,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_ready_shouty_08_01",
+            "sourceFile": "jane\\v2\\ready_shouty_08_01.wav",
+            "sourceSha256": "6a4a3029ab6dbcb0025231249693daea1bd8043909086f2ebb899cf230dd507b",
+            "frames": 32694,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_jane_ready_shouty_09_01",
+            "sourceFile": "jane\\v2\\ready_shouty_09_01.wav",
+            "sourceSha256": "92d8464efae92a9f22c579749cb9f70735e42d1935ec2219ae31e22d8ff58f14",
+            "frames": 17642,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_ready_shouty_10_01",
+            "sourceFile": "jane\\v2\\ready_shouty_10_01.wav",
+            "sourceSha256": "5e01ee7d03dc560a97bace83a4b6da67802745fe7525d62c8e71e1a26b3b1cab",
+            "frames": 44924,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.96148681640625
+        },
+        {
+            "assetName": "cl2_jane_ready_suppressed_01_01",
+            "sourceFile": "jane\\v2\\ready_suppressed_01_01.wav",
+            "sourceSha256": "6b755f36aa4573445eb30d061fb962f45989fc4911771eedf6fc6c14ff34a080",
+            "frames": 45230,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_jane_ready_suppressed_02_01",
+            "sourceFile": "jane\\v2\\ready_suppressed_02_01.wav",
+            "sourceSha256": "91db33f8da946ea9e07b04e5052eaf6175566b4819d16176b5151af04e45d129",
+            "frames": 42976,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_rescue_01_01",
+            "sourceFile": "jane\\v2\\rescue_01_01.wav",
+            "sourceSha256": "027f1911b30b8e4a798b6567cbd2a086c0768b0afad675654110e3d0b30eed88",
+            "frames": 42572,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_rocket_01_01",
+            "sourceFile": "jane\\v2\\rocket_01_01.wav",
+            "sourceSha256": "193d9b03b3c8be9c3cddefc5b9af2e6af32aceba70c48f6961e6ba2bac9dcd6d",
+            "frames": 69386,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_jane_spotted_01_01",
+            "sourceFile": "jane\\v2\\spotted_01_01.wav",
+            "sourceSha256": "56159a2e75c82329c8ed75e01b9eca3a3489d39ec6f70a5d0c7648e84bca3ea7",
+            "frames": 44910,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_spotted_02_01",
+            "sourceFile": "jane\\v2\\spotted_02_01.wav",
+            "sourceSha256": "69253158c3098d01b809e0601c42ce59d9d61df0949643824d81c034fa7492c5",
+            "frames": 44668,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_spotted_03_01",
+            "sourceFile": "jane\\v2\\spotted_03_01.wav",
+            "sourceSha256": "785d21174929a73344dbf467f8c19b97522bbefbee49e2d7740dae8a6e17eed9",
+            "frames": 23756,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_spotted_04_01",
+            "sourceFile": "jane\\v2\\spotted_04_01.wav",
+            "sourceSha256": "56159a2e75c82329c8ed75e01b9eca3a3489d39ec6f70a5d0c7648e84bca3ea7",
+            "frames": 44910,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_spotted_bug_01_01",
+            "sourceFile": "jane\\v2\\spotted_bug_01_01.wav",
+            "sourceSha256": "69253158c3098d01b809e0601c42ce59d9d61df0949643824d81c034fa7492c5",
+            "frames": 44668,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_spotted_bug_02_01",
+            "sourceFile": "jane\\v2\\spotted_bug_02_01.wav",
+            "sourceSha256": "56159a2e75c82329c8ed75e01b9eca3a3489d39ec6f70a5d0c7648e84bca3ea7",
+            "frames": 44910,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_spotted_emp_01_01",
+            "sourceFile": "jane\\v2\\spotted_emp_01_01.wav",
+            "sourceSha256": "785d21174929a73344dbf467f8c19b97522bbefbee49e2d7740dae8a6e17eed9",
+            "frames": 23756,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_spotted_heavy_01_01",
+            "sourceFile": "jane\\v2\\spotted_heavy_01_01.wav",
+            "sourceSha256": "785d21174929a73344dbf467f8c19b97522bbefbee49e2d7740dae8a6e17eed9",
+            "frames": 23756,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_spotted_hurt_01_01",
+            "sourceFile": "jane\\v2\\spotted_hurt_01_01.wav",
+            "sourceSha256": "56159a2e75c82329c8ed75e01b9eca3a3489d39ec6f70a5d0c7648e84bca3ea7",
+            "frames": 44910,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_spotted_hurt_02_01",
+            "sourceFile": "jane\\v2\\spotted_hurt_02_01.wav",
+            "sourceSha256": "785d21174929a73344dbf467f8c19b97522bbefbee49e2d7740dae8a6e17eed9",
+            "frames": 23756,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_spotted_quiet_01_01",
+            "sourceFile": "jane\\v2\\spotted_quiet_01_01.wav",
+            "sourceSha256": "56159a2e75c82329c8ed75e01b9eca3a3489d39ec6f70a5d0c7648e84bca3ea7",
+            "frames": 44910,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_spotted_sniper_01_01",
+            "sourceFile": "jane\\v2\\spotted_sniper_01_01.wav",
+            "sourceSha256": "56159a2e75c82329c8ed75e01b9eca3a3489d39ec6f70a5d0c7648e84bca3ea7",
+            "frames": 44910,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_spotted_turret_01_01",
+            "sourceFile": "jane\\v2\\spotted_turret_01_01.wav",
+            "sourceSha256": "56159a2e75c82329c8ed75e01b9eca3a3489d39ec6f70a5d0c7648e84bca3ea7",
+            "frames": 44910,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_spotted_vehicle_01_01",
+            "sourceFile": "jane\\v2\\spotted_vehicle_01_01.wav",
+            "sourceSha256": "69253158c3098d01b809e0601c42ce59d9d61df0949643824d81c034fa7492c5",
+            "frames": 44668,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_spotted_weapons_01_01",
+            "sourceFile": "jane\\v2\\spotted_weapons_01_01.wav",
+            "sourceSha256": "56159a2e75c82329c8ed75e01b9eca3a3489d39ec6f70a5d0c7648e84bca3ea7",
+            "frames": 44910,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_squad_casualty_01_01",
+            "sourceFile": "jane\\v2\\squad_casualty_01_01.wav",
+            "sourceSha256": "cdea3c8fbc785add1e25b9079da38a022ab84b7fd794f9c48a9b7464085c4649",
+            "frames": 16700,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_squad_casualty_01_02",
+            "sourceFile": "jane\\v2\\squad_casualty_01_02.wav",
+            "sourceSha256": "fe382da5f85932de865ab8ac4a479ad7095c2ce960fca1cd099f4d158c631b8c",
+            "frames": 21406,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_squad_casualty_01_03",
+            "sourceFile": "jane\\v2\\squad_casualty_01_03.wav",
+            "sourceSha256": "42bec02499e21eda387dc1323664350b3091958b527b592aea2905d3d70f8c99",
+            "frames": 23286,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_squad_casualty_02_01",
+            "sourceFile": "jane\\v2\\squad_casualty_02_01.wav",
+            "sourceSha256": "f8bef8f2b2295c852e20b2ff391b81bc8f112b7d2f78742da2bab947d1d46e72",
+            "frames": 22816,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_squad_casualty_02_02",
+            "sourceFile": "jane\\v2\\squad_casualty_02_02.wav",
+            "sourceSha256": "51b6e4859155158c9fbad927cd072826aabee9729378804fe14ec84ff180d72f",
+            "frames": 23286,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_jane_squad_casualty_02_03",
+            "sourceFile": "jane\\v2\\squad_casualty_02_03.wav",
+            "sourceSha256": "b7f332f6d68ae6777c64d91b3524ee68d882f94c1981e38ff6bba6223e1b4fa8",
+            "frames": 17684,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_squad_casualty_03_01",
+            "sourceFile": "jane\\v2\\squad_casualty_03_01.wav",
+            "sourceSha256": "6c822b80c4950f926576c74b5159d71e050abedd8c3d50a57c154ee12bc9b6c2",
+            "frames": 19976,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_jane_squad_casualty_03_02",
+            "sourceFile": "jane\\v2\\squad_casualty_03_02.wav",
+            "sourceSha256": "0a49a1fe242f059248676660f94a35733e2dbb380aa5d711c2e140512f79750d",
+            "frames": 19524,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_squad_casualty_03_03",
+            "sourceFile": "jane\\v2\\squad_casualty_03_03.wav",
+            "sourceSha256": "bccaf3a3a9c7a9a87922393cbd91ae36a5944b349f4352d6e37fc18b6ed9b6d7",
+            "frames": 22712,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_squad_casualty_04_01",
+            "sourceFile": "jane\\v2\\squad_casualty_04_01.wav",
+            "sourceSha256": "d4e3a3e2028ae6840c3dc0c65f64ede0f1e9b25475abe2c4fd91a91e75ef3104",
+            "frames": 35516,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_jane_squad_casualty_05_01",
+            "sourceFile": "jane\\v2\\squad_casualty_05_01.wav",
+            "sourceSha256": "cdea3c8fbc785add1e25b9079da38a022ab84b7fd794f9c48a9b7464085c4649",
+            "frames": 16700,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_squad_casualty_05_02",
+            "sourceFile": "jane\\v2\\squad_casualty_05_02.wav",
+            "sourceSha256": "fe382da5f85932de865ab8ac4a479ad7095c2ce960fca1cd099f4d158c631b8c",
+            "frames": 21406,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_squad_casualty_05_03",
+            "sourceFile": "jane\\v2\\squad_casualty_05_03.wav",
+            "sourceSha256": "42bec02499e21eda387dc1323664350b3091958b527b592aea2905d3d70f8c99",
+            "frames": 23286,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_success_01_01",
+            "sourceFile": "jane\\v2\\success_01_01.wav",
+            "sourceSha256": "2d3eab44a851488aa691f7f6bda82eb489b1239fddd0e20b53b2b214a450a4dc",
+            "frames": 43984,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_success_02_01",
+            "sourceFile": "jane\\v2\\success_02_01.wav",
+            "sourceSha256": "7fd7c92dfb73b83db7722c492ee7a60ce13f082d0b8d0a02e854077db5973a3d",
+            "frames": 34920,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_success_03_01",
+            "sourceFile": "jane\\v2\\success_03_01.wav",
+            "sourceSha256": "2d3eab44a851488aa691f7f6bda82eb489b1239fddd0e20b53b2b214a450a4dc",
+            "frames": 43984,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_success_04_01",
+            "sourceFile": "jane\\v2\\success_04_01.wav",
+            "sourceSha256": "7fd7c92dfb73b83db7722c492ee7a60ce13f082d0b8d0a02e854077db5973a3d",
+            "frames": 34920,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_success_05_01",
+            "sourceFile": "jane\\v2\\success_05_01.wav",
+            "sourceSha256": "2d3eab44a851488aa691f7f6bda82eb489b1239fddd0e20b53b2b214a450a4dc",
+            "frames": 43984,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_suppress_fire_01_01",
+            "sourceFile": "jane\\v2\\suppress_fire_01_01.wav",
+            "sourceSha256": "99fccceef060ca22ab8ac718c76cdcbc598c20cb57217034ff67ab1a03644752",
+            "frames": 17642,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_suppress_fire_01_02",
+            "sourceFile": "jane\\v2\\suppress_fire_01_02.wav",
+            "sourceSha256": "4d813f313f9eda05afba812213a74dec4f0282269821108fdb8da6facac98368",
+            "frames": 24698,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_suppress_fire_01_03",
+            "sourceFile": "jane\\v2\\suppress_fire_01_03.wav",
+            "sourceSha256": "aa69bdde27cc01b3b840b8161fa17ad5d3d956100f58575ba009b04d37597099",
+            "frames": 26580,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_jane_suppressed_01_01",
+            "sourceFile": "jane\\v2\\suppressed_01_01.wav",
+            "sourceSha256": "aa5a40a665a54ab8ce2f0ab6191d78ce1c63989af1855d689c86c529491104f7",
+            "frames": 46964,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_suppressed_02_01",
+            "sourceFile": "jane\\v2\\suppressed_02_01.wav",
+            "sourceSha256": "91db33f8da946ea9e07b04e5052eaf6175566b4819d16176b5151af04e45d129",
+            "frames": 42976,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_suppressed_03_01",
+            "sourceFile": "jane\\v2\\suppressed_03_01.wav",
+            "sourceSha256": "6b755f36aa4573445eb30d061fb962f45989fc4911771eedf6fc6c14ff34a080",
+            "frames": 45230,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_jane_taking_fire_01_01",
+            "sourceFile": "jane\\v2\\taking_fire_01_01.wav",
+            "sourceSha256": "6b755f36aa4573445eb30d061fb962f45989fc4911771eedf6fc6c14ff34a080",
+            "frames": 45230,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_jane_taking_fire_02_01",
+            "sourceFile": "jane\\v2\\taking_fire_02_01.wav",
+            "sourceSha256": "91db33f8da946ea9e07b04e5052eaf6175566b4819d16176b5151af04e45d129",
+            "frames": 42976,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_taking_fire_03_01",
+            "sourceFile": "jane\\v2\\taking_fire_03_01.wav",
+            "sourceSha256": "91db33f8da946ea9e07b04e5052eaf6175566b4819d16176b5151af04e45d129",
+            "frames": 42976,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_taking_fire_04_01",
+            "sourceFile": "jane\\v2\\taking_fire_04_01.wav",
+            "sourceSha256": "379800a1c0673df3448720ba36b699a1929c2d6c9015b021b31c902ee1a9721a",
+            "frames": 28762,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_jane_taking_fire_04_02",
+            "sourceFile": "jane\\v2\\taking_fire_04_02.wav",
+            "sourceSha256": "b5f197a5fcd2a889aaafcbb36cdc8c500b180b36e018acc73a22ec677a2935c4",
+            "frames": 31284,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        },
+        {
+            "assetName": "cl2_jane_taking_fire_hurt_01_01",
+            "sourceFile": "jane\\v2\\taking_fire_hurt_01_01.wav",
+            "sourceSha256": "4b603c4d336d4a645bc2bfdae0af212f393f18b9a7b595ca8ad1c51bf08d7356",
+            "frames": 17118,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 1.0
+        },
+        {
+            "assetName": "cl2_jane_taking_fire_hurt_02_01",
+            "sourceFile": "jane\\v2\\taking_fire_hurt_02_01.wav",
+            "sourceSha256": "6b755f36aa4573445eb30d061fb962f45989fc4911771eedf6fc6c14ff34a080",
+            "frames": 45230,
+            "channels": 1,
+            "sampleRate": 44100,
+            "editorVerifiedPeak": 0.999969482421875
+        }
+    ]
+}

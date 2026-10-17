@@ -85,6 +85,19 @@ function Assert-Dll([string]$Path, [string]$Version, [string]$AssemblyVersion = 
     if ($actual -ne $AssemblyVersion) { throw "DLL AssemblyVersion $actual != $AssemblyVersion : $Path" }
     if ([Diagnostics.FileVersionInfo]::GetVersionInfo($Path).FileVersion -ne $normal) { throw "DLL FileVersion mismatch: $Path" }
 }
+function Get-InstalledSettingsReference([string]$Game, [string]$MinimumVersion) {
+    $root = Join-Path $Game 'Mods\MenaceModSettings'
+    Assert-NotLink $root
+    $manifestPath = Join-Path $root 'jiangyu.json'
+    Assert-Leaf $manifestPath
+    $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
+    if ($manifest.name -ne 'MenaceModSettings' -or [version]$manifest.version -lt [version]$MinimumVersion) {
+        throw "Installed MenaceModSettings does not satisfy >= $MinimumVersion. No files changed."
+    }
+    $dll = Join-Path $root 'code\MenaceModSettings.dll'
+    Assert-Dll $dll $manifest.version '1.0.0.0'
+    return $dll
+}
 function Invoke-Dotnet([string[]]$BuildArguments) {
     & dotnet @BuildArguments
     if ($LASTEXITCODE -ne 0) { throw "dotnet failed with exit code $LASTEXITCODE" }

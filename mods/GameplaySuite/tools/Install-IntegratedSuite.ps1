@@ -6,6 +6,7 @@ param(
     [string]$GamePath = $env:MENACE_GAME,
     [ValidateSet('Suite', 'Camera', 'Standalone')][string]$Product = 'Suite',
     [string[]]$Modules = @(),
+    [switch]$UseInstalledSettings,
     [switch]$BuildOnly,
     [string]$RollbackPath
 )
@@ -47,8 +48,12 @@ try {
     $GamePath = (Resolve-Path -LiteralPath $GamePath).Path
     Assert-NotLink $GamePath
     Assert-Leaf (Join-Path $GamePath 'Menace.exe')
-    Assert-GameClosed
-    $lock = [IO.File]::Open((Join-Path $GamePath '_MENACE-install.lock'), 'OpenOrCreate', 'ReadWrite', 'None')
+    if (-not $BuildOnly -or $RollbackPath) { Assert-GameClosed }
+    # Explicit build-only reads game references; outputs stay in kit/temp build dirs.
+    # Live deployment/rollback retain their independent final closed-game guards.
+    $lockRoot = $GamePath
+    if ($BuildOnly -and -not $RollbackPath) { $lockRoot = $BundleRoot }
+    $lock = [IO.File]::Open((Join-Path $lockRoot '_MENACE-install.lock'), 'OpenOrCreate', 'ReadWrite', 'None')
     if ($RollbackPath) { Restore-ModBackup $GamePath $RollbackPath -CheckCurrent; return }
     Assert-Hash (Join-Path $GamePath 'GameAssembly.dll') $catalog.gameAssemblySha256
     $refs = Join-Path $GamePath 'MelonLoader\Il2CppAssemblies'
@@ -61,12 +66,31 @@ try {
     # First build step: automatic, private SDK bootstrap. No preinstalled SDK required.
     Initialize-PrivateDotnet $BundleRoot $kit.dotnetSdk
     $selected = @($catalog.modules)
+    $settingsDll = ''
+    $settingsHash = ''
     if ($Product -eq 'Camera') { $selected = @('MenaceModSettings', 'CinematicActionCamera') }
     if ($Product -eq 'Standalone') {
         if (-not $Modules.Count) { throw 'Standalone requires -Modules.' }
-        foreach ($name in $Modules) { if ($catalog.modules -notcontains $name) { throw "Unknown module: $name" } }
+        $available = @($catalog.modules)
+        if ($catalog.PSObject.Properties.Name -contains 'experimentalModules') { $available += @($catalog.experimentalModules) }
+        foreach ($name in $Modules) { if ($available -notcontains $name) { throw "Unknown module: $name" } }
         $selected = @('MenaceModSettings') + @($Modules | Where-Object { $_ -ne 'MenaceModSettings' } | Select-Object -Unique)
     }
+    if ($UseInstalledSettings) {
+        if ($Product -ne 'Standalone' -or $Modules.Count -ne 1 -or $Modules[0] -ne 'SquaddieFieldPromotions') {
+            throw 'UseInstalledSettings is supported only for standalone SquaddieFieldPromotions.'
+        }
+        $selected = @('SquaddieFieldPromotions')
+        $dependencyManifest = Get-Content -LiteralPath (Join-Path $BundleRoot 'source\mods\jiangyu\SquaddieFieldPromotions\jiangyu.json') -Raw | ConvertFrom-Json
+        $requirements = @($dependencyManifest.depends | Where-Object { $_ -match '^MenaceModSettings >= ([0-9]+\.[0-9]+\.[0-9]+)$' })
+        if ($requirements.Count -ne 1) { throw 'Missing/ambiguous installed settings requirement.' }
+        $minimum = $requirements[0].Substring('MenaceModSettings >= '.Length)
+        $settingsDll = Get-InstalledSettingsReference $GamePath $minimum
+        $settingsHash = (Get-FileHash -LiteralPath $settingsDll -Algorithm SHA256).Hash
+        Assert-Hash (Join-Path $GamePath 'Mods\Jiangyu.Loader.dll') $catalog.loaderSha256
+        Write-Host 'Reusing validated installed MenaceModSettings and Jiangyu.Loader; neither will be replaced.'
+    }
+    elseif ($Modules -contains 'SquaddieFieldPromotions') { throw 'SFP preview requires -UseInstalledSettings.' }
     if ($Product -ne 'Suite' -and (Test-Path -LiteralPath (Join-Path $GamePath 'Mods\MenaceGameplaySuite'))) {
         throw 'Legacy monolithic Suite detected: use the Suite product for an atomic cutover, not a partial duplicate.'
     }
@@ -101,7 +125,7 @@ try {
             if ($null -eq $versionNode) { throw "Missing project Version: $name" }
             $actual = $versionNode.InnerText.Trim()
             if ($actual -ne $manifest.version) { throw "Project/manifest mismatch: $name" }
-            Invoke-Dotnet @('build', $project, '-c', 'Release', '--nologo', "-p:GameDir=$GamePath", "-p:GameAssembliesDir=$refs", "-p:MelonLoaderDir=$runtime", "-p:JiangyuSdkDir=$sdk", '-p:JiangyuDev=false')
+            Invoke-Dotnet @('build', $project, '-c', 'Release', '--nologo', "-p:GameDir=$GamePath", "-p:GameAssembliesDir=$refs", "-p:MelonLoaderDir=$runtime", "-p:JiangyuSdkDir=$sdk", "-p:MenaceModSettingsPath=$settingsDll", '-p:JiangyuDev=false')
             $assemblyNode = $xml.SelectSingleNode('/Project/PropertyGroup/AssemblyName')
             $assembly = $name
             if ($assemblyNode) { $assembly = $assemblyNode.InnerText.Trim() }
@@ -111,7 +135,15 @@ try {
             Assert-Dll $dll $manifest.version $identity
             Copy-Item -LiteralPath $dll -Destination (Join-Path $compiled "code\$assembly.dll") -Force
         }
+        if ($name -eq 'SquaddieFieldPromotions') {
+            Invoke-Dotnet @('run', '--project', (Join-Path $root 'tests\OfflineChecks\OfflineChecks.csproj'), '-c', 'Release', '--', $source)
+            & (Join-Path $root 'tests\Test-InstalledSettings.ps1') -Helpers (Join-Path $scriptRoot 'Install.Common.ps1') -GamePath $GamePath
+        }
         Copy-Item -LiteralPath $compiled -Destination (Join-Path $stage $name) -Recurse
+        $runtimeAssets = Join-Path $root 'runtime_assets'
+        if (Test-Path -LiteralPath $runtimeAssets -PathType Container) {
+            Copy-Item -LiteralPath $runtimeAssets -Destination (Join-Path (Join-Path $stage $name) 'runtime_assets') -Recurse
+        }
         Write-Host "Staged $name $($manifest.version)"
     }
     $names = @($selected)
@@ -124,8 +156,10 @@ try {
         Copy-Item -LiteralPath $dll -Destination (Join-Path $stage 'MenaceThirdPersonCamera.dll')
         $names += 'MenaceThirdPersonCamera.dll'
     }
-    Copy-Item -LiteralPath $loader -Destination (Join-Path $stage 'Jiangyu.Loader.dll')
-    $names += 'Jiangyu.Loader.dll'
+    if (-not $UseInstalledSettings) {
+        Copy-Item -LiteralPath $loader -Destination (Join-Path $stage 'Jiangyu.Loader.dll')
+        $names += 'Jiangyu.Loader.dll'
+    }
     $conflicts = @()
     foreach ($name in $selected) {
         $conflicts += "$name.dll"
@@ -146,6 +180,7 @@ try {
     foreach ($name in $names) { $null = @(Get-TreeInventory (Join-Path $stage $name)) }
     Write-Host "All builds/versions passed. Staged distribution: $stage"
     if ($BuildOnly) { Write-Host 'BUILD-ONLY: no live mod changed.'; return }
+    if ($UseInstalledSettings) { Assert-Hash $settingsDll $settingsHash }
     Install-StagedMods $GamePath $stage $names $conflicts
     Write-Host 'SUCCESS: files installed and verified. In-game acceptance remains pending.'
 }

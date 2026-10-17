@@ -1,0 +1,1134 @@
+{
+  "schemaVersion": 1,
+  "routes": {
+    "john|ready|0": [
+      "cl2_john_ready_01_01"
+    ],
+    "john|moving|0": [
+      "cl2_john_moving_01_01",
+      "cl2_john_moving_01_02"
+    ],
+    "john|moving|1": [
+      "cl2_john_moving_02_01",
+      "cl2_john_moving_02_02"
+    ],
+    "john|moving|2": [
+      "cl2_john_moving_03_01",
+      "cl2_john_moving_03_02",
+      "cl2_john_moving_03_03"
+    ],
+    "john|move_done|0": [
+      "cl2_john_move_done_01_01"
+    ],
+    "john|move_done|1": [
+      "cl2_john_move_done_02_01"
+    ],
+    "john|move_done|2": [
+      "cl2_john_move_done_03_01",
+      "cl2_john_move_done_03_02"
+    ],
+    "john|spotted|0": [
+      "cl2_john_spotted_01_01"
+    ],
+    "john|spotted|1": [
+      "cl2_john_spotted_02_01"
+    ],
+    "john|spotted|2": [
+      "cl2_john_spotted_03_01"
+    ],
+    "john|spotted|3": [
+      "cl2_john_spotted_04_01"
+    ],
+    "john|taking_fire|0": [
+      "cl2_john_taking_fire_01_01"
+    ],
+    "john|taking_fire|1": [
+      "cl2_john_taking_fire_02_01"
+    ],
+    "john|taking_fire|2": [
+      "cl2_john_taking_fire_03_01"
+    ],
+    "john|taking_fire|3": [
+      "cl2_john_taking_fire_04_01",
+      "cl2_john_taking_fire_04_02"
+    ],
+    "john|kill|0": [
+      "cl2_john_kill_01_01"
+    ],
+    "john|kill|1": [
+      "cl2_john_kill_02_01"
+    ],
+    "john|kill|2": [
+      "cl2_john_kill_03_01"
+    ],
+    "john|kill|3": [
+      "cl2_john_kill_04_01"
+    ],
+    "john|kill|4": [
+      "cl2_john_kill_05_01"
+    ],
+    "john|kill|5": [
+      "cl2_john_kill_06_01"
+    ],
+    "john|suppressed|0": [
+      "cl2_john_suppressed_01_01"
+    ],
+    "john|suppressed|1": [
+      "cl2_john_suppressed_02_01"
+    ],
+    "john|suppressed|2": [
+      "cl2_john_suppressed_03_01"
+    ],
+    "john|miss|0": [
+      "cl2_john_miss_01_01"
+    ],
+    "john|miss|1": [
+      "cl2_john_miss_02_01",
+      "cl2_john_miss_02_02",
+      "cl2_john_miss_02_03"
+    ],
+    "john|miss|2": [
+      "cl2_john_miss_03_01",
+      "cl2_john_miss_03_02",
+      "cl2_john_miss_03_03"
+    ],
+    "john|ready_quiet|0": [
+      "cl2_john_ready_quiet_01_01"
+    ],
+    "john|ready_quiet|1": [
+      "cl2_john_ready_quiet_02_01"
+    ],
+    "john|ready_quiet|2": [
+      "cl2_john_ready_quiet_03_01"
+    ],
+    "john|ready_shouty|0": [
+      "cl2_john_ready_shouty_01_01"
+    ],
+    "john|ready_shouty|1": [
+      "cl2_john_ready_shouty_02_01"
+    ],
+    "john|ready_shouty|2": [
+      "cl2_john_ready_shouty_03_01",
+      "cl2_john_ready_shouty_03_02"
+    ],
+    "john|ready_shouty|3": [
+      "cl2_john_ready_shouty_04_01",
+      "cl2_john_ready_shouty_04_02"
+    ],
+    "john|ready_shouty|4": [
+      "cl2_john_ready_shouty_05_01"
+    ],
+    "john|ready_shouty|5": [
+      "cl2_john_ready_shouty_06_01"
+    ],
+    "john|ready_shouty|6": [
+      "cl2_john_ready_shouty_07_01"
+    ],
+    "john|ready_shouty|7": [
+      "cl2_john_ready_shouty_08_01"
+    ],
+    "john|ready_shouty|8": [
+      "cl2_john_ready_shouty_09_01"
+    ],
+    "john|ready_shouty|9": [
+      "cl2_john_ready_shouty_10_01"
+    ],
+    "john|ready_suppressed|0": [
+      "cl2_john_ready_suppressed_01_01"
+    ],
+    "john|ready_suppressed|1": [
+      "cl2_john_ready_suppressed_02_01"
+    ],
+    "john|ready_hurt|0": [
+      "cl2_john_ready_hurt_01_01"
+    ],
+    "john|ready_hurt|1": [
+      "cl2_john_ready_hurt_02_01",
+      "cl2_john_ready_hurt_02_02"
+    ],
+    "john|ready_hurt|2": [
+      "cl2_john_ready_hurt_03_01",
+      "cl2_john_ready_hurt_03_02"
+    ],
+    "john|after_kills|0": [
+      "cl2_john_after_kills_01_01"
+    ],
+    "john|after_kills|1": [
+      "cl2_john_after_kills_02_01"
+    ],
+    "john|after_kills|2": [
+      "cl2_john_after_kills_03_01"
+    ],
+    "john|after_kills|3": [
+      "cl2_john_after_kills_04_01"
+    ],
+    "john|after_kills|4": [
+      "cl2_john_after_kills_05_01"
+    ],
+    "john|after_kills|5": [
+      "cl2_john_after_kills_06_01"
+    ],
+    "john|after_kills|6": [
+      "cl2_john_after_kills_07_01"
+    ],
+    "john|enemy_hidden|0": [
+      "cl2_john_enemy_hidden_01_01"
+    ],
+    "john|enemy_hidden|1": [
+      "cl2_john_enemy_hidden_02_01"
+    ],
+    "john|objective_threat|0": [
+      "cl2_john_objective_threat_01_01"
+    ],
+    "john|many_enemies|0": [
+      "cl2_john_many_enemies_01_01"
+    ],
+    "john|enemy_trees|0": [
+      "cl2_john_enemy_trees_01_01"
+    ],
+    "john|enemy_trees|1": [
+      "cl2_john_enemy_trees_02_01"
+    ],
+    "john|last_click|0": [
+      "cl2_john_last_click_01_01"
+    ],
+    "john|move_quiet|0": [
+      "cl2_john_move_quiet_01_01",
+      "cl2_john_move_quiet_01_02"
+    ],
+    "john|move_quiet|1": [
+      "cl2_john_move_quiet_02_01"
+    ],
+    "john|move_shout|0": [
+      "cl2_john_move_shout_01_01"
+    ],
+    "john|move_shout|1": [
+      "cl2_john_move_shout_02_01"
+    ],
+    "john|move_shout|2": [
+      "cl2_john_move_shout_03_01"
+    ],
+    "john|move_shout|3": [
+      "cl2_john_move_shout_04_01"
+    ],
+    "john|move_shout|4": [
+      "cl2_john_move_shout_05_01"
+    ],
+    "john|move_shout|5": [
+      "cl2_john_move_shout_06_01"
+    ],
+    "john|move_shout|6": [
+      "cl2_john_move_shout_07_01"
+    ],
+    "john|move_hurt|0": [
+      "cl2_john_move_hurt_01_01"
+    ],
+    "john|move_hurt|1": [
+      "cl2_john_move_hurt_02_01"
+    ],
+    "john|move_cover|0": [
+      "cl2_john_move_cover_01_01"
+    ],
+    "john|move_cover|1": [
+      "cl2_john_move_cover_02_01",
+      "cl2_john_move_cover_02_02"
+    ],
+    "john|move_cover|2": [
+      "cl2_john_move_cover_03_01"
+    ],
+    "john|move_cover_done|0": [
+      "cl2_john_move_cover_done_01_01"
+    ],
+    "john|move_cover_done|1": [
+      "cl2_john_move_cover_done_02_01"
+    ],
+    "john|move_cover_done|2": [
+      "cl2_john_move_cover_done_03_01",
+      "cl2_john_move_cover_done_03_02"
+    ],
+    "john|move_done_quiet|0": [
+      "cl2_john_move_done_quiet_01_01"
+    ],
+    "john|move_done_quiet|1": [
+      "cl2_john_move_done_quiet_02_01"
+    ],
+    "john|move_done_hurt|0": [
+      "cl2_john_move_done_hurt_01_01"
+    ],
+    "john|move_done_hurt|1": [
+      "cl2_john_move_done_hurt_02_01"
+    ],
+    "john|spotted_quiet|0": [
+      "cl2_john_spotted_quiet_01_01"
+    ],
+    "john|spotted_heavy|0": [
+      "cl2_john_spotted_heavy_01_01"
+    ],
+    "john|spotted_sniper|0": [
+      "cl2_john_spotted_sniper_01_01"
+    ],
+    "john|spotted_turret|0": [
+      "cl2_john_spotted_turret_01_01"
+    ],
+    "john|spotted_vehicle|0": [
+      "cl2_john_spotted_vehicle_01_01"
+    ],
+    "john|spotted_weapons|0": [
+      "cl2_john_spotted_weapons_01_01"
+    ],
+    "john|spotted_emp|0": [
+      "cl2_john_spotted_emp_01_01"
+    ],
+    "john|spotted_bug|0": [
+      "cl2_john_spotted_bug_01_01"
+    ],
+    "john|spotted_bug|1": [
+      "cl2_john_spotted_bug_02_01"
+    ],
+    "john|spotted_hurt|0": [
+      "cl2_john_spotted_hurt_01_01"
+    ],
+    "john|spotted_hurt|1": [
+      "cl2_john_spotted_hurt_02_01"
+    ],
+    "john|enemy_damaged|0": [
+      "cl2_john_enemy_damaged_01_01"
+    ],
+    "john|enemy_damaged|1": [
+      "cl2_john_enemy_damaged_02_01"
+    ],
+    "john|enemy_damaged|2": [
+      "cl2_john_enemy_damaged_03_01"
+    ],
+    "john|enemy_damaged|3": [
+      "cl2_john_enemy_damaged_04_01"
+    ],
+    "john|enemy_damaged|4": [
+      "cl2_john_enemy_damaged_05_01"
+    ],
+    "john|enemy_vehicle_damaged|0": [
+      "cl2_john_enemy_vehicle_damaged_01_01"
+    ],
+    "john|enemy_vehicle_damaged|1": [
+      "cl2_john_enemy_vehicle_damaged_02_01"
+    ],
+    "john|enemy_vehicle_damaged|2": [
+      "cl2_john_enemy_vehicle_damaged_03_01"
+    ],
+    "john|enemy_blocked|0": [
+      "cl2_john_enemy_blocked_01_01"
+    ],
+    "john|enemy_blocked|1": [
+      "cl2_john_enemy_blocked_02_01",
+      "cl2_john_enemy_blocked_02_02",
+      "cl2_john_enemy_blocked_02_03"
+    ],
+    "john|enemy_suppressed|0": [
+      "cl2_john_enemy_suppressed_01_01"
+    ],
+    "john|enemy_suppressed|1": [
+      "cl2_john_enemy_suppressed_02_01"
+    ],
+    "john|enemy_suppressed|2": [
+      "cl2_john_enemy_suppressed_03_01"
+    ],
+    "john|kill_heavy|0": [
+      "cl2_john_kill_heavy_01_01"
+    ],
+    "john|kill_sniper|0": [
+      "cl2_john_kill_sniper_01_01"
+    ],
+    "john|kill_turret|0": [
+      "cl2_john_kill_turret_01_01"
+    ],
+    "john|kill_vehicle|0": [
+      "cl2_john_kill_vehicle_01_01"
+    ],
+    "john|kill_weapons|0": [
+      "cl2_john_kill_weapons_01_01"
+    ],
+    "john|kill_bugs|0": [
+      "cl2_john_kill_bugs_01_01"
+    ],
+    "john|kill_bugs|1": [
+      "cl2_john_kill_bugs_02_01"
+    ],
+    "john|kill_bugs|2": [
+      "cl2_john_kill_bugs_03_01"
+    ],
+    "john|kill_bugs|3": [
+      "cl2_john_kill_bugs_04_01"
+    ],
+    "john|kill_hurt|0": [
+      "cl2_john_kill_hurt_01_01"
+    ],
+    "john|kill_hurt|1": [
+      "cl2_john_kill_hurt_02_01"
+    ],
+    "john|construct_damaged|0": [
+      "cl2_john_construct_damaged_01_01"
+    ],
+    "john|construct_damaged|1": [
+      "cl2_john_construct_damaged_02_01"
+    ],
+    "john|construct_spotted|0": [
+      "cl2_john_construct_spotted_01_01"
+    ],
+    "john|construct_spotted|1": [
+      "cl2_john_construct_spotted_02_01"
+    ],
+    "john|construct_spotted|2": [
+      "cl2_john_construct_spotted_03_01"
+    ],
+    "john|construct_spotted|3": [
+      "cl2_john_construct_spotted_04_01",
+      "cl2_john_construct_spotted_04_02"
+    ],
+    "john|construct_boss|0": [
+      "cl2_john_construct_boss_01_01"
+    ],
+    "john|construct_master|0": [
+      "cl2_john_construct_master_01_01"
+    ],
+    "john|construct_killed|0": [
+      "cl2_john_construct_killed_01_01"
+    ],
+    "john|construct_killed|1": [
+      "cl2_john_construct_killed_02_01"
+    ],
+    "john|construct_killed|2": [
+      "cl2_john_construct_killed_03_01"
+    ],
+    "john|construct_killed|3": [
+      "cl2_john_construct_killed_04_01"
+    ],
+    "john|construct_killed_boss|0": [
+      "cl2_john_construct_killed_boss_01_01"
+    ],
+    "john|construct_killed_master|0": [
+      "cl2_john_construct_killed_master_01_01"
+    ],
+    "john|miss_twice|0": [
+      "cl2_john_miss_twice_01_01",
+      "cl2_john_miss_twice_01_02",
+      "cl2_john_miss_twice_01_03"
+    ],
+    "john|miss_cover|0": [
+      "cl2_john_miss_cover_01_01"
+    ],
+    "john|miss_cover|1": [
+      "cl2_john_miss_cover_02_01"
+    ],
+    "john|miss_cover|2": [
+      "cl2_john_miss_cover_03_01",
+      "cl2_john_miss_cover_03_02",
+      "cl2_john_miss_cover_03_03"
+    ],
+    "john|taking_fire_hurt|0": [
+      "cl2_john_taking_fire_hurt_01_01"
+    ],
+    "john|taking_fire_hurt|1": [
+      "cl2_john_taking_fire_hurt_02_01"
+    ],
+    "john|ally_taking_fire|0": [
+      "cl2_john_ally_taking_fire_01_01",
+      "cl2_john_ally_taking_fire_01_02"
+    ],
+    "john|ally_taking_fire|1": [
+      "cl2_john_ally_taking_fire_02_01"
+    ],
+    "john|ally_suppressed|0": [
+      "cl2_john_ally_suppressed_01_01"
+    ],
+    "john|ally_suppressed|1": [
+      "cl2_john_ally_suppressed_02_01"
+    ],
+    "john|morale_wavering|0": [
+      "cl2_john_morale_wavering_01_01"
+    ],
+    "john|morale_wavering|1": [
+      "cl2_john_morale_wavering_02_01"
+    ],
+    "john|morale_fleeing|0": [
+      "cl2_john_morale_fleeing_01_01"
+    ],
+    "john|morale_fleeing|1": [
+      "cl2_john_morale_fleeing_02_01"
+    ],
+    "john|morale_recovery|0": [
+      "cl2_john_morale_recovery_01_01"
+    ],
+    "john|morale_recovery|1": [
+      "cl2_john_morale_recovery_02_01"
+    ],
+    "john|last_man|0": [
+      "cl2_john_last_man_01_01",
+      "cl2_john_last_man_01_02"
+    ],
+    "john|squad_casualty|0": [
+      "cl2_john_squad_casualty_01_01",
+      "cl2_john_squad_casualty_01_02",
+      "cl2_john_squad_casualty_01_03"
+    ],
+    "john|squad_casualty|1": [
+      "cl2_john_squad_casualty_02_01",
+      "cl2_john_squad_casualty_02_02",
+      "cl2_john_squad_casualty_02_03"
+    ],
+    "john|squad_casualty|2": [
+      "cl2_john_squad_casualty_03_01",
+      "cl2_john_squad_casualty_03_02",
+      "cl2_john_squad_casualty_03_03"
+    ],
+    "john|squad_casualty|3": [
+      "cl2_john_squad_casualty_04_01"
+    ],
+    "john|squad_casualty|4": [
+      "cl2_john_squad_casualty_05_01",
+      "cl2_john_squad_casualty_05_02",
+      "cl2_john_squad_casualty_05_03"
+    ],
+    "john|ally_dead|0": [
+      "cl2_john_ally_dead_01_01",
+      "cl2_john_ally_dead_01_02",
+      "cl2_john_ally_dead_01_03"
+    ],
+    "john|rescue|0": [
+      "cl2_john_rescue_01_01"
+    ],
+    "john|success|0": [
+      "cl2_john_success_01_01"
+    ],
+    "john|success|1": [
+      "cl2_john_success_02_01"
+    ],
+    "john|success|2": [
+      "cl2_john_success_03_01"
+    ],
+    "john|success|3": [
+      "cl2_john_success_04_01"
+    ],
+    "john|success|4": [
+      "cl2_john_success_05_01"
+    ],
+    "john|grenade_frag|0": [
+      "cl2_john_grenade_frag_01_01"
+    ],
+    "john|suppress_fire|0": [
+      "cl2_john_suppress_fire_01_01",
+      "cl2_john_suppress_fire_01_02",
+      "cl2_john_suppress_fire_01_03"
+    ],
+    "john|rocket|0": [
+      "cl2_john_rocket_01_01"
+    ],
+    "john|emp_success|0": [
+      "cl2_john_emp_success_01_01"
+    ],
+    "john|emp_failed|0": [
+      "cl2_john_emp_failed_01_01"
+    ],
+    "john|danger_close|0": [
+      "cl2_john_danger_close_01_01"
+    ],
+    "john|offmap|0": [
+      "cl2_john_offmap_01_01"
+    ],
+    "john|offmap|1": [
+      "cl2_john_offmap_02_01",
+      "cl2_john_offmap_02_02",
+      "cl2_john_offmap_02_03"
+    ],
+    "john|massive_explosion|0": [
+      "cl2_john_massive_explosion_01_01"
+    ],
+    "john|enemy_fleeing|0": [
+      "cl2_john_enemy_fleeing_01_01"
+    ],
+    "john|idle_combat|0": [
+      "cl2_john_idle_combat_01_01"
+    ],
+    "john|idle_combat2|0": [
+      "cl2_john_idle_combat2_01_01"
+    ],
+    "john|arrival|0": [
+      "cl2_john_arrival_01_01"
+    ],
+    "john|arrival|1": [
+      "cl2_john_arrival_02_01"
+    ],
+    "john|building_destroyed|0": [
+      "cl2_john_building_destroyed_01_01"
+    ],
+    "john|building_destroyed|1": [
+      "cl2_john_building_destroyed_02_01"
+    ],
+    "john|building_destroyed|2": [
+      "cl2_john_building_destroyed_03_01"
+    ],
+    "jane|ready|0": [
+      "cl2_jane_ready_01_01"
+    ],
+    "jane|moving|0": [
+      "cl2_jane_moving_01_01"
+    ],
+    "jane|moving|1": [
+      "cl2_jane_moving_02_01"
+    ],
+    "jane|moving|2": [
+      "cl2_jane_moving_03_01",
+      "cl2_jane_moving_03_02",
+      "cl2_jane_moving_03_03"
+    ],
+    "jane|move_done|0": [
+      "cl2_jane_move_done_01_01"
+    ],
+    "jane|move_done|1": [
+      "cl2_jane_move_done_02_01"
+    ],
+    "jane|move_done|2": [
+      "cl2_jane_move_done_03_01",
+      "cl2_jane_move_done_03_02"
+    ],
+    "jane|spotted|0": [
+      "cl2_jane_spotted_01_01"
+    ],
+    "jane|spotted|1": [
+      "cl2_jane_spotted_02_01"
+    ],
+    "jane|spotted|2": [
+      "cl2_jane_spotted_03_01"
+    ],
+    "jane|spotted|3": [
+      "cl2_jane_spotted_04_01"
+    ],
+    "jane|taking_fire|0": [
+      "cl2_jane_taking_fire_01_01"
+    ],
+    "jane|taking_fire|1": [
+      "cl2_jane_taking_fire_02_01"
+    ],
+    "jane|taking_fire|2": [
+      "cl2_jane_taking_fire_03_01"
+    ],
+    "jane|taking_fire|3": [
+      "cl2_jane_taking_fire_04_01",
+      "cl2_jane_taking_fire_04_02"
+    ],
+    "jane|kill|0": [
+      "cl2_jane_kill_01_01"
+    ],
+    "jane|kill|1": [
+      "cl2_jane_kill_02_01"
+    ],
+    "jane|kill|2": [
+      "cl2_jane_kill_03_01"
+    ],
+    "jane|kill|3": [
+      "cl2_jane_kill_04_01"
+    ],
+    "jane|kill|4": [
+      "cl2_jane_kill_05_01"
+    ],
+    "jane|kill|5": [
+      "cl2_jane_kill_06_01"
+    ],
+    "jane|suppressed|0": [
+      "cl2_jane_suppressed_01_01"
+    ],
+    "jane|suppressed|1": [
+      "cl2_jane_suppressed_02_01"
+    ],
+    "jane|suppressed|2": [
+      "cl2_jane_suppressed_03_01"
+    ],
+    "jane|miss|0": [
+      "cl2_jane_miss_01_01"
+    ],
+    "jane|miss|1": [
+      "cl2_jane_miss_02_01",
+      "cl2_jane_miss_02_02",
+      "cl2_jane_miss_02_03"
+    ],
+    "jane|miss|2": [
+      "cl2_jane_miss_03_01",
+      "cl2_jane_miss_03_02",
+      "cl2_jane_miss_03_03"
+    ],
+    "jane|ready_quiet|0": [
+      "cl2_jane_ready_quiet_01_01"
+    ],
+    "jane|ready_quiet|1": [
+      "cl2_jane_ready_quiet_02_01"
+    ],
+    "jane|ready_quiet|2": [
+      "cl2_jane_ready_quiet_03_01"
+    ],
+    "jane|ready_shouty|0": [
+      "cl2_jane_ready_shouty_01_01"
+    ],
+    "jane|ready_shouty|1": [
+      "cl2_jane_ready_shouty_02_01"
+    ],
+    "jane|ready_shouty|2": [
+      "cl2_jane_ready_shouty_03_01",
+      "cl2_jane_ready_shouty_03_02"
+    ],
+    "jane|ready_shouty|3": [
+      "cl2_jane_ready_shouty_04_01",
+      "cl2_jane_ready_shouty_04_02"
+    ],
+    "jane|ready_shouty|4": [
+      "cl2_jane_ready_shouty_05_01"
+    ],
+    "jane|ready_shouty|5": [
+      "cl2_jane_ready_shouty_06_01"
+    ],
+    "jane|ready_shouty|6": [
+      "cl2_jane_ready_shouty_07_01"
+    ],
+    "jane|ready_shouty|7": [
+      "cl2_jane_ready_shouty_08_01"
+    ],
+    "jane|ready_shouty|8": [
+      "cl2_jane_ready_shouty_09_01"
+    ],
+    "jane|ready_shouty|9": [
+      "cl2_jane_ready_shouty_10_01"
+    ],
+    "jane|ready_suppressed|0": [
+      "cl2_jane_ready_suppressed_01_01"
+    ],
+    "jane|ready_suppressed|1": [
+      "cl2_jane_ready_suppressed_02_01"
+    ],
+    "jane|ready_hurt|0": [
+      "cl2_jane_ready_hurt_01_01"
+    ],
+    "jane|ready_hurt|1": [
+      "cl2_jane_ready_hurt_02_01",
+      "cl2_jane_ready_hurt_02_02"
+    ],
+    "jane|ready_hurt|2": [
+      "cl2_jane_ready_hurt_03_01"
+    ],
+    "jane|after_kills|0": [
+      "cl2_jane_after_kills_01_01"
+    ],
+    "jane|after_kills|1": [
+      "cl2_jane_after_kills_02_01"
+    ],
+    "jane|after_kills|2": [
+      "cl2_jane_after_kills_03_01"
+    ],
+    "jane|after_kills|3": [
+      "cl2_jane_after_kills_04_01"
+    ],
+    "jane|after_kills|4": [
+      "cl2_jane_after_kills_05_01"
+    ],
+    "jane|after_kills|5": [
+      "cl2_jane_after_kills_06_01"
+    ],
+    "jane|after_kills|6": [
+      "cl2_jane_after_kills_07_01"
+    ],
+    "jane|enemy_hidden|0": [
+      "cl2_jane_enemy_hidden_01_01"
+    ],
+    "jane|enemy_hidden|1": [
+      "cl2_jane_enemy_hidden_02_01"
+    ],
+    "jane|objective_threat|0": [
+      "cl2_jane_objective_threat_01_01"
+    ],
+    "jane|many_enemies|0": [
+      "cl2_jane_many_enemies_01_01"
+    ],
+    "jane|enemy_trees|0": [
+      "cl2_jane_enemy_trees_01_01"
+    ],
+    "jane|enemy_trees|1": [
+      "cl2_jane_enemy_trees_02_01"
+    ],
+    "jane|last_click|0": [
+      "cl2_jane_last_click_01_01"
+    ],
+    "jane|move_quiet|0": [
+      "cl2_jane_move_quiet_01_01",
+      "cl2_jane_move_quiet_01_02"
+    ],
+    "jane|move_quiet|1": [
+      "cl2_jane_move_quiet_02_01"
+    ],
+    "jane|move_shout|0": [
+      "cl2_jane_move_shout_01_01"
+    ],
+    "jane|move_shout|1": [
+      "cl2_jane_move_shout_02_01"
+    ],
+    "jane|move_shout|2": [
+      "cl2_jane_move_shout_03_01"
+    ],
+    "jane|move_shout|3": [
+      "cl2_jane_move_shout_04_01"
+    ],
+    "jane|move_shout|4": [
+      "cl2_jane_move_shout_05_01"
+    ],
+    "jane|move_shout|5": [
+      "cl2_jane_move_shout_06_01"
+    ],
+    "jane|move_shout|6": [
+      "cl2_jane_move_shout_07_01"
+    ],
+    "jane|move_hurt|0": [
+      "cl2_jane_move_hurt_01_01"
+    ],
+    "jane|move_hurt|1": [
+      "cl2_jane_move_hurt_02_01",
+      "cl2_jane_move_hurt_02_02",
+      "cl2_jane_move_hurt_02_03"
+    ],
+    "jane|move_cover|0": [
+      "cl2_jane_move_cover_01_01"
+    ],
+    "jane|move_cover|1": [
+      "cl2_jane_move_cover_02_01",
+      "cl2_jane_move_cover_02_02"
+    ],
+    "jane|move_cover|2": [
+      "cl2_jane_move_cover_03_01"
+    ],
+    "jane|move_cover_done|0": [
+      "cl2_jane_move_cover_done_01_01"
+    ],
+    "jane|move_cover_done|1": [
+      "cl2_jane_move_cover_done_02_01"
+    ],
+    "jane|move_cover_done|2": [
+      "cl2_jane_move_cover_done_03_01",
+      "cl2_jane_move_cover_done_03_02"
+    ],
+    "jane|move_done_quiet|0": [
+      "cl2_jane_move_done_quiet_01_01"
+    ],
+    "jane|move_done_quiet|1": [
+      "cl2_jane_move_done_quiet_02_01"
+    ],
+    "jane|move_done_hurt|0": [
+      "cl2_jane_move_done_hurt_01_01"
+    ],
+    "jane|move_done_hurt|1": [
+      "cl2_jane_move_done_hurt_02_01"
+    ],
+    "jane|spotted_quiet|0": [
+      "cl2_jane_spotted_quiet_01_01"
+    ],
+    "jane|spotted_heavy|0": [
+      "cl2_jane_spotted_heavy_01_01"
+    ],
+    "jane|spotted_sniper|0": [
+      "cl2_jane_spotted_sniper_01_01"
+    ],
+    "jane|spotted_turret|0": [
+      "cl2_jane_spotted_turret_01_01"
+    ],
+    "jane|spotted_vehicle|0": [
+      "cl2_jane_spotted_vehicle_01_01"
+    ],
+    "jane|spotted_weapons|0": [
+      "cl2_jane_spotted_weapons_01_01"
+    ],
+    "jane|spotted_emp|0": [
+      "cl2_jane_spotted_emp_01_01"
+    ],
+    "jane|spotted_bug|0": [
+      "cl2_jane_spotted_bug_01_01"
+    ],
+    "jane|spotted_bug|1": [
+      "cl2_jane_spotted_bug_02_01"
+    ],
+    "jane|spotted_hurt|0": [
+      "cl2_jane_spotted_hurt_01_01"
+    ],
+    "jane|spotted_hurt|1": [
+      "cl2_jane_spotted_hurt_02_01"
+    ],
+    "jane|enemy_damaged|0": [
+      "cl2_jane_enemy_damaged_01_01"
+    ],
+    "jane|enemy_damaged|1": [
+      "cl2_jane_enemy_damaged_02_01"
+    ],
+    "jane|enemy_damaged|2": [
+      "cl2_jane_enemy_damaged_03_01"
+    ],
+    "jane|enemy_damaged|3": [
+      "cl2_jane_enemy_damaged_04_01"
+    ],
+    "jane|enemy_damaged|4": [
+      "cl2_jane_enemy_damaged_05_01"
+    ],
+    "jane|enemy_vehicle_damaged|0": [
+      "cl2_jane_enemy_vehicle_damaged_01_01"
+    ],
+    "jane|enemy_vehicle_damaged|1": [
+      "cl2_jane_enemy_vehicle_damaged_02_01"
+    ],
+    "jane|enemy_vehicle_damaged|2": [
+      "cl2_jane_enemy_vehicle_damaged_03_01"
+    ],
+    "jane|enemy_blocked|0": [
+      "cl2_jane_enemy_blocked_01_01"
+    ],
+    "jane|enemy_blocked|1": [
+      "cl2_jane_enemy_blocked_02_01",
+      "cl2_jane_enemy_blocked_02_02",
+      "cl2_jane_enemy_blocked_02_03"
+    ],
+    "jane|enemy_suppressed|0": [
+      "cl2_jane_enemy_suppressed_01_01"
+    ],
+    "jane|enemy_suppressed|1": [
+      "cl2_jane_enemy_suppressed_02_01"
+    ],
+    "jane|enemy_suppressed|2": [
+      "cl2_jane_enemy_suppressed_03_01"
+    ],
+    "jane|kill_heavy|0": [
+      "cl2_jane_kill_heavy_01_01"
+    ],
+    "jane|kill_sniper|0": [
+      "cl2_jane_kill_sniper_01_01"
+    ],
+    "jane|kill_turret|0": [
+      "cl2_jane_kill_turret_01_01"
+    ],
+    "jane|kill_vehicle|0": [
+      "cl2_jane_kill_vehicle_01_01"
+    ],
+    "jane|kill_weapons|0": [
+      "cl2_jane_kill_weapons_01_01"
+    ],
+    "jane|kill_bugs|0": [
+      "cl2_jane_kill_bugs_01_01"
+    ],
+    "jane|kill_bugs|1": [
+      "cl2_jane_kill_bugs_02_01"
+    ],
+    "jane|kill_bugs|2": [
+      "cl2_jane_kill_bugs_03_01"
+    ],
+    "jane|kill_bugs|3": [
+      "cl2_jane_kill_bugs_04_01"
+    ],
+    "jane|kill_hurt|0": [
+      "cl2_jane_kill_hurt_01_01"
+    ],
+    "jane|kill_hurt|1": [
+      "cl2_jane_kill_hurt_02_01"
+    ],
+    "jane|construct_damaged|0": [
+      "cl2_jane_construct_damaged_01_01"
+    ],
+    "jane|construct_damaged|1": [
+      "cl2_jane_construct_damaged_02_01"
+    ],
+    "jane|construct_spotted|0": [
+      "cl2_jane_construct_spotted_01_01"
+    ],
+    "jane|construct_spotted|1": [
+      "cl2_jane_construct_spotted_02_01"
+    ],
+    "jane|construct_spotted|2": [
+      "cl2_jane_construct_spotted_03_01"
+    ],
+    "jane|construct_spotted|3": [
+      "cl2_jane_construct_spotted_04_01",
+      "cl2_jane_construct_spotted_04_02"
+    ],
+    "jane|construct_boss|0": [
+      "cl2_jane_construct_boss_01_01"
+    ],
+    "jane|construct_master|0": [
+      "cl2_jane_construct_master_01_01"
+    ],
+    "jane|construct_killed|0": [
+      "cl2_jane_construct_killed_01_01"
+    ],
+    "jane|construct_killed|1": [
+      "cl2_jane_construct_killed_02_01"
+    ],
+    "jane|construct_killed|2": [
+      "cl2_jane_construct_killed_03_01"
+    ],
+    "jane|construct_killed|3": [
+      "cl2_jane_construct_killed_04_01"
+    ],
+    "jane|construct_killed_boss|0": [
+      "cl2_jane_construct_killed_boss_01_01"
+    ],
+    "jane|construct_killed_master|0": [
+      "cl2_jane_construct_killed_master_01_01"
+    ],
+    "jane|miss_twice|0": [
+      "cl2_jane_miss_twice_01_01",
+      "cl2_jane_miss_twice_01_02",
+      "cl2_jane_miss_twice_01_03"
+    ],
+    "jane|miss_cover|0": [
+      "cl2_jane_miss_cover_01_01"
+    ],
+    "jane|miss_cover|1": [
+      "cl2_jane_miss_cover_02_01"
+    ],
+    "jane|miss_cover|2": [
+      "cl2_jane_miss_cover_03_01",
+      "cl2_jane_miss_cover_03_02",
+      "cl2_jane_miss_cover_03_03"
+    ],
+    "jane|taking_fire_hurt|0": [
+      "cl2_jane_taking_fire_hurt_01_01"
+    ],
+    "jane|taking_fire_hurt|1": [
+      "cl2_jane_taking_fire_hurt_02_01"
+    ],
+    "jane|ally_taking_fire|0": [
+      "cl2_jane_ally_taking_fire_01_01",
+      "cl2_jane_ally_taking_fire_01_02"
+    ],
+    "jane|ally_taking_fire|1": [
+      "cl2_jane_ally_taking_fire_02_01"
+    ],
+    "jane|ally_suppressed|0": [
+      "cl2_jane_ally_suppressed_01_01"
+    ],
+    "jane|ally_suppressed|1": [
+      "cl2_jane_ally_suppressed_02_01"
+    ],
+    "jane|morale_wavering|0": [
+      "cl2_jane_morale_wavering_01_01"
+    ],
+    "jane|morale_wavering|1": [
+      "cl2_jane_morale_wavering_02_01"
+    ],
+    "jane|morale_fleeing|0": [
+      "cl2_jane_morale_fleeing_01_01"
+    ],
+    "jane|morale_fleeing|1": [
+      "cl2_jane_morale_fleeing_02_01"
+    ],
+    "jane|morale_recovery|0": [
+      "cl2_jane_morale_recovery_01_01"
+    ],
+    "jane|morale_recovery|1": [
+      "cl2_jane_morale_recovery_02_01"
+    ],
+    "jane|last_man|0": [
+      "cl2_jane_last_man_01_01",
+      "cl2_jane_last_man_01_02"
+    ],
+    "jane|squad_casualty|0": [
+      "cl2_jane_squad_casualty_01_01",
+      "cl2_jane_squad_casualty_01_02",
+      "cl2_jane_squad_casualty_01_03"
+    ],
+    "jane|squad_casualty|1": [
+      "cl2_jane_squad_casualty_02_01",
+      "cl2_jane_squad_casualty_02_02",
+      "cl2_jane_squad_casualty_02_03"
+    ],
+    "jane|squad_casualty|2": [
+      "cl2_jane_squad_casualty_03_01",
+      "cl2_jane_squad_casualty_03_02",
+      "cl2_jane_squad_casualty_03_03"
+    ],
+    "jane|squad_casualty|3": [
+      "cl2_jane_squad_casualty_04_01"
+    ],
+    "jane|squad_casualty|4": [
+      "cl2_jane_squad_casualty_05_01",
+      "cl2_jane_squad_casualty_05_02",
+      "cl2_jane_squad_casualty_05_03"
+    ],
+    "jane|ally_dead|0": [
+      "cl2_jane_ally_dead_01_01",
+      "cl2_jane_ally_dead_01_02",
+      "cl2_jane_ally_dead_01_03"
+    ],
+    "jane|rescue|0": [
+      "cl2_jane_rescue_01_01"
+    ],
+    "jane|success|0": [
+      "cl2_jane_success_01_01"
+    ],
+    "jane|success|1": [
+      "cl2_jane_success_02_01"
+    ],
+    "jane|success|2": [
+      "cl2_jane_success_03_01"
+    ],
+    "jane|success|3": [
+      "cl2_jane_success_04_01"
+    ],
+    "jane|success|4": [
+      "cl2_jane_success_05_01"
+    ],
+    "jane|grenade_frag|0": [
+      "cl2_jane_grenade_frag_01_01"
+    ],
+    "jane|suppress_fire|0": [
+      "cl2_jane_suppress_fire_01_01",
+      "cl2_jane_suppress_fire_01_02",
+      "cl2_jane_suppress_fire_01_03"
+    ],
+    "jane|rocket|0": [
+      "cl2_jane_rocket_01_01"
+    ],
+    "jane|emp_success|0": [
+      "cl2_jane_emp_success_01_01"
+    ],
+    "jane|emp_failed|0": [
+      "cl2_jane_emp_failed_01_01"
+    ],
+    "jane|danger_close|0": [
+      "cl2_jane_danger_close_01_01"
+    ],
+    "jane|offmap|0": [
+      "cl2_jane_offmap_01_01"
+    ],
+    "jane|offmap|1": [
+      "cl2_jane_offmap_02_01",
+      "cl2_jane_offmap_02_02",
+      "cl2_jane_offmap_02_03"
+    ],
+    "jane|massive_explosion|0": [
+      "cl2_jane_massive_explosion_01_01"
+    ],
+    "jane|enemy_fleeing|0": [
+      "cl2_jane_enemy_fleeing_01_01"
+    ],
+    "jane|idle_combat|0": [
+      "cl2_jane_idle_combat_01_01"
+    ],
+    "jane|idle_combat2|0": [
+      "cl2_jane_idle_combat2_01_01"
+    ],
+    "jane|arrival|0": [
+      "cl2_jane_arrival_01_01"
+    ],
+    "jane|arrival|1": [
+      "cl2_jane_arrival_02_01"
+    ],
+    "jane|building_destroyed|0": [
+      "cl2_jane_building_destroyed_01_01"
+    ],
+    "jane|building_destroyed|1": [
+      "cl2_jane_building_destroyed_02_01"
+    ],
+    "jane|building_destroyed|2": [
+      "cl2_jane_building_destroyed_03_01"
+    ]
+  }
+}

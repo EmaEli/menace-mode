@@ -25,15 +25,23 @@ def safe_path(name):
     return bool(parts) and not name.startswith("/") and "\\" not in name and ":" not in name and ".." not in parts
 
 
-def collect(root):
+def collect(root, module=None, use_installed_settings=False):
     root = Path(root).resolve()
     catalog = json.loads((root / TOOLS / "distribution.json").read_text())
-    modules = catalog["modules"]
-    if len(set(modules)) != len(modules) or any(not re.fullmatch(r"[A-Za-z][A-Za-z0-9]*", n) for n in modules):
+    available = catalog["modules"] + catalog.get("experimentalModules", [])
+    if len(set(available)) != len(available) or any(not re.fullmatch(r"[A-Za-z][A-Za-z0-9]*", n) for n in available):
         raise ValueError("Invalid/duplicate module names")
     actual = {p.parent.name for p in (root / "mods/jiangyu").glob("*/jiangyu.json")}
-    if actual != set(modules):
+    if actual != set(available):
         raise ValueError("Distribution catalog does not cover the current modules exactly")
+    if module is not None and module not in available:
+        raise ValueError("Unknown requested module")
+    if use_installed_settings and module != "SquaddieFieldPromotions":
+        raise ValueError("Installed-settings mode is supported only by SquaddieFieldPromotions")
+    if module == "SquaddieFieldPromotions" and not use_installed_settings:
+        raise ValueError("Experimental preview requires --use-installed-settings; do not replace an existing companion")
+    modules = catalog["modules"] if module is None else list(dict.fromkeys(
+        ([] if use_installed_settings else ["MenaceModSettings"]) + [module]))
     payload = {}
 
     def add(path):
@@ -60,24 +68,24 @@ def collect(root):
             add(path)
 
     versions = {}
-    for module in modules:
-        folder = root / "mods/jiangyu" / module
+    for current_module in modules:
+        folder = root / "mods/jiangyu" / current_module
         manifest = json.loads((folder / "jiangyu.json").read_text())
         compiled = json.loads((folder / "compiled/jiangyu.json").read_text())
-        if manifest["name"] != module or compiled["name"] != module or manifest["version"] != compiled["version"]:
-            raise ValueError("Manifest mismatch: " + module)
-        versions[module] = manifest["version"]
-        project = folder / "code" / (module + ".csproj")
+        if manifest["name"] != current_module or compiled["name"] != current_module or manifest["version"] != compiled["version"]:
+            raise ValueError("Manifest mismatch: " + current_module)
+        versions[current_module] = manifest["version"]
+        project = folder / "code" / (current_module + ".csproj")
         if project.exists():
             xml = ET.parse(project)
             if xml.findtext("PropertyGroup/Version") != manifest["version"]:
-                raise ValueError("Project/manifest mismatch: " + module)
-            assembly = xml.findtext("PropertyGroup/AssemblyName", module)
+                raise ValueError("Project/manifest mismatch: " + current_module)
+            assembly = xml.findtext("PropertyGroup/AssemblyName", current_module)
             dlls = {p.name for p in (folder / "compiled/code").glob("*.dll")}
             if dlls != {assembly + ".dll"}:
-                raise ValueError("Missing or unexpected compiled DLLs: " + module)
+                raise ValueError("Missing or unexpected compiled DLLs: " + current_module)
         if list((folder / "templates").glob("*.kdl")) and not (folder / "compiled/templates.json").is_file():
-            raise ValueError("Missing compiled template payload: " + module)
+            raise ValueError("Missing compiled template payload: " + current_module)
         add(folder / "jiangyu.json")
         for filename in ("README.md", "CHANGELOG.md", "LICENSE"):
             if (folder / filename).is_file():
@@ -85,7 +93,9 @@ def collect(root):
         tree(folder / "code", CODE_SUFFIXES)
         tree(folder / "templates", {".kdl"})
         tree(folder / "locales", {".po", ".pot"})
+        tree(folder / "tests", {".cs", ".csproj", ".py", ".ps1"})
         tree(folder / "compiled")
+        tree(folder / "runtime_assets")
     tree(root / "mods/GameplaySuite/src", {".cs"})
     tree(root / "mods/LargerMaps/src/LargerMaps", {".cs"})
     for filename in ("ThirdPersonCamera.csproj", "src/ThirdPersonCameraMod.cs", "README.md"):
@@ -94,10 +104,22 @@ def collect(root):
         add(root / TOOLS / filename)
     add(root / "mods/GameplaySuite/docs/INSTALLING.md")
     add(root / "docs/MIGRATION_STATUS.md")
-    payload["INSTALL-SUITE.cmd"] = (root / "mods/GameplaySuite/INSTALL-SUITE.cmd").read_bytes().replace(b"\r\n", b"\n").replace(b"\n", b"\r\n")
+    launcher = (root / "mods/GameplaySuite/INSTALL-SUITE.cmd").read_bytes().replace(b"\r\n", b"\n")
+    launcher_name = "INSTALL-SUITE.cmd"
+    if module is not None:
+        marker = b'-BundleRoot "%~dp0."'
+        if launcher.count(marker) != 1:
+            raise ValueError("Canonical launcher invocation changed")
+        extra = " -Product Standalone -Modules " + module
+        if use_installed_settings:
+            extra += " -UseInstalledSettings"
+        launcher = launcher.replace(marker, marker + extra.encode("ascii"))
+        launcher_name = "INSTALL-" + module + ".cmd"
+    payload[launcher_name] = launcher.replace(b"\n", b"\r\n")
     payload["README.txt"] = (
-        "MENACE Suite - OFFLINE CANDIDATE, not Windows/game-verified.\r\n"
-        "INSTALL-SUITE.cmd builds and INSTALLS all components, including the camera.\r\n"
+        f"MENACE {module or 'Suite'} - CANDIDATE, not game-verified.\r\n"
+        f"Double-click {launcher_name} to build, validate, back up and INSTALL.\r\n"
+        + ("Requires existing MenaceModSettings; does NOT replace it or Jiangyu.Loader.\r\n" if use_installed_settings else "") +
         "Requires the pinned MENACE build and existing MelonLoader/proxies.\r\n"
         "Downloads a hash-verified pinned .NET 10 SDK privately under tools/dotnet.\r\n"
         "Jiangyu 1.4.8 SDK/loader are downloaded with SHA256 checks; no Unity Editor needed.\r\n"
@@ -132,13 +154,17 @@ def make_archive(payload, versions, base_revision, dotnet_sdk=None):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--module", help="Build one explicitly selected module instead of the default Suite")
+    parser.add_argument("--use-installed-settings", action="store_true", help="SFP preview: validate/reuse the installed companion and loader")
     args = parser.parse_args()
     if args.output.exists():
         parser.error("Output already exists; refusing to overwrite")
     dotnet = shutil.which("dotnet") or str(Path.home() / ".dotnet/dotnet")
-    subprocess.run([dotnet, "run", "--project", str(ROOT / "mods/GameplaySuite/tests/OfflineChecks/OfflineChecks.csproj"),
-                    "-c", "Release", "--", str(ROOT)], cwd=ROOT, check=True)
-    payload, versions = collect(ROOT)
+    payload, versions = collect(ROOT, args.module, args.use_installed_settings)
+    runner = ROOT / "mods/GameplaySuite/tests/OfflineChecks/OfflineChecks.csproj"
+    if args.module == "SquaddieFieldPromotions":
+        runner = ROOT / "mods/jiangyu/SquaddieFieldPromotions/tests/OfflineChecks/OfflineChecks.csproj"
+    subprocess.run([dotnet, "run", "--project", str(runner), "-c", "Release", "--", str(ROOT)], cwd=ROOT, check=True)
     revision = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
     sdk = json.loads((ROOT / TOOLS / "distribution.json").read_text())["dotnetSdk"]
     archive, kit = make_archive(payload, versions, revision, sdk)

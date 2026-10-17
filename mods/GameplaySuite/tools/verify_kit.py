@@ -49,21 +49,32 @@ def compile_clean(files, game, sdk, dotnet):
         source = work / "source"
         catalog = json.loads((source / TOOLS / "distribution.json").read_text())
         refs, runtime = game / "MelonLoader/Il2CppAssemblies", game / "MelonLoader/net6"
-        for module in catalog["modules"]:
+        present = {p.parent.name for p in (source / "mods/jiangyu").glob("*/jiangyu.json")}
+        modules = [name for name in catalog["modules"] + catalog.get("experimentalModules", []) if name in present]
+        if present != set(modules):
+            raise ValueError("Unknown module in clean source tree")
+        for module in modules:
             root = source / "mods/jiangyu" / module
             project = root / "code" / (module + ".csproj")
             if not project.exists():
                 continue
-            subprocess.run([dotnet, "build", str(project), "-c", "Release", "--nologo", "-v", "quiet",
-                            f"-p:GameDir={game}", f"-p:GameAssembliesDir={refs}", f"-p:MelonLoaderDir={runtime}",
-                            f"-p:JiangyuSdkDir={sdk}", "-p:JiangyuDev=false"], check=True, cwd=source)
+            build_args = [dotnet, "build", str(project), "-c", "Release", "--nologo", "-v", "quiet",
+                          f"-p:GameDir={game}", f"-p:GameAssembliesDir={refs}", f"-p:MelonLoaderDir={runtime}",
+                          f"-p:JiangyuSdkDir={sdk}", "-p:JiangyuDev=false"]
+            if module == "SquaddieFieldPromotions":
+                build_args.append(f"-p:MenaceModSettingsPath={game / 'Mods/MenaceModSettings/code/MenaceModSettings.dll'}")
+            subprocess.run(build_args, check=True, cwd=source)
             assembly = ET.parse(project).findtext("PropertyGroup/AssemblyName", module)
             shutil.copy2(root / "code/bin/Release" / (assembly + ".dll"), root / "compiled/code" / (assembly + ".dll"))
-        camera = source / "mods/ThirdPersonCamera/ThirdPersonCamera.csproj"
-        subprocess.run([dotnet, "build", str(camera), "-c", "Release", "--nologo", "-v", "quiet",
-                        f"-p:MenaceInteropDir={refs}", f"-p:MenaceRuntimeDir={runtime}",
-                        "-p:DebugType=none", "-p:DebugSymbols=false"], check=True, cwd=source)
-        subprocess.run([dotnet, "run", "--project", str(ROOT / "mods/GameplaySuite/tests/OfflineChecks/OfflineChecks.csproj"),
+        if "CinematicActionCamera" in modules:
+            camera = source / "mods/ThirdPersonCamera/ThirdPersonCamera.csproj"
+            subprocess.run([dotnet, "build", str(camera), "-c", "Release", "--nologo", "-v", "quiet",
+                            f"-p:MenaceInteropDir={refs}", f"-p:MenaceRuntimeDir={runtime}",
+                            "-p:DebugType=none", "-p:DebugSymbols=false"], check=True, cwd=source)
+        runner = ROOT / "mods/GameplaySuite/tests/OfflineChecks/OfflineChecks.csproj"
+        if modules == ["SquaddieFieldPromotions"]:
+            runner = source / "mods/jiangyu/SquaddieFieldPromotions/tests/OfflineChecks/OfflineChecks.csproj"
+        subprocess.run([dotnet, "run", "--project", str(runner),
                         "-c", "Release", "--", str(source)], check=True, cwd=ROOT)
         print("Clean extracted-source build and real DLL metadata checks passed (local host, NOT Windows).")
 

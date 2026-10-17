@@ -114,6 +114,10 @@ versioned packages; no floating Git download or second camera installer is neede
 The Jiangyu SDK comes from the hash-verified CLI archive; code is built directly with .NET against
 installed game proxies. Authored templates/bundles are precompiled for the pinned game,
 so the player does **not** need Unity Editor or a global Jiangyu configuration change.
+A module's raw `runtime_assets/` folder (files read by the mod DLL at runtime, e.g. SFP portraits
+and the prebuilt John/Jane voice bundle) is inventoried by `build_kit.py` and staged next to the
+`compiled/` tree by the installer; `jiangyu compile --clean` does not preserve it, so it must
+never be authored under `compiled/`.
 
 Regression guards: pad three-part versions before asking `.NET Version.ToString(4)`;
 reject renamed/ambiguous duplicates rather than moving unrelated folders; preserve the
@@ -128,6 +132,21 @@ and rollback, not only before a potentially lengthy build.
 
 The scripts are a **candidate**, not Windows-verified. Console/log behavior, real filesystem
 failure recovery, Windows builds and gameplay remain explicit acceptance gates.
+
+Experimental modules are listed separately in `distribution.json.experimentalModules`;
+they must not silently enter the default Suite. Build their kit using the canonical
+`build_kit.py --module <name>` path, which derives its single launcher from `INSTALL-SUITE.cmd`.
+For SFP's opt-in preview, `--use-installed-settings` / `-UseInstalledSettings` explicitly
+requires and validates the installed companion's manifest, DLL versions and the pinned
+Jiangyu loader. Only SFP is built/staged/replaced. Neither installed dependency is
+overwritten; its DLL hash is rechecked before deployment. This avoids accidentally
+rebuilding a different companion source snapshot while testing an unrelated feature.
+
+Explicit `-BuildOnly` may read installed game references while MENACE is running;
+its lock/SDK stay inside the kit and outputs/staging use temporary build directories,
+not the game directory.
+Normal installation and rollback still require the game closed, including the
+independent final deployment/rollback checks. The default launcher still installs.
 
 - [ ] Launcher is one double-click action, not a sequence of ZIPs and commands.
 - [ ] Download/bootstrap errors, compilation errors and version mismatches leave a readable, persisted log; failure opens it automatically.

@@ -7,6 +7,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="../../code/PromotionRules.cs" Link="PromotionRules.cs" />
+    <Compile Include="../../code/PromotionRecord.cs" Link="PromotionRecord.cs" />
     <Compile Include="../../code/PromotionSystem.cs" Link="PromotionSystem.cs" />
   </ItemGroup>
 </Project>

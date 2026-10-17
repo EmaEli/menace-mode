@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.9.0
+
+- Dossier redemption now promotes the selected living squaddie to a hirable squad leader:
+  unique `UnitLeaderTemplate`/`SpeakerTemplate` cloned from the matching vanilla gendered
+  leader, soldier name/nickname/skin, bundled portraits, lettered badge and John/Jane voices
+  (recovered 0.6.1 `LeaderForge` path; donor perks/stats are not inherited).
+- Promotions are recorded in Jiangyu mod state (`PromotionLedger`) and rebuilt by an early
+  prefix on `SaveSystem.ExecLoad` from the sidecar beside the save, before native roster load.
+  Missing sidecar is silent; corrupt data or a broken record warns once and never blocks the load.
+- Already promoted soldiers are skipped on later redemptions. The source soldier is not removed yet.
+- Setting renamed to **Offer 1-credit Field Promotion Dossier in Black Market** (`EnableFieldPromotions`).
+- Shared kit/installer now ship a module's raw `runtime_assets/` next to the compiled package.
+
 ## 0.8.4
 
 - Fix the preview dossier never appearing in the Black Market: the native

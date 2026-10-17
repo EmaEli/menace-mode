@@ -1,6 +1,9 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Reflection;
+using System.Text.Json;
 using Il2CppMenace.Items;
 using Il2CppMenace.States;
 using Il2CppMenace.Strategy;
@@ -13,8 +16,10 @@ using MenaceModSettings;
 namespace SquaddieFieldPromotions;
 
 /// <summary>
-/// Native dossier -> native review dialog. No runtime leader templates, recruitment,
-/// save hooks, input polling, marker files or custom permanent UI panels.
+/// Native Black Market dossier -> promotes the best living squaddie to a hirable squad leader.
+/// Promotions are recorded in Jiangyu's per-save mod state and their native templates are
+/// rebuilt before the roster deserializes, so hired and hirable promoted leaders survive load.
+/// No input polling, marker files or custom permanent UI panels.
 /// </summary>
 public sealed class PromotionSystem : JiangyuSystem
 {
@@ -22,18 +27,24 @@ public sealed class PromotionSystem : JiangyuSystem
     internal const int PreviewStockTimeout = 3;
     // BlackMarketUIScreen.FilterItems drops merchant items whose GetTradeValue() < 1.
     internal const int PreviewPrice = 1;
-    private const string Group = "Squaddie Field Promotions";
+    internal const string Group = "Squaddie Field Promotions";
+    internal const string EnableKey = "EnableFieldPromotions";
+    // Jiangyu's public sidecar convention (ModStateSidecar.PathFor): <save>.jiangyu.<modId>.json.
+    internal const string SidecarSuffix = ".jiangyu.SquaddieFieldPromotions.json";
     private const string DossierType = "Il2CppMenace.Items.DossierItemTemplate";
     private bool _ready;
     private bool _unloaded;
     private readonly HashSet<string> _reported = new(StringComparer.Ordinal);
+    private LeaderForge _forge;
+    private bool _voiceCoroutineScheduled;
+    private bool _voiceAttempted;
 
     public override void OnInit()
     {
         ModSettings.Register(Group, settings =>
         {
-            settings.AddHeader("Native dossier preview - recruitment is not enabled");
-            settings.AddToggle("EnableDossierPreview", "Offer 1-credit promotion-review dossier in Black Market", false);
+            settings.AddHeader("Field promotions - test on a disposable non-Ironman campaign");
+            settings.AddToggle(EnableKey, "Offer 1-credit Field Promotion Dossier in Black Market", false);
             settings.AddHeader("Uses Veterancy XP when complete; otherwise native missions. No extra mod required.");
             settings.AddToggle("DebugLogging", "Diagnostic logging (OFF by default)", false);
         });
@@ -43,7 +54,14 @@ public sealed class PromotionSystem : JiangyuSystem
         Require(typeof(DossierItemTemplate), "GetTradeValue", Type.EmptyTypes, typeof(int));
         Require(typeof(BlackMarket), "Restock", new[] { typeof(bool), typeof(bool) }, typeof(void));
         Require(typeof(BlackMarketUIScreen), "OnOpened", new[] { typeof(IOpenScreenParams) }, typeof(void));
-        Context.Patches.Prefix(DossierType, "Redeem", 0, Review);
+        Require(typeof(Roster), "AddHirableLeader", new[] { typeof(UnitLeaderTemplate) }, typeof(void));
+        Require(typeof(SaveState), "GetFilePath", Type.EmptyTypes, typeof(string));
+        RequireStatic(typeof(SaveSystem), "ExecLoad", new[] { typeof(SaveState) }, typeof(void));
+        _forge = new LeaderForge(Context.ModFolder);
+        // Templates must exist before StrategyState.ProcessSaveState resolves the roster, so the
+        // ledger is read directly from the sidecar here; Jiangyu's own state load runs in postfix.
+        Context.Patches.Prefix("Il2CppMenace.Strategy.SaveSystem", "ExecLoad", 1, Rehydrate);
+        Context.Patches.Prefix(DossierType, "Redeem", 0, Promote);
         Context.Patches.Prefix(DossierType, "GetTradeValue", 0, FreePreviewPrice);
         Context.Patches.Postfix("Il2CppMenace.Strategy.BlackMarket", "Restock", 2, _ =>
         {
@@ -61,7 +79,13 @@ public sealed class PromotionSystem : JiangyuSystem
     {
         if (_unloaded) return;
         try { PrepareTemplate(); }
-        catch (Exception error) { WarnOnce("text", "Cannot initialize preview dossier text: " + error.Message); }
+        catch (Exception error) { WarnOnce("text", "Cannot initialize dossier text: " + error.Message); }
+        ScheduleVoices();
+    }
+
+    public override void OnSceneLoaded(int buildIndex, string sceneName)
+    {
+        if (sceneName == "Strategy" || sceneName == "MissionPreparation") ScheduleVoices();
     }
 
     private static LocalizedLine PreviewText(string field, string text)
@@ -88,12 +112,12 @@ public sealed class PromotionSystem : JiangyuSystem
         if (template == null) return null;
         if (template.GetID() != DossierId)
             throw new InvalidOperationException("Preview lookup returned a different dossier.");
-        template.Title = PreviewText("Title", "Field Promotion Dossier (PREVIEW)");
-        template.ShortName = PreviewText("ShortName", "Promotion review");
+        template.Title = PreviewText("Title", "Field Promotion Dossier");
+        template.ShortName = PreviewText("ShortName", "Field promotion");
         template.Description = PreviewDescription(
-            "Free candidate review. Uses complete Veterancy XP if available, otherwise native missions. " +
-            "Does NOT recruit, remove a soldier, or create a leader. Enable in Menace Mod Settings; " +
-            "test on a disposable non-Ironman campaign.");
+            "Promotes your best living squaddie to a hirable squad leader (0 credits in Hire). " +
+            "Uses complete Veterancy XP if available, otherwise native missions. The source soldier " +
+            "stays in the roster. Promoted leaders are restored on load; test on a disposable non-Ironman campaign.");
         return template;
     }
 
@@ -102,6 +126,7 @@ public sealed class PromotionSystem : JiangyuSystem
         _unloaded = true;
         _ready = false;
         ModSettings.Changed -= SettingChanged;
+        _forge?.Unload();
         // Context owns patch lifetime. Never mutate a live roster or destroy objects.
     }
 
@@ -115,34 +140,139 @@ public sealed class PromotionSystem : JiangyuSystem
         info.Skip = true;
     }
 
-    private void Review(PatchInfo info)
+    private void Promote(PatchInfo info)
     {
         if (!IsPreview(info.Instance)) return;
         info.Skip = true; // Always before ANY fallible lookup: never unlock a random vanilla leader.
+        string text;
         try
         {
             var state = StrategyState.Get();
-            string text;
             if (_unloaded || !_ready || !Enabled)
-                text = "Promotion review is disabled in Menace Mod Settings. No leader or soldier was changed.";
-            else if (state == null || state.Squaddies == null || state.IsIronman())
-                text = "Open a disposable non-Ironman campaign to review a candidate. No leader or soldier was changed.";
+                text = "Field promotions are disabled in Menace Mod Settings. No leader or soldier was changed.";
+            else if (state == null || state.Squaddies == null || state.Roster == null || state.IsIronman())
+                text = "Open a disposable non-Ironman campaign to promote a squaddie. No leader or soldier was changed.";
             else
             {
-                var selection = NativeCandidates.Read(state); // Fresh snapshot at redemption, not stale market-open data.
-                text = PromotionRules.Describe(selection);
-                Debug(selection == null ? "Review: no living candidate." :
-                    $"Review: source={selection.Soldier.Id}, criterion={selection.Criterion}, living={selection.LivingCount}.");
+                var ledger = Context.State.Get<PromotionLedger>();
+                // Fresh snapshot at redemption, not stale market-open data; already promoted soldiers are skipped.
+                var selection = NativeCandidates.Read(state, ledger.PromotedSquaddieIds());
+                if (selection == null) text = PromotionRules.Describe(null, null);
+                else
+                {
+                    if (!_forge.AssetsPresent)
+                        throw new InvalidOperationException("Bundled portrait assets are missing; reinstall the mod.");
+                    var record = LeaderForge.CreateRecord(state, selection, ledger.NextBadgeIndex());
+                    string detail = _forge.Install(state, record);
+                    ledger.Records.Add(record); // Persisted by Jiangyu beside the next game save.
+                    Context.State.Save();
+                    text = PromotionRules.Describe(selection, record);
+                    Debug($"Promoted: source={selection.Soldier.Id}, criterion={selection.Criterion}, living={selection.LivingCount}, {detail}");
+                    ScheduleVoices();
+                }
             }
+        }
+        catch (Exception error)
+        {
+            WarnOnce("promote:" + error.GetType().Name, "Field promotion failed; no leader was added. " + error.Message);
+            text = "Field promotion failed: " + error.Message + "\nNo leader was added and no soldier was changed.";
+        }
+        try
+        {
             var ui = UIManager.Get() ?? throw new InvalidOperationException("Native UI manager unavailable.");
             var dialog = ui.AddSimpleDialog();
-            dialog.Init("SFP.PromotionReview", "FIELD PROMOTION - PREVIEW ONLY", text,
-                "CLOSE", null, null, null, false);
+            dialog.Init("SFP.FieldPromotion", "FIELD PROMOTION", text, "CLOSE", null, null, null, false);
             dialog.GetTextLabel().enableRichText = false; // Soldier names are text, not markup.
         }
         catch (Exception error)
         {
-            WarnOnce("review", "Cannot show promotion review; no leader or soldier changed. " + error.Message);
+            WarnOnce("dialog", "Cannot show promotion dialog: " + error.Message);
+        }
+    }
+
+    private void Rehydrate(PatchInfo info)
+    {
+        if (_unloaded) return;
+        string path = null;
+        try
+        {
+            path = (info.Args.Count > 0 ? info.Args[0] as SaveState : null)?.GetFilePath();
+            if (string.IsNullOrEmpty(path)) return;
+            string sidecar = path + SidecarSuffix;
+            if (!File.Exists(sidecar)) return;
+            var ledger = ReadLedger(File.ReadAllText(sidecar));
+            if (ledger == null) return;
+            int restored = 0, failed = 0;
+            foreach (var record in ledger.Validated())
+            {
+                try
+                {
+                    string detail = _forge.Rehydrate(record);
+                    restored++;
+                    Debug("Rehydrated " + record.LeaderId + ": " + detail);
+                }
+                catch (Exception error)
+                {
+                    failed++;
+                    WarnOnce("rehydrate:" + record.LeaderId, "Promoted leader " + record.Name + " could not be rebuilt; " +
+                        "if hired, it may be missing from the loaded roster. " + error.Message);
+                }
+            }
+            if (restored + failed > 0) Debug($"Load {Path.GetFileName(path)}: {restored} promoted leader(s) rebuilt, {failed} failed.");
+            if (restored > 0) ScheduleVoices();
+        }
+        catch (Exception error)
+        {
+            WarnOnce("rehydrate:" + path, "Promotion ledger for this save is unreadable; promoted leaders were not rebuilt. " + error.Message);
+        }
+    }
+
+    internal static PromotionLedger ReadLedger(string json)
+    {
+        // Same layout Jiangyu writes: { "<type full name>": { ...blob... }, ... }.
+        var options = new JsonSerializerOptions { IncludeFields = true };
+        var map = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(json, options);
+        if (map == null || !map.TryGetValue(typeof(PromotionLedger).FullName, out var blob)) return null;
+        return blob.Deserialize<PromotionLedger>(options);
+    }
+
+    private void ScheduleVoices()
+    {
+        if (_unloaded || _voiceAttempted || _voiceCoroutineScheduled || _forge == null) return;
+        if (!Enabled && !_forge.HasPendingVoices) return;
+        _voiceCoroutineScheduled = true;
+        try { Context.Coroutines.Start(PrepareVoicesWhenReady()); }
+        catch (Exception error) { _voiceCoroutineScheduled = false; WarnOnce("voice", "Voice setup not scheduled: " + error.Message); }
+    }
+
+    private IEnumerator PrepareVoicesWhenReady()
+    {
+        // The audio loader is one-shot: wait (silently) until the strategy singleton and the
+        // vanilla gendered donor templates exist, then prepare exactly once.
+        bool available = false;
+        for (int frame = 0; frame < 300 && !_unloaded; frame++)
+        {
+            try
+            {
+                var lim = StrategyState.Get() == null ? null : DataTemplateLoader.Get<UnitLeaderTemplate>("squad_leader.lim", false);
+                var sy = lim == null ? null : DataTemplateLoader.Get<UnitLeaderTemplate>("squad_leader.sy", false);
+                available = lim != null && sy != null && lim.SpeakerTemplate != null && sy.SpeakerTemplate != null;
+            }
+            catch { available = false; }
+            if (available) break;
+            yield return null;
+        }
+        _voiceCoroutineScheduled = false;
+        if (!available || _voiceAttempted || _unloaded) yield break;
+        _voiceAttempted = true;
+        try
+        {
+            if (!_forge.TryPrepareVoices(out string status))
+                WarnOnce("voice", "John/Jane voices not ready; promoted leaders keep the native donor voice: " + status);
+        }
+        catch (Exception error)
+        {
+            WarnOnce("voice", "Voice setup failed; promoted leaders keep the native donor voice: " + error.Message);
         }
     }
 
@@ -248,12 +378,13 @@ public sealed class PromotionSystem : JiangyuSystem
 
     private void SettingChanged(string group, string key, object value)
     {
-        if (group != Group || key != "EnableDossierPreview") return;
+        if (group != Group || key != EnableKey) return;
         Stock();
         RefreshActiveMarket();
+        ScheduleVoices();
     }
 
-    private static bool Enabled => ModSettings.Get<bool>(Group, "EnableDossierPreview");
+    private static bool Enabled => ModSettings.Get<bool>(Group, EnableKey);
     private static void Debug(string text)
     {
         if (ModSettings.Get<bool>(Group, "DebugLogging")) Log.Info("[SFP] " + text);
@@ -267,6 +398,13 @@ public sealed class PromotionSystem : JiangyuSystem
     private static void Require(Type type, string name, Type[] parameters, Type result)
     {
         var method = type.GetMethod(name, BindingFlags.Public | BindingFlags.Instance, null, parameters, null);
+        if (method?.ReturnType != result)
+            throw new NotSupportedException("Unsupported native API: " + type.FullName + "." + name);
+    }
+
+    private static void RequireStatic(Type type, string name, Type[] parameters, Type result)
+    {
+        var method = type.GetMethod(name, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static, null, parameters, null);
         if (method?.ReturnType != result)
             throw new NotSupportedException("Unsupported native API: " + type.FullName + "." + name);
     }

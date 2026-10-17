@@ -5,16 +5,23 @@
     <ImplicitUsings>disable</ImplicitUsings>
     <LangVersion>latest</LangVersion>
     <AssemblyName>SquaddieFieldPromotions</AssemblyName>
-    <Version>0.8.4</Version>
+    <Version>0.9.0</Version>
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <MenaceModSettingsPath Condition="'$(MenaceModSettingsPath)' == ''">../../MenaceModSettings/compiled/code/MenaceModSettings.dll</MenaceModSettingsPath>
   </PropertyGroup>
   <ItemGroup>
-    <!-- Not part of the safe preview; retained as research for the persistence gate. -->
-    <Compile Remove="JiangyuCloneBridge.cs" />
     <Reference Include="MenaceModSettings">
       <HintPath>$(MenaceModSettingsPath)</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <!-- John/Jane voice bank (.sfpbundle) and runtime AudioClip handling. -->
+    <Reference Include="UnityEngine.AudioModule">
+      <HintPath>$(GameAssembliesDir)/UnityEngine.AudioModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.AssetBundleModule">
+      <HintPath>$(GameAssembliesDir)/UnityEngine.AssetBundleModule.dll</HintPath>
       <Private>false</Private>
     </Reference>
   </ItemGroup>
