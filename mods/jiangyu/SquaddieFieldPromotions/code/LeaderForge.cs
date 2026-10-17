@@ -81,6 +81,16 @@ internal sealed class LeaderForge
         return result;
     }
 
+    // Registered templates remain pinned, but a failed promotion must not leave an extra Hire entry.
+    internal void RollbackInstall(StrategyState state, PromotionRecord record)
+    {
+        var offers = state.Roster.m_HirableLeaders
+            ?? throw new InvalidOperationException("Hire list unavailable for rollback.");
+        for (int i = offers.Count - 1; i >= 0; i--)
+            if (offers[i]?.GetID() == record.LeaderId) offers.RemoveAt(i);
+        _pendingVoice.Remove(record.LeaderId);
+    }
+
     /// <summary>Recreates templates for a saved record before the native roster deserializes.</summary>
     internal string Rehydrate(PromotionRecord record)
     {
@@ -233,7 +243,7 @@ internal sealed class LeaderForge
         return "native-gender-skin-head";
     }
 
-    private static bool RosterContainsLeader(StrategyState state, string leaderId)
+    internal static bool RosterContainsLeader(StrategyState state, string leaderId)
     {
         foreach (object candidate in PrivateMember.Enumerate(state.Roster.GetHirableLeaders()))
             if (candidate is UnitLeaderTemplate item && item.GetID() == leaderId) return true;

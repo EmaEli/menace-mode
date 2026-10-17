@@ -77,7 +77,7 @@ internal static class PromotionRules
 
     internal static string Describe(Selection selection, PromotionRecord record)
     {
-        const string footer = "The source soldier stays in the roster (this version never removes squaddies). " +
+        const string footer = "The source soldier has been removed from their squad and the reserve. " +
             "Promoted leaders are restored when the save is loaded.";
         if (selection == null)
             return "No eligible living squaddie is available. Soldiers already promoted are skipped.\n" +

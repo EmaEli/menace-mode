@@ -17,6 +17,8 @@ public sealed class PromotionRecord
     public string SpeakerId { get; set; } = "";
     public int NumericGuid { get; set; }
     public int SourceSquaddieId { get; set; }
+    // Absent/false in 0.9.x ledgers. Migrated only after a matching leader exists in this save.
+    public bool SourceRemoved { get; set; }
     public string Name { get; set; } = "";
     public string Nickname { get; set; } = "";
     public int Gender { get; set; }

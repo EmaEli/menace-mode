@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.10.0
+
+- Successful promotion now consumes the exact source squaddie: detach from the assigned squad,
+  then remove from the native living pool. Never select a random soldier or mark them killed.
+  Source objects and assignment ordering, the Hire offer and the ledger are restored on failure;
+  an incomplete rollback explicitly tells the player not to save and to reload.
+- Opening Black Market reconciles matching source duplicates from 0.9.x preview saves,
+  only for leaders still hired/hirable and matching native soldier identities. Per-save,
+  idempotent, with no direct edits to save files or Veterancy data.
+- Menace Mod Settings: **Promotion dossier price (credits)**, default **100**, range **10–1000**
+  with **10-credit** increments. Applies immediately to existing stock; native trade modifiers
+  still apply. Hire remains 0 credits, with no second promotion fee.
+- 0.9.2 promotion/persistence verified in game by the user; 0.10.0 gameplay acceptance pending.
+
 ## 0.9.2
 
 - Fix: a redemption after a save load failed with `NullReferenceException` in

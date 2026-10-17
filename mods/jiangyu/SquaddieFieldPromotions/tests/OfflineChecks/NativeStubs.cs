@@ -23,7 +23,7 @@ namespace Il2CppMenace.Items
         public Il2CppMenace.Tools.LocalizedLine Title, ShortName;
         public Il2CppMenace.Tools.LocalizedMultiLine Description;
         public object[] m_UnlockedLeaders = Array.Empty<object>();
-        public int Price = 1;
+        public int Price = 100;
         public int VanillaRedeems;
         public void Redeem() => VanillaRedeems++;
         public int GetTradeValue() => Price;
@@ -45,7 +45,31 @@ namespace Il2CppMenace.Strategy
         { if (!special) result.AddRange(Items); }
     }
     public class SpeakerTemplate { }
-    public class UnitLeaderTemplate { public SpeakerTemplate SpeakerTemplate; }
+    public class UnitLeaderTemplate { public SpeakerTemplate SpeakerTemplate; public string Id; }
+    public class BaseUnitLeader
+    {
+        public Il2CppSystem.Collections.Generic.List<int> m_SquaddieIds = new();
+        public bool FailDetach;
+        public bool TryRemoveSquaddie(int id) => !FailDetach && m_SquaddieIds.Remove(id);
+        public bool HasSquaddie(int id) => m_SquaddieIds.Contains(id);
+    }
+    public class Squaddie
+    {
+        public int Id, Gender, SkinColor;
+        public string Name, Nickname;
+        public BaseUnitLeader Owner;
+        public int GetId() => Id;
+        public int GetGender() => Gender;
+        public int GetSkinColor() => SkinColor;
+        public BaseUnitLeader GetCurrentLeader() => Owner != null && Owner.HasSquaddie(Id) ? Owner : null;
+    }
+    public class Squaddies
+    {
+        public Il2CppSystem.Collections.Generic.List<Squaddie> m_AliveSquaddies = new(), m_WoundedSquaddies = new(), m_KilledSquaddies = new();
+        public Action OnSquaddiesChanged;
+        public bool FailReadback;
+        public bool IsAlive(int id) => FailReadback || m_AliveSquaddies.Any(s => s?.Id == id);
+    }
     public class Roster
     {
         public readonly List<UnitLeaderTemplate> Hirable = new();
@@ -66,7 +90,7 @@ namespace Il2CppMenace.States
     public class StrategyState
     {
         public static StrategyState Current;
-        public object Squaddies = new();
+        public Il2CppMenace.Strategy.Squaddies Squaddies = new();
         public Il2CppMenace.Strategy.Roster Roster = new();
         public Il2CppMenace.Strategy.BlackMarket BlackMarket = new();
         public bool Ironman;
@@ -174,12 +198,13 @@ namespace Jiangyu.Sdk
     {
         public readonly Dictionary<Type, object> Blobs = new();
         public int Saves;
+        public bool FailSave;
         public T Get<T>() where T : class, new()
         {
             if (!Blobs.TryGetValue(typeof(T), out var blob)) Blobs[typeof(T)] = blob = new T();
             return (T)blob;
         }
-        public void Save() => Saves++;
+        public void Save() { if (FailSave) throw new IOException("simulated state failure"); Saves++; }
     }
     public class FakeCoroutines
     {
@@ -205,14 +230,17 @@ namespace MenaceModSettings
     {
         public void AddHeader(string text) { }
         public void AddToggle(string key, string label, bool value) => ModSettings.Values[key] = value;
+        public void AddNumber(string key, string label, int min, int max, int value, int step)
+        { ModSettings.Values[key] = value; ModSettings.Numbers[key] = (min, max, value, step); }
     }
     public static class ModSettings
     {
-        public static Dictionary<string, bool> Values = new();
+        public static Dictionary<string, object> Values = new();
+        public static Dictionary<string, (int Min, int Max, int Default, int Step)> Numbers = new();
         public static event Action<string, string, object> Changed;
         public static void Register(string group, Action<SettingsBuilder> build) => build(new());
         public static T Get<T>(string group, string key) => (T)(object)Values[key];
-        public static void Set(string key, bool value)
+        public static void Set(string key, object value)
         { Values[key] = value; Changed?.Invoke("Squaddie Field Promotions", key, value); }
     }
 }
@@ -262,10 +290,17 @@ namespace SquaddieFieldPromotions
         {
             record.Validate();
             if (FailInstall) throw new InvalidOperationException("simulated native clone failure");
-            state.Roster.AddHirableLeader(new Il2CppMenace.Strategy.UnitLeaderTemplate());
+            state.Roster.AddHirableLeader(new Il2CppMenace.Strategy.UnitLeaderTemplate { Id = record.LeaderId });
             Installed.Add(record.LeaderId);
             return "fake-install";
         }
+        internal void RollbackInstall(Il2CppMenace.States.StrategyState state, PromotionRecord record)
+        {
+            state.Roster.Hirable.RemoveAll(t => t.Id == record.LeaderId);
+            Installed.Remove(record.LeaderId);
+        }
+        internal static bool RosterContainsLeader(Il2CppMenace.States.StrategyState state, string id) =>
+            state.Roster.Hirable.Any(t => t.Id == id);
         internal string Rehydrate(PromotionRecord record)
         {
             record.Validate();

@@ -11,7 +11,7 @@ KDL = (ROOT / 'templates' / 'field-promotion-dossier.kdl').read_text(encoding='u
 class AuthoringTests(unittest.TestCase):
     def test_jiangyu_not_old_modpack(self):
         self.assertEqual(MANIFEST['name'], 'SquaddieFieldPromotions')
-        self.assertEqual(MANIFEST['version'], '0.9.2')
+        self.assertEqual(MANIFEST['version'], '0.10.0')
         self.assertTrue(any(dep.startswith('Jiangyu ') for dep in MANIFEST['depends']))
         self.assertIn('JiangyuSystem', CS)
         self.assertNotIn('IModpackPlugin', CS)
@@ -21,17 +21,17 @@ class AuthoringTests(unittest.TestCase):
         self.assertEqual(MANIFEST['depends'], ['Jiangyu >= 1.4.8', 'MenaceModSettings >= 0.6.1'])
         project = (ROOT / 'code/SquaddieFieldPromotions.csproj').read_text()
         self.assertIn('<Private>false</Private>', project)
-        self.assertIn('<Version>0.9.2</Version>', project)
+        self.assertIn('<Version>0.10.0</Version>', project)
         self.assertIn('$(MenaceModSettingsPath)', project)
 
-    def test_no_hotkeys_polling_or_source_soldier_removal(self):
+    def test_no_hotkeys_polling_random_removal_or_fake_death(self):
         for path in sorted((ROOT / 'code').glob('*.cs')):
             code = path.read_text()
             for forbidden in ('Hotkeys.', 'KeyCode.', 'OnUpdate(', 'HireLeader(', 'RemoveRandomAlive(', 'SetKilled(',
-                              'Squaddies.Remove', 'GetAllAlive().Remove'):
+                              'GetAllAlive().Remove'):
                 self.assertNotIn(forbidden, code, f'{path.name} contains {forbidden}')
         self.assertIn('"DebugLogging", "Diagnostic logging (OFF by default)", false', CS)
-        self.assertIn('AddToggle(EnableKey, "Offer 1-credit Field Promotion Dossier in Black Market", false', CS)
+        self.assertIn('AddToggle(EnableKey, "Offer Field Promotion Dossier in Black Market", false', CS)
         self.assertIn('internal const string EnableKey = "EnableFieldPromotions";', CS)
 
     def test_leaders_rebuilt_before_native_roster_load(self):
@@ -68,16 +68,22 @@ class AuthoringTests(unittest.TestCase):
         self.assertIn('clear "m_UnlockedLeaders"', KDL)
         self.assertIn('set "BlackMarketMaxQuantity" 0', KDL)
         # BlackMarketUIScreen.FilterItems hides merchant items with GetTradeValue() < 1.
-        self.assertIn('set "TradeValue" 1', KDL)
-        self.assertIn('append "m_TradeValues" 1', KDL)
+        self.assertIn('set "TradeValue" 100', KDL)
+        self.assertIn('append "m_TradeValues" 100', KDL)
         self.assertNotIn('append "m_TradeValues" 0', KDL)
-        self.assertIn('internal const int PreviewPrice = 1;', CS)
+        self.assertIn('internal const int DefaultPrice = 100;', CS)
+        self.assertIn('internal const int PriceStep = 10;', CS)
+        self.assertIn('settings.AddNumber(PriceKey, "Promotion dossier price (credits)", PriceStep, MaximumPrice, DefaultPrice, PriceStep)', CS)
         self.assertNotIn('clone "UnitLeaderTemplate"', KDL)
         promote = CS.split('private void Promote(PatchInfo info)', 1)[1].split('private void Rehydrate(PatchInfo info)', 1)[0]
         self.assertLess(promote.index('info.Skip = true'), promote.index('StrategyState.Get()'))
         self.assertIn('ui.AddSimpleDialog()', promote)
         self.assertIn('enableRichText = false', promote)
         self.assertLess(promote.index('_forge.Install(state, record)'), promote.index('ledger.Records.Add(record)'))
+        self.assertLess(promote.index('_forge.Install(state, record)'), promote.index('source.Remove()'))
+        self.assertLess(promote.index('source.Remove()'), promote.index('ledger.Records.Add(record)'))
+        self.assertIn('source.Restore()', promote)
+        self.assertIn('_forge.RollbackInstall(state, record)', promote)
 
     def test_optional_xp_and_fallback(self):
         native = (ROOT / 'code/NativeCandidates.cs').read_text()
@@ -108,7 +114,8 @@ class AuthoringTests(unittest.TestCase):
     def test_safety_warning_in_readme(self):
         readme = (ROOT / 'README.md').read_text(encoding='utf-8')
         self.assertIn('not yet performed in MENACE', readme)
-        self.assertIn('source soldier is not removed', readme)
+        self.assertIn('exact source soldier is removed', readme)
+        self.assertIn('normal market', readme)
         self.assertIn('before native roster load', readme)
         self.assertIn('runtime_assets', readme)
 

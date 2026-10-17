@@ -26,7 +26,10 @@ public sealed class PromotionSystem : JiangyuSystem
     internal const string DossierId = "mod.squaddiefieldpromotions.field_promotion_dossier";
     internal const int PreviewStockTimeout = 3;
     // BlackMarketUIScreen.FilterItems drops merchant items whose GetTradeValue() < 1.
-    internal const int PreviewPrice = 1;
+    internal const int DefaultPrice = 100;
+    internal const int PriceStep = 10;
+    internal const int MaximumPrice = 1000;
+    internal const string PriceKey = "PromotionPrice";
     internal const string Group = "Squaddie Field Promotions";
     internal const string EnableKey = "EnableFieldPromotions";
     // Jiangyu's public sidecar convention (ModStateSidecar.PathFor): <save>.jiangyu.<modId>.json.
@@ -44,7 +47,8 @@ public sealed class PromotionSystem : JiangyuSystem
         ModSettings.Register(Group, settings =>
         {
             settings.AddHeader("Field promotions - test on a disposable non-Ironman campaign");
-            settings.AddToggle(EnableKey, "Offer 1-credit Field Promotion Dossier in Black Market", false);
+            settings.AddToggle(EnableKey, "Offer Field Promotion Dossier in Black Market", false);
+            settings.AddNumber(PriceKey, "Promotion dossier price (credits)", PriceStep, MaximumPrice, DefaultPrice, PriceStep);
             settings.AddHeader("Uses Veterancy XP when complete; otherwise native missions. No extra mod required.");
             settings.AddToggle("DebugLogging", "Diagnostic logging (OFF by default)", false);
         });
@@ -62,7 +66,7 @@ public sealed class PromotionSystem : JiangyuSystem
         // ledger is read directly from the sidecar here; Jiangyu's own state load runs in postfix.
         Context.Patches.Prefix("Il2CppMenace.Strategy.SaveSystem", "ExecLoad", 1, Rehydrate);
         Context.Patches.Prefix(DossierType, "Redeem", 0, Promote);
-        Context.Patches.Prefix(DossierType, "GetTradeValue", 0, FreePreviewPrice);
+        Context.Patches.Prefix(DossierType, "GetTradeValue", 0, DossierPrice);
         Context.Patches.Postfix("Il2CppMenace.Strategy.BlackMarket", "Restock", 2, _ =>
         {
             Stock();
@@ -117,7 +121,8 @@ public sealed class PromotionSystem : JiangyuSystem
         template.Description = PreviewDescription(
             "Promotes your best living squaddie to a hirable squad leader (0 credits in Hire). " +
             "Uses complete Veterancy XP if available, otherwise native missions. The source soldier " +
-            "stays in the roster. Promoted leaders are restored on load; test on a disposable non-Ironman campaign.");
+            "is removed from their squad and the reserve after a successful promotion. " +
+            "Promoted leaders are restored on load; test on a disposable non-Ironman campaign.");
         return template;
     }
 
@@ -133,10 +138,13 @@ public sealed class PromotionSystem : JiangyuSystem
     private static bool IsPreview(object instance) =>
         instance is DossierItemTemplate template && template.GetID() == DossierId;
 
-    private static void FreePreviewPrice(PatchInfo info)
+    internal static int NormalizePrice(int value) => System.Math.Clamp(value, PriceStep, MaximumPrice) / PriceStep * PriceStep;
+    private static int Price => NormalizePrice(ModSettings.Get<int>(Group, PriceKey));
+
+    private static void DossierPrice(PatchInfo info)
     {
         if (!IsPreview(info.Instance)) return;
-        info.Result = PreviewPrice; // Dossiers calculate prices independently of BaseItemTemplate.TradeValue.
+        info.Result = Price; // Dossiers calculate prices independently of BaseItemTemplate.TradeValue.
         info.Skip = true;
     }
 
@@ -155,6 +163,7 @@ public sealed class PromotionSystem : JiangyuSystem
             else
             {
                 var ledger = Context.State.Get<PromotionLedger>();
+                ReconcilePreviewSources(state, ledger);
                 // Fresh snapshot at redemption, not stale market-open data; already promoted soldiers are skipped.
                 var selection = NativeCandidates.Read(state, ledger.PromotedSquaddieIds());
                 if (selection == null) text = PromotionRules.Describe(null, null);
@@ -163,19 +172,42 @@ public sealed class PromotionSystem : JiangyuSystem
                     if (!_forge.AssetsPresent)
                         throw new InvalidOperationException("Bundled portrait assets are missing; reinstall the mod.");
                     var record = LeaderForge.CreateRecord(state, selection, ledger.NextBadgeIndex());
-                    string detail = _forge.Install(state, record);
-                    ledger.Records.Add(record); // Persisted by Jiangyu beside the next game save.
-                    Context.State.Save();
+                    var source = new SourceSquaddieRemoval(state, record);
+                    if (!source.Present) throw new InvalidOperationException("Selected source soldier no longer exists.");
+                    string detail;
+                    try
+                    {
+                        detail = _forge.Install(state, record);
+                        source.Remove();
+                        record.SourceRemoved = true;
+                        ledger.Records.Add(record); // Persisted beside the next game save, with the native pool.
+                        Context.State.Save();
+                    }
+                    catch (Exception failure)
+                    {
+                        ledger.Records.Remove(record);
+                        // Attempt both rollbacks even if restoring one native collection fails.
+                        Exception rollbackFailure = null;
+                        try { source.Restore(); }
+                        catch (Exception error) { rollbackFailure = error; }
+                        try { _forge.RollbackInstall(state, record); }
+                        catch (Exception error) { rollbackFailure = new AggregateException(rollbackFailure ?? failure, error); }
+                        if (rollbackFailure != null) throw new PromotionRollbackException(rollbackFailure);
+                        throw;
+                    }
+                    NotifySourceChanged(source);
                     text = PromotionRules.Describe(selection, record);
-                    Debug($"Promoted: source={selection.Soldier.Id}, criterion={selection.Criterion}, living={selection.LivingCount}, {detail}");
+                    Debug($"Promoted: source={selection.Soldier.Id}, sourceRemoved={record.SourceRemoved}, poolAlive={state.Squaddies.m_AliveSquaddies.Count}, criterion={selection.Criterion}, living={selection.LivingCount}, {detail}");
                     ScheduleVoices();
                 }
             }
         }
         catch (Exception error)
         {
-            WarnOnce("promote:" + error.GetType().Name, "Field promotion failed; no leader was added. " + error.Message);
-            text = "Field promotion failed: " + error.Message + "\nNo leader was added and no soldier was changed.";
+            WarnOnce("promote:" + error.GetType().Name + ":" + error.Message, "Field promotion failed. " + error.Message);
+            text = "Field promotion failed: " + error.Message + (error is PromotionRollbackException
+                ? "\nDo not save this session. Reload the previous save before continuing."
+                : "\nThe attempted promotion was not committed.");
         }
         try
         {
@@ -187,6 +219,38 @@ public sealed class PromotionSystem : JiangyuSystem
         catch (Exception error)
         {
             WarnOnce("dialog", "Cannot show promotion dialog: " + error.Message);
+        }
+    }
+
+    private void NotifySourceChanged(SourceSquaddieRemoval source)
+    {
+        try { source.NotifyChanged(); }
+        catch (Exception error) { WarnOnce("squaddie-ui", "Promotion committed, but the squad UI notification failed: " + error.Message); }
+    }
+
+    private void ReconcilePreviewSources(StrategyState state, PromotionLedger ledger)
+    {
+        // Upgrade the user's 0.9.x test saves when opening the market, not in the early load prefix.
+        // Never delete a soldier for an orphaned ledger record or a mismatched identity.
+        foreach (var record in ledger.Validated())
+        {
+            if (record.SourceRemoved || !LeaderForge.RosterContainsLeader(state, record.LeaderId)) continue;
+            var source = new SourceSquaddieRemoval(state, record);
+            try
+            {
+                source.Remove();
+                record.SourceRemoved = true;
+                Context.State.Save();
+            }
+            catch
+            {
+                record.SourceRemoved = false;
+                try { source.Restore(); }
+                catch (Exception error) { throw new PromotionRollbackException(error); }
+                throw;
+            }
+            NotifySourceChanged(source);
+            Debug("Removed preview source: " + record.SourceSquaddieId);
         }
     }
 
@@ -297,7 +361,7 @@ public sealed class PromotionSystem : JiangyuSystem
             if (state.BlackMarket.ContainsItem(template)) return;
             // Empty donor list is a second barrier against accidental vanilla unlocks.
             if (template.m_UnlockedLeaders == null || template.m_UnlockedLeaders.Length != 0 ||
-                template.GetTradeValue() != PreviewPrice)
+                template.GetTradeValue() != Price)
                 throw new InvalidOperationException("Preview template safety/price validation failed.");
             var item = template.CreateItem(BaseItemTemplate.CreateGuid());
             if (item == null || item.GetBaseItemTemplate()?.GetID() != DossierId)
@@ -305,7 +369,7 @@ public sealed class PromotionSystem : JiangyuSystem
             state.BlackMarket.AddItem(item, PreviewStockTimeout);
             if (!state.BlackMarket.ContainsItem(template))
                 throw new InvalidOperationException("Native stock insertion readback failed.");
-            Debug($"Promotion-review dossier stocked in native Black Market (price {PreviewPrice}, timeout {PreviewStockTimeout}).");
+            Debug($"Promotion-review dossier stocked in native Black Market (price {Price}, timeout {PreviewStockTimeout}).");
         }
         catch (Exception error)
         {
@@ -331,6 +395,14 @@ public sealed class PromotionSystem : JiangyuSystem
 
     private void MarketOpened(PatchInfo info)
     {
+        if (!_ready || _unloaded) return;
+        try
+        {
+            var state = StrategyState.Get();
+            if (state?.Squaddies != null && state.Roster != null && !state.IsIronman())
+                ReconcilePreviewSources(state, Context.State.Get<PromotionLedger>());
+        }
+        catch (Exception error) { WarnOnce("preview-sources", "Cannot remove an old preview source soldier: " + error.Message); }
         Stock();
         try { RefreshMarketWindow(info.Instance as BlackMarketUIScreen); }
         catch (Exception error) { WarnOnce("refresh", "Cannot refresh Black Market after opening: " + error.Message); }
@@ -378,7 +450,7 @@ public sealed class PromotionSystem : JiangyuSystem
 
     private void SettingChanged(string group, string key, object value)
     {
-        if (group != Group || key != EnableKey) return;
+        if (group != Group || (key != EnableKey && key != PriceKey)) return;
         Stock();
         RefreshActiveMarket();
         ScheduleVoices();
@@ -408,4 +480,10 @@ public sealed class PromotionSystem : JiangyuSystem
         if (method?.ReturnType != result)
             throw new NotSupportedException("Unsupported native API: " + type.FullName + "." + name);
     }
+}
+
+internal sealed class PromotionRollbackException : Exception
+{
+    internal PromotionRollbackException(Exception inner)
+        : base("Could not fully restore the roster after a failed promotion. Do not save; reload the previous save. " + inner.Message, inner) { }
 }

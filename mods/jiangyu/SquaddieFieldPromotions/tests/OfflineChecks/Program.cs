@@ -3,6 +3,7 @@ using Jiangyu.Sdk;
 using MenaceModSettings;
 using Il2CppMenace.Items;
 using Il2CppMenace.States;
+using Il2CppMenace.Strategy;
 using Il2CppMenace.Tools;
 using Il2CppMenace.UI;
 using Il2CppMenace.UI.Strategy;
@@ -105,7 +106,7 @@ system.OnInit();
 system.OnTemplatesApplied();
 Check(preview.Title.GetRawDefaultTranslation() == "Field Promotion Dossier", "native localized dossier title");
 Check(preview.ShortName.GetRawDefaultTranslation() == "Field promotion", "native localized short name");
-Check(preview.Description.GetRawDefaultTranslation().Contains("source soldier stays in the roster"), "native localized safety description");
+Check(preview.Description.GetRawDefaultTranslation().Contains("is removed from their squad and the reserve"), "native localized removal description");
 Check(LeaderForge.Last != null && LeaderForge.Last.ModFolder == system.Context.ModFolder, "forge bound to the mod folder");
 Check(system.Context.Coroutines.Started.Count == 0, "no voice preparation while disabled and nothing pending");
 Check(new BaseLocalizedString[] { preview.Title, preview.ShortName, preview.Description }.All(t =>
@@ -139,7 +140,10 @@ PatchInfo Redeem(DossierItemTemplate template)
 }
 Open();
 Check(StrategyState.Current.BlackMarket.Items.Count == 0, "stock OFF by default");
-Check(!ModSettings.Values["DebugLogging"] && Log.InfoLines.Count == 0, "silent by default");
+Check(!(bool)ModSettings.Values["DebugLogging"] && Log.InfoLines.Count == 0, "silent by default");
+Check(ModSettings.Numbers[PromotionSystem.PriceKey] == (10, 1000, 100, 10), "price number defaults to 100 and steps by 10");
+foreach (var (input, expected) in new[] { (int.MinValue,10), (0,10), (10,10), (99,90), (100,100), (110,110), (999,990), (int.MaxValue,1000) })
+    Check(PromotionSystem.NormalizePrice(input) == expected, "safe price normalization " + input);
 Check(marketScreen.Updates == 1, "native market window refreshed after open");
 ModSettings.Set(PromotionSystem.EnableKey, true);
 Check(system.Context.Coroutines.Started.Count == 1, "enabling schedules the one-shot voice preparation");
@@ -158,14 +162,33 @@ Check(Log.InfoLines.Any(line => line.Contains("normal=1") && line.Contains("prev
 ModSettings.Set("DebugLogging", false);
 var price = new PatchInfo { Instance = preview, Result = 77 };
 prefixes["GetTradeValue"](price);
-Check(price.Skip && (int)price.Result == PromotionSystem.PreviewPrice && PromotionSystem.PreviewPrice >= 1,
-    "preview price fixed and never below the native merchant-list minimum of 1");
+Check(price.Skip && (int)price.Result == PromotionSystem.DefaultPrice, "dossier default price is 100");
+int updatesBeforePriceChange = marketScreen.Updates;
+ModSettings.Set(PromotionSystem.PriceKey, 110);
+preview.Price = 110; // Simulate the patched native GetTradeValue used by the stock/UI reader.
+prefixes["GetTradeValue"](price);
+Check((int)price.Result == 110 && marketScreen.Updates > updatesBeforePriceChange, "price change applies immediately and refreshes market");
+ModSettings.Set(PromotionSystem.PriceKey, 100);
+preview.Price = 100;
 Check(marketScreen.m_TempFilteredRegularOffers.Any(i => i.Template == preview), "preview survives native price filter");
 price = new PatchInfo { Instance = vanilla, Result = 25 };
 prefixes["GetTradeValue"](price);
 Check(!price.Skip && (int)price.Result == 25, "vanilla price untouched");
 Check(!Redeem(vanilla).Skip && vanilla.VanillaRedeems == 1, "vanilla redemption untouched");
 NativeCandidates.Value = selection;
+Squaddie Seed(Candidate candidate, BaseUnitLeader owner = null)
+{
+    var soldier = new Squaddie { Id = candidate.Id, Name = candidate.Name, Nickname = candidate.Nickname,
+        Gender = candidate.Gender, SkinColor = candidate.SkinColor, Owner = owner };
+    StrategyState.Current.Squaddies.m_AliveSquaddies.Add(soldier);
+    return soldier;
+}
+var squad = new BaseUnitLeader();
+squad.m_SquaddieIds.AddRange(new[] { 80, selection.Soldier.Id, 81 });
+var firstSource = Seed(selection.Soldier, squad);
+var untouched = Seed(C(99));
+int poolNotifications = 0;
+StrategyState.Current.Squaddies.OnSquaddiesChanged = () => poolNotifications++;
 var liveLedger = system.Context.State.Get<PromotionLedger>();
 Check(Redeem(preview).Skip && preview.VanillaRedeems == 0, "custom redemption NEVER calls vanilla");
 Check(UIManager.Current.Last.Text.Contains("is now a squad leader"), "promotion result visible");
@@ -173,16 +196,34 @@ Check(!UIManager.Current.Last.Label.enableRichText, "names cannot inject markup"
 Check(LeaderForge.Last.Installed.Count == 1 && StrategyState.Current.Roster.Hirable.Count == 1, "leader installed once into Hire");
 Check(liveLedger.Records.Count == 1 && liveLedger.Records[0].SourceSquaddieId == selection.Soldier.Id &&
     liveLedger.Records[0].LeaderId == LeaderForge.Last.Installed[0] && system.Context.State.Saves == 1, "promotion recorded in Jiangyu mod state");
+Check(liveLedger.Records[0].SourceRemoved && !StrategyState.Current.Squaddies.IsAlive(firstSource.Id) &&
+    squad.m_SquaddieIds.SequenceEqual(new[] { 80, 81 }), "exact promoted soldier removed from assigned squad and pool");
+Check(StrategyState.Current.Squaddies.m_AliveSquaddies.Single() == untouched &&
+    StrategyState.Current.Squaddies.m_KilledSquaddies.Count == 0 && poolNotifications == 1, "other soldiers untouched, no fake death, one notification");
 Check(NativeCandidates.LastExcluded.Count == 0, "first promotion excludes nobody");
 Check(Redeem(preview).Skip && UIManager.Current.Last.Text.Contains("No eligible living squaddie"), "promoted soldier is never promoted twice");
 Check(NativeCandidates.LastExcluded.SetEquals(new[] { selection.Soldier.Id }) && liveLedger.Records.Count == 1 &&
     LeaderForge.Last.Installed.Count == 1, "second redemption changes nothing");
 NativeCandidates.Value = excluded;
+var secondSource = Seed(excluded.Soldier);
 LeaderForge.FailInstall = true;
 Check(Redeem(preview).Skip && UIManager.Current.Last.Text.Contains("Field promotion failed") && liveLedger.Records.Count == 1,
     "native clone failure keeps the ledger unchanged and tells the player");
 LeaderForge.FailInstall = false;
+Check(StrategyState.Current.Squaddies.m_AliveSquaddies.Contains(secondSource), "forge failure preserves source soldier");
+system.Context.State.FailSave = true;
+Redeem(preview);
+Check(liveLedger.Records.Count == 1 && StrategyState.Current.Roster.Hirable.Count == 1 &&
+    StrategyState.Current.Squaddies.m_AliveSquaddies.SequenceEqual(new[] { untouched, secondSource }) && poolNotifications == 1,
+    "state failure rolls back Hire, source and ledger without notifying observers");
+system.Context.State.FailSave = false;
+StrategyState.Current.Squaddies.FailReadback = true;
+Redeem(preview);
+Check(liveLedger.Records.Count == 1 && StrategyState.Current.Roster.Hirable.Count == 1 &&
+    StrategyState.Current.Squaddies.m_AliveSquaddies.Contains(secondSource), "failed removal readback rolls back Hire and source");
+StrategyState.Current.Squaddies.FailReadback = false;
 Check(Redeem(preview).Skip && liveLedger.Records.Count == 2 && liveLedger.Records[1].BadgeIndex == 1, "next promotion gets the next badge");
+Check(!StrategyState.Current.Squaddies.IsAlive(secondSource.Id), "unassigned promoted source also removed");
 Check(UIManager.Current.Last.Text.Contains("1 already promoted skipped") || liveLedger.Records[1].SourceSquaddieId == excluded.Soldier.Id, "second leader from a different soldier");
 Log.Warnings.Clear();
 NativeCandidates.Fail = true;
@@ -238,7 +279,7 @@ preview.m_UnlockedLeaders = Array.Empty<object>();
 preview.Price = 4;
 Open();
 Check(!StrategyState.Current.BlackMarket.ContainsItem(preview), "unexpected preview price fails closed");
-preview.Price = PromotionSystem.PreviewPrice;
+preview.Price = PromotionSystem.DefaultPrice;
 system.OnUnload();
 Open();
 Check(!StrategyState.Current.BlackMarket.ContainsItem(preview), "unloaded callbacks cannot stock");
@@ -272,4 +313,6 @@ if (args.Length > 0)
         "voice bundle built for the pinned Unity version");
     Check(File.Exists(Path.Combine(voice, "voice_routes.json")), "voice routes bundled");
 }
+SourceRemovalChecks.Run(Check);
+PreviewMigrationChecks.Run(Check);
 Console.WriteLine($"PASS: {checks} behavior checks (production rules and callbacks; native APIs simulated).");

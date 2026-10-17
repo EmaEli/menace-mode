@@ -1,12 +1,12 @@
 // Stable clone identity: native inventory can resolve it on restart while this mod is installed.
 // Opt-in preview only. Stock is added explicitly; never compete with vanilla random stock.
-// Price 1: the native merchant list hides items whose GetTradeValue() is below 1.
+// Default price 100, overridden by the mod setting; never below the native merchant-list minimum.
 // Localized text uses fresh native LocalizedLine/LocalizedMultiLine objects in PromotionSystem.
 // Raw strings here are rejected by Jiangyu; editing donor text objects can affect vanilla.
 clone "DossierItemTemplate" from="dossier.squad_leader" id="mod.squaddiefieldpromotions.field_promotion_dossier" {
-    set "TradeValue" 1
+    set "TradeValue" 100
     set "BlackMarketMaxQuantity" 0
     clear "m_TradeValues"
-    append "m_TradeValues" 1
+    append "m_TradeValues" 100
     clear "m_UnlockedLeaders"
 }

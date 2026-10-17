@@ -9,5 +9,6 @@
     <Compile Include="../../code/PromotionRules.cs" Link="PromotionRules.cs" />
     <Compile Include="../../code/PromotionRecord.cs" Link="PromotionRecord.cs" />
     <Compile Include="../../code/PromotionSystem.cs" Link="PromotionSystem.cs" />
+    <Compile Include="../../code/SourceSquaddieRemoval.cs" Link="SourceSquaddieRemoval.cs" />
   </ItemGroup>
 </Project>
