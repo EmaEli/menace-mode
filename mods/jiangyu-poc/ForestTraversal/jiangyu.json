@@ -1,0 +1,9 @@
+{
+  "name": "ForestTraversal",
+  "version": "0.2.0",
+  "author": "Luca",
+  "description": "Lets infantry cross Dense Forest while retaining MENACE's native forest and structure movement penalties. Vehicles remain blocked. Jiangyu port of the legacy Modpack Loader standalone (0.1.2).",
+  "depends": [
+    "Jiangyu >= 1.4.8"
+  ]
+}
