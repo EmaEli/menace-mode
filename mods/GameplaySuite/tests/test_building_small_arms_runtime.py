@@ -105,7 +105,7 @@ class BuildingGuardRuntimeTests(unittest.TestCase):
     def test_actual_guard_methods(self):
         methods = [
             part("    private static readonly string[] SmallArmsTokens =", "    // Garrisonable Buildings"),
-            part("    private static void OnStructureDamage", "    private sealed class PendingCollapse"),
+            part("    private static void OnStructureDamage", "    private static bool IsSmallArmsSkill"),
             part("    private static bool IsSmallArmsSkill", "    private static string SkillId"),
             part("    private static bool IsProtectedStructure", "    private static string Short"),
         ]

@@ -51,6 +51,9 @@ CoverSettingsChecks.Run(Check);
 CoordinatedFireChecks.Run(Check);
 SmokeAiChecks.Run(Check);
 AssaultDefenseChecks.Run(Check);
+MortarScatterChecks.Run(Check);
 LargerMaps.Plugin.RunPlanningChecks(Check);
-if (args.Length > 0) ArtifactChecks.Run(Check, args[0]);
+if (args.Length > 0 && args[0] == "--mortar-proxies")
+    MortarProxyChecks.Run(Check, args[1], args[2]);
+else if (args.Length > 0) ArtifactChecks.Run(Check, args[0]);
 Console.WriteLine($"Offline C# regression checks: {checks} passed.");

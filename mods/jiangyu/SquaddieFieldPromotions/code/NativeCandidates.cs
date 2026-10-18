@@ -18,6 +18,7 @@ internal static class NativeCandidates
         int count = collection.Count;
         var snapshots = new List<Candidate>();
         MethodInfo xpApi = FindXpApi();
+        MethodInfo rankApi = FindRankApi();
         for (int i = 0; i < count; i++)
         {
             var soldier = list[i] ?? throw new InvalidOperationException("Null living squaddie.");
@@ -26,9 +27,13 @@ internal static class NativeCandidates
                 throw new InvalidOperationException("Invalid native squaddie identity.");
             if (!state.Squaddies.IsAlive(id))
                 throw new InvalidOperationException("Living squaddie collection changed during review.");
+            var lastLeader = soldier.GetLastLeaderTemplate();
+            string lastUnitTitle = lastLeader?.UnitTitle?.GetRawDefaultTranslation();
+            string lastCommander = PromotionIdentity.CommanderName(lastLeader?.SpeakerTemplate);
             snapshots.Add(new Candidate(id, soldier.Name, soldier.Nickname,
                 (int)soldier.GetGender(), (int)soldier.GetSkinColor(), soldier.GetMissionsParticipated(),
-                ReadXp(xpApi, id), soldier.GetCurrentLeader() != null));
+                ReadXp(xpApi, id), soldier.GetCurrentLeader() != null, lastUnitTitle, lastCommander,
+                ReadRank(rankApi, id)));
         }
         if (count != collection.Count)
             throw new InvalidOperationException("Living squaddie count changed during review.");
@@ -51,10 +56,32 @@ internal static class NativeCandidates
         catch { return null; } // Discovery of an OPTIONAL provider must not block native review.
     }
 
+    private static MethodInfo FindRankApi()
+    {
+        try
+        {
+            var methods = AppDomain.CurrentDomain.GetAssemblies()
+                .Select(a => a.GetType("SquaddieProbe.CompatibilityApi", false))
+                .Where(t => t != null)
+                .Select(t => t!.GetMethod("GetSquaddieRank", BindingFlags.Public | BindingFlags.Static,
+                    null, new[] { typeof(int) }, null))
+                .Where(m => m?.ReturnType == typeof(string)).ToArray();
+            return methods.Length == 1 ? methods[0] : null;
+        }
+        catch { return null; }
+    }
+
     private static int? ReadXp(MethodInfo api, int id)
     {
         if (api == null) return null;
         try { return api.Invoke(null, new object[] { id }) is int xp && xp >= 0 ? xp : null; }
         catch { return null; } // Optional provider failure never blocks native-missions mode.
+    }
+
+    private static string ReadRank(MethodInfo api, int id)
+    {
+        if (api == null) return "";
+        try { return api.Invoke(null, new object[] { id }) as string ?? ""; }
+        catch { return ""; } // Optional provider failure never blocks native-missions mode.
     }
 }

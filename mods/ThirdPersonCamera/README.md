@@ -1,4 +1,11 @@
-# Cinematic Action Camera 1.1.0 — local candidate
+# Cinematic Action Camera 1.1.1 — local candidate
+
+## Obstructed firing cinematics (#54)
+
+Automatic firing cinematics are skipped when a shooter is garrisoned in a
+building or bunker. The decision uses MENACE's container type, so watchtowers
+remain eligible. Movement cinematics and manual camera use are unchanged. This
+source candidate has not yet been visually verified in game.
 
 ## Automatic firing direction (#49)
 

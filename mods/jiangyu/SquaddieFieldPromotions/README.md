@@ -1,7 +1,8 @@
-# Squaddie Field Promotions 0.10.0
+# Squaddie Field Promotions 0.11.8
 
 **Experimental: promotes real squaddies to hirable leaders and persists them across save/load.**
-Tracked in [#27](https://github.com/EmaEli/menace-mode/issues/27).
+Tracked in [#27](https://github.com/EmaEli/menace-mode/issues/27) and
+[#53](https://github.com/EmaEli/menace-mode/issues/53).
 
 ## Requirements
 
@@ -24,8 +25,19 @@ Tracked in [#27](https://github.com/EmaEli/menace-mode/issues/27).
   gendered leader, with the soldier's name, nickname, skin, bundled portraits from
   `runtime_assets/<gender>/`, a lettered badge (A, B, C, ...) and the John/Jane voice
   bank from `runtime_assets/voice/` when it loads; otherwise the native donor voice stays.
+- The generated leader receives a persistent `UnitTitle` based on the squaddie's last unit
+  (or a varied Imperius designation) and an individual section/badge. Its `UnitDescription`
+  carries the prior unit/commander, native lifetime mission count, optional Veterancy rank,
+  and per-unit missions/wounded-mission history recorded by SFP.
+- Per-unit service tracking begins with 0.11.0: at mission end, deployed squaddie IDs and
+  native wounded/downed IDs are attributed to their leader template and saved in the same
+  per-save Jiangyu sidecar. Mission keys prevent duplicate callbacks from counting twice;
+  earlier unit-by-unit history is explicitly reported as unavailable, not invented.
+- **Use generic heads for promoted leaders** is ON by default. It clears `CustomHead` so
+  promoted leaders use the game's generic appearance even if **Show Unique Leader Heads**
+  is enabled. Turn it off to restore gender-matched custom heads.
 - Attributes: baseline **65/65/62/50/50/5/45** (AGI/WS/VAL/TOU/VIT/PRE/POS) plus a
-  Veterancy XP bonus; perks/stats of the donor template are not inherited.
+  Veterancy rank-aligned bonus; perks/stats of the donor template are not inherited.
 - **The exact source soldier is removed** from their assigned squad and the living pool after
   the new leader is offered in Hire. No random removal, fake death or replacement soldier.
   On a failed promotion, source objects/assignment order, Hire offer and ledger are rolled back.
@@ -39,10 +51,22 @@ Tracked in [#27](https://github.com/EmaEli/menace-mode/issues/27).
   `SaveSystem.ExecLoad` rebuilds every recorded leader **before native roster load**,
   so hired leaders deserialize against an existing template. A missing sidecar loads
   silently; a corrupt sidecar or a single broken record warns once and never blocks
-  the other records or the native load.
+  the other records or the native load. Afterward, SFP reapplies the promoted title and
+  description to both the unit and speaker templates. SFP-only overrides of native
+  `GetUnitTitle` / `GetUnitDescription` expose these values for infantry, whose getters
+  otherwise read the shared vanilla infantry template. The shared template is never edited.
+  Post-load verification reads the displayed strings through those native getters.
+- **DANGER — BACK UP `test.save` BEFORE ENABLING THE ONE-SHOT CLEANUP.** It removes every
+  ledger-matching SFP leader from every roster state and deployment, then saves over `test.save`.
+  The option is OFF by default and disarms itself; restore your backup to undo the cleanup.
+  After native model loading completes and a full preflight of all five roster lists and deployment,
+  it removes matching leaders and BattlePlan entries through MENACE's native manual-save API.
+  Unrelated leaders are preserved; invalid or duplicate ledger IDs, unavailable lists or an Ironman
+  save abort without changing the roster. The promotion sidecar is retained for safe load recovery.
 - No recruitment/debug hotkeys, marker files or polling. Voice setup runs once, after
   the strategy layer exists, only when the option is on or promoted leaders exist.
-- The option and diagnostic logging are both **OFF by default** in Menace Mod Settings.
+- Promotion and diagnostic logging are **OFF by default**; generic promoted-leader heads are
+  **ON by default** in Menace Mod Settings.
 
 Use a disposable campaign; do not test on a save containing old lab-generated leaders.
 
@@ -60,7 +84,7 @@ The kit also ships the module's raw `runtime_assets/` (portraits, prebuilt John/
 voice bundle with its build receipt, voice routes); the installer stages them next to
 the compiled package because `jiangyu compile --clean` does not preserve them.
 
-## Acceptance test (0.10.0 not yet performed in MENACE)
+## Acceptance test (0.11.8 in-game warning display pending)
 
 Versions 0.8.0-0.8.4 verified in game that the native dossier is stocked, visible at
 1 credit, redeemable and restocked. Version 0.9.0 reconnects the recovered 0.6.1 leader
@@ -69,7 +93,18 @@ creation (templates, portraits, badges, John/Jane voices) and adds save/load per
 0.9.2 keeps runtime portrait/badge assets alive across scene changes (redemption after load).
 On 0.9.2 the user verified hired/unhired leaders surviving restart/load, then further
 redemptions (female and male) after load; the log rebuilt A/B/C and promoted D/E/F with no SFP errors.
-Source removal, preview-save reconciliation and configurable pricing are new in 0.10.0.
+Source removal, preview-save reconciliation and configurable pricing were added in 0.10.0.
+Version 0.11.0 adds saved per-unit service and generic leader heads. Version 0.11.2 overrides
+the infantry title/description getters for promoted leaders. Version 0.11.3 aligns attribute
+bonuses with the Veterancy rank ladder. Version 0.11.4 adds guarded `test.save` cleanup;
+0.11.6 extends it to all five native roster states. The 0.11.5/0.11.6 attempts logged no matches,
+but the user still saw SFP leaders in Hire, squads and deployment. Native inspection confirmed
+that `ExecLoad` only starts a coroutine and scene arrival precedes roster deserialization.
+Version 0.11.7 waits for the active roster to deserialize and that exact loading stream to close
+after all model processors; it also removes matching BattlePlan entries with rollback.
+The user verified the cleanup in game: 5 hirable and 3 hired leaders removed, saving succeeded, and
+the one-shot toggle persisted OFF. Version 0.11.8 makes the destructive action and backup warning
+unmistakable in settings; visual confirmation of that warning remains pending.
 
 1. Launch a **throwaway non-Ironman** campaign. Note the living soldier count and Hire list.
 2. In Menace Mod Settings -> **Squaddie Field Promotions**, enable
@@ -82,9 +117,22 @@ Source removal, preview-save reconciliation and configurable pricing are new in 
    ID must no longer be in the old squad/reserve or listed as killed. Hire and assign the new leader.
 6. Redeem a second dossier: a different soldier is promoted (badge B); the first is skipped.
 7. **Save, quit to desktop, relaunch, load**: both leaders must still be present in the
-   roster/Hire with name, badge and portraits; confirm the voice bark in a mission.
+   roster/Hire with name, badge, portraits, unit designation and generated description;
+   confirm the voice bark in a mission.
 8. Disable the option: only the dossier stock should disappear; vanilla dossiers must still work.
 9. Send observations; the agent can pull `Latest.log` (enable **Diagnostic logging** for detail).
+10. **DANGER: make a separate backup of `test.save` first** and confirm it is non-Ironman. Load it
+    and enable **I HAVE A BACKUP - REMOVE ALL SFP LEADERS FROM test.save (ONE-SHOT)** only if you
+    intend to remove all matching promoted leaders and save over that file. Verify SFP entries disappear from
+    all five native roster lists and deployment while unrelated leaders and promotion records remain;
+    cleanup must wait for native load completion even if the toggle was already armed at startup.
+    The setting must turn itself off. Duplicate ledger IDs abort without saving; other save
+    filenames are untouched. Save, quit and reload to confirm the result persists.
+11. Complete missions with deployed soldiers (including one wounded soldier), then promote one.
+    Check the leader's unit title/description for the correct unit, commander, missions and wound
+    history. Earlier service is not backfilled; new mission service should persist after restart.
+12. Confirm generic faces with the default setting, toggle **Use generic heads for promoted
+    leaders** off and back on, and verify the preference survives save/load.
 
 When loading a 0.9.x preview save, opening Black Market also removes matching old duplicate
 sources once. Count those separately from the one soldier consumed by each new dossier.
@@ -101,8 +149,10 @@ readability remain in-game acceptance gates.
    offline tests of source/Hire/ledger rollback do not verify native purchase rollback.
 
 Baseline AGI/WS/VAL/TOU/VIT/PRE/POS: **65/65/62/50/50/5/45**.
-Complete XP adds **0/2/4/6/8/10/12** at **0/25/50/100/150/250/500** XP;
-Precision receives half, cap 85. These remain provisional values, not balanced recruitment.
+XP bonuses by Veterancy rank: Green **+0** at 0 XP; Combat Tested **+2** at 250 XP;
+Hardened **+4** at 500 XP; Regular **+6** at 1,000 XP; Veteran **+8** at 2,000 XP;
+Crack **+10** at 4,000 XP; Elite **+12** at **8,000+ XP**. Precision receives half
+the bonus. These attribute values remain provisional and need in-game balance testing.
 
 ## Developer checks
 

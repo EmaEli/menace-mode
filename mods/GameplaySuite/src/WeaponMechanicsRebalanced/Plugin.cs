@@ -5,9 +5,9 @@ using Menace.SDK;
 using MenaceModSuite.Shared;
 using UnityEngine;
 
-[assembly: AssemblyVersion("0.4.9.0")]
-[assembly: AssemblyFileVersion("0.4.9.0")]
-[assembly: AssemblyInformationalVersion("0.4.9")]
+[assembly: AssemblyVersion("0.4.11.0")]
+[assembly: AssemblyFileVersion("0.4.11.0")]
+[assembly: AssemblyInformationalVersion("0.4.11")]
 
 namespace MenaceWeaponMechanicsRebalanced;
 
@@ -15,7 +15,7 @@ namespace MenaceWeaponMechanicsRebalanced;
 public sealed partial class Plugin : IHostedPlugin
 {
     private const string SettingsGroup = "Weapon Mechanics Rebalanced";
-    private const string Version = "0.4.9";
+    private const string Version = "0.4.11";
 
     private sealed class MortarSkillSpec
     {
@@ -139,11 +139,10 @@ public sealed partial class Plugin : IHostedPlugin
     private static ModLog? _logger;
     private static bool _enabled = true;
     private static bool _debugLogging;
-    private const int MortarScatterReductionPerPriorShot = 1;
-    private const int MortarUnsolvedScatterFloor = 2;
-    private const int MortarSolvedScatter = 1;
+    private const int MortarUnsolvedScatterFloor = MortarScatterRules.UnsolvedFloor;
     private static GUIStyle? _mortarBonusStyle;
     private static GUIStyle? _mortarBonusShadowStyle;
+    private static GUIStyle? _mortarLineStyle;
     private static bool _mortarOverlayErrorLogged;
     private readonly struct MortarHighlightBlend
     {
@@ -204,6 +203,7 @@ public sealed partial class Plugin : IHostedPlugin
         ClearMortarWorldHighlights();
         MortarRangingSolutions.Clear();
         _mortarOverlayErrorLogged = false;
+        _mortarPreviewErrorLogged = false;
         _mortarWorldRendererLogged = false;
         _mortarWorldRendererErrorLogged = false;
         _activeMortarApplyState = null;
@@ -217,7 +217,35 @@ public sealed partial class Plugin : IHostedPlugin
 
     public void OnGUI()
     {
-        DrawMortarRangingOverlay();
+        if (!_enabled || Event.current == null || Event.current.type != EventType.Repaint) return;
+        // ModGui dispatches multiple HUDs on one Unity OnGUI event. Never inherit
+        // a previous callback's tint/scale/depth, or leak ours to the next HUD.
+        Color oldColor = GUI.color;
+        Color oldContentColor = GUI.contentColor;
+        Color oldBackgroundColor = GUI.backgroundColor;
+        Matrix4x4 oldMatrix = GUI.matrix;
+        int oldDepth = GUI.depth;
+        bool oldEnabled = GUI.enabled;
+        try
+        {
+            GUI.color = Color.white;
+            GUI.contentColor = Color.white;
+            GUI.backgroundColor = Color.white;
+            GUI.matrix = Matrix4x4.identity;
+            GUI.depth = -100;
+            GUI.enabled = true;
+            DrawMortarRangingOverlay();
+            DrawMortarScatterPreview();
+        }
+        finally
+        {
+            GUI.color = oldColor;
+            GUI.contentColor = oldContentColor;
+            GUI.backgroundColor = oldBackgroundColor;
+            GUI.matrix = oldMatrix;
+            GUI.depth = oldDepth;
+            GUI.enabled = oldEnabled;
+        }
     }
 
     private static IEnumerator DelayedApply(string reason)
@@ -269,6 +297,8 @@ public sealed partial class Plugin : IHostedPlugin
         GUILayout.Label("Enabled: " + _enabled);
         GUILayout.Label("Mortar ranging: Scatter -1 per prior shot; misses stop at Scatter 2; exact hit finds solution -> Scatter 1; ScatterChance unchanged");
         GUILayout.Label("Remembered mortar firing positions: " + MortarRangingSolutions.Count);
+        GUILayout.Label("Remembered target tiles: " + MortarRangingSolutions.Values.Sum(tiles => tiles.Count));
+        GUILayout.Label($"World borders: {MortarWorldHighlightTiles.Count}; overlay error: {_mortarOverlayErrorLogged}; preview error: {_mortarPreviewErrorLogged}");
         GUILayout.Label("Alternate rifle fire: Sustained/Spray 40 AP + 2 ammo; Aimed Fire max 50 AP + 1 ammo");
         GUILayout.EndArea();
     }
@@ -819,13 +849,7 @@ public sealed partial class Plugin : IHostedPlugin
             var tileKey = (__0.GetX(), __0.GetZ());
             int originalScatter = Math.Max(0, template.Scatter);
             int originalScatterChance = template.ScatterChance;
-            int effectiveScatter = originalScatter;
-            if (MortarRangingSolutions.TryGetValue(key, out Dictionary<(int X, int Z), MortarRangingState>? exactSolutions)
-                && exactSolutions.TryGetValue(tileKey, out MortarRangingState? exactRanging)
-                && exactRanging != null)
-            {
-                effectiveScatter = GetMortarEffectiveScatter(exactRanging, originalScatter);
-            }
+            int effectiveScatter = GetMortarTargetScatter(__instance, actor, __0, originalScatter);
 
             if (effectiveScatter != originalScatter)
                 template.Scatter = effectiveScatter;
@@ -964,18 +988,8 @@ public sealed partial class Plugin : IHostedPlugin
         return (actorKey, weaponKey);
     }
 
-    private static int GetMortarEffectiveScatter(MortarRangingState ranging, int baseScatter)
-    {
-        baseScatter = Math.Max(0, baseScatter);
-        if (baseScatter <= 1) return baseScatter;
-        if (ranging != null && ranging.SolutionFound)
-            return Math.Min(baseScatter, MortarSolvedScatter);
-
-        int shots = ranging == null ? 0 : Math.Max(0, ranging.Shots);
-        int tightened = baseScatter - shots * MortarScatterReductionPerPriorShot;
-        int floor = Math.Min(baseScatter, MortarUnsolvedScatterFloor);
-        return Math.Max(floor, tightened);
-    }
+    private static int GetMortarEffectiveScatter(MortarRangingState? ranging, int baseScatter)
+        => MortarScatterRules.EffectiveScatter(baseScatter, ranging?.Shots ?? 0, ranging?.SolutionFound ?? false);
 
     private static float GetMortarRegistrationProgress(MortarRangingState ranging)
     {
@@ -997,7 +1011,7 @@ public sealed partial class Plugin : IHostedPlugin
         return Mathf.Clamp01((completedSteps - 1) / (float)(totalUnsolvedSteps - 1)) * 0.78f;
     }
 
-    private static MortarHighlightBlend GetMortarHighlightBlend(MortarRangingState ranging)
+    private static MortarHighlightBlend GetMortarHighlightBlend(MortarRangingState ranging, int? baseScatter = null)
     {
         float progress = GetMortarRegistrationProgress(ranging);
         float strength = ranging.SolutionFound ? 15f : Mathf.Lerp(9f, 14f, progress);
@@ -1013,7 +1027,8 @@ public sealed partial class Plugin : IHostedPlugin
             red = 1;
         }
 
-        int effectiveScatter = ranging.LastEffectiveScatter > 0
+        int effectiveScatter = baseScatter.HasValue ? GetMortarEffectiveScatter(ranging, baseScatter.Value)
+            : ranging.LastEffectiveScatter > 0
             ? ranging.LastEffectiveScatter
             : Math.Max(MortarUnsolvedScatterFloor, ranging.LastBaseScatter);
         return new MortarHighlightBlend(red, green, effectiveScatter, ranging.SolutionFound);
@@ -1129,7 +1144,9 @@ public sealed partial class Plugin : IHostedPlugin
             hideFlags = HideFlags.HideAndDontSave,
         };
         lineObject.transform.SetParent(root.transform, false);
-        LineRenderer line = lineObject.AddComponent<LineRenderer>();
+        // The native generic AddComponent<LineRenderer> instantiation is stripped.
+        LineRenderer line = lineObject.AddComponent(
+            Il2CppInterop.Runtime.Il2CppType.Of<LineRenderer>()).Cast<LineRenderer>();
         line.enabled = true;
         line.useWorldSpace = true;
         line.loop = true;
@@ -1239,10 +1256,12 @@ public sealed partial class Plugin : IHostedPlugin
 
     private static void UpdateMortarWorldHighlights()
     {
+        if (_mortarWorldRendererErrorLogged) return;
         try
         {
             Il2CppMenace.Tactical.TacticalManager manager = Il2CppMenace.Tactical.TacticalManager.Get();
-            Il2CppMenace.Tactical.Actor? actor = manager == null ? null : manager.GetActiveActor();
+            var selectedSkill = GetSelectedMortarSkill();
+            Il2CppMenace.Tactical.Actor? actor = manager == null ? null : GetMortarDisplayActor(manager, selectedSkill);
             long actorKey = NativeKey(actor);
 
             if (!_enabled || manager == null || actor == null || actorKey == 0 || MortarRangingSolutions.Count == 0)
@@ -1252,15 +1271,18 @@ public sealed partial class Plugin : IHostedPlugin
             }
 
             var desired = new Dictionary<(int X, int Z), MortarHighlightBlend>();
+            var selectedKey = selectedSkill == null ? default : MortarRangingKey(selectedSkill, actor);
+            int? selectedScatter = selectedSkill?.GetTemplate()?.Scatter;
             foreach (var pair in MortarRangingSolutions)
             {
                 if (pair.Key.Actor != actorKey) continue;
+                if (selectedSkill != null && pair.Key != selectedKey) continue;
                 foreach (var tilePair in pair.Value)
                 {
                     MortarRangingState? ranging = tilePair.Value;
                     if (ranging == null || ranging.Shots <= 0) continue;
 
-                    MortarHighlightBlend blend = GetMortarHighlightBlend(ranging);
+                    MortarHighlightBlend blend = GetMortarHighlightBlend(ranging, selectedScatter);
                     if (!desired.TryGetValue(tilePair.Key, out MortarHighlightBlend existing)
                         || blend.SolutionFound && !existing.SolutionFound
                         || blend.EffectiveScatter < existing.EffectiveScatter)
@@ -1323,12 +1345,11 @@ public sealed partial class Plugin : IHostedPlugin
         }
         catch (Exception ex)
         {
-            // This runs every frame. Emit at most one diagnostic and only with Debug ON.
-            if (_debugLogging && !_mortarWorldRendererErrorLogged)
-            {
-                _mortarWorldRendererErrorLogged = true;
-                Warn($"Mortar world-space tile highlight failed: {ex.GetType().Name}: {ex.Message}");
-            }
+            // Stop retrying a broken renderer every frame, even with Debug OFF.
+            _mortarWorldRendererErrorLogged = true;
+            ClearMortarWorldHighlights();
+            if (_debugLogging)
+                Warn($"Mortar world-space tile highlight failed: {ex}");
         }
     }
 
@@ -1359,7 +1380,8 @@ public sealed partial class Plugin : IHostedPlugin
             Il2CppMenace.Tactical.TacticalManager manager = Il2CppMenace.Tactical.TacticalManager.Get();
             if (manager == null) return;
 
-            Il2CppMenace.Tactical.Actor? actor = manager.GetActiveActor();
+            var selectedSkill = GetSelectedMortarSkill();
+            Il2CppMenace.Tactical.Actor? actor = GetMortarDisplayActor(manager, selectedSkill);
             long actorKey = NativeKey(actor);
             if (actor == null || actorKey == 0) return;
 
@@ -1368,9 +1390,7 @@ public sealed partial class Plugin : IHostedPlugin
             // actor. This makes the feedback visible as soon as the mortar unit itself is
             // selected, matching the normal tactical selection flow.
             var solutionMaps = new List<Dictionary<(int X, int Z), MortarRangingState>>();
-            Il2CppMenace.States.TacticalState state = Il2CppMenace.States.TacticalState.Get();
-            Il2CppMenace.Tactical.Skills.Skill? selectedSkill = state == null ? null : state.GetSelectedSkill();
-            if (selectedSkill != null && MortarRangingSkillIds.Contains(selectedSkill.GetID()))
+            if (selectedSkill != null)
             {
                 Il2CppMenace.Tactical.Actor? selectedSkillActor = selectedSkill.GetActor();
                 if (NativeKey(selectedSkillActor) == actorKey)
@@ -1381,7 +1401,7 @@ public sealed partial class Plugin : IHostedPlugin
                 }
             }
 
-            if (solutionMaps.Count == 0)
+            if (selectedSkill == null)
             {
                 foreach (var pair in MortarRangingSolutions)
                 {
@@ -1393,8 +1413,7 @@ public sealed partial class Plugin : IHostedPlugin
             if (solutionMaps.Count == 0) return;
 
             Il2CppMenace.Tactical.Map map = manager.GetMap();
-            Il2CppMenace.Tactical.TacticalCamera tacticalCamera = manager.GetCamera();
-            Camera? camera = tacticalCamera == null ? null : tacticalCamera.GetCamera();
+            Camera? camera = GetMortarOverlayCamera(manager);
             if (map == null || camera == null) return;
 
             EnsureMortarOverlayStyles();
@@ -1403,6 +1422,7 @@ public sealed partial class Plugin : IHostedPlugin
             // registered dispersion on each tile. The optional label reports the
             // effective Scatter value for the next shot (S1 is a solved firing solution).
             var merged = new Dictionary<(int X, int Z), MortarHighlightBlend>();
+            int? selectedScatter = selectedSkill?.GetTemplate()?.Scatter;
             for (int m = 0; m < solutionMaps.Count; m++)
             {
                 foreach (var pair in solutionMaps[m])
@@ -1410,7 +1430,7 @@ public sealed partial class Plugin : IHostedPlugin
                     MortarRangingState ranging = pair.Value;
                     if (ranging == null || ranging.Shots <= 0) continue;
 
-                    MortarHighlightBlend blend = GetMortarHighlightBlend(ranging);
+                    MortarHighlightBlend blend = GetMortarHighlightBlend(ranging, selectedScatter);
                     if (!merged.TryGetValue(pair.Key, out MortarHighlightBlend existing)
                         || blend.SolutionFound && !existing.SolutionFound
                         || blend.EffectiveScatter < existing.EffectiveScatter)
@@ -1436,7 +1456,7 @@ public sealed partial class Plugin : IHostedPlugin
             // scene-local failure so Debug mode cannot create log spam or frame-time churn.
             _mortarOverlayErrorLogged = true;
             if (_debugLogging)
-                Warn($"Mortar ranging overlay disabled for this scene after an error: {ex.GetType().Name}: {ex.Message}");
+                Warn($"Mortar ranging overlay disabled for this scene after an error: {ex}");
         }
     }
 
@@ -1468,7 +1488,7 @@ public sealed partial class Plugin : IHostedPlugin
         return Color.Lerp(low, high, greenMix);
     }
 
-    private static void DrawMortarTileBorder(Camera camera, Il2CppMenace.Tactical.Tile tile, float thickness, Color color)
+    private static void DrawMortarTileBorder(Camera camera, Il2CppMenace.Tactical.Tile tile, float thickness, Color color, int edges = 15)
     {
         const float halfTile = 4f;
         Vector3 center = tile.GetPos();
@@ -1490,13 +1510,21 @@ public sealed partial class Plugin : IHostedPlugin
         }
 
         Color oldColor = GUI.color;
-        GUI.color = color;
-        for (int i = 0; i < 4; i++)
-            DrawGuiLine(screen[i], screen[(i + 1) % 4], thickness);
-        GUI.color = oldColor;
+        try
+        {
+            for (int i = 0; i < 4; i++)
+            {
+                if ((edges & (1 << i)) == 0) continue;
+                GUI.color = new Color(0f, 0f, 0f, 0.95f);
+                DrawGuiLine(screen[i], screen[(i + 1) % 4], thickness + 3f);
+                GUI.color = color;
+                DrawGuiLine(screen[i], screen[(i + 1) % 4], thickness);
+            }
+        }
+        finally { GUI.color = oldColor; }
     }
 
-    private static void DrawMortarTileScatter(Camera camera, Il2CppMenace.Tactical.Tile tile, int effectiveScatter, Color color)
+    private static void DrawMortarTileScatter(Camera camera, Il2CppMenace.Tactical.Tile tile, int effectiveScatter, Color color, string prefix = "S")
     {
         if (_mortarBonusStyle == null || _mortarBonusShadowStyle == null) return;
 
@@ -1505,11 +1533,11 @@ public sealed partial class Plugin : IHostedPlugin
         Vector3 p = camera.WorldToScreenPoint(center);
         if (p.z <= 0f) return;
 
-        const float width = 62f;
+        const float width = 100f;
         const float height = 22f;
         float x = p.x - width * 0.5f;
         float y = Screen.height - p.y - height * 0.5f;
-        string text = "S" + Math.Max(0, effectiveScatter).ToString();
+        string text = prefix + Math.Max(0, effectiveScatter).ToString();
 
         Color old = _mortarBonusStyle.normal.textColor;
         _mortarBonusStyle.normal.textColor = color;
@@ -1524,11 +1552,22 @@ public sealed partial class Plugin : IHostedPlugin
         float length = delta.magnitude;
         if (length <= 0.5f) return;
 
+        if (_mortarLineStyle == null)
+        {
+            _mortarLineStyle = new GUIStyle();
+            _mortarLineStyle.normal.background = Texture2D.whiteTexture;
+        }
         Matrix4x4 oldMatrix = GUI.matrix;
         float angle = Mathf.Atan2(delta.y, delta.x) * Mathf.Rad2Deg;
-        GUIUtility.RotateAroundPivot(angle, from);
-        GUI.DrawTexture(new Rect(from.x, from.y - thickness * 0.5f, length, thickness), Texture2D.whiteTexture);
-        GUI.matrix = oldMatrix;
+        try
+        {
+            GUIUtility.RotateAroundPivot(angle, from);
+            // DrawTexture's overload chain ends in an unstripping-failed proxy stub.
+            // This Label overload invokes native Unity directly and paints the style background.
+            GUI.Label(new Rect(from.x, from.y - thickness * 0.5f, length, thickness),
+                GUIContent.none, _mortarLineStyle);
+        }
+        finally { GUI.matrix = oldMatrix; }
     }
 
     private static void InstallMortarSuppressionRadiusPatch(global::HarmonyLib.Harmony harmony)

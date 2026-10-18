@@ -10,9 +10,11 @@ root = Path(__file__).resolve().parents[1]
 src = (root/'src/ThirdPersonCameraMod.cs').read_text(encoding='utf-8')
 project = (root/'ThirdPersonCamera.csproj').read_text(encoding='utf-8')
 builder = (root/'tools/build-and-deploy.ps1').read_text(encoding='utf-8')
+container_filter = re.search(
+    r'private static bool ShouldSkipFiringCameraFromEnclosedBuilding\(.*?\n        \}', src, re.S)
 
 checks = {
-    'release identity 1.0.0': '"Cinematic Action Camera", "1.0.0"' in src and '<Version>1.0.0</Version>' in project,
+    'release identity 1.1.1': '"Cinematic Action Camera", "1.1.1"' in src and '<Version>1.1.1</Version>' in project,
     'MEN-006 compatibility contract': 'public static bool IsCinematicViewActive' in src,
     'native tactical UI visibility used': 'UITactical.SetUIVisibility(false)' in src and 'UITactical.SetUIVisibility(true)' in src,
     'UI restored by exit even when camera fails': re.search(r'private void ExitThirdPerson\(.*?finally\s*\{.*?RestoreTacticalUi\(\);', src, re.S) is not None,
@@ -24,6 +26,8 @@ checks = {
     'enemy movement uses movement probability': 'float chance = kind == EventKind.Movement ? _cachedMovementChance : _cachedFiringChance;' in src,
     'attacked friendly never triggers auto camera': all(x not in src for x in ('InvokeOnDamageReceived','InvokeOnAttackMissed','InvokeOnSuppressionApplied','EventKind.UnderFire','UnderFireChance')),
     'fire follows friendly shooter': 'if (!IsPlayerUnit(attacker)' in src,
+    'enclosed building and bunker shooters skip automatic firing': 'ShouldSkipFiringCameraFromEnclosedBuilding(attacker)' in src and 'GetContainerEntity()' in src,
+    'only Building container type suppresses firing cameras': container_filter is not None and '"ContainerType"' in container_filter.group(0) and '"Building"' in container_filter.group(0) and '"Tower"' not in container_filter.group(0),
     'no repeated per-frame debug': 'DebugLog("Auto camera "' in src and 'if (_debug != null && _debug.Value)' in src,
     'same deployment workflow': 'dotnet build' in builder and 'MenaceThirdPersonCamera.dll' in builder,
 }

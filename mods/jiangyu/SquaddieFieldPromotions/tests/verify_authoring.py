@@ -11,7 +11,7 @@ KDL = (ROOT / 'templates' / 'field-promotion-dossier.kdl').read_text(encoding='u
 class AuthoringTests(unittest.TestCase):
     def test_jiangyu_not_old_modpack(self):
         self.assertEqual(MANIFEST['name'], 'SquaddieFieldPromotions')
-        self.assertEqual(MANIFEST['version'], '0.10.0')
+        self.assertEqual(MANIFEST['version'], '0.11.8')
         self.assertTrue(any(dep.startswith('Jiangyu ') for dep in MANIFEST['depends']))
         self.assertIn('JiangyuSystem', CS)
         self.assertNotIn('IModpackPlugin', CS)
@@ -21,7 +21,7 @@ class AuthoringTests(unittest.TestCase):
         self.assertEqual(MANIFEST['depends'], ['Jiangyu >= 1.4.8', 'MenaceModSettings >= 0.6.1'])
         project = (ROOT / 'code/SquaddieFieldPromotions.csproj').read_text()
         self.assertIn('<Private>false</Private>', project)
-        self.assertIn('<Version>0.10.0</Version>', project)
+        self.assertIn('<Version>0.11.8</Version>', project)
         self.assertIn('$(MenaceModSettingsPath)', project)
 
     def test_no_hotkeys_polling_random_removal_or_fake_death(self):
@@ -34,14 +34,48 @@ class AuthoringTests(unittest.TestCase):
         self.assertIn('AddToggle(EnableKey, "Offer Field Promotion Dossier in Black Market", false', CS)
         self.assertIn('internal const string EnableKey = "EnableFieldPromotions";', CS)
 
+    def test_test_save_cleanup_is_one_shot_and_preflighted(self):
+        cleanup = (ROOT / 'code/PromotionRosterCleanup.cs').read_text(encoding='utf-8')
+        self.assertIn('AddHeader("!!! DANGER: BACK UP test.save BEFORE ENABLING !!!")', CS)
+        self.assertIn('REMOVES ALL SFP LEADERS FROM EVERY ROSTER STATE AND DEPLOYMENT, THEN SAVES test.save.', CS)
+        self.assertIn('AddToggle(CleanupTestSaveKey, "I HAVE A BACKUP - REMOVE ALL SFP LEADERS FROM test.save (ONE-SHOT)", false)', CS)
+        self.assertIn('Path.GetFileName(_loadedSavePath), "test.save"', CS)
+        self.assertIn('SaveSystem.Save(SaveStateType.Manual, _loadedSavePath', CS)
+        self.assertIn('ModSettings.Set(Group, CleanupTestSaveKey, false)', CS)
+        self.assertIn('string.IsNullOrEmpty(_loadedSavePath)', CS)
+        self.assertIn('PromotionRosterCleanup.BuildPlan(leaderIds, ReadRosterEntries(roster))', CS)
+        self.assertIn('PromotionRosterLocation.Hired', cleanup)
+        self.assertIn('PromotionRosterLocation.Unburied', cleanup)
+        self.assertIn('PromotionRosterLocation.Buried', cleanup)
+        self.assertIn('RemoveTemplates(roster.m_HirableLeaders', CS)
+        for state in ('m_HiredLeaders', 'm_DismissedLeaders', 'm_UnburiedLeaders', 'm_BuriedLeaders'):
+            self.assertIn(f'RemoveLeaders(roster.{state}', CS)
+        self.assertNotIn('A promoted leader is hired, awaiting burial, or buried', cleanup)
+        self.assertIn('cleanup request disarmed before preflight', CS)
+
+    def test_cleanup_waits_for_native_model_and_cleans_deployment(self):
+        self.assertNotIn('Postfix("Il2CppMenace.Strategy.SaveSystem", "ExecLoad"', CS)
+        self.assertIn('Postfix("Il2CppMenace.Strategy.Roster", "ProcessSaveState", 1, NativeRosterLoaded)', CS)
+        self.assertIn('Postfix("Il2CppMenace.Strategy.SaveState", "Close", 0, NativeSaveClosed)', CS)
+        self.assertIn('save.Pointer != _rosterLoadState.Pointer', CS)
+        self.assertIn('!save.IsLoading()', CS)
+        self.assertIn('!_nativeLoadCompleted', CS)
+        self.assertIn('!IsLoadedRoster(StrategyState.Get()?.Roster)', CS)
+        self.assertIn('RemoveDeployments(deployment, targets, removedDeployment)', CS)
+        self.assertIn('RestoreEntries(deployment, removedDeployment)', CS)
+
     def test_leaders_rebuilt_before_native_roster_load(self):
         # Prefix on SaveSystem.ExecLoad: the sidecar is read and templates re-registered before deserialization.
         self.assertIn('Context.Patches.Prefix("Il2CppMenace.Strategy.SaveSystem", "ExecLoad", 1, Rehydrate)', CS)
+        self.assertIn('Context.Patches.Postfix("Il2CppMenace.Strategy.SaveState", "Close", 0, NativeSaveClosed)', CS)
         self.assertIn('RequireStatic(typeof(SaveSystem), "ExecLoad", new[] { typeof(SaveState) }, typeof(void))', CS)
         self.assertIn('ModStateSidecar', CS)
         self.assertIn('Context.State.Get<PromotionLedger>()', CS)
         self.assertIn('Context.State.Save()', CS)
         forge = (ROOT / 'code/LeaderForge.cs').read_text()
+        template_text = (ROOT / 'code/PromotionTemplateText.cs').read_text()
+        self.assertIn('leader.SpeakerTemplate.Description = NewMultiLine', template_text)
+        self.assertIn('leader.UnitDescription = NewMultiLine', template_text)
         self.assertIn('Roster.AddHirableLeader(leader)', forge)
         self.assertIn('new JiangyuCloneBridge()', forge)
         for name in ('NativeCandidates.cs', 'PromotionRules.cs', 'PromotionRecord.cs'):
@@ -63,6 +97,15 @@ class AuthoringTests(unittest.TestCase):
         self.assertIn('tree(folder / "runtime_assets")', kit)
         self.assertIn("Join-Path $root 'runtime_assets'", installer)
 
+    def test_native_infantry_display_getters_are_overridden_only_for_sfp(self):
+        for method, callback in (('GetUnitTitle', 'LeaderTitle'), ('GetUnitDescription', 'LeaderDescription')):
+            self.assertIn(f'Context.Patches.Postfix("Il2CppMenace.Strategy.UnitLeaderTemplate", "{method}", 0, {callback})', CS)
+        self.assertIn('StartsWith(PromotionRecord.LeaderPrefix, StringComparison.Ordinal)', CS)
+        forge = (ROOT / 'code/LeaderForge.cs').read_text()
+        self.assertIn('PromotionTemplateText.VerifyDisplay(record, leader)', forge)
+        self.assertNotIn('InfantryUnitTemplate.UnitTitle =', forge)
+        self.assertNotIn('InfantryUnitTemplate.UnitDescription =', forge)
+
     def test_native_template_isolated_from_vanilla_unlocks(self):
         self.assertIn('clone "DossierItemTemplate" from="dossier.squad_leader"', KDL)
         self.assertIn('clear "m_UnlockedLeaders"', KDL)
@@ -79,8 +122,8 @@ class AuthoringTests(unittest.TestCase):
         self.assertLess(promote.index('info.Skip = true'), promote.index('StrategyState.Get()'))
         self.assertIn('ui.AddSimpleDialog()', promote)
         self.assertIn('enableRichText = false', promote)
-        self.assertLess(promote.index('_forge.Install(state, record)'), promote.index('ledger.Records.Add(record)'))
-        self.assertLess(promote.index('_forge.Install(state, record)'), promote.index('source.Remove()'))
+        self.assertLess(promote.index('_forge.Install(state, record, ForceGenericHeads)'), promote.index('ledger.Records.Add(record)'))
+        self.assertLess(promote.index('_forge.Install(state, record, ForceGenericHeads)'), promote.index('source.Remove()'))
         self.assertLess(promote.index('source.Remove()'), promote.index('ledger.Records.Add(record)'))
         self.assertIn('source.Restore()', promote)
         self.assertIn('_forge.RollbackInstall(state, record)', promote)
@@ -94,6 +137,19 @@ class AuthoringTests(unittest.TestCase):
         self.assertIn('GetAllAlive()', native)
         self.assertIn('IReadOnlyCollection', native)
         self.assertIn('65, 65, 62, 50, 50, 5, 45', rules)
+        readme = (ROOT / 'README.md').read_text(encoding='utf-8')
+        self.assertIn('Elite **+12** at **8,000+ XP**', readme)
+
+    def test_service_history_titles_and_generic_heads(self):
+        identity = (ROOT / 'code/PromotionIdentity.cs').read_text()
+        history = (ROOT / 'code/SquaddieServiceHistory.cs').read_text()
+        forge = (ROOT / 'code/LeaderForge.cs').read_text()
+        self.assertIn('Context.Patches.Postfix("Il2CppMenace.Strategy.Squaddies", "OnMissionEnd", 2, MissionEnded)', CS)
+        self.assertIn('Context.Patches.Prefix("Il2CppMenace.Strategy.Squaddies", "OnMissionEnd", 2, MissionEnding)', CS)
+        self.assertIn('AddToggle(GenericHeadKey, "Use generic heads for promoted leaders", true)', CS)
+        self.assertIn('record.UnitTitle = TitleFor', identity)
+        self.assertIn('WoundedMissions', history)
+        self.assertIn('leader.CustomHead = null', forge)
 
     def test_localized_fields_are_not_raw_template_strings(self):
         for field in ('Title', 'ShortName', 'Description'):
@@ -113,7 +169,8 @@ class AuthoringTests(unittest.TestCase):
 
     def test_safety_warning_in_readme(self):
         readme = (ROOT / 'README.md').read_text(encoding='utf-8')
-        self.assertIn('not yet performed in MENACE', readme)
+        self.assertIn(f"## Acceptance test ({MANIFEST['version']} in-game warning display pending)", readme)
+        self.assertIn('BACK UP `test.save` BEFORE ENABLING', readme)
         self.assertIn('exact source soldier is removed', readme)
         self.assertIn('normal market', readme)
         self.assertIn('before native roster load', readme)

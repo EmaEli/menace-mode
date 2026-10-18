@@ -1,3 +1,10 @@
+# 1.1.1 - Skip obstructed firing cinematics (patch)
+
+- Automatic firing cinematics are skipped when the shooter is inside a building or bunker, using MENACE's native container type.
+- Towers remain eligible; movement cinematics, manual camera use, and gameplay behavior are unchanged.
+- User reports the current build works in game and turns progress normally; individual camera
+  trigger cases were not logged separately.
+
 # 0.3.3 - Mod Settings namespace and live-value reading (patch)
 
 - Fixed `CS0103` in the settings companion: imported `Menace.SDK`, which exports `ModSettings`, following the working Larger Maps implementation.

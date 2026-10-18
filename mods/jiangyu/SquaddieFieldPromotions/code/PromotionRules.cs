@@ -16,12 +16,18 @@ internal sealed class Candidate
     internal int Missions { get; }
     internal int? Xp { get; }
     internal bool Assigned { get; }
+    internal string LastUnitTitle { get; }
+    internal string LastCommander { get; }
+    internal string VeterancyRank { get; }
 
     internal Candidate(int id, string name, string nickname, int gender, int skinColor,
-        int missions, int? xp, bool assigned)
+        int missions, int? xp, bool assigned, string lastUnitTitle = "", string lastCommander = "",
+        string veterancyRank = "")
     {
         Id = id; Name = name; Nickname = nickname; Gender = gender;
         SkinColor = skinColor; Missions = missions; Xp = xp; Assigned = assigned;
+        LastUnitTitle = lastUnitTitle ?? ""; LastCommander = lastCommander ?? "";
+        VeterancyRank = veterancyRank ?? "";
     }
 }
 
@@ -68,8 +74,9 @@ internal static class PromotionRules
     {
         if (xp < 0) throw new ArgumentOutOfRangeException(nameof(xp));
         byte[] values = { 65, 65, 62, 50, 50, 5, 45 };
-        int bonus = xp >= 500 ? 12 : xp >= 250 ? 10 : xp >= 150 ? 8 :
-            xp >= 100 ? 6 : xp >= 50 ? 4 : xp >= 25 ? 2 : 0;
+        // Match the Squaddie Veterancy rank ladder, reserving the full bonus for Elite.
+        int bonus = xp >= 8000 ? 12 : xp >= 4000 ? 10 : xp >= 2000 ? 8 :
+            xp >= 1000 ? 6 : xp >= 500 ? 4 : xp >= 250 ? 2 : 0;
         for (int i = 0; i < values.Length; i++)
             values[i] = (byte)Math.Min(85, values[i] + (i == 5 ? bonus / 2 : bonus));
         return values;
@@ -86,7 +93,7 @@ internal static class PromotionRules
         var soldier = selection.Soldier;
         string xp = soldier.Xp?.ToString() ?? "unavailable (Veterancy is optional)";
         return $"{Clean(soldier.Name, "Squaddie")} '{Clean(soldier.Nickname, "Field")}' (ID {soldier.Id}) " +
-            "is now a squad leader. Recruit the new leader in Hire (0 credits).\n" +
+            "is now a squad leader of " + record.UnitTitle + ". Recruit the new leader in Hire (0 credits).\n" +
             $"Selection: {selection.Criterion}; ties use lowest native ID.\n" +
             $"Eligible living soldiers: {selection.LivingCount}" +
             (selection.ExcludedCount > 0 ? $" ({selection.ExcludedCount} already promoted skipped).\n" : ".\n") +

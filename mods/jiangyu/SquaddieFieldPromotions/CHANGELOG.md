@@ -1,5 +1,85 @@
 # Changelog
 
+## 0.11.8
+
+- Keep the one-time `test.save` cleanup, but make its destructive scope and required backup prominent
+  in Menace Mod Settings. It remains OFF by default and one-shot; cleanup behavior is unchanged.
+- Record 0.11.7 in-game acceptance: five hirable and three hired leaders removed, native save
+  succeeded, and the toggle persisted OFF.
+- User reports the current build works in game and turns progress normally; no turn-blocking
+  regression was observed.
+
+## 0.11.7
+
+- Fix premature cleanup: `ExecLoad` only schedules loading, and the Strategy scene can arrive before
+  roster deserialization. Wait for the active roster's loading processor and closure of that exact
+  loading SaveState after all native model processors. Ignore metadata reads, saves, unrelated
+  streams and stale/replaced rosters; reset the gate and cancel pending cleanup on every new load.
+- Refresh reconstructed identity text only after native model loading, not in the ExecLoad postfix.
+- Remove ledger-matching BattlePlan deployment entries alongside roster entries, including orphaned
+  deployment references. Preserve exact objects/order/positions for rollback on save failure.
+- The 0.11.6 no-match log was not proof of absence: the user confirmed leaders in Hire, squads and
+  deployment. Add asynchronous-load regressions and per-state preflight counts. In-game acceptance
+  subsequently passed with the 0.11.7 cleanup.
+
+## 0.11.6
+
+- Extend the guarded `test.save` cleanup to remove SFP-ledger IDs from all five native roster lists,
+  including hired and casualty states; preserve unrelated leaders and remove duplicate placements
+  from every matching list. Duplicate/invalid ledger IDs and unavailable roster lists still abort.
+- Verify native roster readback before and after the manual save, and restore all five lists if the
+  save does not complete. The promotion sidecar remains available for load recovery.
+
+## 0.11.5
+
+- Refine the `test.save` cleanup to remove only inactive Hire/Dismissed entries while preserving
+  hired and casualty states. The follow-up run logged no matches, leading to the broader all-state
+  cleanup in 0.11.6; this observation was later found unreliable due to premature roster inspection.
+
+## 0.11.4
+
+- Add an OFF-by-default, one-time cleanup for `test.save`. It plans against all five native
+  roster states before mutation, removes only SFP hirable/dismissed entries, and aborts without
+  saving if a promoted leader is hired, dead/buried, duplicated, or the save is Ironman.
+- Uses MENACE's native manual-save API and retains promotion records in the Jiangyu sidecar;
+  the setting turns itself off after the attempt. Back up `test.save` before enabling it.
+
+## 0.11.3
+
+- Align initial-attribute bonuses with Squaddie Veterancy ranks: +0/+2/+4/+6/+8/+10/+12
+  at 0/250/500/1000/2000/4000/8000 XP, so only Elite receives the maximum bonus.
+- Keep the existing baseline and half-bonus rule for Precision. Existing leaders retain their
+  persisted attributes; old records do not contain enough source XP/rank data for safe recalculation.
+- Offline tests cover both sides of every rank threshold. This version has not been deployed or
+  tested in MENACE.
+
+## 0.11.2
+
+- Fix the actual infantry display path: native `GetUnitTitle` / `GetUnitDescription`
+  return shared infantry-template text, ignoring the leader fields changed in 0.11.0–0.11.1.
+  Override these getter results only for SFP leaders; vanilla/shared templates stay unchanged.
+- Verify rendered localized strings through native getters after load and before a new
+  Hire offer. A failed post-load display check warns without preventing roster reconstruction.
+- Regression checks reproduce the native infantry indirection and verify donor isolation.
+- In-game acceptance pending; 0.11.1 was confirmed ineffective by the user.
+
+## 0.11.1
+
+- Refresh promoted titles and descriptions after native roster loading, and write the generated
+  description to both unit and speaker templates. This did not fix the infantry display path.
+- Offline checks cover both localized description fields and the post-load refresh path.
+
+## 0.11.0
+
+- Track deployed squaddie service by mission and unit, including wounded/downed participants;
+  mission keys make recording idempotent and the versioned Jiangyu sidecar persists the history.
+  Tracking starts on upgrade; older saves are not given fabricated unit histories.
+- Give each promoted leader a persistent unit designation and a description containing prior
+  unit/commander, native lifetime missions, optional Veterancy rank, and tracked unit service.
+- Generic heads are enabled by default for promoted leaders, with a setting to restore
+  gender-matched custom heads. Existing 0.10.0 ledgers migrate on read.
+- In-game acceptance pending.
+
 ## 0.10.0
 
 - Successful promotion now consumes the exact source squaddie: detach from the assigned squad,

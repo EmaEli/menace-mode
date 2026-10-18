@@ -37,8 +37,13 @@ class MissionFeedbackTests(unittest.TestCase):
     def test_heavy_exclusions_and_collapse_scope_are_preserved(self):
         for tag in ("ANTI_STRUCTURE", "VEHICLE_WEAPON", "INDIRECT_FIRE", "GRENADE", "ROCKET", "MINE"):
             self.assertIn("template.HasTag(TagType." + tag + ")", BUILDINGS)
-        self.assertIn("SafeIsBuilding(structure)", BUILDINGS)
-        self.assertIn("PendingCollapses.Clear();", BUILDINGS)
+        protected = section(BUILDINGS, "private static bool IsProtectedStructure", "private static bool Valid")
+        self.assertIn("if (!Valid(entity)) return false;", protected)
+        self.assertIn("entity!.IsStructure()", protected)
+        self.assertIn("entity.IsBuilding()", protected)
+        self.assertIn("catch { return false; }", protected)
+        safe_collapse = (ROOT / "mods/GameplaySuite/src/GarrisonableBuildings/SafeCollapse.cs").read_text()
+        self.assertIn("PendingCollapses.Clear();", safe_collapse)
 
     def test_attack_target_reaches_all_accepted_camera_paths(self):
         attack = section(CAMERA, "private void HandleAttack", "private bool RollChance")

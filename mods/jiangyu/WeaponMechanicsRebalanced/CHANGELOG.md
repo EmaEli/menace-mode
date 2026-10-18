@@ -1,3 +1,17 @@
+## 0.4.11 — observed Unity proxy failures (#56; visual retest pending)
+
+- The Windows 0.4.10 test loaded successfully but both screen overlays failed with `NotSupportedException: Method unstripping failed`. Its `GUI.DrawTexture(Rect, Texture)` overload chain ends in an explicit unsupported proxy stub. Solid lines now use the native `GUI.Label(Rect, GUIContent, GUIStyle)` entry point with a white background texture; background tint is isolated/restored too.
+- World borders failed in `MethodInfoStoreGeneric_AddComponent_Public_T_0<LineRenderer>`. Component creation now uses non-generic `AddComponent(Il2CppType.Of<LineRenderer>())` and a managed cast, avoiding the stripped native generic instantiation.
+- Failed world renderers stop retrying for the scene. Debug-only error entries retain stack traces; normal logging remains unchanged. No balance or off-map highlight changes.
+- Added metadata-only checks against actual proxy IL and the compiled WMR DLL, including a positive control demonstrating the old DrawTexture failure. These are not native rendering tests.
+
+## 0.4.10 — mortar targeting feedback (#56; in-game verification pending)
+
+- Added a separate yellow cursor dispersion envelope and `Spread N` label. Native blast AoE remains unchanged: it is not the mortar's scatter preview. The envelope follows the game's inclusive square scatter bounds and uses the same per-weapon/per-target calculation as firing, even before the first shot.
+- Hardened remembered-tile screen borders with a dark outline, camera fallback and isolated/restored IMGUI color, matrix, depth and enabled state. Feedback no longer relies solely on the world-space line shader being visible.
+- Both renderers now prefer the selected mortar's actor and physical weapon; an unregistered second mortar cannot inherit another mortar's registered markers. HE/smoke labels use the selected skill's own base scatter with the shared ranging history.
+- Added offline C# scatter/outline checks and source-wiring guards. Balance, scatter chance, blast damage and off-map highlight channels are unchanged. These checks do not establish in-game visibility.
+
 ## 0.4.9 — MEN-004 ammo drain fix
 
 - Fixed the alternate-fire ammo drain (GitHub issue #4). The `Skill.Use` postfix that charges the extra round for Sustained Fire / Spray ignored the usage flags and also ran on the game's simulated usages (`Fake | LowerAudioVolume | Free`, native ammo delta 0), which MENACE issues repeatedly during the enemy turn. Each simulated call removed 2 rounds and synchronized the loss to the sibling fire mode; the 0.4.8 ledger recorded a squad going 22 → 0 across one AI phase without firing. Usages flagged `Fake` or `NoUsesConsumed` are now left untouched by both the pre-use guard and the extra-cost postfix. Real player shots are unchanged (native 1 + extra 1).

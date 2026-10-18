@@ -11,7 +11,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 
 [assembly: MelonInfo(typeof(MenaceThirdPersonCamera.ThirdPersonCameraMod),
-    "Cinematic Action Camera", "1.1.0", "MENACE Community")]
+    "Cinematic Action Camera", "1.1.1", "MENACE Community")]
 
 namespace MenaceThirdPersonCamera
 {
@@ -276,12 +276,33 @@ namespace MenaceThirdPersonCamera
         {
             // Stay with the friendly shooter, but frame along the actual attack axis,
             // not the leader's facing. Snapshot the tile; never retain a victim entity.
-            if (!IsPlayerUnit(attacker) || skill == null || !skill.IsAttack()) return;
+            if (!IsPlayerUnit(attacker) || skill == null || !skill.IsAttack() ||
+                ShouldSkipFiringCameraFromEnclosedBuilding(attacker)) return;
             Map map = TacticalManager.Get()?.GetMap();
             Vector3? target = tile != null && map != null
                 ? map.TileCenterToWorldPos(tile.GetTilePos(), true) : (Vector3?)null;
             float clip = Mathf.Clamp(duration + 1.0f, 2.2f, 10f);
             ConsiderAutoCamera(attacker, EventKind.Firing, clip, target);
+        }
+
+        private static bool ShouldSkipFiringCameraFromEnclosedBuilding(Actor attacker)
+        {
+            try
+            {
+                Entity container = attacker == null ? null : attacker.GetContainerEntity();
+                object containerTemplate = container?.GetTemplate();
+                // Avoid adding the Sirenix serialization proxy just to read this game enum field.
+                Type templateType = containerTemplate?.GetType();
+                FieldInfo containerTypeField = templateType?.GetField(
+                    "ContainerType", BindingFlags.Instance | BindingFlags.Public);
+                object containerType = containerTypeField?.GetValue(containerTemplate);
+                return string.Equals(containerType?.ToString(), "Building", StringComparison.OrdinalIgnoreCase);
+            }
+            catch
+            {
+                // A failed native lookup must not disable other automatic camera hooks.
+                return false;
+            }
         }
 
         private void ConsiderAutoCamera(Actor actor, EventKind kind, float clipDuration, Vector3? attackTarget = null)

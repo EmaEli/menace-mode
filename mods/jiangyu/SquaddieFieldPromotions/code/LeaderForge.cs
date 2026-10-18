@@ -35,7 +35,8 @@ internal sealed class LeaderForge
 
     internal void Unload() => _voices?.UnpatchOnUnload();
 
-    internal static PromotionRecord CreateRecord(StrategyState state, Selection selection, int badgeIndex)
+    internal static PromotionRecord CreateRecord(StrategyState state, Selection selection, int badgeIndex,
+        SquaddieServiceRecord service)
     {
         var soldier = selection.Soldier;
         string token = Guid.NewGuid().ToString("N");
@@ -52,6 +53,7 @@ internal sealed class LeaderForge
             BadgeIndex = badgeIndex,
             InitialAttributes = PromotionRules.Attributes(selection.UsesXp ? soldier.Xp : null),
         };
+        PromotionIdentity.Populate(record, soldier, service);
         record.Validate();
         return record;
     }
@@ -66,15 +68,16 @@ internal sealed class LeaderForge
     }
 
     /// <summary>Creates (or validates an existing) template pair and offers it in Hire.</summary>
-    internal string Install(StrategyState state, PromotionRecord record)
+    internal string Install(StrategyState state, PromotionRecord record, bool forceGenericHead)
     {
         record.Validate();
         if (state == null || state.Roster == null) throw new InvalidOperationException("Roster unavailable.");
         if (RosterContainsLeader(state, record.LeaderId) || RosterContainsGuid(state, record.NumericGuid))
             throw new InvalidOperationException("Generated leader identity already appears in the roster.");
-        string result = Materialize(record);
+        string result = Materialize(record, forceGenericHead);
         var leader = DataTemplateLoader.Get<UnitLeaderTemplate>(record.LeaderId, false)
             ?? throw new InvalidOperationException("Registered leader template lookup failed.");
+        PromotionTemplateText.VerifyDisplay(record, leader);
         state.Roster.AddHirableLeader(leader);
         if (!RosterContainsLeader(state, record.LeaderId))
             throw new InvalidOperationException("Hire list readback failed after AddHirableLeader.");
@@ -92,10 +95,31 @@ internal sealed class LeaderForge
     }
 
     /// <summary>Recreates templates for a saved record before the native roster deserializes.</summary>
-    internal string Rehydrate(PromotionRecord record)
+    internal string Rehydrate(PromotionRecord record, bool forceGenericHead)
     {
         record.Validate();
-        return Materialize(record);
+        return Materialize(record, forceGenericHead);
+    }
+
+    internal bool SetHeadMode(PromotionRecord record, bool forceGenericHead)
+    {
+        var leader = DataTemplateLoader.Get<UnitLeaderTemplate>(record.LeaderId, false);
+        if (leader == null) return false;
+        if (forceGenericHead)
+        {
+            leader.CustomHead = null;
+            return true;
+        }
+
+        var nativeDonor = DataTemplateLoader.Get<UnitLeaderTemplate>(
+            record.Gender == Convert.ToInt32(Il2CppMenace.Tactical.Gender.Female) ? "squad_leader.sy" : "squad_leader.lim", false);
+        if (nativeDonor == null) return false;
+        var carda = DataTemplateLoader.Get<UnitLeaderTemplate>("squad_leader.carda", false);
+        leader.CustomHead = record.Gender == Convert.ToInt32(Il2CppMenace.Tactical.Gender.Female) &&
+            carda != null && carda.Gender == leader.Gender && carda.CustomHead != null
+                ? carda.CustomHead
+                : nativeDonor.CustomHead;
+        return true;
     }
 
     /// <summary>
@@ -121,7 +145,7 @@ internal sealed class LeaderForge
         return tactical + "/" + hiring;
     }
 
-    private string Materialize(PromotionRecord record)
+    private string Materialize(PromotionRecord record, bool forceGenericHead)
     {
         var existing = DataTemplateLoader.Get<UnitLeaderTemplate>(record.LeaderId, false);
         if (existing != null)
@@ -132,6 +156,8 @@ internal sealed class LeaderForge
                 Convert.ToInt32(existing.Gender) != record.Gender ||
                 Convert.ToInt32(existing.SkinColor) != record.SkinColor)
                 throw new InvalidOperationException("Native leader template ID collision / identity mismatch.");
+            ApplyIdentityText(record, existing);
+            SetHeadMode(record, forceGenericHead);
             return "reuse=registered, badge=" + DynamicBadgeFactory.LabelForIndex(record.BadgeIndex);
         }
         if (DataTemplateLoader.Get<SpeakerTemplate>(record.SpeakerId, false) != null)
@@ -181,10 +207,10 @@ internal sealed class LeaderForge
                 _pendingVoice[record.LeaderId] = (leader, speaker, female);
                 voice = "native-" + gender + " (pending John/Jane)";
             }
-            leader.UnitTitle = NewLine(source.UnitTitle, record.LeaderId, "UnitTitle", "Field Promotion Squad");
+            ApplyIdentityText(record, leader, source, voiceDonor);
             leader.Gender = (Il2CppMenace.Tactical.Gender)record.Gender;
             leader.SkinColor = (Il2CppMenace.Tactical.SkinColor)record.SkinColor;
-            string head = ApplyStandaloneVisuals(leader, speaker, voiceDonor, art, female);
+            string head = ApplyStandaloneVisuals(leader, speaker, voiceDonor, art, female, forceGenericHead);
             string badgeLabel = DynamicBadgeFactory.LabelForIndex(record.BadgeIndex);
             string badge = DynamicBadgeFactory.Apply(leader, art, badgeLabel, _pinned);
             leader.QualityLevel = 1;
@@ -197,8 +223,6 @@ internal sealed class LeaderForge
                     throw new InvalidOperationException("InitialAttributes readback mismatch.");
             if (!PrivateMember.Set(leader, "m_Guid", record.NumericGuid) || leader.GetGuid() != record.NumericGuid)
                 throw new InvalidOperationException("Numeric leader GUID readback mismatch.");
-            PrivateMember.Set(speaker, "m_LocalizedStrings", null);
-            PrivateMember.Set(leader, "m_LocalizedStrings", null);
             if (leader.GetID() != record.LeaderId || speaker.GetID() != record.SpeakerId)
                 throw new InvalidOperationException("Cloned IDs mismatch.");
             if (DataTemplateLoader.Get<UnitLeaderTemplate>(record.LeaderId, false) != null ||
@@ -224,9 +248,14 @@ internal sealed class LeaderForge
     }
 
     private static string ApplyStandaloneVisuals(UnitLeaderTemplate leader, SpeakerTemplate speaker,
-        UnitLeaderTemplate nativeDonor, StandalonePortraitAssets art, bool female)
+        UnitLeaderTemplate nativeDonor, StandalonePortraitAssets art, bool female, bool forceGenericHead)
     {
         art.ApplyTo(leader, speaker);
+        if (forceGenericHead)
+        {
+            leader.CustomHead = null;
+            return "generic-head";
+        }
         // Squaddie holds no persistent appearance/head pointer in strategy state.
         // Prefer Carda's helmeted head for women, and Lim for men.
         var carda = DataTemplateLoader.Get<UnitLeaderTemplate>("squad_leader.carda", false);
@@ -241,6 +270,33 @@ internal sealed class LeaderForge
             return "native-gender-head";
         }
         return "native-gender-skin-head";
+    }
+
+    internal bool RefreshIdentity(PromotionRecord record)
+    {
+        var leader = DataTemplateLoader.Get<UnitLeaderTemplate>(record.LeaderId, false);
+        if (leader == null) return false;
+        ApplyIdentityText(record, leader);
+        // Do not make pre-load template reconstruction depend on a display check.
+        PromotionTemplateText.VerifyDisplay(record, leader);
+        return true;
+    }
+
+    private static void ApplyIdentityText(PromotionRecord record, UnitLeaderTemplate leader)
+    {
+        var source = DataTemplateLoader.Get<UnitLeaderTemplate>(SourceLeaderId, false);
+        string voiceDonorId = record.Gender == Convert.ToInt32(Il2CppMenace.Tactical.Gender.Female)
+            ? "squad_leader.sy" : "squad_leader.lim";
+        var voiceDonor = DataTemplateLoader.Get<UnitLeaderTemplate>(voiceDonorId, false);
+        ApplyIdentityText(record, leader, source, voiceDonor);
+    }
+
+    private static void ApplyIdentityText(PromotionRecord record, UnitLeaderTemplate leader,
+        UnitLeaderTemplate source, UnitLeaderTemplate voiceDonor)
+    {
+        PromotionTemplateText.Apply(record, leader, source, voiceDonor);
+        PrivateMember.Set(leader.SpeakerTemplate, "m_LocalizedStrings", null);
+        PrivateMember.Set(leader, "m_LocalizedStrings", null);
     }
 
     internal static bool RosterContainsLeader(StrategyState state, string leaderId)
@@ -302,4 +358,5 @@ internal sealed class LeaderForge
         line.SetDefaultTranslation(value);
         return line;
     }
+
 }

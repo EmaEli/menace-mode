@@ -1,3 +1,38 @@
+## Weapon Mechanics Rebalanced 0.4.11 — #56 (user-reported in-game acceptance; per-target visual checklist not recorded)
+
+The 0.4.10 Windows run loaded the new DLL but failed both screen overlays in the
+unsupported DrawTexture proxy chain; the world renderer also failed in generic
+AddComponent initialization. 0.4.11 avoids these calls. Local and PC Unity proxy
+SHA256 values match. Metadata checks do not establish successful native drawing.
+The user reports the current build behaves as expected in game and turns progress normally;
+the individual overlay cases below were not logged separately.
+Run the offline checker with `--mortar-proxies <Il2CppAssemblies> <WMR.dll>` to
+verify the old stub positive control and the replacement compiled call sites.
+
+The older 0.21/0.22 ScatterChance checklists below are historical, not the current
+ranging contract. Offline C# and source-wiring tests cannot establish visible UI.
+
+1. With Debug OFF, select deployed light-mortar HE before firing: a yellow envelope
+   and `Spread 3` label must appear at a valid cursor target (7x7 tile maximum bounds).
+   The small native **blast AoE** must remain unchanged inside the spread envelope.
+2. Miss tile A: its remembered red border and `S2` appear; hovering A shows `Spread 2`
+   (5x5 bounds). Further misses cannot reduce it below 2. An exact aimed-tile impact
+   turns the remembered border green and the next preview becomes `Spread 1` (3x3).
+3. Hover fresh tile B: preview returns to 3; return to A: its solution is retained.
+   Repeat for medium (4 -> 3 -> 2) and 120mm (5 -> 4 -> 3 -> 2), solved scatter 1.
+4. Switch HE/smoke: history is shared but each preview uses that skill's base scatter.
+   Switch to a different physical mortar with no history: no inherited registered
+   borders; switch back: original remembered tiles reappear. Check actor selection.
+5. Check screen borders over snow/terrain/smoke and at map edges, camera zoom/pan,
+   alongside other mod HUDs, with no world-line shader dependency. No open envelope
+   at map boundaries. Settings panels and unrelated HUDs must still render normally.
+6. Undeploy/move/disable/change scene: history and markers reset by existing rules;
+   re-enable/redeploy: fresh-target preview works before the first shot. Out-of-range
+   targets and non-mortar skills must not show a mortar spread preview.
+7. Supply Drop/off-map markers must expire normally; no shared delayed-AoE channels.
+   No routine logs with Debug OFF. If feedback is absent, enable Debug for diagnosis
+   and check remembered-target counts/overlay error flags in the WMR debug panel.
+
 ## Smoke Overhaul 0.6.4 — #1 offline follow-up, acceptance pending
 
 Ports PR #12 commit `0426b4484581e355cbd5b831f85fb40c483f114c` to the current

@@ -16,6 +16,7 @@
     <Compile Include="../../src/CoordinatedFire/Core/Rules.cs" Link="CoordinatedFireRules.cs" />
     <Compile Include="../../src/SmokeOverhaul/SmokeAiRules.cs" Link="SmokeAiRules.cs" />
     <Compile Include="../../src/InfantryAssault/AssaultDefenseRules.cs" Link="AssaultDefenseRules.cs" />
+    <Compile Include="../../src/WeaponMechanicsRebalanced/MortarScatterRules.cs" Link="MortarScatterRules.cs" />
     <Compile Include="../../../LargerMaps/src/LargerMaps/SimplifiedCombatPlanning.cs" Link="SimplifiedCombatPlanning.cs" />
   </ItemGroup>
 </Project>

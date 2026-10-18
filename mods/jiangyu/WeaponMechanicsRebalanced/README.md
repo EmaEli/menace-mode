@@ -1,4 +1,6 @@
-# Weapon Mechanics Rebalanced 0.4.9
+# Weapon Mechanics Rebalanced 0.4.11
+
+**0.4.11 targeting feedback (#56):** fixes two runtime failures observed with 0.4.10: its screen borders reached an unsupported `GUI.DrawTexture` proxy stub, and world borders failed in generic `AddComponent<LineRenderer>`. Borders now use a native `GUI.Label` background and non-generic component creation. The yellow dispersion envelope (`Spread N`) remains separate from blast AoE. Proxy call-path checks supplement the pure/source checks; in-game visibility still requires confirmation.
 
 **0.4.9 MEN-004 fix:** the extra ammunition cost of high-volume alternate fire (Sustained Fire / Spray) is no longer applied to simulated or free `Skill.Use` calls (`Fake` / `NoUsesConsumed` usage flags). The game issues such calls during the enemy turn; each one silently removed 2 rounds from the squad weapon, draining a full magazine in one AI phase.
 
@@ -43,7 +45,9 @@ Each physical mortar remembers intended target tiles while its firing position r
 
 ### Ranging feedback
 
-When the selected mortar has ranged a tile, WMR draws an independent world-space border around that tile. The border progresses red -> orange/amber -> yellow-green -> green as effective Scatter tightens; full green is reserved for the solved Scatter 1 state.
+When the selected mortar has ranged a tile, WMR draws independent world-space and high-contrast screen-space borders around that tile, with an `S` label for the next shot's scatter. The border progresses red -> orange/amber -> yellow-green -> green as effective Scatter tightens; full green is reserved for the solved Scatter 1 state. Selecting a specific mortar shows only that physical weapon's history.
+
+While targeting, a **yellow outer envelope** and `Spread N` label show the maximum dispersion radius for the current mortar/target combination, including fresh targets. Scatter 3 spans offsets -3 through +3 (a 7-by-7 tile envelope), Scatter 2 spans 5-by-5, and Scatter 1 spans 3-by-3. This is the scatter envelope, not guaranteed damage or an exact-hit probability; native valid-impact filters may exclude tiles. The native blast AoE inside it is deliberately left unchanged.
 
 Version 0.4.1 deliberately does **not** use MENACE's `DelayedAoE3` or `DelayedEnemyAoE3` highlight channels. Those channels are used by delayed off-map abilities such as supply drops, and sharing them could keep an expired off-map marker visible. WMR now leaves MENACE tile-highlight channels, enable flags and color overrides untouched.
 
