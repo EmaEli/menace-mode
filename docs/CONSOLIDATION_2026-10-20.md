@@ -65,6 +65,13 @@ can be recovered from its corresponding tag; no force-push/reset is needed.
 Existing dirty worktrees remain on disk, detached at their original commit.
 They are inactive archives, not additional development lines.
 
+**Completed:** verified 32 local/remote archive tags, then retired 17 local and
+15 remote branch refs. Only `main` and `dev` remain locally and on GitHub. Closed
+obsolete PRs #8, #12, #16, #18, #28 and #36 with links to the single
+[integration PR #64](https://github.com/EmaEli/menace-mode/pull/64).
+The working tree on `dev` is committed/pushed; the PR is not merged. The archived
+Camera/WMR worktrees retain their original dirty-file hashes and commits.
+
 ## Consolidation checks
 
 - GameplaySuite: 141 Python tests passed.
