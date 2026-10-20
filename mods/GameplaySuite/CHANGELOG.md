@@ -1,3 +1,18 @@
+## Weapon Mechanics Rebalanced 0.4.13 — #59 enemy-only mortar coverage (retest pending)
+
+- The user rejected the deployed 0.4.12 mortar balance. Its Debug log identifies `active.enemy_only_launch_medium_mortar_frag`, absent from WMR's baseline and ranging allowlist.
+- Apply only the medium dispersion baseline (Scatter 4 / ScatterChance 80%) and activation ranging to that enemy-only skill; preserve native AP, uses, repetitions, damage and suppression. Player behavior is unchanged. Ranging does not change ScatterChance.
+- Add observed-skill fixture, source-wiring regressions, production-method managed baseline/restore tests, and optional baseline/shot-ID diagnostics. Native hooks and balance require a new live test; #59 remains open.
+
+## Overwatch 0.32.3.8 — #44 JIT crash mitigation (not game-verified)
+
+- Dump `Menace.exe.2428.dmp` (18 October) identifies `Native.CurrentProperties`
+  in Overwatch 0.32.3.7 at the recurring `coreclr.dll+0x3c129` JIT fault.
+  Disable optimization and inlining only for this helper, preserving the native
+  virtual property calls, actor-type selection and failure handling. Keep assembly
+  pre-JIT intact. This is a candidate mitigation, not proof of a fixed game crash.
+- Add managed behavior/implementation-flag checks. No gameplay settings change.
+
 ## MEN-004 root cause — Weapon Mechanics Rebalanced 0.4.9
 
 - **Weapon Mechanics Rebalanced 0.4.8 → 0.4.9:** the alternate-fire extra-ammo postfix ran on the

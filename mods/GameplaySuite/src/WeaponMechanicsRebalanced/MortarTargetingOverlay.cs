@@ -29,12 +29,15 @@ public sealed partial class Plugin
         Il2CppMenace.Tactical.Skills.Skill skill,
         Il2CppMenace.Tactical.Actor actor,
         Il2CppMenace.Tactical.Tile target,
-        int baseScatter)
+        int baseScatter,
+        bool useDisplayedState = true)
     {
         MortarRangingState? ranging = null;
         if (MortarRangingSolutions.TryGetValue(MortarRangingKey(skill, actor), out var solutions))
             solutions.TryGetValue((target.GetX(), target.GetZ()), out ranging);
-        return GetMortarEffectiveScatter(ranging, baseScatter);
+        return useDisplayedState
+            ? GetMortarDisplayedEffectiveScatter(ranging, baseScatter)
+            : GetMortarEffectiveScatter(ranging, baseScatter);
     }
 
     private static void DrawMortarScatterPreview()

@@ -1,3 +1,28 @@
+# 1.2.2 - Observe the native Jetpack effect (#60)
+
+- Replaced the generic skill-use filter with an observer prefix on `JetPackHandler.OnApply`, before its jump coroutine starts. MENACE 0.7.17's JetPackHandler does not implement IMovementSkill, so 1.2.1 incorrectly rejected the actual jump.
+- Use the effect's original source/destination tiles and native destination-validity check; preserve movement chance, minimum distance, visibility and cooldown rules. The concrete effect identifies Jetpack use without requiring an actor tag.
+- Temporarily disable depth of field while third-person camera is active, then restore the previous quality on exit or failure. Preserve a newer graphics-setting change made while the camera is active.
+- 1.2.1 loaded and manual F6 worked, but the user confirmed automatic Jetpack follow still failed with automatic mode enabled, 100% movement chance and minimum tiles 0.
+- Canonical standalone BuildOnly and installation succeeded on MENACE 0.7.17+22362 (19 Oct 2026). Installed DLLs/manifests verify as 1.2.2; existing user settings are unchanged; no legacy camera duplicates remain. Backup: `_MENACE_Backups/20261019-170837-d007eddc0bac4a7082be2917cf49e260` (9 files).
+- A post-install launch log was reviewed: the camera loaded with no camera-specific startup/hook/UI/depth-of-field errors or warnings. User feedback was positive, but the allied Jetpack auto-follow result was not explicit; keep #60 open until confirmed.
+
+# 1.2.1 - Follow Jetpack movement skills (patch, #60)
+
+- Added an automatic-camera hook for MENACE movement skills used by JETPACK-tagged units, covering Jetpack movement that does not emit the ordinary movement event.
+- Reuses the existing movement chance, visibility/turn eligibility, cooldown and minimum-tile filter; non-movement skills do not trigger it.
+- Installed on Windows; user gameplay retest failed. Superseded by the 1.2.2 candidate.
+
+# 1.2.0 - Per-unit camera controls (local candidate, #60)
+
+- Expose infantry squad leader distance/height in the Jiangyu settings menu.
+- Separate movement/firing percentages and framing for infantry, vehicles and walkers.
+- Add separate visible-enemy movement percentages by category and include JETPACK-tagged units as follow targets.
+- Add a minimum ordered move distance in tiles (0 disables; 3 skips 1-2 tile moves).
+- Preserve existing saved percentages/framing when splitting settings; new enemy chances inherit each category's movement chance and explicit 0% wins.
+- Preserve vehicle follow behavior; firing-target framing, visibility and enclosed-building rules are unchanged.
+- Not deployed or visually verified in game; release acceptance remains pending.
+
 # 1.1.1 - Skip obstructed firing cinematics (patch)
 
 - Automatic firing cinematics are skipped when the shooter is inside a building or bunker, using MENACE's native container type.

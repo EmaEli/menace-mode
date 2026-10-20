@@ -18,7 +18,7 @@ class CameraMigrationTests(unittest.TestCase):
         self.assertIn("class CameraSettingsSystem : JiangyuSystem", companion)
         for forbidden in ("new Harmony", "Skill.Use", "OnLateUpdate", "SetActionPoints"):
             self.assertNotIn(forbidden, companion)
-        self.assertEqual(companion.count("s.AddSlider("), 5)
+        self.assertEqual(companion.count("s.AddSlider("), 17)
         self.assertEqual(companion.count("s.AddToggle("), 2)
 
     def test_settings_priority_and_bounded_lifecycle(self):

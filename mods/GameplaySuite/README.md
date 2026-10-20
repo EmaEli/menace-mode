@@ -8,6 +8,9 @@ Smoke Overhaul **0.6.4** ports PR #12's bounded proactive smoke rules (60/45/30%
 pinned-only emergency smoke permission/AP behavior. Native use, coexistence and AI
 timing are unverified; no global scheduler or new pathfinder was added. The previous
 migration ZIP is unchanged and does not contain this subsequent AI follow-up.
+Garrisonable Buildings **1.2.0** mirrors the native deployed-stance outgoing accuracy
+property for attacks from supported garrisons (#62); source tests pass, live comparison pending.
+Weapon Mechanics Rebalanced **0.4.13** corrects the enemy-only medium mortar skill omitted by 0.4.12 (#59): medium dispersion baseline and activation ranging, without changing native enemy action economy or damage. The 0.4.12 live balance test failed; the corrected candidate requires a new in-game test.
 
 ### 0.32.5 MENACE 0.7.16 compatibility (Field Logistics)
 

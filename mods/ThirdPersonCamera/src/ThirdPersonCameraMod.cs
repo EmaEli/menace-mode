@@ -3,15 +3,18 @@ using System.Collections.Generic;
 using System.Reflection;
 using HarmonyLib;
 using MelonLoader;
+using Il2CppMenace.Tags;
+using Il2CppMenace.PlayerSettings;
 using Il2CppMenace.Tactical;
 using Il2CppMenace.Tactical.Skills;
+using Il2CppMenace.Tactical.Skills.Effects;
 using Il2CppMenace.States;
 using Il2CppMenace.UI;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
 [assembly: MelonInfo(typeof(MenaceThirdPersonCamera.ThirdPersonCameraMod),
-    "Cinematic Action Camera", "1.1.1", "MENACE Community")]
+    "Cinematic Action Camera", "1.2.2", "MENACE Community")]
 
 namespace MenaceThirdPersonCamera
 {
@@ -25,19 +28,19 @@ namespace MenaceThirdPersonCamera
         private enum EventKind { Movement = 0, Firing = 1 }
         // An IL2CPP callback can fail on a transient/destroyed entity. One bad
         // event must not permanently switch off all cinematic cameras.
-        private enum AutoHook { Movement, MovementFinished, AttackStarted }
+        private enum AutoHook { Movement, MovementFinished, JetpackSkill, AttackStarted }
 
         private static ThirdPersonCameraMod s_instance;
         // MEN-006 / 0.3.4 compatibility contract, retained from PR #16.
         public static bool IsCinematicViewActive => s_instance != null && s_instance._active;
 
-        // Read-only migration bridge. The historical MelonPreferences category and all
-        // advanced entries remain unchanged; only the seven menu values are seeded once.
+        // Read-only migration bridge. Preserve historical keys and explicit per-type
+        // preferences; -1 on a new preference means inherit the historical value.
         public static Dictionary<string, object> GetLegacySettingsValues()
         {
             var c = s_instance;
             if (c == null || c._orbitSensitivity == null) return null;
-            return new Dictionary<string, object>
+            var values = new Dictionary<string, object>
             {
                 ["AutomaticMode"] = c._automaticMode.Value,
                 ["MovementChance"] = c._movementChance.Value,
@@ -45,11 +48,25 @@ namespace MenaceThirdPersonCamera
                 ["FollowVisibleEnemyMovement"] = c._enemyMovements.Value,
                 ["VehicleDistance"] = c._vehicleDistance.Value,
                 ["VehicleHeight"] = c._vehicleHeight.Value,
+                ["Distance"] = c._distance.Value,
+                ["Height"] = c._height.Value,
+                ["MinimumMovementTiles"] = c._minimumMovementTiles.Value,
                 ["OrbitSensitivity"] = c._orbitSensitivity.Value,
             };
+            if (c._vehicleMovementChance.Value >= 0) values["VehicleMovementChance"] = c._vehicleMovementChance.Value;
+            if (c._vehicleFiringChance.Value >= 0) values["VehicleFiringChance"] = c._vehicleFiringChance.Value;
+            if (c._walkerMovementChance.Value >= 0) values["WalkerMovementChance"] = c._walkerMovementChance.Value;
+            if (c._walkerFiringChance.Value >= 0) values["WalkerFiringChance"] = c._walkerFiringChance.Value;
+            if (c._walkerDistance.Value >= 0) values["WalkerDistance"] = c._walkerDistance.Value;
+            if (c._walkerHeight.Value >= 0) values["WalkerHeight"] = c._walkerHeight.Value;
+            if (c._enemyInfantryMovementChance.Value >= 0) values["EnemyInfantryMovementChance"] = c._enemyInfantryMovementChance.Value;
+            if (c._enemyVehicleMovementChance.Value >= 0) values["EnemyVehicleMovementChance"] = c._enemyVehicleMovementChance.Value;
+            if (c._enemyWalkerMovementChance.Value >= 0) values["EnemyWalkerMovementChance"] = c._enemyWalkerMovementChance.Value;
+            return values;
         }
         private HarmonyLib.Harmony _harmony;
         private bool _movementHookInstalled;
+        private bool _jetpackSkillHookInstalled;
         private bool _shotHookInstalled;
         private bool _reportedCallbackDetails;
         private readonly HashSet<AutoHook> _disabledAutoHooks = new HashSet<AutoHook>();
@@ -74,9 +91,19 @@ namespace MenaceThirdPersonCamera
         private MelonPreferences_Entry<bool> _automaticMode;
         private MelonPreferences_Entry<int> _movementChance;
         private MelonPreferences_Entry<int> _firingChance;
+        private MelonPreferences_Entry<int> _vehicleMovementChance;
+        private MelonPreferences_Entry<int> _vehicleFiringChance;
+        private MelonPreferences_Entry<int> _walkerMovementChance;
+        private MelonPreferences_Entry<int> _walkerFiringChance;
+        private MelonPreferences_Entry<int> _enemyInfantryMovementChance;
+        private MelonPreferences_Entry<int> _enemyVehicleMovementChance;
+        private MelonPreferences_Entry<int> _enemyWalkerMovementChance;
+        private MelonPreferences_Entry<int> _minimumMovementTiles;
         private MelonPreferences_Entry<bool> _enemyMovements;
         private MelonPreferences_Entry<float> _vehicleDistance;
         private MelonPreferences_Entry<float> _vehicleHeight;
+        private MelonPreferences_Entry<float> _walkerDistance;
+        private MelonPreferences_Entry<float> _walkerHeight;
         private MelonPreferences_Entry<float> _distance;
         private MelonPreferences_Entry<float> _height;
         private MelonPreferences_Entry<float> _shoulder;
@@ -97,9 +124,21 @@ namespace MenaceThirdPersonCamera
         private bool _cachedAutomaticMode;
         private float _cachedMovementChance = 80f;
         private float _cachedFiringChance = 100f;
+        private float _cachedVehicleMovementChance = 80f;
+        private float _cachedVehicleFiringChance = 100f;
+        private float _cachedWalkerMovementChance = 80f;
+        private float _cachedWalkerFiringChance = 100f;
+        private float _cachedEnemyInfantryMovementChance = 80f;
+        private float _cachedEnemyVehicleMovementChance = 80f;
+        private float _cachedEnemyWalkerMovementChance = 80f;
+        private int _cachedMinimumMovementTiles;
         private bool _cachedEnemyMovements = true;
         private float _cachedVehicleDistance = 8.5f;
         private float _cachedVehicleHeight = 3.8f;
+        private float _cachedWalkerDistance = 8.5f;
+        private float _cachedWalkerHeight = 3.8f;
+        private float _cachedDistance = 3.2f;
+        private float _cachedHeight = 1.75f;
         private float _cachedOrbitSensitivity = 0.35f;
 
         private TacticalCamera _tacticalCamera;
@@ -113,6 +152,9 @@ namespace MenaceThirdPersonCamera
         private float _savedFov;
         private float _savedNear;
         private float _savedFar;
+        private int _savedDepthOfFieldQuality;
+        private bool _depthOfFieldOverridden;
+        private bool _reportedDepthOfFieldError;
         private bool _savedSkipAutoFocus;
         private bool _uiHidden;
         private bool _reportedUiError;
@@ -134,9 +176,19 @@ namespace MenaceThirdPersonCamera
             _automaticMode = category.CreateEntry("AutomaticMode", false);
             _movementChance = category.CreateEntry("MovementChance", 80);
             _firingChance = category.CreateEntry("FiringChance", 100);
+            _vehicleMovementChance = category.CreateEntry("VehicleMovementChance", -1);
+            _vehicleFiringChance = category.CreateEntry("VehicleFiringChance", -1);
+            _walkerMovementChance = category.CreateEntry("WalkerMovementChance", -1);
+            _walkerFiringChance = category.CreateEntry("WalkerFiringChance", -1);
+            _enemyInfantryMovementChance = category.CreateEntry("EnemyInfantryMovementChance", -1);
+            _enemyVehicleMovementChance = category.CreateEntry("EnemyVehicleMovementChance", -1);
+            _enemyWalkerMovementChance = category.CreateEntry("EnemyWalkerMovementChance", -1);
+            _minimumMovementTiles = category.CreateEntry("MinimumMovementTiles", 0);
             _enemyMovements = category.CreateEntry("FollowVisibleEnemyMovement", true);
             _vehicleDistance = category.CreateEntry("VehicleDistance", 8.5f);
             _vehicleHeight = category.CreateEntry("VehicleHeight", 3.8f);
+            _walkerDistance = category.CreateEntry("WalkerDistance", -1f);
+            _walkerHeight = category.CreateEntry("WalkerHeight", -1f);
             _distance = category.CreateEntry("Distance", 3.2f);
             _height = category.CreateEntry("Height", 1.75f);
             _shoulder = category.CreateEntry("ShoulderOffset", 0.55f);
@@ -145,6 +197,7 @@ namespace MenaceThirdPersonCamera
             _orbitButton = category.CreateEntry("OrbitMouseButton", "Middle");
             _debug = category.CreateEntry("Debug", false);
 
+            RefreshSettings();
             InstallEventHooks();
         }
 
@@ -155,10 +208,12 @@ namespace MenaceThirdPersonCamera
                 _harmony = new HarmonyLib.Harmony("menace.thirdpersoncamera.events");
                 _movementHookInstalled = PatchEvent("InvokeOnMovement", 5, nameof(MovementPostfix));
                 PatchEvent("InvokeOnMovementFinished", 2, nameof(MovementFinishedPostfix));
+                _jetpackSkillHookInstalled = PatchEvent("OnApply", 6, nameof(JetpackApplyPrefix),
+                    typeof(JetPackHandler), true);
                 _shotHookInstalled = PatchEvent("InvokeOnAttackTileStart", 4, nameof(AttackStartedPostfix));
                 // Never switch to a friendly victim on hit, miss, suppression,
                 // or attack targeting. The camera is an observer, not a hit reaction.
-                if (!_movementHookInstalled || !_shotHookInstalled)
+                if (!_movementHookInstalled || !_jetpackSkillHookInstalled || !_shotHookInstalled)
                     MelonLogger.Warning("Some cinematic event hooks were unavailable; check Debug for details.");
             }
             catch (Exception ex)
@@ -168,12 +223,13 @@ namespace MenaceThirdPersonCamera
             }
         }
 
-        private bool PatchEvent(string methodName, int arity, string postfixName)
+        private bool PatchEvent(string methodName, int arity, string handlerName,
+            Type eventType = null, bool prefix = false)
         {
             try
             {
                 MethodInfo target = null;
-                foreach (MethodInfo candidate in typeof(TacticalManager).GetMethods(BindingFlags.Instance | BindingFlags.Public))
+                foreach (MethodInfo candidate in (eventType ?? typeof(TacticalManager)).GetMethods(BindingFlags.Instance | BindingFlags.Public))
                 {
                     if (candidate.Name == methodName && candidate.GetParameters().Length == arity)
                     {
@@ -181,11 +237,12 @@ namespace MenaceThirdPersonCamera
                         break;
                     }
                 }
-                MethodInfo handler = typeof(ThirdPersonCameraMod).GetMethod(postfixName,
+                MethodInfo handler = typeof(ThirdPersonCameraMod).GetMethod(handlerName,
                     BindingFlags.Static | BindingFlags.NonPublic);
                 if (target == null || handler == null)
                     return false;
-                _harmony.Patch(target, postfix: new HarmonyMethod(handler));
+                _harmony.Patch(target, prefix: prefix ? new HarmonyMethod(handler) : null,
+                    postfix: prefix ? null : new HarmonyMethod(handler));
                 DebugLog("Hook active: " + methodName);
                 return true;
             }
@@ -199,16 +256,26 @@ namespace MenaceThirdPersonCamera
 
         // Native IL2CPP methods are patched at their event-invocation sites.
         // The callbacks never change any original parameters or results.
-        private static void MovementPostfix(Actor _actor)
+        private static void MovementPostfix(Actor _actor, Tile _from, Tile _to)
         {
             if (s_instance != null)
-                s_instance.SafeEvent(AutoHook.Movement, () => s_instance.HandleMovement(_actor));
+                s_instance.SafeEvent(AutoHook.Movement, () => s_instance.HandleMovement(_actor, _from, _to));
         }
 
         private static void MovementFinishedPostfix(Actor _actor)
         {
             if (s_instance != null)
                 s_instance.SafeEvent(AutoHook.MovementFinished, () => s_instance.HandleMovementFinished(_actor));
+        }
+
+        private static void JetpackApplyPrefix(Actor __0, Tile __1, Tile __2)
+        {
+            // Observe the concrete effect before its coroutine moves any element.
+            // JetPackHandler does not implement IMovementSkill in MENACE 0.7.17,
+            // so Skill.IsMovementSkill() rejects the actual Jetpack jump.
+            if (s_instance != null)
+                s_instance.SafeEvent(AutoHook.JetpackSkill,
+                    () => s_instance.HandleJetpackJump(__0, __1, __2));
         }
 
         private static void AttackStartedPostfix(Actor _actor, Skill _skill, Tile _targetTile,
@@ -236,6 +303,7 @@ namespace MenaceThirdPersonCamera
                     _seenMovement = false;
                 }
                 if (hook == AutoHook.AttackStarted) _shotHookInstalled = false;
+                if (hook == AutoHook.JetpackSkill) _jetpackSkillHookInstalled = false;
 
                 // An exception inside camera activation may leave an automatic
                 // shot partially active. Restore normal camera conservatively.
@@ -258,9 +326,28 @@ namespace MenaceThirdPersonCamera
             }
         }
 
-        private void HandleMovement(Actor actor)
+        private void HandleMovement(Actor actor, Tile from, Tile to)
         {
             if (!IsEligibleAutoActor(actor, EventKind.Movement)) return;
+            // Filter the ordered move before any chance roll or active-shot extension.
+            // Use MENACE's tile distance, not world units, AP or accumulated turn travel.
+            if (_cachedMinimumMovementTiles > 0 &&
+                (from == null || to == null || from.GetDistanceTo(to) < _cachedMinimumMovementTiles)) return;
+            ConsiderAutoCamera(actor, EventKind.Movement, 1.8f);
+        }
+
+        private void HandleJetpackJump(Actor actor, Tile from, Tile targetTile)
+        {
+            if (!IsEligibleAutoActor(actor, EventKind.Movement)) return;
+            if (from == null || targetTile == null || !targetTile.IsValidMovementDestination()) return;
+            int distance = from.GetDistanceTo(targetTile);
+            if (distance <= 0 ||
+                (_cachedMinimumMovementTiles > 0 && distance < _cachedMinimumMovementTiles)) return;
+
+            // The concrete JetPack effect identifies the jump, not actor tags or
+            // the unrelated IMovementSkill interface. Reuse chance/cooldown logic;
+            // repeated per-element applications must not re-roll an accepted shot.
+            DebugLog("Jetpack effect actor=" + actor.ID + " distance=" + distance);
             ConsiderAutoCamera(actor, EventKind.Movement, 1.8f);
         }
 
@@ -291,7 +378,7 @@ namespace MenaceThirdPersonCamera
             {
                 Entity container = attacker == null ? null : attacker.GetContainerEntity();
                 object containerTemplate = container?.GetTemplate();
-                // Avoid adding the Sirenix serialization proxy just to read this game enum field.
+                // Read the game enum by name without coupling to its proxy enum type.
                 Type templateType = containerTemplate?.GetType();
                 FieldInfo containerTypeField = templateType?.GetField(
                     "ContainerType", BindingFlags.Instance | BindingFlags.Public);
@@ -343,7 +430,7 @@ namespace MenaceThirdPersonCamera
                 if (now - previous < debounce) return;
             }
             _eventDecisions[decisionKey] = now;
-            if (!RollChance(kind)) return;
+            if (!RollChance(actor, kind)) return;
 
             if (_active && _actorId == actor.ID)
             {
@@ -370,11 +457,31 @@ namespace MenaceThirdPersonCamera
                 _heading = FlatDirection(_autoAttackTarget.Value - _trackedActor.GetPos(), _heading);
         }
 
-        private bool RollChance(EventKind kind)
+        private static bool IsWalkerVehicle(Actor actor)
         {
-            // Same movement percentage for player and visible enemy units;
-            // same firing percentage for player infantry and player vehicles.
-            float chance = kind == EventKind.Movement ? _cachedMovementChance : _cachedFiringChance;
+            // Same template-ID convention used by Squaddie Veterancy. Never classify
+            // infantry as walkers merely because their display name contains "walker".
+            return actor.IsVehicle() &&
+                (actor.GetTemplate()?.GetID()?.IndexOf("walker", StringComparison.OrdinalIgnoreCase) ?? -1) >= 0;
+        }
+
+        private bool RollChance(Actor actor, EventKind kind)
+        {
+            bool movement = kind == EventKind.Movement;
+            float chance;
+            if (movement && !actor.IsPlayerOrPlayerAI())
+            {
+                chance = IsWalkerVehicle(actor) ? _cachedEnemyWalkerMovementChance
+                    : actor.IsVehicle() ? _cachedEnemyVehicleMovementChance : _cachedEnemyInfantryMovementChance;
+            }
+            else
+            {
+                chance = IsWalkerVehicle(actor)
+                    ? (movement ? _cachedWalkerMovementChance : _cachedWalkerFiringChance)
+                    : actor.IsVehicle()
+                        ? (movement ? _cachedVehicleMovementChance : _cachedVehicleFiringChance)
+                        : (movement ? _cachedMovementChance : _cachedFiringChance);
+            }
             chance = Mathf.Clamp(chance, 0f, 100f);
             if (chance <= 0f) return false;
             if (chance >= 100f) return true;
@@ -383,7 +490,8 @@ namespace MenaceThirdPersonCamera
 
         private static bool IsSupportedUnit(Actor actor)
         {
-            return actor != null && actor.IsAlive() && (actor.IsInfantry() || actor.IsVehicle());
+            return actor != null && actor.IsAlive() &&
+                (actor.IsInfantry() || actor.IsVehicle() || actor.HasTag(TagType.JETPACK));
         }
 
         private static bool IsPlayerUnit(Actor actor)
@@ -499,7 +607,9 @@ namespace MenaceThirdPersonCamera
                 _seenActorId = actor.ID;
                 _seenMovement = false;
             }
-            if (moving && !_seenMovement)
+            // Without the native event we do not know the ordered endpoints. Do not
+            // bypass an enabled distance filter or guess from partial movement.
+            if (moving && !_seenMovement && _cachedMinimumMovementTiles == 0)
                 ConsiderAutoCamera(actor, EventKind.Movement, 2.0f);
             _seenMovement = moving;
         }
@@ -644,6 +754,7 @@ namespace MenaceThirdPersonCamera
             tacticalCamera.CancelAutoCamera();
             TacticalCameraController.SkipAutoFocus = true;
             _active = true;
+            DisableDepthOfField();
             HideTacticalUi();
             DebugLog((manual ? "Manual" : "Automatic") + " camera ON for actor=" + _actorId);
             return true;
@@ -669,10 +780,11 @@ namespace MenaceThirdPersonCamera
             Vector3 orbitForward = Quaternion.AngleAxis(_orbitYaw, Vector3.up) * _heading;
             Vector3 right = Vector3.Cross(Vector3.up, orbitForward).normalized;
             bool vehicle = _trackedActor.IsVehicle();
-            float distance = vehicle ? Mathf.Clamp(_cachedVehicleDistance, 4f, 25f)
-                : Mathf.Clamp(_distance.Value, 1.25f, 12f);
-            float height = vehicle ? Mathf.Clamp(_cachedVehicleHeight, 1.5f, 12f)
-                : Mathf.Clamp(_height.Value, 0.6f, 6f);
+            bool walker = IsWalkerVehicle(_trackedActor);
+            float distance = vehicle ? Mathf.Clamp(walker ? _cachedWalkerDistance : _cachedVehicleDistance, 4f, 25f)
+                : Mathf.Clamp(_cachedDistance, 1.25f, 12f);
+            float height = vehicle ? Mathf.Clamp(walker ? _cachedWalkerHeight : _cachedVehicleHeight, 1.5f, 12f)
+                : Mathf.Clamp(_cachedHeight, 0.6f, 6f);
             float shoulder = vehicle ? 0f : Mathf.Clamp(_shoulder.Value, -1.5f, 1.5f);
             float pitch = _orbitPitch * Mathf.Deg2Rad;
             Vector3 desiredPosition = position + Vector3.up * (height + Mathf.Sin(pitch) * distance)
@@ -748,9 +860,61 @@ namespace MenaceThirdPersonCamera
             }
         }
 
+        private void DisableDepthOfField()
+        {
+            try
+            {
+                DisplaySettings settings = PersistentPlayerSettings.DisplaySettings;
+                _savedDepthOfFieldQuality = settings.DepthOfFieldQuality;
+                if (_savedDepthOfFieldQuality == 0) return;
+
+                _depthOfFieldOverridden = true;
+                settings.DepthOfFieldQuality = 0;
+                PersistentPlayerSettings.DisplaySettings = settings;
+                settings.ApplyToAllCameras();
+            }
+            catch (Exception ex)
+            {
+                RestoreDepthOfField();
+                ReportDepthOfFieldError(ex);
+            }
+        }
+
+        private void RestoreDepthOfField()
+        {
+            if (!_depthOfFieldOverridden) return;
+            try
+            {
+                DisplaySettings settings = PersistentPlayerSettings.DisplaySettings;
+                if (settings.DepthOfFieldQuality == 0)
+                {
+                    settings.DepthOfFieldQuality = _savedDepthOfFieldQuality;
+                    PersistentPlayerSettings.DisplaySettings = settings;
+                    _depthOfFieldOverridden = false;
+                    settings.ApplyToAllCameras();
+                    return;
+                }
+
+                // Preserve a newer graphics-setting change made while the camera was active.
+                _depthOfFieldOverridden = false;
+            }
+            catch (Exception ex)
+            {
+                ReportDepthOfFieldError(ex);
+            }
+        }
+
+        private void ReportDepthOfFieldError(Exception ex)
+        {
+            if (_reportedDepthOfFieldError) return;
+            _reportedDepthOfFieldError = true;
+            MelonLogger.Warning("Could not change depth-of-field quality for the cinematic camera (" +
+                ex.GetType().Name + ").");
+        }
+
         private void ExitThirdPerson(bool debug = true)
         {
-            if (!_active && !_uiHidden) return;
+            if (!_active && !_uiHidden && !_depthOfFieldOverridden) return;
             bool wasActive = _active;
             _active = false;
             try
@@ -770,6 +934,7 @@ namespace MenaceThirdPersonCamera
             finally
             {
                 // Never leave the mission unplayable with an invisible HUD.
+                RestoreDepthOfField();
                 RestoreTacticalUi();
                 _tacticalCamera = null;
                 _unityCamera = null;
@@ -784,7 +949,7 @@ namespace MenaceThirdPersonCamera
 
         public override void OnSceneWasUnloaded(int buildIndex, string sceneName)
         {
-            if (_active || _uiHidden)
+            if (_active || _uiHidden || _depthOfFieldOverridden)
             {
                 try { ExitThirdPerson(false); }
                 catch { RestoreTacticalUi(); }
@@ -796,7 +961,7 @@ namespace MenaceThirdPersonCamera
 
         public override void OnApplicationQuit()
         {
-            if (_active || _uiHidden)
+            if (_active || _uiHidden || _depthOfFieldOverridden)
             {
                 try { ExitThirdPerson(false); }
                 catch { RestoreTacticalUi(); }
@@ -821,11 +986,25 @@ namespace MenaceThirdPersonCamera
             _cachedAutomaticMode = setting;
             _cachedMovementChance = MenuNumber("MovementChance", _movementChance.Value);
             _cachedFiringChance = MenuNumber("FiringChance", _firingChance.Value);
+            _cachedVehicleMovementChance = MenuNumber("VehicleMovementChance", Inherit(_vehicleMovementChance.Value, _cachedMovementChance));
+            _cachedVehicleFiringChance = MenuNumber("VehicleFiringChance", Inherit(_vehicleFiringChance.Value, _cachedFiringChance));
+            _cachedWalkerMovementChance = MenuNumber("WalkerMovementChance", Inherit(_walkerMovementChance.Value, _cachedMovementChance));
+            _cachedWalkerFiringChance = MenuNumber("WalkerFiringChance", Inherit(_walkerFiringChance.Value, _cachedFiringChance));
+            _cachedEnemyInfantryMovementChance = MenuNumber("EnemyInfantryMovementChance", Inherit(_enemyInfantryMovementChance.Value, _cachedMovementChance));
+            _cachedEnemyVehicleMovementChance = MenuNumber("EnemyVehicleMovementChance", Inherit(_enemyVehicleMovementChance.Value, _cachedVehicleMovementChance));
+            _cachedEnemyWalkerMovementChance = MenuNumber("EnemyWalkerMovementChance", Inherit(_enemyWalkerMovementChance.Value, _cachedWalkerMovementChance));
+            _cachedMinimumMovementTiles = (int)Mathf.Clamp((float)Math.Round(MenuNumber("MinimumMovementTiles", _minimumMovementTiles.Value)), 0f, 50f);
             _cachedEnemyMovements = MenuBoolean("FollowVisibleEnemyMovement", _enemyMovements.Value);
             _cachedVehicleDistance = MenuNumber("VehicleDistance", _vehicleDistance.Value);
             _cachedVehicleHeight = MenuNumber("VehicleHeight", _vehicleHeight.Value);
+            _cachedWalkerDistance = MenuNumber("WalkerDistance", Inherit(_walkerDistance.Value, _cachedVehicleDistance));
+            _cachedWalkerHeight = MenuNumber("WalkerHeight", Inherit(_walkerHeight.Value, _cachedVehicleHeight));
+            _cachedDistance = MenuNumber("Distance", _distance.Value);
+            _cachedHeight = MenuNumber("Height", _height.Value);
             _cachedOrbitSensitivity = MenuNumber("OrbitSensitivity", _orbitSensitivity.Value);
         }
+
+        private static float Inherit(float value, float fallback) { return value < 0f ? fallback : value; }
 
         // The 0.3 reflection-based UI registration was unreliable and silently
         // failed for some ModpackLoader versions. The companion modpack now owns

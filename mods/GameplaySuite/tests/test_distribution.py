@@ -158,6 +158,35 @@ class DistributionTests(unittest.TestCase):
         self.assertIn("if (-not $BuildOnly -or $RollbackPath) { Assert-GameClosed }", source)
         self.assertIn("if ($BuildOnly -and -not $RollbackPath) { $lockRoot = $BundleRoot }", source)
 
+    def test_module_candidate_scopes_artifact_checks_to_selected_packages(self):
+        builder = (TOOLS / "build_kit.py").read_text()
+        program = (ROOT / "mods/GameplaySuite/tests/OfflineChecks/Program.cs").read_text()
+        checks = (ROOT / "mods/GameplaySuite/tests/OfflineChecks/ArtifactChecks.cs").read_text()
+        self.assertIn('offline_args.extend(["--modules", ",".join(versions)])', builder)
+        self.assertIn('args.module is not None and args.module != "SquaddieFieldPromotions"', builder)
+        self.assertIn('args[1] != "--modules"', program)
+        self.assertIn("ArtifactChecks.Run(Check, args[0], selectedModules)", program)
+        self.assertIn("selectedModules?.ToHashSet(StringComparer.Ordinal)", checks)
+        self.assertIn("selected is not null && !selected.Contains(module)", checks)
+        self.assertIn('!selected.Contains("CinematicActionCamera")', checks)
+
+    def test_clean_build_checks_only_packages_present_in_standalone(self):
+        from unittest.mock import patch
+        from contextlib import redirect_stdout
+        from io import StringIO
+        files = {
+            "source/mods/GameplaySuite/tools/distribution.json": json.dumps({
+                "modules": ["MenaceModSettings", "LargerMaps", "Unbundled"]
+            }).encode(),
+            "source/mods/jiangyu/MenaceModSettings/jiangyu.json": b'{}',
+            "source/mods/jiangyu/LargerMaps/jiangyu.json": b'{}',
+        }
+        with patch.object(VERIFIER.subprocess, "run") as run, redirect_stdout(StringIO()):
+            VERIFIER.compile_clean(files, Path("/unused-game"), Path("/unused-sdk"), "dotnet")
+        args = run.call_args.args[0]
+        self.assertEqual(args[-2:], ["--modules", "MenaceModSettings,LargerMaps"])
+        self.assertNotIn("Unbundled", args)
+
     def test_private_sdk_pins_are_recorded_in_kit_manifest(self):
         pin = json.loads((TOOLS / "distribution.json").read_text())["dotnetSdk"]
         self.assertEqual(pin["channel"], "10.0")

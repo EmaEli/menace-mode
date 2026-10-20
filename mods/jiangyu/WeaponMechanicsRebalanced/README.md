@@ -1,4 +1,10 @@
-# Weapon Mechanics Rebalanced 0.4.11
+# Weapon Mechanics Rebalanced 0.4.14
+
+**0.4.14 mortar feedback (#61; live check pending):** ranging markers use a muted dark-red-to-green palette based on effective Scatter, with brighter green reserved for a solved shot. The displayed scatter value and marker color stay at their previous state while a shell is in flight and update only after the impact callback is observed. This is presentation-only; mortar ballistics and action economy are unchanged.
+
+**0.4.13 enemy-only mortar correction (#59):** the 0.4.12 PC balance test failed. The log revealed a separate `active.enemy_only_launch_medium_mortar_frag` skill that WMR did not cover. It now uses the medium dispersion baseline (Scatter 4, ScatterChance 80%) and activation ranging, without changing its native AP, ammo, repetitions, damage or suppression. Debug-only baseline readback and shot skill IDs support the next live test; balance acceptance remains pending.
+
+**0.4.12 activation ranging (#59):** covered hostile mortars tighten Scatter by one for each later firing action during the same actor activation, regardless of target tile. Misses stop at 2; an exact impact makes later shots use Scatter 1 until the next activation. Player ranging is unchanged. Ranging never changes ScatterChance; 0.4.13 separately corrects the omitted enemy-only skill's baseline.
 
 **0.4.11 targeting feedback (#56):** fixes two runtime failures observed with 0.4.10: its screen borders reached an unsupported `GUI.DrawTexture` proxy stub, and world borders failed in generic `AddComponent<LineRenderer>`. Borders now use a native `GUI.Label` background and non-generic component creation. The yellow dispersion envelope (`Spread N`) remains separate from blast AoE. Proxy call-path checks supplement the pure/source checks; in-game visibility still requires confirmation.
 
@@ -20,6 +26,8 @@ Weapon Mechanics Rebalanced (WMR) contains non-range weapon gameplay changes sep
 
 WMR changes mortar behavior while leaving range ownership to WRR or vanilla:
 
+The economy/damage/suppression adjustments below apply to the regular player/vehicle skill profiles. The separate enemy-only medium skill receives **only** Scatter 4 / ScatterChance 80% and activation ranging; all its other native values are retained.
+
 - HE and smoke mortar firing AP cost is 50% of the captured native value;
 - limited HE and smoke mortar uses are doubled;
 - HE physical HP damage and armor-durability damage are multiplied by 0.5;
@@ -31,21 +39,21 @@ WMR changes mortar behavior while leaving range ownership to WRR or vanilla:
 
 ### Cumulative ranging fire
 
-Each physical mortar remembers intended target tiles while its firing position remains established. Ranging tightens the **size of the dispersion area**; it does not increase exact-hit probability by reducing ScatterChance.
+Player mortars remember intended target tiles while their firing position remains established. Hostile AI mortars instead track shots per physical weapon and actor activation, independent of target tile. Ranging tightens the **size of the dispersion area**; it does not increase exact-hit probability by reducing ScatterChance.
 
-- each prior shot at the same tile reduces effective `Scatter` by 1 for the next shot;
-- misses can reduce Scatter only to **2**;
-- only an actual impact on the exact intended tile finds the firing solution and unlocks **Scatter 1**;
-- therefore the default progressions are light `3 -> 2 -> 1(hit only)`, medium `4 -> 3 -> 2 -> 1(hit only)`, and 120 mm `5 -> 4 -> 3 -> 2 -> 1(hit only)`;
+- for players, each prior shot at the same tile reduces effective `Scatter` by 1 for the next shot;
+- for hostile mortars, each later firing action in the same activation reduces `Scatter` by 1, even when aimed at a different tile;
+- misses can reduce Scatter only to **2**; an exact impact on the intended tile makes subsequent shots by that mortar use **Scatter 1** until its next activation;
+- the hostile-mortar counter resets at the next actor activation; HE and smoke from the same physical weapon share it;
 - ScatterChance is unchanged at every ranging stage;
-- different tiles keep independent firing solutions;
+- player firing solutions remain independent per tile;
 - HE and smoke from the same physical mortar share the same solution;
 - infantry mortar solutions are retained only while the crew remains deployed;
 - vehicle-mounted mortar solutions are retained while stationary and clear when the platform moves.
 
 ### Ranging feedback
 
-When the selected mortar has ranged a tile, WMR draws independent world-space and high-contrast screen-space borders around that tile, with an `S` label for the next shot's scatter. The border progresses red -> orange/amber -> yellow-green -> green as effective Scatter tightens; full green is reserved for the solved Scatter 1 state. Selecting a specific mortar shows only that physical weapon's history.
+When the selected mortar has ranged a tile, WMR draws independent world-space and screen-space borders around that tile, with an `S` label for the next shot's scatter. The border follows a muted dark-red-to-green palette as effective Scatter tightens; a solved Scatter 1 state uses brighter green. The displayed value and color advance only after the projectile impact is observed. Selecting a specific mortar shows only that physical weapon's history.
 
 While targeting, a **yellow outer envelope** and `Spread N` label show the maximum dispersion radius for the current mortar/target combination, including fresh targets. Scatter 3 spans offsets -3 through +3 (a 7-by-7 tile envelope), Scatter 2 spans 5-by-5, and Scatter 1 spans 3-by-3. This is the scatter envelope, not guaranteed damage or an exact-hit probability; native valid-impact filters may exclude tiles. The native blast AoE inside it is deliberately left unchanged.
 

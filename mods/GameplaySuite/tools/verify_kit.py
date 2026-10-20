@@ -72,10 +72,13 @@ def compile_clean(files, game, sdk, dotnet):
                             f"-p:MenaceInteropDir={refs}", f"-p:MenaceRuntimeDir={runtime}",
                             "-p:DebugType=none", "-p:DebugSymbols=false"], check=True, cwd=source)
         runner = ROOT / "mods/GameplaySuite/tests/OfflineChecks/OfflineChecks.csproj"
+        check_args = [dotnet, "run", "--project", str(runner), "-c", "Release", "--", str(source)]
         if modules == ["SquaddieFieldPromotions"]:
             runner = source / "mods/jiangyu/SquaddieFieldPromotions/tests/OfflineChecks/OfflineChecks.csproj"
-        subprocess.run([dotnet, "run", "--project", str(runner),
-                        "-c", "Release", "--", str(source)], check=True, cwd=ROOT)
+            check_args[3] = str(runner)
+        else:
+            check_args.extend(["--modules", ",".join(modules)])
+        subprocess.run(check_args, check=True, cwd=ROOT)
         print("Clean extracted-source build and real DLL metadata checks passed (local host, NOT Windows).")
 
 

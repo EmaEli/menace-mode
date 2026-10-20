@@ -146,8 +146,6 @@ public sealed partial class Plugin
     private static readonly Dictionary<int, AiDiagState> _aiDiagStates = new();
     private static int _aiPickCalls;
     private static int _pathCalls;
-    private static int _routeAgentLines;
-    private static int _routeMoveLines;
     private static int _skillTargetDiagSerial;
     private static int _aoeNullCompareHits;
     private static int _aoeRandomNullHits;
@@ -240,6 +238,7 @@ public sealed partial class Plugin
             settings.AddToggle("SimplifyCombatAIPlanning", "Simplified attack planning (no future firing positions)", true);
             settings.AddToggle("PreserveBasicInfantryFirePositioning", "MEN-002 experiment: preserve five infantry fire profiles (OFF; restart required)", false);
             settings.AddToggle("UseLocalTacticalRouting", "Local tactical routing (limit destination search)", false);
+            settings.AddToggle("RecoverStalledAdvance", "MEN-002 candidate: recover advance after two idle rounds (ON; restart required)", true);
             settings.AddSlider("LocalNearTileLimit", "Nearby destinations inspected", 12f, 64f, 20f);
             settings.AddSlider("LocalCullTileDistance", "Cull distance (tiles)", 10f, 20f, 12f);
             settings.AddHeader("Camera");
@@ -248,7 +247,7 @@ public sealed partial class Plugin
             settings.AddHeader("Diagnostics (log only, restart required)");
             settings.AddToggle("DiagnoseTerrainStampDensity", "Log terrain stamp counts", false);
             settings.AddToggle("DiagnoseMissionAreas", "Log mission area coordinates", false);
-            settings.AddToggle("DiagnoseAIRoutes", "Log AI zones and movement targets", false);
+            settings.AddToggle("DiagnoseAIRoutes", "Log AI advance, decisions and attacks (all rounds)", false);
             settings.AddToggle("DiagnoseAIPerformance", "Log AI task / unit timings", false);
             settings.AddToggle("DiagnoseAIPathfinding", "Log AI path timings (needs AI task timings)", false);
         });
@@ -406,6 +405,7 @@ public sealed partial class Plugin
             PatchAiPerformance(harmony);
             PatchAiDiagnostics(harmony);
             PatchAIRouteInvestigation(harmony);
+            PatchAdvanceRecovery(harmony);
 
             // Diagnostic-only hooks stay completely out of gameplay hot paths in normal builds.
             // Debug() is source-controlled and OFF by default.
@@ -1535,100 +1535,6 @@ public sealed partial class Plugin
 
         PatchPathMethod(harmony, "FindPath");
         PatchPathMethod(harmony, "FindPathForwardOrBackward");
-    }
-
-    // AI route investigation is OFF by default and is installed only when the user
-    // enables its dedicated setting before launching the game. No AI behavior is
-    // modified: we observe the native Agent's existing operational zones and the
-    // Move behavior's already-selected target. No pathfinding calculation is added.
-    private static void PatchAIRouteInvestigation(HarmonyLib.Harmony harmony)
-    {
-        if (!ReadBool("DiagnoseAIRoutes", false)) return;
-
-        TryInstallRouteProbe(harmony, _agentType, "OnTurnStart", 0,
-            nameof(AIRouteAgentTurnPostfix), false, "agent turn");
-        TryInstallRouteProbe(harmony, _moveBehaviorType, "OnExecute", 1,
-            nameof(AIRouteMoveExecutionPrefix), true, "movement decision");
-        _log.Msg($"{ModName}: AI route diagnostics enabled for this session (limited to 120 agent and 200 movement entries).");
-    }
-
-    private static void TryInstallRouteProbe(HarmonyLib.Harmony harmony, Type type,
-        string methodName, int paramCount, string callbackName, bool prefix, string label)
-    {
-        try
-        {
-            MethodInfo method = type?.GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
-                .FirstOrDefault(m => m.Name == methodName && m.GetParameters().Length == paramCount);
-            MethodInfo callback = typeof(Plugin).GetMethod(callbackName, BindingFlags.Static | BindingFlags.NonPublic);
-            if (method == null || callback == null)
-            {
-                _log.Warning($"{ModName}: AI route diagnostic unavailable for {label}: method not found.");
-                return;
-            }
-            harmony.Patch(method, prefix: prefix ? new HarmonyMethod(callback) : null,
-                postfix: prefix ? null : new HarmonyMethod(callback));
-        }
-        catch (Exception e)
-        {
-            _log.Warning($"{ModName}: AI route diagnostic unavailable for {label}: {e.GetType().Name}: {e.Message}");
-        }
-    }
-
-    private static void AIRouteAgentTurnPostfix(object __instance)
-    {
-        if (!ReadBool("DiagnoseAIRoutes", false) || __instance == null) return;
-        if (System.Threading.Interlocked.Increment(ref _routeAgentLines) > 120) return;
-        try
-        {
-            object actor = InvokeNoArg(__instance, "GetActor") ?? GetMember(__instance, "m_Actor");
-            object role = InvokeNoArg(__instance, "GetRole");
-            object zones = InvokeNoArg(__instance, "GetZones");
-            int count = GetCollectionCount(zones);
-            var snippets = new List<string>();
-            foreach (object zone in SnapshotCollection(zones, 4))
-            {
-                object area = GetMember(zone, "Area");
-                int x = ToInt(GetMember(area, "m_XMin") ?? GetMember(area, "xMin"), -1);
-                int z = ToInt(GetMember(area, "m_YMin") ?? GetMember(area, "yMin"), -1);
-                int w = ToInt(GetMember(area, "m_Width") ?? GetMember(area, "width"), -1);
-                int h = ToInt(GetMember(area, "m_Height") ?? GetMember(area, "height"), -1);
-                object order = GetMember(zone, "Order");
-                object priority = GetMember(zone, "Priority");
-                snippets.Add($"{Safe(order)}:({x},{z},{w},{h}) p={Safe(priority)}");
-            }
-            object tile = InvokeNoArg(actor, "GetTile");
-            object template = InvokeNoArg(actor, "GetTemplate");
-            object templateId = GetMember(template, "m_ID") ?? GetMember(template, "ID");
-            _log.Msg($"{ModName}: AI ROUTE AGENT id={GetStableObjectKey(actor):X} template={Safe(templateId)} tile={DescribeTile(tile)} " +
-                $"sleeping={Safe(InvokeNoArg(__instance, "IsSleeping"))} zones={count} [{string.Join(";", snippets)}] " +
-                $"zoneWeight={Safe(GetMember(role, "ZoneImportanceWeight"))} distanceWeight={Safe(GetMember(role, "DistanceScale"))}.");
-        }
-        catch (Exception ex)
-        {
-            if (_routeAgentLines < 6) _log.Warning($"{ModName}: AI route agent diagnostic failed: {ex.GetType().Name}: {ex.Message}");
-        }
-    }
-
-    private static void AIRouteMoveExecutionPrefix(object __instance, object[] __args)
-    {
-        if (!ReadBool("DiagnoseAIRoutes", false) || __instance == null) return;
-        if (System.Threading.Interlocked.Increment(ref _routeMoveLines) > 200) return;
-        try
-        {
-            object actor = __args != null && __args.Length > 0 ? __args[0] : null;
-            object chosen = GetMember(__instance, "m_TargetTile");
-            object destination = GetMember(chosen, "Tile");
-            object ultimate = GetMember(chosen, "UltimateTile");
-            object path = GetMember(__instance, "m_Path");
-            object candidates = GetMember(__instance, "m_Destinations");
-            _log.Msg($"{ModName}: AI ROUTE MOVE id={GetStableObjectKey(actor):X} " +
-                $"from={DescribeTile(InvokeNoArg(actor, "GetTile"))} target={DescribeTile(destination)} " +
-                $"ultimate={DescribeTile(ultimate)} pathNodes={GetCollectionCount(path)} candidates={GetCollectionCount(candidates)}.");
-        }
-        catch (Exception ex)
-        {
-            if (_routeMoveLines < 6) _log.Warning($"{ModName}: AI route movement diagnostic failed: {ex.GetType().Name}: {ex.Message}");
-        }
     }
 
     private static void PatchAiMethod(HarmonyLib.Harmony harmony, Type type, string name, int parameterCount, string prefixName, string postfixName, string label)

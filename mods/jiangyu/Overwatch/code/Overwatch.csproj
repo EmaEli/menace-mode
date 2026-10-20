@@ -9,7 +9,7 @@
   -->
   <PropertyGroup>
     <!-- Keep in step with jiangyu.json so the DLL metadata identifies the shipped build. -->
-    <Version>0.32.3.7</Version>
+    <Version>0.32.3.8</Version>
     <AssemblyName>Overwatch</AssemblyName>
     <RootNamespace>MenaceOverwatch</RootNamespace>
     <Nullable>enable</Nullable>

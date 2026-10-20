@@ -1,3 +1,35 @@
+# 1.2.2 candidate acceptance (#60)
+
+1.2.1 failed the allied Jetpack test despite automatic mode ON, 100% movement chance and
+minimum tiles 0. The 1.2.2 candidate observes JetPackHandler.OnApply, not IsMovementSkill.
+When Debug is enabled, check `Hook active: OnApply` and `Jetpack effect actor=... distance=...`.
+Windows test install passed 19 Oct 2026 (MENACE 0.7.17+22362); backup is
+`_MENACE_Backups/20261019-170837-d007eddc0bac4a7082be2917cf49e260`. Existing settings
+were preserved. A post-install launch log has been reviewed with no camera-specific startup,
+hook, UI or depth-of-field errors/warnings. The user gave positive feedback; explicit
+confirmation that allied Jetpack automatic follow worked is still pending.
+
+- Upgrade with customized shared chances and vehicle framing: all types initially keep
+  the old percentages; walkers keep old vehicle framing; infantry keeps Distance/Height.
+- Set distinct distance/height values for infantry, vehicles and walkers; test F6,
+  movement and firing for each. Changes should apply live without affecting other types.
+- For each type, test movement/firing at 0% and 100% independently. Confirm currently
+  visible enemy movement uses its type's chance, with no enemy firing/victim cuts.
+- Set minimum tiles to 3: moves of 1 and 2 tiles must not start or extend a movement
+  shot, and moves of 3+ tiles remain eligible. Test diagonals, repeated short orders and
+  different unit types. Check 0 disables the filter; firing/manual F6 remain unaffected.
+- With automatic mode on and friendly MovementChance=100, verify both ordinary movement
+  and the actual Jetpack movement skill follow an allied JETPACK-tagged unit. At 0% neither
+  should trigger; non-movement skills must not trigger. Repeat with a 3-tile minimum and
+  check that the Jetpack skill destination obeys the same threshold without duplicate cuts.
+  Repeat with a multi-element squad; rejected/invalid jumps must not trigger a cut.
+- Restart: all separate settings, especially explicit 0%, must persist. Recheck attack
+  target framing, building/tower distinction, orbit and HUD restoration after exit.
+- With depth of field enabled in Graphics settings, test manual F6 and automatic camera
+  cuts: depth of field should be off during the shot and the original quality restored on
+  exit. Confirm the saved graphics setting is unchanged after restarting the game.
+- Offline checks/compilation are not proof of this visual acceptance.
+
 # Third Person Camera 0.3.3 - smoke-test plan
 
 Use a tactical mission with player infantry, at least one player vehicle and some enemy infantry/vehicles.

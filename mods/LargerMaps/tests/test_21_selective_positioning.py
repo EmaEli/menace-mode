@@ -43,9 +43,9 @@ class SelectivePositioningTests(unittest.TestCase):
             self.assertNotIn(forbidden, COMBAT)
 
     def test_current_jiangyu_versions_not_old_draft_modpack(self):
-        self.assertEqual(json.loads((PACKAGE / 'jiangyu.json').read_text())['version'], '2.2.0')
-        self.assertEqual(json.loads((PACKAGE / 'compiled/jiangyu.json').read_text())['version'], '2.2.0')
-        self.assertIn('<Version>2.2.0</Version>', (PACKAGE / 'code/LargerMaps.csproj').read_text())
+        self.assertEqual(json.loads((PACKAGE / 'jiangyu.json').read_text())['version'], '2.3.2')
+        self.assertEqual(json.loads((PACKAGE / 'compiled/jiangyu.json').read_text())['version'], '2.3.2')
+        self.assertIn('<Version>2.3.2</Version>', (PACKAGE / 'code/LargerMaps.csproj').read_text())
 
 
 if __name__ == '__main__':

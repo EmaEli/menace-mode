@@ -55,5 +55,15 @@ MortarScatterChecks.Run(Check);
 LargerMaps.Plugin.RunPlanningChecks(Check);
 if (args.Length > 0 && args[0] == "--mortar-proxies")
     MortarProxyChecks.Run(Check, args[1], args[2]);
-else if (args.Length > 0) ArtifactChecks.Run(Check, args[0]);
+else if (args.Length > 0)
+{
+    string[]? selectedModules = null;
+    if (args.Length > 1)
+    {
+        if (args.Length != 3 || args[1] != "--modules")
+            throw new ArgumentException("Expected --modules <comma-separated names> after the repository path.");
+        selectedModules = args[2].Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+    }
+    ArtifactChecks.Run(Check, args[0], selectedModules);
+}
 Console.WriteLine($"Offline C# regression checks: {checks} passed.");

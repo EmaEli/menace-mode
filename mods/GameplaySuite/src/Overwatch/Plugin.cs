@@ -5,9 +5,9 @@ using MenaceModSuite.Shared;
 using UnityEngine;
 using Path = global::System.IO.Path;
 
-[assembly: AssemblyVersion("0.32.3.7")]
-[assembly: AssemblyFileVersion("0.32.3.7")]
-[assembly: AssemblyInformationalVersion("0.32.3.7")]
+[assembly: AssemblyVersion("0.32.3.8")]
+[assembly: AssemblyFileVersion("0.32.3.8")]
+[assembly: AssemblyInformationalVersion("0.32.3.8")]
 
 namespace MenaceOverwatch;
 
@@ -15,7 +15,7 @@ namespace MenaceOverwatch;
 public sealed partial class Plugin : IHostedPlugin
 {
     private const string SettingsGroup = "Overwatch";
-    private const string Version = "0.32.3.7";
+    private const string Version = "0.32.3.8";
     private Runtime? _runtime;
     private global::HarmonyLib.Harmony? _harmony;
     private ModLog? _logger;

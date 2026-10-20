@@ -1,5 +1,10 @@
 # MENACE migration status — 15 October 2026
 
+**20 October consolidation:** work now uses only `main` and `dev`; see
+[the current consolidation record](CONSOLIDATION_2026-10-20.md). Older release-gate
+language below is historical, not a requirement to re-test every feature before
+integrating accepted gameplay source. The source inventory is not a fresh PC audit.
+
 Tracks [#29](https://github.com/EmaEli/menace-mode/issues/29),
 [#31](https://github.com/EmaEli/menace-mode/issues/31),
 [#33](https://github.com/EmaEli/menace-mode/issues/33),
@@ -37,22 +42,22 @@ KDL counts below are **source files**, not patch-operation counts.
 | BuildingCombatRules | 0.3.0 | Shared SuiteSystem host, Harmony/runtime; tree protection candidate #48 |
 | BuildingsBlockLineOfSight | 0.2.3 | Shared SuiteSystem host, Harmony/runtime |
 | CoordinatedFire | 1.6.11 | Shared SuiteSystem host, native attacks/HUD |
-| CoverDestructionRebalance | 0.4.0 | KDL only, 1 source file |
+| CoverDestructionRebalance | 0.4.1 | KDL tiers + runtime light/medium mortar impact guard; #58 gameplay verification pending |
 | CustomSupplySliders | 0.2.1 | Shared SuiteSystem host; difficulty-menu slider ranges |
 | FieldLogistics | 1.0.11 | Shared SuiteSystem host + 4 KDL files; ammo support |
 | ForestTraversal | 0.2.0 | KDL only, 1 source file |
-| GarrisonableBuildings | 1.1.0 | Shared SuiteSystem host, templates/runtime |
+| GarrisonableBuildings | 1.2.0 | Shared SuiteSystem host; #62 native deployed-stance accuracy mirror, live comparison pending |
 | InfantryAssault | 0.5.9 | Shared SuiteSystem host + 2 KDL files; defensive suppression fix candidate #47 |
-| LargerMaps | 2.2.0 | Jiangyu system; PR #18 selective positioning OFF by default, runtime pending; MEN-008 stamp footprint ON, visual check pending |
-| Overwatch | 0.32.3.7 | Shared SuiteSystem host, native reactions/HUD |
+| LargerMaps | 2.3.2 | Jiangyu system; recovery ON-default, selective positioning OFF; Windows installed and ON/OFF gameplay compared; user accepted the bounded gameplay improvement and MEN-002 is closed; distinct slowdown #57 remains separate |
+| Overwatch | 0.32.3.8 | Shared SuiteSystem host, native reactions/HUD; isolated hostile-turn JIT guard |
 | SmokeOverhaul | 0.6.4 | Shared SuiteSystem host; PR #12 bounded smoke rules ported, runtime pending |
 | SquaddieVeterancy | 1.10.2 | Shared SuiteSystem host, native hooks/HUD/save sidecars |
 | StartingOptions | 0.1.1 | Shared SuiteSystem host, new-campaign settings |
 | StrongerCover | 3.0.1 | Jiangyu system, SDK prefix + runtime inside-cover settings |
 | VisibilityOverhaul | 3.2.0 | Jiangyu host, native visibility and opt-in pirate diagnostics |
-| WeaponMechanicsRebalanced | 0.4.11 | Shared SuiteSystem host, skill/ammo/mortar hooks; #56 observed Unity proxy failures corrected, visual retest pending |
+| WeaponMechanicsRebalanced | 0.4.14 | Shared SuiteSystem host, skill/ammo/mortar hooks; #59 enemy-only skill coverage plus muted impact-gated ranging feedback (#61); Windows installed 2026-10-19, gameplay check pending |
 | WeaponRangesRebalanced | 2.9.2 | Shared SuiteSystem host, ranges/linked skills/override JSON |
-| CinematicActionCamera | 1.1.1 | Jiangyu menu + separate MenaceThirdPersonCamera 1.1.1 MelonMod; enclosed-building firing-camera fix |
+| CinematicActionCamera | 1.2.2 | Windows test install and post-install startup log verified on MENACE 0.7.17+22362; manifests/DLLs verified, settings preserved, backup retained; no camera startup errors/warnings; positive user feedback but explicit allied Jetpack auto-follow acceptance still pending (#60) |
 
 ## Evidence levels: do not confuse them
 

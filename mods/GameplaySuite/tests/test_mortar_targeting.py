@@ -1,4 +1,5 @@
 """Source-wiring guards only; native hooks and visible rendering require a game test."""
+import json
 import unittest
 from pathlib import Path
 
@@ -9,12 +10,71 @@ OVERLAY = (ROOT / "src/WeaponMechanicsRebalanced/MortarTargetingOverlay.cs").rea
 
 class MortarTargetingTests(unittest.TestCase):
     def test_shot_and_preview_use_same_target_lookup(self):
-        self.assertIn("GetMortarTargetScatter(__instance, actor, __0, originalScatter)", PLUGIN)
+        self.assertIn("GetMortarTargetScatter(__instance, actor, __0, originalScatter, useDisplayedState: false)", PLUGIN)
         self.assertIn("GetMortarTargetScatter(skill, actor, target, template.Scatter)", OVERLAY)
         self.assertIn("MortarRangingKey(skill, actor)", OVERLAY)
         self.assertIn("solutions.TryGetValue((target.GetX(), target.GetZ()), out ranging)", OVERLAY)
-        self.assertIn("return GetMortarEffectiveScatter(ranging, baseScatter)", OVERLAY)
+        self.assertIn("return useDisplayedState", OVERLAY)
+        self.assertIn("GetMortarDisplayedEffectiveScatter(ranging, baseScatter)", OVERLAY)
         self.assertIn("MortarScatterRules.EffectiveScatter", PLUGIN)
+
+    def test_hostile_mortars_range_per_activation_independent_of_target(self):
+        self.assertIn("Dictionary<(long Actor, long Weapon), MortarTurnScatterState> EnemyMortarTurnRanging", PLUGIN)
+        self.assertIn("GetEnemyMortarTurnState(key).EffectiveScatter(originalScatter)", PLUGIN)
+        self.assertIn("IsHostileMortarActor(actor)", PLUGIN)
+        self.assertIn("MortarRangingAgentTurnStartPostfix", PLUGIN)
+        self.assertIn("pair.Value.Reset()", PLUGIN)
+        self.assertIn("turnState.RecordShot(__state.DirectHit)", PLUGIN)
+        self.assertIn("if (__state.IsHostileMortar)", PLUGIN)
+        self.assertIn("GetMortarTargetScatter(__instance, actor, __0, originalScatter, useDisplayedState: false)", PLUGIN)
+
+    def test_ranging_ui_waits_for_projectile_impact(self):
+        self.assertIn("PendingMortarImpacts", PLUGIN)
+        self.assertIn("AttackHandler.OnTileHit/4", PLUGIN)
+        self.assertIn('"Il2CppMenace.Tactical.Skills.Skill"', PLUGIN)
+        self.assertIn('"Il2CppMenace.Tactical.Tile"', PLUGIN)
+        self.assertIn("typeof(Vector3).FullName", PLUGIN)
+        self.assertIn("MortarRangingTileHitPostfix", PLUGIN)
+        self.assertIn("ranging.DisplayShots <= 0", PLUGIN)
+        self.assertIn("ranging?.DisplayShots ?? 0", PLUGIN)
+        apply_postfix = PLUGIN.split("private static void MortarRangingApplyToTilePostfix(", 1)[1]
+        apply_postfix = apply_postfix.split("private static MortarRangingState RecordMortarPlayerShot", 1)[0]
+        self.assertIn("RecordMortarPlayerShot(__state)", apply_postfix)
+        self.assertNotIn("DisplayShots =", apply_postfix)
+        self.assertNotIn("UpdateMortarRangingDisplay", apply_postfix)
+        self.assertIn("impact-gated ranging feedback will remain hidden", PLUGIN)
+        impact_hook = PLUGIN.split("private static void MortarRangingTileHitPostfix", 1)[1]
+        impact_hook = impact_hook.split("private static long NativeKey", 1)[0]
+        self.assertIn("UpdateMortarRangingDisplay(ranging, shot)", impact_hook)
+        display_update = PLUGIN.split("private static void UpdateMortarRangingDisplay", 1)[1]
+        display_update = display_update.split("private static void EnqueuePendingMortarImpact", 1)[0]
+        self.assertIn("ranging.DisplayShots = shot.ShotsAfterShot", display_update)
+
+    def test_mortar_ranges_use_muted_scatter_based_colors(self):
+        self.assertIn("Color.Lerp(low, high, blend.Progress)", PLUGIN)
+        self.assertIn("new Color(0.48f, 0.15f, 0.14f, 0.92f)", PLUGIN)
+        self.assertIn("new Color(0.30f, 0.59f, 0.35f, 0.92f)", PLUGIN)
+
+    def test_enemy_only_medium_mortar_is_not_omitted_again(self):
+        fixture = json.loads((ROOT / "tests/fixtures/enemy_medium_mortar.json").read_text())
+        ranging_ids = PLUGIN.split("MortarRangingSkillIds =", 1)[1].split("};", 1)[0]
+        self.assertIn('"' + fixture["id"] + '"', ranging_ids)
+        baseline = PLUGIN.split("private static void ApplyEnemyMortarBallisticsPolicy()", 1)[1]
+        baseline = baseline.split("private static void ", 1)[0]
+        self.assertIn('const string skillId = "' + fixture["id"] + '";', baseline)
+        for field, value in fixture["wmr_overrides"].items():
+            self.assertIn(f'ApplyMortarTemplateValue(template, skillId, "{field}", {value});', baseline)
+        self.assertNotIn("ApplyMortarTemplateScaledValue", baseline)
+        self.assertNotIn("ApplyMortarHandler", baseline)
+        for field in ("ActionPointCost", "Uses", "Repetitions", "DamageMult"):
+            self.assertNotIn('"' + field + '"', baseline)
+
+    def test_enemy_only_baseline_uses_existing_enable_and_restore_path(self):
+        policy = PLUGIN.split("private static void ApplyMortarBallisticsPolicy()", 1)[1]
+        policy = policy.split("private static void ", 1)[0]
+        self.assertIn("ApplyEnemyMortarBallisticsPolicy();", policy)
+        self.assertIn("object desired = _enabled ? enabledValue : OriginalMortarTemplateValues[key];", PLUGIN)
+        self.assertIn("MORTAR BASELINE skill={skillId}", PLUGIN)
 
     def test_preview_works_before_any_shots_without_writing_gameplay_state(self):
         self.assertNotIn("MortarRangingSolutions.Count", OVERLAY)

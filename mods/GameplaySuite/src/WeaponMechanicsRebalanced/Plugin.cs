@@ -1,13 +1,14 @@
 using MelonLoader;
 using Il2CppInterop.Runtime.InteropTypes;
+using Il2CppMenace.Tactical.AI;
 using MenaceModSettings;
 using Menace.SDK;
 using MenaceModSuite.Shared;
 using UnityEngine;
 
-[assembly: AssemblyVersion("0.4.11.0")]
-[assembly: AssemblyFileVersion("0.4.11.0")]
-[assembly: AssemblyInformationalVersion("0.4.11")]
+[assembly: AssemblyVersion("0.4.14.0")]
+[assembly: AssemblyFileVersion("0.4.14.0")]
+[assembly: AssemblyInformationalVersion("0.4.14")]
 
 namespace MenaceWeaponMechanicsRebalanced;
 
@@ -15,7 +16,7 @@ namespace MenaceWeaponMechanicsRebalanced;
 public sealed partial class Plugin : IHostedPlugin
 {
     private const string SettingsGroup = "Weapon Mechanics Rebalanced";
-    private const string Version = "0.4.11";
+    private const string Version = "0.4.14";
 
     private sealed class MortarSkillSpec
     {
@@ -65,17 +66,15 @@ public sealed partial class Plugin : IHostedPlugin
         "active.mod.twinfire.launch_mortar_smoke_autoloader",
     };
 
-    // Ranging fire: each physical mortar remembers every intended target tile while
-    // its firing position remains established. Each prior shot tightens the dispersion
-    // radius by one Scatter point, but misses can never improve below Scatter=2. An exact
-    // impact finds the firing solution and unlocks Scatter=1. ScatterChance is never
-    // changed by ranging. Infantry mortar memory lasts only for the current deployed
-    // stance; non-deployable vehicle mortars retain solutions only while stationary.
-    // The shared SkillTemplate is modified only around the current shot and restored.
+    // Player mortar fire keeps per-target firing solutions. Hostile AI instead accumulates
+    // aim per physical mortar during its current activation, independent of target tile:
+    // each prior shot reduces Scatter by one to 2, and an exact impact solves to Scatter=1.
+    // The AI state resets at Agent.OnTurnStart; ScatterChance is never changed.
     private static readonly HashSet<string> MortarRangingSkillIds = new(StringComparer.OrdinalIgnoreCase)
     {
         "active.launch_light_mortar_frag",
         "active.launch_medium_mortar_frag",
+        "active.enemy_only_launch_medium_mortar_frag",
         "active.mod.fire_120mm_mortar_autoloader",
         "active.mod.twinfire.fire_120mm_mortar_autoloader",
         "active.launch_mortar_smoke",
@@ -89,6 +88,10 @@ public sealed partial class Plugin : IHostedPlugin
         public bool SolutionFound;
         public int LastBaseScatter = -1;
         public int LastEffectiveScatter = -1;
+        public int DisplayShots;
+        public bool DisplaySolutionFound;
+        public int DisplayLastBaseScatter = -1;
+        public int DisplayLastEffectiveScatter = -1;
     }
 
     private sealed class MortarApplyState
@@ -96,6 +99,7 @@ public sealed partial class Plugin : IHostedPlugin
         public long SkillKey;
         public (long Actor, long Weapon) RangingKey;
         public (int X, int Z) TileKey;
+        public bool IsHostileMortar;
         public Il2CppMenace.Tactical.Skills.SkillTemplate? Template;
         public int OriginalScatter = -1;
         public int OriginalScatterChance = -1;
@@ -103,11 +107,19 @@ public sealed partial class Plugin : IHostedPlugin
         public bool DirectHit;
         public int ImpactX;
         public int ImpactZ;
+        public bool PlayerShotRecorded;
+        public int ShotsAfterShot;
+        public bool SolutionFoundAfterShot;
+        public int EffectiveScatterAfterShot = -1;
     }
 
     private static readonly Dictionary<string, object> OriginalMortarTemplateValues = new(StringComparer.OrdinalIgnoreCase);
     private static readonly Dictionary<string, object> OriginalMortarHandlerValues = new(StringComparer.OrdinalIgnoreCase);
     private static readonly Dictionary<(long Actor, long Weapon), Dictionary<(int X, int Z), MortarRangingState>> MortarRangingSolutions = new();
+    private static readonly Dictionary<long, Queue<MortarApplyState>> PendingMortarImpacts = new();
+    private static readonly Dictionary<(long Actor, long Weapon), MortarTurnScatterState> EnemyMortarTurnRanging = new();
+    private static bool _mortarAgentTurnStartPatchInstalled;
+    private static bool _mortarImpactPatchInstalled;
 
     private static readonly Dictionary<string, object> OriginalFireModeTemplateValues = new(StringComparer.OrdinalIgnoreCase);
 
@@ -139,22 +151,19 @@ public sealed partial class Plugin : IHostedPlugin
     private static ModLog? _logger;
     private static bool _enabled = true;
     private static bool _debugLogging;
-    private const int MortarUnsolvedScatterFloor = MortarScatterRules.UnsolvedFloor;
     private static GUIStyle? _mortarBonusStyle;
     private static GUIStyle? _mortarBonusShadowStyle;
     private static GUIStyle? _mortarLineStyle;
     private static bool _mortarOverlayErrorLogged;
     private readonly struct MortarHighlightBlend
     {
-        public readonly byte Red;
-        public readonly byte Green;
+        public readonly float Progress;
         public readonly int EffectiveScatter;
         public readonly bool SolutionFound;
 
-        public MortarHighlightBlend(byte red, byte green, int effectiveScatter, bool solutionFound)
+        public MortarHighlightBlend(float progress, int effectiveScatter, bool solutionFound)
         {
-            Red = red;
-            Green = green;
+            Progress = progress;
             EffectiveScatter = effectiveScatter;
             SolutionFound = solutionFound;
         }
@@ -202,6 +211,8 @@ public sealed partial class Plugin : IHostedPlugin
     {
         ClearMortarWorldHighlights();
         MortarRangingSolutions.Clear();
+        PendingMortarImpacts.Clear();
+        EnemyMortarTurnRanging.Clear();
         _mortarOverlayErrorLogged = false;
         _mortarPreviewErrorLogged = false;
         _mortarWorldRendererLogged = false;
@@ -266,7 +277,12 @@ public sealed partial class Plugin : IHostedPlugin
     {
         _enabled = Setting("EnableGameplay", true);
         _debugLogging = Setting("DebugLogging", false);
-        if (!_enabled) MortarRangingSolutions.Clear();
+        if (!_enabled)
+        {
+            MortarRangingSolutions.Clear();
+            PendingMortarImpacts.Clear();
+            EnemyMortarTurnRanging.Clear();
+        }
     }
 
     private static T Setting<T>(string key, T fallback)
@@ -282,7 +298,7 @@ public sealed partial class Plugin : IHostedPlugin
             ReloadSettings();
             ApplyMortarBallisticsPolicy();
             ApplyFireModeEconomyPolicy();
-            DebugLog($"Applied mechanics pass ({reason}), enabled={_enabled}, mortarRanging=scatter -1 per prior shot (unsolved floor 2; exact hit solves to 1), ScatterChance unchanged.");
+            DebugLog($"Applied mechanics pass ({reason}), enabled={_enabled}, playerMortarRanging=per-target, enemyMortarRanging=-1 Scatter per prior shot within activation (floor 2; exact hit solves to 1), ScatterChance unchanged.");
         }
         catch (Exception ex)
         {
@@ -295,7 +311,7 @@ public sealed partial class Plugin : IHostedPlugin
         GUILayout.BeginArea(area);
         GUILayout.Label($"Weapon Mechanics Rebalanced {Version}");
         GUILayout.Label("Enabled: " + _enabled);
-        GUILayout.Label("Mortar ranging: Scatter -1 per prior shot; misses stop at Scatter 2; exact hit finds solution -> Scatter 1; ScatterChance unchanged");
+        GUILayout.Label("Mortar ranging: player per target; hostile AI per activation (-1 Scatter per shot, floor 2; exact hit -> 1)");
         GUILayout.Label("Remembered mortar firing positions: " + MortarRangingSolutions.Count);
         GUILayout.Label("Remembered target tiles: " + MortarRangingSolutions.Values.Sum(tiles => tiles.Count));
         GUILayout.Label($"World borders: {MortarWorldHighlightTiles.Count}; overlay error: {_mortarOverlayErrorLogged}; preview error: {_mortarPreviewErrorLogged}");
@@ -312,6 +328,10 @@ public sealed partial class Plugin : IHostedPlugin
             ClearMortarWorldHighlights();
             _enabled = false;
             MortarRangingSolutions.Clear();
+            PendingMortarImpacts.Clear();
+            EnemyMortarTurnRanging.Clear();
+            _mortarAgentTurnStartPatchInstalled = false;
+            _mortarImpactPatchInstalled = false;
             _activeMortarApplyState = null;
             ApplyMortarBallisticsPolicy();
             ApplyFireModeEconomyPolicy();
@@ -724,10 +744,12 @@ public sealed partial class Plugin : IHostedPlugin
 
     private static void InstallMortarRangingPatch(global::HarmonyLib.Harmony harmony)
     {
+        _mortarImpactPatchInstalled = false;
         try
         {
             Type? skillType = global::HarmonyLib.AccessTools.TypeByName("Il2CppMenace.Tactical.Skills.Skill");
             Type? actorType = global::HarmonyLib.AccessTools.TypeByName("Il2CppMenace.Tactical.Actor");
+            Type? attackHandlerType = global::HarmonyLib.AccessTools.TypeByName("Il2CppMenace.Tactical.Skills.Effects.AttackHandler");
             MethodInfo? applyToTile = skillType == null
                 ? null
                 : global::HarmonyLib.AccessTools.GetDeclaredMethods(skillType)
@@ -739,6 +761,17 @@ public sealed partial class Plugin : IHostedPlugin
                     .FirstOrDefault(m => string.Equals(m.Name, "Scatter", StringComparison.Ordinal)
                         && m.GetParameters().Length == 1
                         && string.Equals(m.ReturnType.FullName, "Il2CppMenace.Tactical.Tile", StringComparison.Ordinal));
+            MethodInfo? onTileHit = attackHandlerType == null
+                ? null
+                : global::HarmonyLib.AccessTools.GetDeclaredMethods(attackHandlerType)
+                    .FirstOrDefault(m => string.Equals(m.Name, "OnTileHit", StringComparison.Ordinal)
+                        && m.GetParameters().Select(p => p.ParameterType.FullName).SequenceEqual(new[]
+                        {
+                            "Il2CppMenace.Tactical.Skills.Skill",
+                            "Il2CppMenace.Tactical.Tile",
+                            "Il2CppMenace.Tactical.Tile",
+                            typeof(Vector3).FullName
+                        }));
             MethodInfo? setStance = actorType == null
                 ? null
                 : global::HarmonyLib.AccessTools.GetDeclaredMethods(actorType)
@@ -770,6 +803,18 @@ public sealed partial class Plugin : IHostedPlugin
                 applyToTile,
                 prefix: new global::HarmonyLib.HarmonyMethod(typeof(Plugin), nameof(MortarRangingApplyToTilePrefix)),
                 postfix: new global::HarmonyLib.HarmonyMethod(typeof(Plugin), nameof(MortarRangingApplyToTilePostfix)));
+
+            if (onTileHit != null)
+            {
+                harmony.Patch(
+                    onTileHit,
+                    postfix: new global::HarmonyLib.HarmonyMethod(typeof(Plugin), nameof(MortarRangingTileHitPostfix)));
+                _mortarImpactPatchInstalled = true;
+            }
+            else
+            {
+                Warn("Mortar impact feedback patch unavailable: AttackHandler.OnTileHit/4 was not found; impact-gated ranging feedback will remain hidden.");
+            }
 
             // Scatter is only a direct-hit probe now. If a future game update changes this
             // helper, progressive scatter tightening still works; only the immediate Scatter=1 jump
@@ -811,11 +856,36 @@ public sealed partial class Plugin : IHostedPlugin
                     postfix: new global::HarmonyLib.HarmonyMethod(typeof(Plugin), nameof(MortarRangingMovePostfix)));
             }
 
-            DebugLog("Mortar ranging patches installed: prior shots tighten Scatter to a miss-only floor of 2; exact impact unlocks Scatter=1; ScatterChance is unchanged.");
+            InstallMortarAgentTurnStartPatch(harmony);
+            DebugLog($"Mortar ranging patches installed: player histories are per-target and UI waits for impact={_mortarImpactPatchInstalled}; hostile AI ranging is per activation (miss floor 2, exact impact Scatter=1); ScatterChance is unchanged.");
         }
         catch (Exception ex)
         {
             Warn($"Mortar ranging-fire patch failed: {ex.GetType().Name}: {ex.Message}");
+        }
+    }
+
+    private static void InstallMortarAgentTurnStartPatch(global::HarmonyLib.Harmony harmony)
+    {
+        _mortarAgentTurnStartPatchInstalled = false;
+        try
+        {
+            MethodInfo? turnStart = global::HarmonyLib.AccessTools.Method(
+                typeof(Agent), nameof(Agent.OnTurnStart), Type.EmptyTypes);
+            if (turnStart == null)
+            {
+                Warn("Enemy mortar activation reset unavailable: Agent.OnTurnStart() was not found; hostile mortar ranging remains at base Scatter.");
+                return;
+            }
+
+            harmony.Patch(
+                turnStart,
+                postfix: new global::HarmonyLib.HarmonyMethod(typeof(Plugin), nameof(MortarRangingAgentTurnStartPostfix)));
+            _mortarAgentTurnStartPatchInstalled = true;
+        }
+        catch (Exception ex)
+        {
+            Warn($"Enemy mortar activation reset unavailable: {ex.GetType().Name}: {ex.Message}; hostile mortar ranging remains at base Scatter.");
         }
     }
 
@@ -849,7 +919,12 @@ public sealed partial class Plugin : IHostedPlugin
             var tileKey = (__0.GetX(), __0.GetZ());
             int originalScatter = Math.Max(0, template.Scatter);
             int originalScatterChance = template.ScatterChance;
-            int effectiveScatter = GetMortarTargetScatter(__instance, actor, __0, originalScatter);
+            bool isHostileMortar = IsHostileMortarActor(actor);
+            int effectiveScatter = isHostileMortar
+                ? _mortarAgentTurnStartPatchInstalled
+                    ? GetEnemyMortarTurnState(key).EffectiveScatter(originalScatter)
+                    : originalScatter
+                : GetMortarTargetScatter(__instance, actor, __0, originalScatter, useDisplayedState: false);
 
             if (effectiveScatter != originalScatter)
                 template.Scatter = effectiveScatter;
@@ -859,6 +934,7 @@ public sealed partial class Plugin : IHostedPlugin
                 SkillKey = NativeKey(__instance),
                 RangingKey = key,
                 TileKey = tileKey,
+                IsHostileMortar = isHostileMortar,
                 Template = template,
                 OriginalScatter = originalScatter,
                 OriginalScatterChance = originalScatterChance,
@@ -867,8 +943,10 @@ public sealed partial class Plugin : IHostedPlugin
                 ImpactZ = int.MinValue,
             };
             _activeMortarApplyState = __state;
+            if (!isHostileMortar && _mortarImpactPatchInstalled && __state.SkillKey != 0)
+                EnqueuePendingMortarImpact(__state);
 
-            DebugLog($"MORTAR APPLY actor=0x{key.Actor:X} weapon=0x{key.Weapon:X} target=({tileKey.Item1},{tileKey.Item2}) baseScatter={originalScatter} effectiveScatter={effectiveScatter} scatterChance={originalScatterChance}%.");
+            DebugLog($"MORTAR APPLY actor=0x{key.Actor:X} weapon=0x{key.Weapon:X} target=({tileKey.Item1},{tileKey.Item2}) baseScatter={originalScatter} effectiveScatter={effectiveScatter} scatterChance={originalScatterChance}% skill={skillId}.");
         }
         catch (Exception ex)
         {
@@ -919,25 +997,22 @@ public sealed partial class Plugin : IHostedPlugin
 
             if (!_enabled || __state.RangingKey.Actor == 0) return;
 
-            if (!MortarRangingSolutions.TryGetValue(__state.RangingKey, out Dictionary<(int X, int Z), MortarRangingState>? solutions))
+            if (__state.IsHostileMortar)
             {
-                solutions = new Dictionary<(int X, int Z), MortarRangingState>();
-                MortarRangingSolutions[__state.RangingKey] = solutions;
+                if (_mortarAgentTurnStartPatchInstalled)
+                {
+                    MortarTurnScatterState turnState = GetEnemyMortarTurnState(__state.RangingKey);
+                    turnState.RecordShot(__state.DirectHit);
+                    int nextScatter = turnState.EffectiveScatter(Math.Max(0, __state.OriginalScatter));
+                    string enemyImpact = __state.ImpactX == int.MinValue
+                        ? "unknown"
+                        : $"({__state.ImpactX},{__state.ImpactZ})";
+                    DebugLog($"ENEMY MORTAR RESULT actor=0x{__state.RangingKey.Actor:X} weapon=0x{__state.RangingKey.Weapon:X} target=({__state.TileKey.X},{__state.TileKey.Z}) impact={enemyImpact} directHit={__state.DirectHit} shotScatter={__state.EffectiveScatter} nextScatter={nextScatter} scatterChance={__state.OriginalScatterChance}% shots={turnState.Shots} solution={turnState.SolutionFound}.");
+                }
+                return;
             }
 
-            if (!solutions.TryGetValue(__state.TileKey, out MortarRangingState? ranging) || ranging == null)
-            {
-                ranging = new MortarRangingState();
-                solutions[__state.TileKey] = ranging;
-            }
-
-            if (ranging.Shots < 1000000)
-                ranging.Shots++;
-            if (__state.DirectHit)
-                ranging.SolutionFound = true;
-
-            ranging.LastBaseScatter = Math.Max(0, __state.OriginalScatter);
-            ranging.LastEffectiveScatter = GetMortarEffectiveScatter(ranging, ranging.LastBaseScatter);
+            MortarRangingState ranging = RecordMortarPlayerShot(__state);
 
             string impact = __state.ImpactX == int.MinValue
                 ? "unknown"
@@ -961,10 +1036,122 @@ public sealed partial class Plugin : IHostedPlugin
         }
     }
 
+    private static MortarRangingState RecordMortarPlayerShot(MortarApplyState shot)
+    {
+        if (!MortarRangingSolutions.TryGetValue(shot.RangingKey, out Dictionary<(int X, int Z), MortarRangingState>? solutions))
+        {
+            solutions = new Dictionary<(int X, int Z), MortarRangingState>();
+            MortarRangingSolutions[shot.RangingKey] = solutions;
+        }
+
+        if (!solutions.TryGetValue(shot.TileKey, out MortarRangingState? ranging) || ranging == null)
+        {
+            ranging = new MortarRangingState();
+            solutions[shot.TileKey] = ranging;
+        }
+
+        if (!shot.PlayerShotRecorded)
+        {
+            if (ranging.Shots < 1000000)
+                ranging.Shots++;
+            if (shot.DirectHit)
+                ranging.SolutionFound = true;
+
+            ranging.LastBaseScatter = Math.Max(0, shot.OriginalScatter);
+            ranging.LastEffectiveScatter = GetMortarEffectiveScatter(ranging, ranging.LastBaseScatter);
+            shot.PlayerShotRecorded = true;
+            shot.ShotsAfterShot = ranging.Shots;
+            shot.SolutionFoundAfterShot = ranging.SolutionFound;
+            shot.EffectiveScatterAfterShot = ranging.LastEffectiveScatter;
+        }
+
+        return ranging;
+    }
+
+    private static void UpdateMortarRangingDisplay(MortarRangingState ranging, MortarApplyState shot)
+    {
+        if (shot.ShotsAfterShot >= ranging.DisplayShots)
+        {
+            ranging.DisplayShots = shot.ShotsAfterShot;
+            ranging.DisplayLastBaseScatter = Math.Max(0, shot.OriginalScatter);
+            ranging.DisplayLastEffectiveScatter = shot.EffectiveScatterAfterShot;
+        }
+
+        if (shot.SolutionFoundAfterShot)
+            ranging.DisplaySolutionFound = true;
+        if (ranging.DisplaySolutionFound)
+            ranging.DisplayLastEffectiveScatter = MortarScatterRules.SolvedScatter;
+    }
+
+    private static void EnqueuePendingMortarImpact(MortarApplyState shot)
+    {
+        if (!PendingMortarImpacts.TryGetValue(shot.SkillKey, out Queue<MortarApplyState>? pending))
+        {
+            pending = new Queue<MortarApplyState>();
+            PendingMortarImpacts[shot.SkillKey] = pending;
+        }
+
+        pending.Enqueue(shot);
+    }
+
+    private static void MortarRangingTileHitPostfix(Il2CppMenace.Tactical.Skills.Skill __0)
+    {
+        if (__0 == null) return;
+
+        try
+        {
+            long skillKey = NativeKey(__0);
+            if (skillKey == 0 || !PendingMortarImpacts.TryGetValue(skillKey, out Queue<MortarApplyState>? pending)
+                || pending.Count == 0)
+                return;
+
+            MortarApplyState shot = pending.Dequeue();
+            if (pending.Count == 0)
+                PendingMortarImpacts.Remove(skillKey);
+            if (!_enabled || shot.IsHostileMortar) return;
+
+            MortarRangingState ranging = RecordMortarPlayerShot(shot);
+            UpdateMortarRangingDisplay(ranging, shot);
+            DebugLog($"MORTAR IMPACT actor=0x{shot.RangingKey.Actor:X} weapon=0x{shot.RangingKey.Weapon:X} target=({shot.TileKey.X},{shot.TileKey.Z}) impact=({shot.ImpactX},{shot.ImpactZ}) scatter={shot.EffectiveScatterAfterShot} shots={ranging.DisplayShots} solution={ranging.DisplaySolutionFound}.");
+        }
+        catch (Exception ex)
+        {
+            if (_debugLogging)
+                Warn($"Mortar impact feedback failed: {ex.GetType().Name}: {ex.Message}");
+        }
+    }
+
     private static long NativeKey(Il2CppObjectBase? value)
     {
         try { return value?.Pointer.ToInt64() ?? 0; }
         catch { return 0; }
+    }
+
+    private static bool IsHostileMortarActor(Il2CppMenace.Tactical.Actor actor)
+    {
+        try
+        {
+            int faction = (int)actor.GetFaction();
+            return faction == (int)FactionType.EnemyLocalForces
+                || faction == (int)FactionType.Pirates
+                || faction == (int)FactionType.Wildlife
+                || faction == (int)FactionType.Constructs
+                || faction == (int)FactionType.RogueArmy;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private static MortarTurnScatterState GetEnemyMortarTurnState((long Actor, long Weapon) key)
+    {
+        if (!EnemyMortarTurnRanging.TryGetValue(key, out MortarTurnScatterState? state) || state == null)
+        {
+            state = new MortarTurnScatterState();
+            EnemyMortarTurnRanging[key] = state;
+        }
+        return state;
     }
 
     private static (long Actor, long Weapon) MortarRangingKey(
@@ -991,47 +1178,20 @@ public sealed partial class Plugin : IHostedPlugin
     private static int GetMortarEffectiveScatter(MortarRangingState? ranging, int baseScatter)
         => MortarScatterRules.EffectiveScatter(baseScatter, ranging?.Shots ?? 0, ranging?.SolutionFound ?? false);
 
-    private static float GetMortarRegistrationProgress(MortarRangingState ranging)
-    {
-        if (ranging == null || ranging.Shots <= 0) return 0f;
-        if (ranging.SolutionFound) return 1f;
-
-        int baseScatter = ranging.LastBaseScatter;
-        if (baseScatter <= MortarUnsolvedScatterFloor) return 0f;
-        int effective = ranging.LastEffectiveScatter > 0
-            ? ranging.LastEffectiveScatter
-            : GetMortarEffectiveScatter(ranging, baseScatter);
-
-        int totalUnsolvedSteps = Math.Max(1, baseScatter - MortarUnsolvedScatterFloor);
-        int completedSteps = Math.Clamp(baseScatter - effective, 1, totalUnsolvedSteps);
-        if (totalUnsolvedSteps <= 1) return 0f;
-
-        // First ranging correction is deliberately red. Subsequent tightening moves
-        // through amber/yellow toward green, while full green is reserved for Scatter=1.
-        return Mathf.Clamp01((completedSteps - 1) / (float)(totalUnsolvedSteps - 1)) * 0.78f;
-    }
+    private static int GetMortarDisplayedEffectiveScatter(MortarRangingState? ranging, int baseScatter)
+        => MortarScatterRules.EffectiveScatter(baseScatter, ranging?.DisplayShots ?? 0, ranging?.DisplaySolutionFound ?? false);
 
     private static MortarHighlightBlend GetMortarHighlightBlend(MortarRangingState ranging, int? baseScatter = null)
     {
-        float progress = GetMortarRegistrationProgress(ranging);
-        float strength = ranging.SolutionFound ? 15f : Mathf.Lerp(9f, 14f, progress);
-        byte red = (byte)Math.Clamp((int)Math.Round(strength * (1f - progress)), 0, 15);
-        byte green = (byte)Math.Clamp((int)Math.Round(strength * progress), 0, 15);
-        if (ranging.SolutionFound)
-        {
-            red = 0;
-            green = 15;
-        }
-        else if (red == 0 && green == 0)
-        {
-            red = 1;
-        }
-
-        int effectiveScatter = baseScatter.HasValue ? GetMortarEffectiveScatter(ranging, baseScatter.Value)
-            : ranging.LastEffectiveScatter > 0
-            ? ranging.LastEffectiveScatter
-            : Math.Max(MortarUnsolvedScatterFloor, ranging.LastBaseScatter);
-        return new MortarHighlightBlend(red, green, effectiveScatter, ranging.SolutionFound);
+        int colorBaseScatter = Math.Max(0, baseScatter ?? ranging.DisplayLastBaseScatter);
+        int effectiveScatter = baseScatter.HasValue
+            ? GetMortarDisplayedEffectiveScatter(ranging, baseScatter.Value)
+            : ranging.DisplayLastEffectiveScatter > 0
+                ? ranging.DisplayLastEffectiveScatter
+                : colorBaseScatter;
+        float progress = MortarScatterRules.ColorProgress(
+            colorBaseScatter, effectiveScatter, ranging.DisplaySolutionFound);
+        return new MortarHighlightBlend(progress, effectiveScatter, ranging.DisplaySolutionFound);
     }
 
     private static void MortarRangingSetStancePrefix(
@@ -1070,9 +1230,36 @@ public sealed partial class Plugin : IHostedPlugin
         ClearMortarRangingForActor(__instance);
     }
 
+    private static void MortarRangingAgentTurnStartPostfix(Agent __instance)
+    {
+        if (__instance == null) return;
+
+        try
+        {
+            Il2CppMenace.Tactical.Actor actor = __instance.GetActor();
+            long actorKey = NativeKey(actor);
+            if (actorKey == 0) return;
+
+            int resetCount = 0;
+            foreach (var pair in EnemyMortarTurnRanging)
+            {
+                if (pair.Key.Actor != actorKey) continue;
+                pair.Value.Reset();
+                resetCount++;
+            }
+            if (resetCount > 0)
+                DebugLog($"MORTAR TURN RESET actor=0x{actorKey:X} weapons={resetCount}.");
+        }
+        catch (Exception ex)
+        {
+            if (_debugLogging)
+                Warn($"Enemy mortar activation reset failed: {ex.GetType().Name}: {ex.Message}");
+        }
+    }
+
     private static void ClearMortarRangingForActor(Il2CppMenace.Tactical.Actor actor)
     {
-        if (actor == null || MortarRangingSolutions.Count == 0) return;
+        if (actor == null) return;
 
         long actorKey = NativeKey(actor);
         if (actorKey == 0) return;
@@ -1085,9 +1272,28 @@ public sealed partial class Plugin : IHostedPlugin
             remove.Add(key);
         }
 
-        if (remove == null) return;
-        for (int i = 0; i < remove.Count; i++)
-            MortarRangingSolutions.Remove(remove[i]);
+        if (remove != null)
+        {
+            for (int i = 0; i < remove.Count; i++)
+                MortarRangingSolutions.Remove(remove[i]);
+        }
+
+        foreach (long skillKey in PendingMortarImpacts.Keys.ToArray())
+        {
+            Queue<MortarApplyState> queued = PendingMortarImpacts[skillKey];
+            Queue<MortarApplyState> remaining = new();
+            while (queued.Count > 0)
+            {
+                MortarApplyState pending = queued.Dequeue();
+                if (pending.RangingKey.Actor != actorKey)
+                    remaining.Enqueue(pending);
+            }
+
+            if (remaining.Count == 0)
+                PendingMortarImpacts.Remove(skillKey);
+            else
+                PendingMortarImpacts[skillKey] = remaining;
+        }
     }
 
     private static Material? GetMortarWorldLineMaterial()
@@ -1280,7 +1486,7 @@ public sealed partial class Plugin : IHostedPlugin
                 foreach (var tilePair in pair.Value)
                 {
                     MortarRangingState? ranging = tilePair.Value;
-                    if (ranging == null || ranging.Shots <= 0) continue;
+                    if (ranging == null || ranging.DisplayShots <= 0) continue;
 
                     MortarHighlightBlend blend = GetMortarHighlightBlend(ranging, selectedScatter);
                     if (!desired.TryGetValue(tilePair.Key, out MortarHighlightBlend existing)
@@ -1332,8 +1538,7 @@ public sealed partial class Plugin : IHostedPlugin
                 }
 
                 MortarHighlightBlend previous = worldHighlight.Blend;
-                if (previous.Red != pair.Value.Red
-                    || previous.Green != pair.Value.Green
+                if (previous.Progress != pair.Value.Progress
                     || previous.EffectiveScatter != pair.Value.EffectiveScatter
                     || previous.SolutionFound != pair.Value.SolutionFound)
                 {
@@ -1428,7 +1633,7 @@ public sealed partial class Plugin : IHostedPlugin
                 foreach (var pair in solutionMaps[m])
                 {
                     MortarRangingState ranging = pair.Value;
-                    if (ranging == null || ranging.Shots <= 0) continue;
+                    if (ranging == null || ranging.DisplayShots <= 0) continue;
 
                     MortarHighlightBlend blend = GetMortarHighlightBlend(ranging, selectedScatter);
                     if (!merged.TryGetValue(pair.Key, out MortarHighlightBlend existing)
@@ -1479,13 +1684,11 @@ public sealed partial class Plugin : IHostedPlugin
 
     private static Color GetMortarOverlayColor(MortarHighlightBlend blend)
     {
-        float total = Math.Max(1f, blend.Red + blend.Green);
-        float greenMix = blend.Green / total;
-        Color low = new Color(1.00f, 0.08f, 0.04f, 0.98f);
+        Color low = new Color(0.48f, 0.15f, 0.14f, 0.92f);
         Color high = blend.SolutionFound
-            ? new Color(0.18f, 1.00f, 0.22f, 1f)
-            : new Color(0.20f, 0.92f, 0.18f, 0.98f);
-        return Color.Lerp(low, high, greenMix);
+            ? new Color(0.31f, 0.64f, 0.37f, 0.96f)
+            : new Color(0.30f, 0.59f, 0.35f, 0.92f);
+        return Color.Lerp(low, high, blend.Progress);
     }
 
     private static void DrawMortarTileBorder(Camera camera, Il2CppMenace.Tactical.Tile tile, float thickness, Color color, int edges = 15)
@@ -1708,6 +1911,7 @@ public sealed partial class Plugin : IHostedPlugin
 
     private static void ApplyMortarBallisticsPolicy()
     {
+        ApplyEnemyMortarBallisticsPolicy();
         foreach (var pair in MortarSkillSpecs)
         {
             GameObj template = Templates.Find("SkillTemplate", pair.Key);
@@ -1765,6 +1969,24 @@ public sealed partial class Plugin : IHostedPlugin
                     Warn($"Could not update smoke-mortar action economy for {skillId}: {ex.GetType().Name}: {ex.Message}");
             }
         }
+    }
+
+    private static void ApplyEnemyMortarBallisticsPolicy()
+    {
+        // The enemy uses a separate skill, not active.launch_medium_mortar_frag.
+        // Share the medium dispersion profile only: do not halve enemy AP costs,
+        // double ammunition, alter repetitions or apply player damage/suppression changes.
+        const string skillId = "active.enemy_only_launch_medium_mortar_frag";
+        GameObj template = Templates.Find("SkillTemplate", skillId);
+        if (template.IsNull)
+        {
+            DebugLog($"Enemy mortar baseline unavailable: {skillId} was not found.");
+            return;
+        }
+
+        ApplyMortarTemplateValue(template, skillId, "Scatter", 4);
+        ApplyMortarTemplateValue(template, skillId, "ScatterChance", 80);
+        DebugLog($"MORTAR BASELINE skill={skillId} scatter={Templates.ReadField(template, "Scatter")} scatterChance={Templates.ReadField(template, "ScatterChance")}% enabled={_enabled}.");
     }
 
     private static void ApplyMortarTemplateValue(GameObj template, string skillId, string fieldName, object enabledValue)

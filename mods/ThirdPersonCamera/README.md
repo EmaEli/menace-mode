@@ -1,4 +1,38 @@
-# Cinematic Action Camera 1.1.1 — local candidate
+# Cinematic Action Camera 1.2.2 — Windows test install; gameplay retest pending
+
+## Per-unit controls and short-move filter (#60)
+
+Open **Menace Mod Settings (End) > Cinematic Action Camera**. Friendly infantry squad leaders,
+conventional vehicles and walkers keep their distance/height and movement/firing controls.
+Visible enemy movement has separate percentages for infantry (including jetpack units),
+vehicles and walkers; enemies reuse the existing framing for their category. Firing
+cinematics still follow friendly shooters only. The legacy ModpackLoader companion is frozen;
+use the Jiangyu companion for the new controls.
+
+**Minimum move distance** defaults to **0 (disabled)** to preserve existing behavior.
+Set it to **3** to skip one- and two-tile moves. This uses MENACE's start-to-destination
+tile distance, not detour path length or total tiles moved during a turn. It affects only
+automatic movement cinematics, never firing or manual F6. If the native movement hook is
+unavailable, the polling fallback cannot know the endpoints: automatic movement shots are
+suppressed while this filter is enabled rather than bypassing it.
+
+Automatic follow observes MENACE's concrete Jetpack effect before its jump coroutine starts. It uses
+the skill's destination tile and the same movement chance and minimum-distance setting;
+other skills do not trigger a movement shot.
+
+Existing movement/firing percentages seed all three types on upgrade. New enemy movement
+percentages inherit the matching unit type's movement chance; explicit new values, including
+0%, are preserved. Walkers initially inherit the saved vehicle framing; saved infantry
+Distance/Height are exposed unchanged. Without the companion, new
+per-type preferences use **-1** to inherit the historical shared values. Walker detection
+uses vehicle template IDs containing `walker`, consistent with Squaddie Veterancy; custom
+vehicle templates without that marker use conventional vehicle controls.
+
+The 1.2.2 candidate was built and installed on MENACE 0.7.17+22362 on 19 Oct 2026. A
+post-install launch log contains the camera and no camera startup/hook/UI errors or warnings.
+User feedback was positive, but the specific allied Jetpack automatic-follow result has not
+yet been explicitly recorded; keep #60 open until confirmed. Per-setting persistence and
+the remaining visual cases are not all verified.
 
 ## Obstructed firing cinematics (#54)
 
@@ -19,7 +53,7 @@ acceptance remains separate; see `docs/MISSION_VALIDATION_2026-10-16.md`.
 ## Jiangyu-compatible distribution (#33 / #15)
 
 The camera remains the **single** `MenaceThirdPersonCamera.dll` MelonLoader entry point.
-Its seven menu controls now have a Jiangyu companion in `mods/jiangyu/CinematicActionCamera`,
+Its menu controls have a Jiangyu companion in `mods/jiangyu/CinematicActionCamera`,
 using MenaceModSettings 0.6.0 (End key). The settings companion does not start another camera or
 patch combat. Keep MelonLoader and Jiangyu; do not install the legacy settings modpack too.
 
@@ -30,10 +64,10 @@ then the camera's existing MelonPreferences. Migration never rewrites old prefer
 Only the known group-to-scalar JSON schema is imported; other legacy formats remain intact
 and need explicit inspection, not guessed conversion.
 
-Both new DLLs compile locally against the cached game proxies. This is **not** a Windows
-startup/deployment or gameplay verification. Keep #15/#33 open for F6/F7, infantry/vehicles,
-visibility, orbit, HUD restore and settings persistence checks. Packaging uses the shared
-installer under `mods/GameplaySuite/tools/Install-IntegratedSuite.ps1`.
+The 1.2.2 camera and companion DLLs compiled and were installed on Windows against the
+MENACE 0.7.17+22362 proxies; a post-install launch was checked. Keep #15/#33 open for F6/F7,
+infantry/vehicles, visibility, orbit, HUD restore and settings persistence checks. Packaging
+uses the shared installer under `mods/GameplaySuite/tools/Install-IntegratedSuite.ps1`.
 
 The following sections describe the historical 0.3.3 behavior and controls; the new shared
 installer supersedes the old manual deployment steps.
@@ -44,7 +78,7 @@ A **camera-only** MelonLoader mod. Watch infantry and vehicles from a chase/orbi
 
 | Control | Action |
 |---|---|
-| **F6** | Enter/exit third person for the selected friendly infantry squad **or vehicle** |
+| **F6** | Enter/exit third person for the selected friendly infantry squad (including jetpack infantry) **or vehicle** |
 | **F7** | Toggle automatic cinematics for this session (OFF by default) |
 | **Hold middle mouse + move mouse** | Orbit freely around the observed unit and adjust camera elevation |
 | **R** | Reset orbit to the unit's forward direction |
@@ -59,9 +93,15 @@ Automatic mode is **OFF by default**. Activate with **F7**, `AutomaticMode=true`
 
 | Event | Default | Behavior |
 |---|---:|---|
-| `MovementChance` | 80% | Player infantry, player vehicles, and **currently visible enemy infantry/vehicles** use the **same** chance |
-| `FiringChance` | 100% | Player infantry and player vehicles firing (the shooting unit, never a friendly victim) |
-| `FollowVisibleEnemyMovement` | true | Enables/disables following visible enemy moves without adding another probability slider |
+| `MovementChance` | 80% | Friendly infantry movement; historical key retained |
+| `FiringChance` | 100% | Friendly infantry firing; historical key retained |
+| `VehicleMovementChance` / `VehicleFiringChance` | Inherited | Conventional vehicles; independent movement/firing percentages |
+| `WalkerMovementChance` / `WalkerFiringChance` | Inherited | Walkers; independent movement/firing percentages |
+| `EnemyInfantryMovementChance` | Inherited | Visible enemy infantry movement, including jetpack units |
+| `EnemyVehicleMovementChance` | Inherited | Visible enemy vehicle movement |
+| `EnemyWalkerMovementChance` | Inherited | Visible enemy walker movement |
+| `MinimumMovementTiles` | 0 | Minimum ordered move distance; 3 skips 1-2 tiles |
+| `FollowVisibleEnemyMovement` | true | Enables/disables visible enemy movement follow, in addition to the category percentages |
 
 **Incoming fire no longer starts a camera shot.** Hits, misses, suppression, and attacks directed *at* friendly units do not trigger a victim-camera cut. This supersedes the old `UnderFireChance` preference from 0.2.x, which is ignored in 0.3 and no longer listed in the menu.
 
@@ -71,9 +111,9 @@ Each eligible movement/attack gets one independent probability roll, not one rol
 
 ## Camera settings
 
-The infantry camera retains the original preferences: `Distance=3.2`, `Height=1.75`, `ShoulderOffset=0.55`, `FieldOfView=66` and `OrbitSensitivity=0.35`.
+The infantry camera retains the original preferences: `Distance=3.2`, `Height=1.75`, `ShoulderOffset=0.55`, `FieldOfView=66` and `OrbitSensitivity=0.35`. Distance and height are now exposed in the Jiangyu menu too.
 
-Vehicles have their own defaults: `VehicleDistance=8.5` and `VehicleHeight=3.8`, with zero shoulder offset for a centered follow camera. Both can be adjusted in MelonPreferences or the in-game menu. This is a first approximation for tanks, transporters and tall walkers; the camera does not yet automatically measure each model's bounds.
+Vehicles have their own defaults: `VehicleDistance=8.5` and `VehicleHeight=3.8`, with zero shoulder offset for a centered follow camera. Walkers use separate `WalkerDistance` and `WalkerHeight` settings, initially inherited from vehicles. All can be adjusted in MelonPreferences or the Jiangyu menu. The camera does not automatically measure model bounds.
 
 Other preferences: `ToggleKey=F6`, `AutoToggleKey=F7`, `OrbitMouseButton=Middle`, `Debug=false`. All settings belong to the MelonPreferences category `MenaceThirdPersonCamera`. The companion modpack implements the same `IModpackPlugin` interface as Larger Maps (including the required scene callback) and registers these settings with `ModSettings.Register`. When installed, its settings are re-read at most twice per second and take precedence over corresponding MelonPreferences values. F7 is a temporary per-session override.
 

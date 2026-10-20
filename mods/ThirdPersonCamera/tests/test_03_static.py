@@ -14,16 +14,31 @@ container_filter = re.search(
     r'private static bool ShouldSkipFiringCameraFromEnclosedBuilding\(.*?\n        \}', src, re.S)
 
 checks = {
-    'release identity 1.1.1': '"Cinematic Action Camera", "1.1.1"' in src and '<Version>1.1.1</Version>' in project,
+    'release identity 1.2.2': '"Cinematic Action Camera", "1.2.2"' in src and '<Version>1.2.2</Version>' in project,
     'MEN-006 compatibility contract': 'public static bool IsCinematicViewActive' in src,
     'native tactical UI visibility used': 'UITactical.SetUIVisibility(false)' in src and 'UITactical.SetUIVisibility(true)' in src,
     'UI restored by exit even when camera fails': re.search(r'private void ExitThirdPerson\(.*?finally\s*\{.*?RestoreTacticalUi\(\);', src, re.S) is not None,
+    'depth of field is temporarily disabled and restored': all(x in src for x in (
+        'private void DisableDepthOfField()', 'settings.DepthOfFieldQuality = 0;',
+        '_savedDepthOfFieldQuality = settings.DepthOfFieldQuality;',
+        'settings.DepthOfFieldQuality = _savedDepthOfFieldQuality;',
+        'private void RestoreDepthOfField()', 'settings.ApplyToAllCameras();')) and
+        re.search(r'private void ExitThirdPerson\(.*?finally\s*\{[^}]*?RestoreDepthOfField\(\);', src, re.S) is not None and
+        'PersistentPlayerSettings.Save()' not in src,
     'UI restored on scene exit': 'override void OnSceneWasUnloaded' in src and 'ExitThirdPerson(false)' in src,
-    'manual camera permits vehicles': 'if (manual ? !IsPlayerUnit(actor)' in src and '(actor.IsInfantry() || actor.IsVehicle())' in src,
+    'manual camera permits vehicles': 'if (manual ? !IsPlayerUnit(actor)' in src and '(actor.IsInfantry() || actor.IsVehicle() || actor.HasTag(TagType.JETPACK))' in src,
+    'jetpack-tagged infantry is a supported follow target': 'actor.HasTag(TagType.JETPACK)' in src and 'using Il2CppMenace.Tags;' in src,
     'separate vehicle positioning': 'VehicleDistance' in src and 'VehicleHeight' in src and '_trackedActor.IsVehicle()' in src,
     'visible enemy movement eligible': 'FollowVisibleEnemyMovement' in src and '!actor.IsHiddenToPlayer()' in src and 'actor.Is3DModelVisibleToPlayer()' in src,
     'current vision / not only discovered': 'actor.IsDiscoveredByPlayer()' in src and '!actor.IsHiddenToPlayer()' in src,
-    'enemy movement uses movement probability': 'float chance = kind == EventKind.Movement ? _cachedMovementChance : _cachedFiringChance;' in src,
+    'per-type movement and firing probabilities': all(key in src for key in ('_cachedVehicleMovementChance', '_cachedVehicleFiringChance', '_cachedWalkerMovementChance', '_cachedWalkerFiringChance', 'RollChance(actor, kind)')),
+    'enemy movement chances are independently configurable by category': all(key in src for key in ('EnemyInfantryMovementChance', 'EnemyVehicleMovementChance', 'EnemyWalkerMovementChance', '_cachedEnemyWalkerMovementChance')),
+    'minimum move filter uses native event endpoints': 'MovementPostfix(Actor _actor, Tile _from, Tile _to)' in src and 'from.GetDistanceTo(to) < _cachedMinimumMovementTiles' in src,
+    'jetpack jumps observe the concrete native effect before movement': 'PatchEvent("OnApply", 6, nameof(JetpackApplyPrefix),' in src and 'typeof(JetPackHandler), true)' in src and 'JetpackApplyPrefix(Actor __0, Tile __1, Tile __2)' in src,
+    'jetpack effect is not rejected by generic movement classification': 'if (!actor.HasTag(TagType.JETPACK) || !skill.IsMovementSkill())' not in src and 'PatchEvent("InvokeOnSkillUse"' not in src,
+    'invalid jetpack destinations are ignored just like the native effect': '!targetTile.IsValidMovementDestination()' in src,
+    'jetpack skill destinations honor minimum movement distance': 'from.GetDistanceTo(targetTile)' in src and 'distance < _cachedMinimumMovementTiles' in src,
+    'poll fallback cannot bypass minimum move filter': 'moving && !_seenMovement && _cachedMinimumMovementTiles == 0' in src,
     'attacked friendly never triggers auto camera': all(x not in src for x in ('InvokeOnDamageReceived','InvokeOnAttackMissed','InvokeOnSuppressionApplied','EventKind.UnderFire','UnderFireChance')),
     'fire follows friendly shooter': 'if (!IsPlayerUnit(attacker)' in src,
     'enclosed building and bunker shooters skip automatic firing': 'ShouldSkipFiringCameraFromEnclosedBuilding(attacker)' in src and 'GetContainerEntity()' in src,

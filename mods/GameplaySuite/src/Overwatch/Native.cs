@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using Il2CppInterop.Runtime.InteropTypes;
 using Il2CppMenace.Items;
 using Il2CppMenace.Tactical;
@@ -389,6 +390,10 @@ internal static class Native
         return true;
     }
 
+    // #44: dump 2428 faults in coreclr's devirtualizing JIT while compiling this helper,
+    // despite assembly pre-JIT. Keep the IL2CPP virtual property calls out of optimizing
+    // compilation, including in callers; do not replace native virtual dispatch.
+    [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)]
     private static EntityProperties? CurrentProperties(Actor actor, out string concreteType)
     {
         concreteType = "unknown";
