@@ -23,7 +23,7 @@ source, tests and documentation, including previously untracked implementation f
 - LargerMaps 2.3.2: route diagnostics/budget, conditional advance recovery and tests.
   Windows install and ON/OFF gameplay are documented in
   [the AI report](AI_DIAGNOSTICS_2026-10-19.md); MEN-002 is closed by user acceptance.
-- CinematicActionCamera 1.2.2 and ThirdPersonCamera 0.4.2: framing/control fixes.
+- CinematicActionCamera and ThirdPersonCamera 1.2.2: framing/control fixes.
 - WeaponMechanicsRebalanced 0.4.14: impact-gated muted ranging feedback, hostile
   per-activation scatter and enemy-only medium-mortar coverage.
 - GarrisonableBuildings 1.2.0: native deployed-stance accuracy handling and tests.
@@ -44,16 +44,39 @@ the current packages merely to make the historical branch graph appear merged.
 
 Two isolated local commits need explicit accounting:
 
-- `6f5373c` / #51: Smoke Overhaul 0.7.0 opt-in free infantry grenades; recover the
-  source/test/docs change on `dev`. This package was delivered to Downloads, not
+- `6f5373c` / #51: Smoke Overhaul 0.7.0 opt-in free infantry grenades; recovered by
+  cherry-pick `0c0d32b` on `dev`. This package was delivered to Downloads, not
   proven installed; do not describe it as an exact copy of the played PC build.
 - `9564de7` / #61: mortar feedback already present in the broader current 0.4.14
   implementation; retain hostile-mortar additions rather than replacing them with
-  that isolated 0.4.15 branch. Account for any remaining delta explicitly.
+  that isolated 0.4.15 branch. Its other runtime delta moves impact-hook installation
+  later in the same method; retain the current earlier installation. Feedback
+  production helpers, overlay code and regression assertions are already included.
+- Camera worktree: current source retains its changes; remaining differences are
+  method/settings ordering, comments and UI/depth-of-field restoration order.
+- Older detached MEN-002 worktree: diagnostics/budget are included; its 2.2.x
+  plugin/version is superseded by the current tested 2.3.2 recovery implementation.
 
-Retain historical refs and dirty worktrees until their unique work has been
-accounted for. They are inactive archives, not further development branches.
-Do not delete unique history to achieve a cosmetic two-branch list.
+Preserve historical tips as remote and local tags under
+`archive/2026-10-20/local/<branch>` and `archive/2026-10-20/origin/<branch>`
+before removing old branch refs. Tags retain unique history, including older
+documentation and prototypes not copied into current runtime packages. A branch
+can be recovered from its corresponding tag; no force-push/reset is needed.
+Existing dirty worktrees remain on disk, detached at their original commit.
+They are inactive archives, not additional development lines.
+
+## Consolidation checks
+
+- GameplaySuite: 141 Python tests passed.
+- LargerMaps: 146 Python tests run, 142 passed and four optional fixture checks
+  skipped; available 0.7.17 native-binary and dump contracts were included.
+- C# managed regression checks: 17,764 Suite, 12,237 recovery and 10,120 route-budget
+  assertions passed. Existing nullable-reference compiler warnings remain.
+- Camera: 28 static checks and the legacy settings-bridge checks passed.
+- Corrected the source inventory for Smoke Overhaul/Overwatch and an obsolete
+  camera test assertion after its actor-aware probability signature changed.
+- `git diff --check` passed. No production rebuild, new kit, Windows install or
+  new gameplay session was performed during consolidation.
 
 ## Evidence boundary
 

@@ -50,7 +50,7 @@ class MissionFeedbackTests(unittest.TestCase):
         self.assertIn("map.TileCenterToWorldPos(tile.GetTilePos(), true)", attack)
         self.assertIn("ConsiderAutoCamera(attacker, EventKind.Firing, clip, target)", attack)
         self.assertEqual(attack.count("SetAutoAttackTarget(kind, attackTarget);"), 3)
-        self.assertEqual(attack.count("if (!RollChance(kind)) return;"), 1)
+        self.assertEqual(attack.count("if (!RollChance(actor, kind)) return;"), 1)
         self.assertIn("if (_active && _manual) return;", attack)
 
     def test_attack_view_ignores_leader_heading_and_targets_firing_axis(self):

@@ -50,7 +50,7 @@ KDL counts below are **source files**, not patch-operation counts.
 | InfantryAssault | 0.5.9 | Shared SuiteSystem host + 2 KDL files; defensive suppression fix candidate #47 |
 | LargerMaps | 2.3.2 | Jiangyu system; recovery ON-default, selective positioning OFF; Windows installed and ON/OFF gameplay compared; user accepted the bounded gameplay improvement and MEN-002 is closed; distinct slowdown #57 remains separate |
 | Overwatch | 0.32.3.8 | Shared SuiteSystem host, native reactions/HUD; isolated hostile-turn JIT guard |
-| SmokeOverhaul | 0.6.4 | Shared SuiteSystem host; PR #12 bounded smoke rules ported, runtime pending |
+| SmokeOverhaul | 0.7.0 | Shared SuiteSystem host; bounded AI smoke rules retained, free infantry grenade grants opt-in OFF (#51); package delivered to Downloads, installation not verified |
 | SquaddieVeterancy | 1.10.2 | Shared SuiteSystem host, native hooks/HUD/save sidecars |
 | StartingOptions | 0.1.1 | Shared SuiteSystem host, new-campaign settings |
 | StrongerCover | 3.0.1 | Jiangyu system, SDK prefix + runtime inside-cover settings |
