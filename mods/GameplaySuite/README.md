@@ -9,6 +9,8 @@ pinned-only emergency smoke permission/AP behavior. Native use, coexistence and 
 timing are unverified; no global scheduler or new pathfinder was added. The previous
 migration ZIP is unchanged and does not contain this subsequent AI follow-up.
 
+Weapon Mechanics Rebalanced **0.4.15** isolates issue #61's muted, impact-gated mortar feedback from the separate unaccepted #59 balance change. The user confirms the live visual/timing acceptance from the Windows test install; the isolated source candidate still needs its build validation.
+
 ### 0.32.5 MENACE 0.7.16 compatibility (Field Logistics)
 
 Field Logistics **1.0.7** restores `Resupply Infantry` and `Redistribute Ammo` on MENACE v0.7.16, which removed the skill template both were cloned from. The clones now derive from `active.rogue_officer_whistle` with the Refill Ammo behavior re-applied by the manifest, and all suite `EntityTemplate.Skills` patches use `$append` so the grenade skills 0.7.16 adds to player squads are kept. Other modules are unchanged. Verified in game on 0.7.16. See issue #41.

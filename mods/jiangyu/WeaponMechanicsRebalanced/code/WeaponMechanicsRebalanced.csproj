@@ -9,7 +9,7 @@
   -->
   <PropertyGroup>
     <!-- Keep in step with jiangyu.json so the DLL metadata identifies the shipped build. -->
-    <Version>0.4.11</Version>
+    <Version>0.4.15</Version>
     <AssemblyName>WeaponMechanicsRebalanced</AssemblyName>
     <RootNamespace>MenaceWeaponMechanicsRebalanced</RootNamespace>
     <Nullable>enable</Nullable>

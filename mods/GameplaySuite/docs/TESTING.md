@@ -1,3 +1,24 @@
+## Weapon Mechanics Rebalanced 0.4.15 — #61 muted, impact-gated feedback
+
+The user confirms the in-game visual/timing acceptance from the Windows test install. The
+0.4.15 source candidate isolates presentation changes from the separate, unaccepted #59
+balance work; after building this candidate, confirm the behavior remains presentation-only:
+
+1. With Debug OFF, fire at a remembered mortar target. Keep the prior `S` value and color
+   while the projectile is in flight; update them once only after the impact callback.
+2. Repeat with a miss and a direct hit. A solved value/color must appear after impact,
+   not at fire start. Check separate targets and physical mortars remain isolated.
+3. Confirm the marker progresses through muted dark red to green as effective Scatter
+   tightens, with a brighter green only for a solved Scatter 1 state.
+4. Confirm the yellow `Spread N` cursor envelope and native blast AoE are unchanged.
+5. Verify mortar Scatter, ScatterChance, AP/ammo, repetitions, damage and suppression are
+   identical to the pre-change behavior. If the impact hook is unavailable, ranging display
+   remains hidden rather than advancing early. Debug logging remains OFF by default.
+
+Offline C# and source-wiring checks validate the interpolation and hook data flow but do
+not establish in-game visibility/timing. The user has confirmed issue #61 acceptance; keep
+the source candidate's isolated build/version check separate from #59.
+
 ## Weapon Mechanics Rebalanced 0.4.11 — #56 (user-reported in-game acceptance; per-target visual checklist not recorded)
 
 The 0.4.10 Windows run loaded the new DLL but failed both screen overlays in the

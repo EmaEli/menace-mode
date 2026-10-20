@@ -16,6 +16,15 @@ internal static class MortarScatterRules
         return (int)Math.Max(Math.Min(baseScatter, UnsolvedFloor), tightened);
     }
 
+    internal static float ColorProgress(int baseScatter, int effectiveScatter, bool solutionFound)
+    {
+        if (solutionFound) return 1f;
+        baseScatter = Math.Max(0, baseScatter);
+        if (baseScatter <= SolvedScatter) return 0f;
+        float progress = (baseScatter - (float)effectiveScatter) / (baseScatter - SolvedScatter);
+        return Math.Clamp(progress, 0f, 1f);
+    }
+
     // Skill.GetAvailableScatterTiles uses an inclusive square, not a circle.
     // Bits follow the projected tile corners: south, east, north, west.
     internal static int BorderEdges(int dx, int dz, int scatter)

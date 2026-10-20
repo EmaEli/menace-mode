@@ -1,4 +1,6 @@
-# Weapon Mechanics Rebalanced 0.4.11
+# Weapon Mechanics Rebalanced 0.4.15
+
+**0.4.15 mortar feedback (#61):** ranging markers use a muted dark-red-to-green palette based on effective Scatter, with brighter green reserved for a solved shot. The displayed scatter value and color remain unchanged while a shell is in flight and advance only after MENACE's projectile-impact callback is observed. The user confirms the live visual/timing behavior on the Windows test install. Presentation only: mortar ballistics, Scatter, ScatterChance, action economy and damage are unchanged.
 
 **0.4.11 targeting feedback (#56):** fixes two runtime failures observed with 0.4.10: its screen borders reached an unsupported `GUI.DrawTexture` proxy stub, and world borders failed in generic `AddComponent<LineRenderer>`. Borders now use a native `GUI.Label` background and non-generic component creation. The yellow dispersion envelope (`Spread N`) remains separate from blast AoE. Proxy call-path checks supplement the pure/source checks; in-game visibility still requires confirmation.
 
@@ -45,7 +47,7 @@ Each physical mortar remembers intended target tiles while its firing position r
 
 ### Ranging feedback
 
-When the selected mortar has ranged a tile, WMR draws independent world-space and high-contrast screen-space borders around that tile, with an `S` label for the next shot's scatter. The border progresses red -> orange/amber -> yellow-green -> green as effective Scatter tightens; full green is reserved for the solved Scatter 1 state. Selecting a specific mortar shows only that physical weapon's history.
+When the selected mortar has ranged a tile, WMR draws independent world-space and screen-space borders around that tile, with an `S` label for the next shot's scatter. The border follows a muted dark-red-to-green palette as effective Scatter tightens; a solved Scatter 1 state uses brighter green. The displayed value and color advance only after the projectile impact is observed. Selecting a specific mortar shows only that physical weapon's history.
 
 While targeting, a **yellow outer envelope** and `Spread N` label show the maximum dispersion radius for the current mortar/target combination, including fresh targets. Scatter 3 spans offsets -3 through +3 (a 7-by-7 tile envelope), Scatter 2 spans 5-by-5, and Scatter 1 spans 3-by-3. This is the scatter envelope, not guaranteed damage or an exact-hit probability; native valid-impact filters may exclude tiles. The native blast AoE inside it is deliberately left unchanged.
 

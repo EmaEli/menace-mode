@@ -9,11 +9,12 @@ OVERLAY = (ROOT / "src/WeaponMechanicsRebalanced/MortarTargetingOverlay.cs").rea
 
 class MortarTargetingTests(unittest.TestCase):
     def test_shot_and_preview_use_same_target_lookup(self):
-        self.assertIn("GetMortarTargetScatter(__instance, actor, __0, originalScatter)", PLUGIN)
+        self.assertIn("GetMortarTargetScatter(__instance, actor, __0, originalScatter, useDisplayedState: false)", PLUGIN)
         self.assertIn("GetMortarTargetScatter(skill, actor, target, template.Scatter)", OVERLAY)
         self.assertIn("MortarRangingKey(skill, actor)", OVERLAY)
         self.assertIn("solutions.TryGetValue((target.GetX(), target.GetZ()), out ranging)", OVERLAY)
-        self.assertIn("return GetMortarEffectiveScatter(ranging, baseScatter)", OVERLAY)
+        self.assertIn("return useDisplayedState", OVERLAY)
+        self.assertIn("GetMortarDisplayedEffectiveScatter(ranging, baseScatter)", OVERLAY)
         self.assertIn("MortarScatterRules.EffectiveScatter", PLUGIN)
 
     def test_preview_works_before_any_shots_without_writing_gameplay_state(self):
@@ -60,6 +61,33 @@ class MortarTargetingTests(unittest.TestCase):
         self.assertIn("_mortarPreviewErrorLogged = false;", PLUGIN)
         self.assertIn("_mortarPreviewErrorLogged = true;\n            if (_debugLogging)", OVERLAY)
         self.assertIn('AddToggle("DebugLogging", "Debug logging", false)', PLUGIN)
+
+    def test_ranging_ui_waits_for_projectile_impact(self):
+        self.assertIn("PendingMortarImpacts", PLUGIN)
+        self.assertIn("AttackHandler.OnTileHit/4", PLUGIN)
+        self.assertIn('"Il2CppMenace.Tactical.Skills.Skill"', PLUGIN)
+        self.assertIn('"Il2CppMenace.Tactical.Tile"', PLUGIN)
+        self.assertIn("typeof(Vector3).FullName", PLUGIN)
+        self.assertIn("MortarRangingTileHitPostfix", PLUGIN)
+        self.assertIn("ranging.DisplayShots <= 0", PLUGIN)
+        self.assertIn("ranging?.DisplayShots ?? 0", PLUGIN)
+        apply_postfix = PLUGIN.split("private static void MortarRangingApplyToTilePostfix(", 1)[1]
+        apply_postfix = apply_postfix.split("private static MortarRangingState RecordMortarPlayerShot", 1)[0]
+        self.assertIn("RecordMortarPlayerShot(__state)", apply_postfix)
+        self.assertNotIn("DisplayShots =", apply_postfix)
+        self.assertNotIn("UpdateMortarRangingDisplay", apply_postfix)
+        self.assertIn("impact-gated ranging feedback will remain hidden", PLUGIN)
+        impact_hook = PLUGIN.split("private static void MortarRangingTileHitPostfix", 1)[1]
+        impact_hook = impact_hook.split("private static long NativeKey", 1)[0]
+        self.assertIn("UpdateMortarRangingDisplay(ranging, shot)", impact_hook)
+        display_update = PLUGIN.split("private static void UpdateMortarRangingDisplay", 1)[1]
+        display_update = display_update.split("private static void EnqueuePendingMortarImpact", 1)[0]
+        self.assertIn("ranging.DisplayShots = shot.ShotsAfterShot", display_update)
+
+    def test_mortar_ranges_use_muted_scatter_based_colors(self):
+        self.assertIn("Color.Lerp(low, high, blend.Progress)", PLUGIN)
+        self.assertIn("new Color(0.48f, 0.15f, 0.14f, 0.92f)", PLUGIN)
+        self.assertIn("new Color(0.30f, 0.59f, 0.35f, 0.92f)", PLUGIN)
 
     def test_lines_avoid_unstripping_failed_draw_texture_chain(self):
         draw = PLUGIN.split("private static void DrawGuiLine(", 1)[1].split(

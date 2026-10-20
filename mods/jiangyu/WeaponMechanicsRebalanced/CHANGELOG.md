@@ -1,3 +1,10 @@
+## 0.4.15 — muted mortar feedback, defer display update until impact (#61)
+
+- Ranging markers now use a muted dark-red-to-green palette based on effective Scatter, with a brighter green for a solved shot.
+- The displayed ranging value and color remain at their prior state while a shell is in flight and advance only after the impact callback is observed. If the impact hook is unavailable, the feedback stays hidden rather than updating early.
+- Presentation only: mortar ballistics, Scatter, ScatterChance, action economy and damage are unchanged.
+- The user confirms the in-game visual/timing acceptance for #61 on the Windows test install; this isolated 0.4.15 candidate excludes the separate, unaccepted #59 balance change.
+
 ## 0.4.11 — observed Unity proxy failures (#56; visual retest pending)
 
 - The Windows 0.4.10 test loaded successfully but both screen overlays failed with `NotSupportedException: Method unstripping failed`. Its `GUI.DrawTexture(Rect, Texture)` overload chain ends in an explicit unsupported proxy stub. Solid lines now use the native `GUI.Label(Rect, GUIContent, GUIStyle)` entry point with a white background texture; background tint is isolated/restored too.
