@@ -38,7 +38,7 @@ KDL counts below are **source files**, not patch-operation counts.
 
 | Package | Version | Runtime / data authoring |
 | --- | --- | --- |
-| MenaceModSettings | 0.7.0 | Jiangyu settings/UI; manual confirmed debug inventory top-up (#65), gameplay pending; stable assembly identity 1.0.0.0 |
+| MenaceModSettings | 0.8.0 | Jiangyu settings/UI; debug inventory top-up diagnostics (#65), PC install/gameplay test pending; stable assembly identity 1.0.0.0 |
 | BuildingCombatRules | 0.3.0 | Shared SuiteSystem host, Harmony/runtime; tree protection candidate #48 |
 | BuildingsBlockLineOfSight | 0.2.3 | Shared SuiteSystem host, Harmony/runtime |
 | CoordinatedFire | 1.6.11 | Shared SuiteSystem host, native attacks/HUD |

@@ -40,7 +40,11 @@ consumer built against 0.5.x (Field Logistics, Starting Options) failed `OnInit`
   **Use a separate test save:** changes persist when saved and mark the campaign as cheated.
   Cancel, closing the window, changing tabs or scenes clears confirmation. Reopen Armory/Market
   afterward to refresh the list. Reports partial failures without pretending to roll back;
-  retrying fills only remaining shortages. Windows/gameplay verification pending.
+  retrying fills only remaining shortages.
+- **0.8.0 — inventory failure diagnostics:** reports the item ID, processing stage and exception
+  type/message for failures, or explicitly says when `AddItem` returns no item. Shows up to five
+  failures and counts any additional ones. Catalog-wide errors identify the phase that failed.
+  Test PC deployment and gameplay verification pending.
 - 0.4.1 adds a shared tactical HUD input guard (#43). IMGUI consumers register a live
   rectangle provider with `HudInputGuard.Register(owner, provider)` (GUI coordinates, null
   when hidden) and call `Unregister(owner)` on unload. One companion-owned Harmony guard

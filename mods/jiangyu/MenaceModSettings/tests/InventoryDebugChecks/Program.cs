@@ -66,11 +66,15 @@ owned.Stock[craft.Id].Items.Clear(); owned.Fail.Add(craft.Id);
 owned.Stock[reward.Id].Items.Clear(); owned.Throw.Add(reward.Id);
 result = InventoryDebugActions.Grant(state.Pointer);
 Check(result.Contains("2 failed") && result.Contains("Partial changes"), "Null and throwing AddItem reported");
+Check(result.Contains("crafted.weapon [add item]: AddItem returned no item."), "Null AddItem identifies item and reason");
+Check(result.Contains("reward.weapon [add item]: Exception: add failure"), "Thrown AddItem identifies item and exception");
 owned.Fail.Clear(); owned.Throw.Clear();
 Check(InventoryDebugActions.Grant(state.Pointer).Contains("20 copies added"), "Retry fills just failed items");
 DataTemplateLoader.Throw = true; calls = owned.Calls;
 Check(InventoryDebugActions.Grant(state.Pointer).Contains("could not complete") && owned.Calls == calls,
     "Catalog failure before first write");
+Check(InventoryDebugActions.Grant(state.Pointer).Contains("while reading item catalogs (Exception: catalog failure)"),
+    "Catalog failure reports phase and exception");
 DataTemplateLoader.Throw = false; DataTemplateLoader.Catalog.Clear();
 Check(InventoryDebugActions.Grant(state.Pointer).StartsWith("Not applied"), "Empty catalog not reported as success");
 for (int count = 0; count <= 25; count++)
@@ -83,4 +87,6 @@ for (int count = 0; count <= 25; count++)
 }
 var negative = InventoryDebugStock.TopUp(new[] { "a" }, x => x, _ => -1, _ => throw new Exception(), () => { });
 Check(negative.Failed == 1 && negative.Added == 0, "Invalid counts fail closed");
+Check(negative.Failures[0].ItemId == "a" && negative.Failures[0].Stage == "read current stock"
+    && negative.Failures[0].Details == "InvalidOperationException: Invalid reserve count.", "Reserve failure details retained");
 Console.WriteLine($"Inventory debug checks: {checks} passed (managed stand-ins, not gameplay)");

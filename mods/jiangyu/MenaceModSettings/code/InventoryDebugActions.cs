@@ -28,6 +28,7 @@ internal static class InventoryDebugActions
     {
         if (!TryGetCampaign(out var state) || state.Pointer != confirmedCampaign)
             return "Not applied: return to the campaign screen and confirm again.";
+        string phase = "reading item catalogs";
         try
         {
             // Complete the read-only catalog before changing any inventory. Do not use
@@ -35,17 +36,29 @@ internal static class InventoryDebugActions
             var templates = CollectObtainable();
             if (templates.Count == 0) return "Not applied: no obtainable item templates found.";
             var owned = state.OwnedItems;
+            phase = "topping up campaign inventory";
             var result = InventoryDebugStock.TopUp(templates, t => t.GetID(),
                 t => CountReserve(owned, t), t => owned.AddItem(t, false, false) != null,
                 () => state.SetHasCheatBeenUsed());
             return $"Debug inventory: {result.Added} copies added; {result.Types} item types checked; "
                 + $"{result.Failed} failed. Reopen the Armory/Market to refresh."
-                + (result.Failed > 0 ? " Partial changes remain; retry only fills missing copies." : "");
+                + (result.Failed > 0 ? FormatFailures(result) : "");
         }
         catch (Exception error)
         {
-            return "Debug inventory could not complete (some additions may remain): " + error.Message;
+            return $"Debug inventory could not complete while {phase} "
+                + $"({error.GetType().Name}: {error.Message}). Some changes may remain; retry only fills missing copies.";
         }
+    }
+
+    private static string FormatFailures(InventoryDebugStock.Result result)
+    {
+        const int maxShown = 5;
+        string details = string.Join("; ", result.Failures.Take(maxShown)
+            .Select(failure => $"{failure.ItemId} [{failure.Stage}]: {failure.Details}"));
+        string additional = result.Failed > maxShown
+            ? $" (first {maxShown} shown; {result.Failed - maxShown} more not shown)" : "";
+        return $" Partial changes remain; retry only fills missing copies. Failures: {details}{additional}";
     }
 
     private static int CountReserve(OwnedItems owned, BaseItemTemplate template)
