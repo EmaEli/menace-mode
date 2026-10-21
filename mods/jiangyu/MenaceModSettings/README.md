@@ -53,7 +53,14 @@ consumer built against 0.5.x (Field Logistics, Starting Options) failed `OnInit`
   remain silent. Diagnostic logger failures cannot interrupt or repeat additions. This is
   evidence collection for #65, not a claimed fix for native item creation.
   Canonical Windows BuildOnly/install passed on 21 October 2026; installed manifest/file
-  0.8.1/0.8.1.0 and assembly 1.0.0.0 verified. In-game diagnostic confirmation is pending.
+  0.8.1/0.8.1.0 and assembly 1.0.0.0 verified. The diagnostic gameplay run identified the
+  stock enumeration failure described below.
+- **0.8.2 — indexed native stock reads:** the 0.8.1 diagnostic run reported 218/218 failures,
+  all twenty sampled details at `read current stock`, with native `List<BaseItem>.Enumerator.MoveNext`
+  throwing "Collection was modified" before any addition. Counts reserve copies through the
+  read-only list indexer and separate count interface, avoiding that enumerator. Equipped/
+  temporary exclusions, top-up limits and native AddItem behavior are unchanged. Regression
+  checks use stock lists whose MoveNext always throws; actual gameplay remains a separate gate.
 - 0.4.1 adds a shared tactical HUD input guard (#43). IMGUI consumers register a live
   rectangle provider with `HudInputGuard.Register(owner, provider)` (GUI coordinates, null
   when hidden) and call `Unregister(owner)` on unload. One companion-owned Harmony guard

@@ -42,10 +42,17 @@ Check(InventoryDebugActions.Grant((IntPtr)99).StartsWith("Not applied"), "Stale 
 StrategyState.Current = null;
 Check(!InventoryDebugActions.TryGetCampaign(out _), "No campaign blocked");
 StrategyState.Current = state;
-owned.Stock[kpac.Id] = new() { Items = new() { new() { Equipped = true }, new(), new() { Temporary = true } } };
-owned.Stock[commodity.Id] = new() { Items = Enumerable.Range(0, 15).Select(_ => new BaseItem()).ToList() };
+owned.Stock[kpac.Id] = new() { ThrowOnEnumerate = true,
+    Items = new() { new() { Equipped = true }, new(), new() { Temporary = true } } };
+owned.Stock[commodity.Id] = new() { ThrowOnEnumerate = true,
+    Items = Enumerable.Range(0, 15).Select(_ => new BaseItem()).ToList() };
+bool enumeratorFailed = false;
+try { owned.GetInstances(kpac).GetEnumerator().MoveNext(); }
+catch (InvalidOperationException error) { enumeratorFailed = error.Message.StartsWith("Collection was modified"); }
+Check(enumeratorFailed, "Fixture reproduces the native stock MoveNext failure before the first addition");
 string result = InventoryDebugActions.Grant(state.Pointer);
 Check(result.Contains("0 failed") && result.Contains("6 item types"), "Unique full catalog: " + result);
+Check(result.Contains("49 copies added"), "Indexed stock reads work despite broken native stock enumerators");
 Check(owned.GetInstances(kpac).Items.Count == 12, "Ten reserve plus existing equipped/temporary copies");
 Check(owned.GetInstances(kpac).Items[0].Equipped, "Equipped copy preserved");
 Check(owned.GetInstances(commodity).Items.Count == 15, "Stock above ten preserved");
@@ -72,12 +79,12 @@ Check(result.Contains("reward.weapon [add item]: Exception: add failure"), "Thro
 Check(diagnosticLog.Any(line => line.Contains("2 failed")), "Diagnostic summary written on explicit request");
 Check(diagnosticLog.Any(line => line.Contains("crafted.weapon [add item]: AddItem returned no item.")), "Null failure logged");
 Check(diagnosticLog.Any(line => line.Contains("reward.weapon [add item]: Exception: add failure")), "Exception failure logged");
-owned.Stock[kpac.Id].ThrowOnEnumerate = true;
+owned.Stock[kpac.Id].ThrowOnRead = true;
 diagnosticLog.Clear();
 InventoryDebugActions.Grant(state.Pointer, diagnosticLog.Add);
-Check(diagnosticLog.Any(line => line.Contains(kpac.Id + " [read current stock]: Exception: stock enumeration failure")),
+Check(diagnosticLog.Any(line => line.Contains(kpac.Id + " [read current stock]: Exception: stock index failure")),
     "Native stock-read failure distinguished from addition failure");
-owned.Stock[kpac.Id].ThrowOnEnumerate = false;
+owned.Stock[kpac.Id].ThrowOnRead = false;
 state.ThrowOnCheatMark = true;
 diagnosticLog.Clear(); calls = owned.Calls;
 InventoryDebugActions.Grant(state.Pointer, diagnosticLog.Add);

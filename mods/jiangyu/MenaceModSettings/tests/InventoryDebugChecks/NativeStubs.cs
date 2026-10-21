@@ -12,19 +12,30 @@ namespace Il2CppSystem.Collections
 {
     public interface IEnumerable { IEnumerator GetEnumerator(); }
     public interface IEnumerator { bool MoveNext(); Il2CppObjectBase Current { get; } }
-    public class NativeCollection<T> : Il2CppObjectBase, IEnumerable where T : Il2CppObjectBase
+    public class NativeCollection<T> : Il2CppObjectBase, IEnumerable,
+        Generic.IReadOnlyCollection<T>, Generic.IReadOnlyList<T> where T : Il2CppObjectBase
     {
         public List<T> Items = new();
-        public bool ThrowOnEnumerate;
-        public IEnumerator GetEnumerator() => ThrowOnEnumerate ? throw new Exception("stock enumeration failure") : new Iterator(Items);
+        public bool ThrowOnEnumerate, ThrowOnRead;
+        public int Count => Items.Count;
+        public T this[int index] => ThrowOnRead ? throw new Exception("stock index failure") : Items[index];
+        public IEnumerator GetEnumerator() => new Iterator(Items, ThrowOnEnumerate);
         private sealed class Iterator : IEnumerator
         {
             private readonly List<T> items; private int index = -1;
-            public Iterator(List<T> values) { items = values; }
-            public bool MoveNext() => ++index < items.Count;
+            private readonly bool fail;
+            public Iterator(List<T> values, bool throwOnMove) { items = values; fail = throwOnMove; }
+            public bool MoveNext() => fail ? throw new InvalidOperationException("Collection was modified; enumeration operation may not execute.")
+                : ++index < items.Count;
             public Il2CppObjectBase Current => items[index];
         }
     }
+}
+namespace Il2CppSystem.Collections.Generic
+{
+    // Keep Count and indexer separate, as in the generated IL2CPP proxy types.
+    public interface IReadOnlyCollection<T> { int Count { get; } }
+    public interface IReadOnlyList<T> { T this[int index] { get; } }
 }
 namespace Il2CppMenace.Tools
 {
@@ -78,7 +89,7 @@ namespace Il2CppMenace.Strategy
         public int Calls;
         public Il2CppSystem.Collections.NativeCollection<BaseItem> GetInstances(BaseItemTemplate t)
         {
-            if (!Stock.ContainsKey(t.Id)) Stock[t.Id] = new();
+            if (!Stock.ContainsKey(t.Id)) Stock[t.Id] = new() { ThrowOnEnumerate = true };
             return Stock[t.Id];
         }
         public BaseItem AddItem(BaseItemTemplate t, bool dialog, bool slot)

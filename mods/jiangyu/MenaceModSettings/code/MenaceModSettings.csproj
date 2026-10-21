@@ -11,8 +11,8 @@
     <!-- Keep in step with jiangyu.json so the DLL metadata identifies the shipped build.
          AssemblyVersion stays fixed: consumer mods bind to "MenaceModSettings, Version=1.0.0.0"
          and the loader resolves by exact identity, so changing it breaks every installed consumer. -->
-    <Version>0.8.1</Version>
-    <FileVersion>0.8.1.0</FileVersion>
+    <Version>0.8.2</Version>
+    <FileVersion>0.8.2.0</FileVersion>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
   </PropertyGroup>
   <ItemGroup>

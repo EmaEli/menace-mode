@@ -35,6 +35,14 @@ class InventoryDebugTests(unittest.TestCase):
         self.assertEqual(project.findtext("PropertyGroup/AssemblyVersion"), "1.0.0.0")
         self.assertEqual(project.findtext("PropertyGroup/Version"), json.loads((MOD / "jiangyu.json").read_text())["version"])
 
+    def test_stock_reads_do_not_use_native_enumerator(self):
+        source = (MOD / "code/InventoryDebugActions.cs").read_text()
+        stock = source.split('private static int CountReserve(')[1].split('private static IEnumerable<T> ReadNative')[0]
+        self.assertIn('IReadOnlyCollection<BaseItem>', stock)
+        self.assertIn('var item = items[index];', stock)
+        self.assertNotIn('ReadNative<', stock)
+        self.assertNotIn('foreach', stock)
+
 
 if __name__ == "__main__":
     unittest.main()

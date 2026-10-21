@@ -87,8 +87,17 @@ internal static class InventoryDebugActions
         int count = 0;
         var items = owned.GetInstances(template);
         if (items == null) return 0;
-        foreach (var item in ReadNative<BaseItem>(items))
+        // Native List<BaseItem>.Enumerator.MoveNext fails through the non-generic
+        // IL2CPP bridge. Use IReadOnlyList's indexer and its separate inherited count
+        // interface (the proxies do not flatten it). Finish counting before any AddItem.
+        var collection = items.TryCast<Il2CppSystem.Collections.Generic.IReadOnlyCollection<BaseItem>>();
+        if (collection == null) throw new InvalidOperationException("Native stock count unavailable");
+        int length = collection.Count;
+        for (int index = 0; index < length; index++)
+        {
+            var item = items[index];
             if (item != null && item.GetContainer() == null && !item.IsTemporary()) count++;
+        }
         return count;
     }
 
