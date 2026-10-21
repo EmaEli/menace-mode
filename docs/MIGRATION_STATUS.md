@@ -94,8 +94,11 @@ were reused, and saves/UserData were untouched. Backup/rollback journal:
 Candidate ZIP SHA256: `74529d5f0447d1504b3cfff0db21ff57722f92ea2aaed9f1a157e4c8d25fa5e8`.
 Installed DLL SHA256: `CD2B52008C5519A5FC529E19A781B29C591344953879C1FF49ED7D5F07017E7F`.
 Installer log: `M:\SFP-0.13.0-20261021-Build\Temp\MENACE-install.log`.
-The user has not launched the game with 0.13.0 yet; startup/memory and voice playback acceptance
-remain pending. The eager ten-profile setup (~780 conversation clones) is specifically under test.
+Initial post-install user feedback: pitch differences are audible between hired soldiers, and the
+user thinks the in-game badges appear correct. This is preliminary; exact five-profile coverage,
+matching Hire/tactical playback, save/load persistence, startup/memory remain to be checked. The
+fresh `Latest.log` was retrieved after the session; no SFP-tagged warning/error was found. The eager
+ten-profile setup (~780 conversation clones) is still a performance gate.
 
 ## Evidence levels: do not confuse them
 

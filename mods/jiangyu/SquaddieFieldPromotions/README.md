@@ -4,7 +4,8 @@
 > five deterministic pitch presets (1.00 / 0.90 / 0.95 / 1.05 / 1.10) by badge index;
 > existing save records stay neutral. Tactical and Hire barks use the same isolated
 > profile, reusing the bundled John/Jane audio. Canonical Windows BuildOnly/install passed;
-> startup/memory measurement and in-game audio confirmation are pending. Do not use on a
+> initial user feedback confirms audible pitch differences and tentatively says badges look
+> correct. Full profile, save/load and startup/memory checks remain pending. Do not use on a
 > valuable save; see #68.
 
 **Experimental: promotes real squaddies to hirable leaders and persists them across save/load.**
@@ -108,6 +109,8 @@ overlay and reported Singh's icon still above tactical units. Version 0.12.1 res
 letter badges and fixes the native tactical getter path; in-game confirmation is pending.
 Version 0.13.0 adds five persisted pitch profiles; test startup time/memory and compare
 the new leaders' Hire and tactical barks before treating this prototype as accepted.
+Initial user feedback is positive but preliminary: pitch differences are audible between hired
+leaders and the in-game badges appear correct; full profile and persistence checks remain pending.
 
 Versions 0.8.0-0.8.4 verified in game that the native dossier is stocked, visible at
 1 credit, redeemable and restocked. Version 0.9.0 reconnects the recovered 0.6.1 leader
