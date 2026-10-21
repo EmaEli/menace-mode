@@ -32,6 +32,12 @@ public sealed class PromotionRecord
     public string UnitTitle { get; set; } = "";
     public string UnitDescription { get; set; } = "";
     public byte[] InitialAttributes { get; set; } = Array.Empty<byte>();
+    // 0 = legacy leader: do not touch native donor perks or already purchased skills.
+    public int PerkSchemaVersion { get; set; }
+    public int? XpAtPromotion { get; set; }
+    public string InitialPerkId { get; set; } = "";
+    public string MentorLeaderTemplateId { get; set; } = "";
+    public List<GeneratedPerk> GeneratedPerks { get; set; } = new();
 
     public void Validate()
     {
@@ -55,6 +61,7 @@ public sealed class PromotionRecord
             throw new InvalidDataException("Promotion record title/description/service identity invalid.");
         if (InitialAttributes == null || InitialAttributes.Length != 7)
             throw new InvalidDataException("Promotion record leader attributes invalid.");
+        PerkGeneration.Validate(this);
         foreach (byte attribute in InitialAttributes)
             if (attribute > 100) throw new InvalidDataException("Promotion record attribute outside 0..100.");
     }
