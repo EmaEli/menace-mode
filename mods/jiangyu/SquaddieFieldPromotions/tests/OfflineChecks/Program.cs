@@ -67,6 +67,16 @@ selection = PromotionRules.Choose(new[] { C(1, 2, 999), C(2, 3) });
 Check(!selection.UsesXp && selection.PartialXp && selection.Soldier.Id == 2, "partial XP does not mix metrics");
 PromotionRecord R(Selection s, int badge = 0, SquaddieServiceRecord service = null) =>
     LeaderForge.CreateRecord(null, s, badge, service);
+Check(VoicePitchProfiles.Count == 5 && VoicePitchProfiles.Pitch(0) == 1.00f &&
+    VoicePitchProfiles.Pitch(1) == 0.90f && VoicePitchProfiles.Pitch(4) == 1.10f,
+    "five bounded pitch profiles with unchanged original voice");
+for (int badge = 0; badge < 12; badge++)
+    Check(R(selection, badge).VoicePitchPreset == badge % VoicePitchProfiles.Count,
+        "promotion badge maps deterministically to pitch profile " + badge);
+var oldVoiceJson = System.Text.Json.JsonSerializer.Serialize(R(selection))
+    .Replace(",\"VoicePitchPreset\":0", "");
+Check(System.Text.Json.JsonSerializer.Deserialize<PromotionRecord>(oldVoiceJson).VoicePitchPreset == 0,
+    "pre-feature save records without voice pitch stay neutral");
 Check(PromotionRules.Describe(selection, R(selection)).Contains("Incomplete XP coverage"), "partial-coverage reason visible");
 var excluded = PromotionRules.Choose(new[] { C(1, 2, 999), C(2, 3), C(3, xp: 5) }, new HashSet<int> { 2 });
 Check(excluded.Soldier.Id == 1 && excluded.UsesXp && excluded.LivingCount == 2 && excluded.ExcludedCount == 1,
@@ -203,6 +213,7 @@ RejectLedger(r => r.NumericGuid = ledger.Records[0].NumericGuid, "duplicate nume
 RejectLedger(r => r.BadgeIndex = 1, "duplicate badge");
 RejectLedger(r => r.SourceSquaddieId = 2, "same soldier promoted twice");
 RejectLedger(r => r.Gender = 2, "invalid gender");
+RejectLedger(r => r.VoicePitchPreset = VoicePitchProfiles.Count, "invalid voice pitch preset");
 RejectLedger(r => r.InitialAttributes = new byte[] { 1, 2 }, "invalid attribute vector");
 RejectLedger(r => r.InitialAttributes[0] = 101, "attribute above 100");
 RejectLedger(r => r.Name = "", "empty name");
@@ -215,6 +226,7 @@ var sidecarJson = System.Text.Json.JsonSerializer.Serialize(new Dictionary<strin
 var reread = PromotionSystem.ReadLedger(sidecarJson);
 Check(reread.Validated().Count == 2 && reread.Records[1].LeaderId == ledger.Records[1].LeaderId &&
     reread.Records[1].InitialAttributes.SequenceEqual(ledger.Records[1].InitialAttributes) &&
+    reread.Records[1].VoicePitchPreset == ledger.Records[1].VoicePitchPreset &&
     reread.ServiceRecords.Count == serviceLedger.ServiceRecords.Count &&
     reread.ProcessedMissionKeys.SequenceEqual(serviceLedger.ProcessedMissionKeys), "sidecar round-trip");
 Check(PromotionSystem.ReadLedger("{\"Other.Type\":{}}") == null, "sidecar without our blob is ignored");
