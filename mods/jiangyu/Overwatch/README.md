@@ -1,4 +1,12 @@
-# Overwatch 0.32.3.7
+# Overwatch 0.32.3.8
+
+## 0.32.3.8 — #44 JIT mitigation candidate (not game-verified)
+
+- The `Native.CurrentProperties` helper is marked `NoInlining | NoOptimization` to avoid the
+  optimizing/devirtualizing JIT path implicated by the repeated worker-thread crash. Its IL,
+  native virtual calls, actor selection, fallback and error handling remain unchanged.
+- Local Release build against MENACE 0.7.17 references succeeds. This mitigation has not been
+  installed or verified in a live game; retain the pre-JIT protection and keep #44 open.
 
 ## 0.32.3.7
 
