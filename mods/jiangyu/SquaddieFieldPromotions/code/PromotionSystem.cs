@@ -33,6 +33,7 @@ public sealed class PromotionSystem : JiangyuSystem
     internal const string Group = "Squaddie Field Promotions";
     internal const string EnableKey = "EnableFieldPromotions";
     internal const string GenericHeadKey = "GenericLeaderHeads";
+    internal const string CustomPortraitPreviewKey = "PreviewMaleBadgeAPortrait";
     internal const string CleanupTestSaveKey = "CleanupPromotedLeadersFromTestSave";
     // Jiangyu's public sidecar convention (ModStateSidecar.PathFor): <save>.jiangyu.<modId>.json.
     internal const string SidecarSuffix = ".jiangyu.SquaddieFieldPromotions.json";
@@ -61,6 +62,8 @@ public sealed class PromotionSystem : JiangyuSystem
             settings.AddToggle(EnableKey, "Offer Field Promotion Dossier in Black Market", false);
             settings.AddNumber(PriceKey, "Promotion dossier price (credits)", PriceStep, MaximumPrice, DefaultPrice, PriceStep);
             settings.AddToggle(GenericHeadKey, "Use generic heads for promoted leaders", true);
+            settings.AddToggle(CustomPortraitPreviewKey,
+                "EXPERIMENTAL: custom portrait for male badge A (fresh game launch required)", false);
             settings.AddHeader("!!! DANGER: BACK UP test.save BEFORE ENABLING !!!");
             settings.AddHeader("REMOVES ALL SFP LEADERS FROM EVERY ROSTER STATE AND DEPLOYMENT, THEN SAVES test.save.");
             settings.AddToggle(CleanupTestSaveKey, "I HAVE A BACKUP - REMOVE ALL SFP LEADERS FROM test.save (ONE-SHOT)", false);

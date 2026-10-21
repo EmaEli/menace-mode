@@ -1,4 +1,4 @@
-# Squaddie Field Promotions 0.11.8
+# Squaddie Field Promotions 0.12
 
 **Experimental: promotes real squaddies to hirable leaders and persists them across save/load.**
 Tracked in [#27](https://github.com/EmaEli/menace-mode/issues/27) and
@@ -25,6 +25,14 @@ Tracked in [#27](https://github.com/EmaEli/menace-mode/issues/27) and
   gendered leader, with the soldier's name, nickname, skin, bundled portraits from
   `runtime_assets/<gender>/`, a lettered badge (A, B, C, ...) and the John/Jane voice
   bank from `runtime_assets/voice/` when it loads; otherwise the native donor voice stays.
+- **Experimental portrait preview**, OFF by default: the **male promoted leader
+  with badge A only** can use the custom black-beret portrait set from
+  `runtime_assets/portrait_previews/promoted_male_01/`. Other leaders continue
+  using the original art. This does not change squad appearance or the donor
+  badge artwork; the legacy drag badge may still show the donor soldier.
+  The toggle is read when the template is created. To change its effect on
+  an existing leader, fully exit and relaunch MENACE before loading a save.
+  The portrait preview is not yet in-game verified.
 - The generated leader receives a persistent `UnitTitle` based on the squaddie's last unit
   (or a varied Imperius designation) and an individual section/badge. Its `UnitDescription`
   carries the prior unit/commander, native lifetime mission count, optional Veterancy rank,
@@ -84,7 +92,7 @@ The kit also ships the module's raw `runtime_assets/` (portraits, prebuilt John/
 voice bundle with its build receipt, voice routes); the installer stages them next to
 the compiled package because `jiangyu compile --clean` does not preserve them.
 
-## Acceptance test (0.11.8 in-game warning display pending)
+## Acceptance test (0.12 portrait preview pending in-game)
 
 Versions 0.8.0-0.8.4 verified in game that the native dossier is stocked, visible at
 1 credit, redeemable and restocked. Version 0.9.0 reconnects the recovered 0.6.1 leader
@@ -133,6 +141,12 @@ unmistakable in settings; visual confirmation of that warning remains pending.
     history. Earlier service is not backfilled; new mission service should persist after restart.
 12. Confirm generic faces with the default setting, toggle **Use generic heads for promoted
     leaders** off and back on, and verify the preference survives save/load.
+13. On a **separate test save with a male badge-A promotion**, opt in to the custom
+    portrait preview before a fresh game launch. Check normal/inactive roster slots,
+    barks, left/right full-body view and grayscale inactive full-body view.
+    Keep the preview OFF in normal campaigns. A cold restart is required when
+    toggling preview for already created templates. Check that every other
+    leader retains the original artwork and native badges.
 
 When loading a 0.9.x preview save, opening Black Market also removes matching old duplicate
 sources once. Count those separately from the one soldier consumed by each new dossier.

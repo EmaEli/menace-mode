@@ -11,7 +11,7 @@ KDL = (ROOT / 'templates' / 'field-promotion-dossier.kdl').read_text(encoding='u
 class AuthoringTests(unittest.TestCase):
     def test_jiangyu_not_old_modpack(self):
         self.assertEqual(MANIFEST['name'], 'SquaddieFieldPromotions')
-        self.assertEqual(MANIFEST['version'], '0.11.8')
+        self.assertEqual(MANIFEST['version'], '0.12')
         self.assertTrue(any(dep.startswith('Jiangyu ') for dep in MANIFEST['depends']))
         self.assertIn('JiangyuSystem', CS)
         self.assertNotIn('IModpackPlugin', CS)
@@ -21,7 +21,7 @@ class AuthoringTests(unittest.TestCase):
         self.assertEqual(MANIFEST['depends'], ['Jiangyu >= 1.4.8', 'MenaceModSettings >= 0.6.1'])
         project = (ROOT / 'code/SquaddieFieldPromotions.csproj').read_text()
         self.assertIn('<Private>false</Private>', project)
-        self.assertIn('<Version>0.11.8</Version>', project)
+        self.assertIn('<Version>0.12</Version>', project)
         self.assertIn('$(MenaceModSettingsPath)', project)
 
     def test_no_hotkeys_polling_random_removal_or_fake_death(self):
@@ -84,6 +84,32 @@ class AuthoringTests(unittest.TestCase):
         self.assertIn('public sealed class PromotionLedger', record)
         self.assertIn('public List<PromotionRecord> Records { get; set; }', record)
         self.assertIn('public IReadOnlyList<PromotionRecord> Validated()', record)
+
+    def test_optional_preview_art_is_complete_and_isolated(self):
+        import struct
+        preview = ROOT / "runtime_assets" / "portrait_previews" / "promoted_male_01"
+        expected = {
+            "slot.png": (162, 162),
+            "slot_inactive.png": (162, 162),
+            "bark.png": (460, 480),
+            "stand_left.png": (1024, 1714),
+            "stand_right.png": (1024, 1714),
+            "stand_right_inactive.png": (1024, 1714),
+        }
+        for name, size in expected.items():
+            png = (preview / name).read_bytes()
+            self.assertEqual(png[:8], b"\x89PNG\r\n\x1a\n", name)
+            self.assertEqual(struct.unpack(">II", png[16:24]), size, name)
+            self.assertEqual(png[25], 6, name)  # RGBA, no flattened background
+        art = (ROOT / "code" / "StandalonePortraitAssets.cs").read_text()
+        forge = (ROOT / "code" / "LeaderForge.cs").read_text()
+        self.assertIn("PreviewPresent", art)
+        self.assertIn("record.BadgeIndex == 0", forge)
+        self.assertIn("preview ? _malePreviewArt : female ? _femaleArt : _maleArt", forge)
+        self.assertIn('ModSettings.Get<bool>(PromotionSystem.Group, PromotionSystem.CustomPortraitPreviewKey)', forge)
+        self.assertIn('"EXPERIMENTAL: custom portrait for male badge A (fresh game launch required)", false', CS)
+        self.assertIn("PortraitFiles.Contains(name)", art)
+        self.assertIn('"badge_dragged.png"', art)  # generic native badges unchanged
 
     def test_runtime_assets_bundled_outside_compiled(self):
         assets = ROOT / 'runtime_assets'

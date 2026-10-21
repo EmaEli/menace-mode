@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.12
+
+- Add a **disabled-by-default, experimental portrait preview** for the promoted
+  **male badge-A leader only**; every other promoted leader retains original art.
+- Add an isolated, alpha-preserving six-image portrait family under
+  `runtime_assets/portrait_previews/promoted_male_01/`, separate from existing
+  male/female assets and the dynamic badge-letter sources.
+- Use the same exact preview sprites through normal promotion and save rehydration,
+  provided the setting is enabled at game startup. In-game visual and save/load
+  verification is still pending; this is not a production-ready art pack.
+- The existing drag badge uses the donor portrait and is not yet customized.
+
 ## 0.11.8
 
 - Keep the one-time `test.save` cleanup, but make its destructive scope and required backup prominent

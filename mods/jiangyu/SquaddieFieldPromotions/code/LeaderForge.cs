@@ -5,6 +5,7 @@ using Il2CppMenace.Conversations;
 using Il2CppMenace.States;
 using Il2CppMenace.Strategy;
 using Il2CppMenace.Tools;
+using MenaceModSettings;
 
 namespace SquaddieFieldPromotions;
 
@@ -21,6 +22,7 @@ internal sealed class LeaderForge
     private readonly List<UnityEngine.Object> _pinned = new();
     private StandalonePortraitAssets _maleArt;
     private StandalonePortraitAssets _femaleArt;
+    private StandalonePortraitAssets _malePreviewArt;
     private FieldVoiceSystem _voices;
     // Leaders created before John/Jane audio was ready keep the native donor voice until bound.
     private readonly Dictionary<string, (UnitLeaderTemplate Leader, SpeakerTemplate Speaker, bool Female)> _pendingVoice =
@@ -180,12 +182,22 @@ internal sealed class LeaderForge
             bool female = record.Gender == Convert.ToInt32(sy.Gender);
             var voiceDonor = female ? sy : lim;
             string gender = female ? "female" : "male";
-            var art = female ? _femaleArt : _maleArt;
+            // Test-pilot only: badge A male uses the approved character art when
+            // explicitly enabled. Every other leader keeps its original art.
+            // Evaluate the setting on template creation; reloading a registered
+            // template in the same process does not change its sprite pointers.
+            bool preview = !female && record.BadgeIndex == 0 &&
+                ModSettings.Get<bool>(PromotionSystem.Group, PromotionSystem.CustomPortraitPreviewKey) &&
+                StandalonePortraitAssets.PreviewPresent(_modFolder, "promoted_male_01");
+            var art = preview ? _malePreviewArt : female ? _femaleArt : _maleArt;
             if (art != null && !art.IsAlive) art = null;
             if (art == null)
             {
-                art = StandalonePortraitAssets.Load(_modFolder, gender, _pinned);
-                if (female) _femaleArt = art; else _maleArt = art;
+                art = StandalonePortraitAssets.Load(_modFolder, gender, _pinned,
+                    preview ? "promoted_male_01" : null);
+                if (preview) _malePreviewArt = art;
+                else if (female) _femaleArt = art;
+                else _maleArt = art;
             }
             DataTemplateLoader.GetAll<UnitLeaderTemplate>();
             DataTemplateLoader.GetAll<SpeakerTemplate>();
@@ -233,7 +245,7 @@ internal sealed class LeaderForge
             if (DataTemplateLoader.Get<UnitLeaderTemplate>(record.LeaderId, false) == null ||
                 DataTemplateLoader.Get<SpeakerTemplate>(record.SpeakerId, false) == null)
                 throw new InvalidOperationException("Dynamic template registration failed.");
-            return $"visual=embedded-{gender}, head={head}, voice={voice}, badge={badgeLabel}/{badge}, " +
+            return $"visual={(preview ? "preview-male-01" : "embedded-" + gender)}, head={head}, voice={voice}, badge={badgeLabel}/{badge}, " +
                    $"leaderId={record.LeaderId}, guid={record.NumericGuid}";
         }
         catch

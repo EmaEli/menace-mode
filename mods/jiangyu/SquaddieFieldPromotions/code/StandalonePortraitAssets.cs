@@ -28,6 +28,23 @@ internal sealed class StandalonePortraitAssets
         "badge_unit.png", "slot_badge.png", "big_badge.png"
     };
 
+    // Only character portraits are overridden. The six native badge templates stay
+    // unchanged so the dynamic A/B/C lettering continues to work.
+    internal static readonly string[] PortraitFiles =
+    {
+        "slot.png", "slot_inactive.png", "bark.png", "stand_right.png",
+        "stand_left.png", "stand_right_inactive.png"
+    };
+
+    private const string PreviewOne = "promoted_male_01";
+
+    internal static bool PreviewPresent(string modFolder, string name)
+    {
+        if (name != PreviewOne) return false; // never use unchecked paths from settings
+        string root = Path.Combine(modFolder, "runtime_assets", "portrait_previews", name);
+        return PortraitFiles.All(file => File.Exists(Path.Combine(root, file)));
+    }
+
     private readonly Dictionary<string, Sprite> _sprites;
 
     private StandalonePortraitAssets(Dictionary<string, Sprite> sprites) => _sprites = sprites;
@@ -39,8 +56,10 @@ internal sealed class StandalonePortraitAssets
     }
 
     internal static StandalonePortraitAssets Load(string modFolder, string gender,
-        List<UnityEngine.Object> pinned)
+        List<UnityEngine.Object> pinned, string previewName = null)
     {
+        if (previewName != null && (gender != "male" || !PreviewPresent(modFolder, previewName)))
+            throw new InvalidOperationException("The optional male portrait preview is incomplete.");
         if (gender != "male" && gender != "female")
             throw new ArgumentException("Unknown portrait family", nameof(gender));
         if (!ArePresent(modFolder, gender))
@@ -49,14 +68,18 @@ internal sealed class StandalonePortraitAssets
                 "the CLI deploy step alone does not preserve raw runtime_assets.");
 
         string folder = Path.Combine(modFolder, "runtime_assets", gender);
+        string previewFolder = previewName == null ? null :
+            Path.Combine(modFolder, "runtime_assets", "portrait_previews", previewName);
         var loaded = new Dictionary<string, Sprite>(StringComparer.Ordinal);
         foreach (string name in FileNames)
         {
             var texture = new Texture2D(2, 2, TextureFormat.RGBA32, false);
-            byte[] png = File.ReadAllBytes(Path.Combine(folder, name));
+            bool custom = previewFolder != null && PortraitFiles.Contains(name);
+            byte[] png = File.ReadAllBytes(Path.Combine(custom ? previewFolder : folder, name));
             if (png.Length < 8 || !DecodePng(texture, png))
-                throw new InvalidOperationException("PNG could not be decoded by Unity IL2CPP: " + gender + "/" + name);
-            texture.name = "sfp.embedded." + gender + "." + name;
+                throw new InvalidOperationException("PNG could not be decoded by Unity IL2CPP: " +
+                    (custom ? previewName : gender) + "/" + name);
+            texture.name = "sfp.embedded." + (previewName ?? gender) + "." + name;
             texture.filterMode = FilterMode.Bilinear;
             // Runtime-created assets are otherwise destroyed by the scene-change
             // Resources.UnloadUnusedAssets (rehydration runs before Strategy loads).
