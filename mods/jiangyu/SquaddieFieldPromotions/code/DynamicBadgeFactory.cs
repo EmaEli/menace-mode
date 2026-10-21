@@ -10,7 +10,7 @@ namespace SquaddieFieldPromotions;
 /// Experimental on-demand badge lettering for the self-contained generic art families.
 /// Replaces the red A/D source glyph pixels on private readable Unity sprite copies.
 /// No original Generic Leaders mod, external templates, or disk mutation.
-/// Requires in-game verification with MENACE 0.7.15 / Jiangyu 1.4.7.
+/// Tactical badge getters must also be overridden for promoted infantry.
 /// </summary>
 internal static class DynamicBadgeFactory
 {
@@ -73,8 +73,9 @@ internal static class DynamicBadgeFactory
         target.BadgeUnitWindow = Generate(art.Get("badge_unit.png"), label, pinned, ref attempted, ref created) ?? art.Get("badge_unit.png");
         target.SlotBadge = Generate(art.Get("slot_badge.png"), label, pinned, ref attempted, ref created) ?? art.Get("slot_badge.png");
         target.BigBadge = Generate(art.Get("big_badge.png"), label, pinned, ref attempted, ref created) ?? art.Get("big_badge.png");
-        // Preserve the target native white-silhouette state. There is no
-        // red-letter white silhouette in the embedded generic portrait source.
+        // The tactical status overlay must never retain the cloned Singh emblem.
+        // Reuse the same shield silhouette and letter for both tactical layers.
+        target.BadgeWhite = target.Badge;
         return created + "/" + attempted;
     }
 
@@ -135,7 +136,7 @@ internal static class DynamicBadgeFactory
             texture.hideFlags = HideFlags.DontUnloadUnusedAsset;
             Vector2 originalPivot = source.pivot;
             var pivot = new Vector2(originalPivot.x / w, originalPivot.y / h);
-            Sprite result = Sprite.Create(texture, new Rect(0, 0, w, h), pivot);
+            Sprite result = Sprite.Create(texture, new Rect(0, 0, w, h), pivot, source.pixelsPerUnit);
             if (result == null) return null;
             result.hideFlags = HideFlags.DontUnloadUnusedAsset;
             pinned.Add(texture);

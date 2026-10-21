@@ -1,0 +1,75 @@
+clone "PerkTreeTemplate" from="perk_tree.lim" id="mod.squaddiefieldpromotions.generic_infantry_tree" {
+  clear "Perks"
+  append "Perks" {
+    set "Skill" ref="PerkTemplate" "perk.scout"
+    set "Tier" 1
+  }
+  append "Perks" {
+    set "Skill" ref="PerkTemplate" "perk.athletic"
+    set "Tier" 1
+  }
+  append "Perks" {
+    set "Skill" ref="PerkTemplate" "perk.new_tricks"
+    set "Tier" 1
+  }
+  append "Perks" {
+    set "Skill" ref="PerkTemplate" "perk.hit_the_deck"
+    set "Tier" 1
+  }
+  append "Perks" {
+    set "Skill" ref="PerkTemplate" "perk.buff"
+    set "Tier" 1
+  }
+  append "Perks" {
+    set "Skill" ref="PerkTemplate" "perk.solid_grouping"
+    set "Tier" 2
+  }
+  append "Perks" {
+    set "Skill" ref="PerkTemplate" "perk.bags_belts"
+    set "Tier" 2
+  }
+  append "Perks" {
+    set "Skill" ref="PerkTemplate" "perk.mobile_infantry"
+    set "Tier" 2
+  }
+  append "Perks" {
+    set "Skill" ref="PerkTemplate" "perk.share_the_load"
+    set "Tier" 2
+  }
+  append "Perks" {
+    set "Skill" ref="PerkTemplate" "perk.firing_line"
+    set "Tier" 2
+  }
+  append "Perks" {
+    set "Skill" ref="PerkTemplate" "perk.steady_gun"
+    set "Tier" 3
+  }
+  append "Perks" {
+    set "Skill" ref="PerkTemplate" "perk.tankbuster"
+    set "Tier" 3
+  }
+  append "Perks" {
+    set "Skill" ref="PerkTemplate" "perk.fortify"
+    set "Tier" 3
+  }
+  append "Perks" {
+    set "Skill" ref="PerkTemplate" "perk.zig_zag"
+    set "Tier" 3
+  }
+  append "Perks" {
+    set "Skill" ref="PerkTemplate" "perk.full_send"
+    set "Tier" 4
+  }
+  append "Perks" {
+    set "Skill" ref="PerkTemplate" "perk.command_rally"
+    set "Tier" 4
+  }
+}
+
+clone "UnitLeaderTemplate" from="squad_leader.lim" id="mod.squaddiefieldpromotions.generic_perk_source" {
+  set "m_Guid" 0
+  set "HiringCosts" 0
+  set "InitialPerk" ref="PerkTemplate" "perk.unique_sy_economics"
+  clear "PerkTrees"
+  append "PerkTrees" ref="PerkTreeTemplate" "mod.squaddiefieldpromotions.generic_infantry_tree"
+}

@@ -19,11 +19,14 @@ internal static class PromotionIdentity
         "TCRN Imperius Rapid Response Unit",
     };
 
-    internal static void Populate(PromotionRecord record, Candidate candidate, SquaddieServiceRecord service)
+    internal static void Populate(PromotionRecord record, Candidate candidate, SquaddieServiceRecord service,
+        string sourceLeaderTemplateId = "")
     {
         record.MissionsParticipated = candidate.Missions;
         record.SourceUnitTitle = Clean(candidate.LastUnitTitle, "", 120);
         record.SourceCommander = Clean(candidate.LastCommander, "", 100);
+        record.SourceLeaderTemplateId = PromotionProgression.IsSafeTemplateId(sourceLeaderTemplateId)
+            ? sourceLeaderTemplateId : "";
         record.VeterancyRank = Clean(candidate.VeterancyRank, "", 64);
         record.UnitTitle = TitleFor(record.BadgeIndex, record.SourceUnitTitle);
         record.UnitDescription = DescriptionFor(record, candidate, service);

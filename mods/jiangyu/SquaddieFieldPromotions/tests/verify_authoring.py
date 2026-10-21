@@ -1,17 +1,19 @@
 import json
 import pathlib
+import re
 import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 MANIFEST = json.loads((ROOT / 'jiangyu.json').read_text(encoding='utf-8'))
 CS = (ROOT / 'code' / 'PromotionSystem.cs').read_text(encoding='utf-8')
 KDL = (ROOT / 'templates' / 'field-promotion-dossier.kdl').read_text(encoding='utf-8')
+PROGRESSION_KDL = (ROOT / 'templates' / 'generic-infantry-progression.kdl').read_text(encoding='utf-8')
 
 
 class AuthoringTests(unittest.TestCase):
     def test_jiangyu_not_old_modpack(self):
         self.assertEqual(MANIFEST['name'], 'SquaddieFieldPromotions')
-        self.assertEqual(MANIFEST['version'], '0.11.8')
+        self.assertEqual(MANIFEST['version'], '0.12.1')
         self.assertTrue(any(dep.startswith('Jiangyu ') for dep in MANIFEST['depends']))
         self.assertIn('JiangyuSystem', CS)
         self.assertNotIn('IModpackPlugin', CS)
@@ -21,7 +23,7 @@ class AuthoringTests(unittest.TestCase):
         self.assertEqual(MANIFEST['depends'], ['Jiangyu >= 1.4.8', 'MenaceModSettings >= 0.6.1'])
         project = (ROOT / 'code/SquaddieFieldPromotions.csproj').read_text()
         self.assertIn('<Private>false</Private>', project)
-        self.assertIn('<Version>0.11.8</Version>', project)
+        self.assertIn('<Version>0.12.1</Version>', project)
         self.assertIn('$(MenaceModSettingsPath)', project)
 
     def test_no_hotkeys_polling_random_removal_or_fake_death(self):
@@ -128,6 +130,54 @@ class AuthoringTests(unittest.TestCase):
         self.assertIn('source.Restore()', promote)
         self.assertIn('_forge.RollbackInstall(state, record)', promote)
 
+    def test_generic_infantry_progression_and_perk_state_isolation(self):
+        expected = [
+            ('perk.scout', '1'), ('perk.athletic', '1'), ('perk.new_tricks', '1'),
+            ('perk.hit_the_deck', '1'), ('perk.buff', '1'),
+            ('perk.solid_grouping', '2'), ('perk.bags_belts', '2'),
+            ('perk.mobile_infantry', '2'), ('perk.share_the_load', '2'), ('perk.firing_line', '2'),
+            ('perk.steady_gun', '3'), ('perk.tankbuster', '3'), ('perk.fortify', '3'),
+            ('perk.zig_zag', '3'), ('perk.full_send', '4'), ('perk.command_rally', '4'),
+        ]
+        entries = re.findall(
+            r'append "Perks" \{\s+'
+            r'set "Skill" ref="PerkTemplate" "([^"]+)"\s+set "Tier" ([1-4])\s+\}',
+            PROGRESSION_KDL)
+        self.assertEqual(entries, expected)
+        self.assertIn('set "InitialPerk" ref="PerkTemplate" "perk.unique_sy_economics"', PROGRESSION_KDL)
+        forge = (ROOT / 'code/LeaderForge.cs').read_text()
+        self.assertIn('ApplyGenericProgression(leader)', forge)
+        progression = forge.split('private static void ApplyGenericProgression', 1)[1].split(
+            'internal bool RefreshIdentity', 1)[0]
+        self.assertNotIn('BaseUnitLeader', progression)
+        self.assertNotIn('m_Perks', progression)
+
+    def test_provenance_remains_save_compatible_but_badges_use_only_bundled_black_art(self):
+        record = (ROOT / 'code/PromotionRecord.cs').read_text()
+        candidates = (ROOT / 'code/NativeCandidates.cs').read_text()
+        forge = (ROOT / 'code/LeaderForge.cs').read_text()
+        badges = (ROOT / 'code/DynamicBadgeFactory.cs').read_text()
+        self.assertIn('public string SourceLeaderTemplateId { get; set; } = "";', record)
+        self.assertIn('currentLeader?.LeaderTemplate ?? lastLeader', candidates)
+        self.assertIn('RootSourceTemplateId(selection.Soldier.SourceLeaderTemplateId, ledger)',
+                      (ROOT / 'code/PromotionSystem.cs').read_text())
+        self.assertIn('DynamicBadgeFactory.Apply(leader, art, badgeLabel, _pinned)', forge)
+        self.assertNotIn('GetSourceLeader(record)', forge)
+        for field in ('Badge', 'BadgeMini', 'BadgeDragged', 'BadgeUnitWindow', 'SlotBadge', 'BigBadge'):
+            self.assertIn(f'target.{field} = Generate(art.Get(', badges)
+        self.assertIn('target.BadgeWhite = target.Badge;', badges)
+        self.assertNotIn('OverlaySource', badges)
+        self.assertNotIn('RenderTexture', badges)
+
+    def test_tactical_badge_getters_override_shared_infantry_sprites_only_for_sfp(self):
+        for method, callback in (('GetBadge', 'LeaderBadge'), ('GetBadgeWhite', 'LeaderBadgeWhite')):
+            self.assertIn(f'Context.Patches.Postfix("Il2CppMenace.Strategy.UnitLeaderTemplate", "{method}", 0, {callback})', CS)
+            self.assertIn(f'Require(typeof(UnitLeaderTemplate), "{method}", Type.EmptyTypes, typeof(UnityEngine.Sprite))', CS)
+        self.assertIn('var leader = PromotedTemplate(info);', CS)
+        for path in (ROOT / 'code').glob('*.cs'):
+            self.assertNotIn('InfantryUnitTemplate.Badge =', path.read_text())
+            self.assertNotIn('InfantryUnitTemplate.BadgeWhite =', path.read_text())
+
     def test_optional_xp_and_fallback(self):
         native = (ROOT / 'code/NativeCandidates.cs').read_text()
         rules = (ROOT / 'code/PromotionRules.cs').read_text()
@@ -169,7 +219,7 @@ class AuthoringTests(unittest.TestCase):
 
     def test_safety_warning_in_readme(self):
         readme = (ROOT / 'README.md').read_text(encoding='utf-8')
-        self.assertIn(f"## Acceptance test ({MANIFEST['version']} in-game warning display pending)", readme)
+        self.assertIn(f"## Acceptance test ({MANIFEST['version']} ", readme)
         self.assertIn('BACK UP `test.save` BEFORE ENABLING', readme)
         self.assertIn('exact source soldier is removed', readme)
         self.assertIn('normal market', readme)

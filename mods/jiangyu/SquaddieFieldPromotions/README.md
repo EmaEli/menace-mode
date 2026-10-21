@@ -1,4 +1,4 @@
-# Squaddie Field Promotions 0.11.8
+# Squaddie Field Promotions 0.12.1
 
 **Experimental: promotes real squaddies to hirable leaders and persists them across save/load.**
 Tracked in [#27](https://github.com/EmaEli/menace-mode/issues/27) and
@@ -27,7 +27,7 @@ Vehicle crew promotions ([#66](https://github.com/EmaEli/menace-mode/issues/66))
 - The chosen squaddie becomes a **new squad leader in the Hire list (0 credits)**: a
   unique `UnitLeaderTemplate`/`SpeakerTemplate` cloned from the matching vanilla
   gendered leader, with the soldier's name, nickname, skin, bundled portraits from
-  `runtime_assets/<gender>/`, a lettered badge (A, B, C, ...) and the John/Jane voice
+  `runtime_assets/<gender>/`, a black shield with a dynamic letter (A, B, C, ...), and the John/Jane voice
   bank from `runtime_assets/voice/` when it loads; otherwise the native donor voice stays.
 - The generated leader receives a persistent `UnitTitle` based on the squaddie's last unit
   (or a varied Imperius designation) and an individual section/badge. Its `UnitDescription`
@@ -41,7 +41,13 @@ Vehicle crew promotions ([#66](https://github.com/EmaEli/menace-mode/issues/66))
   promoted leaders use the game's generic appearance even if **Show Unique Leader Heads**
   is enabled. Turn it off to restore gender-matched custom heads.
 - Attributes: baseline **65/65/62/50/50/5/45** (AGI/WS/VAL/TOU/VIT/PRE/POS) plus a
-  Veterancy rank-aligned bonus; perks/stats of the donor template are not inherited.
+  Veterancy rank-aligned bonus. Promoted leaders use the Generic Low Level Squad Leaders
+  infantry perk tree (16 perks, Tiers 1–4) and its generic initial perk instead of the donor's
+  progression. Rebinding the template does not rewrite already acquired perks saved on a leader.
+- All promoted leaders, including older records, rebuild the black letter badge after loading.
+  SFP-only overrides of native `GetBadge` / `GetBadgeWhite` bypass the shared infantry donor
+  emblem used by the tactical overhead HUD. Vanilla leader/unit templates remain unchanged.
+  Source leader template IDs remain in promotion records for compatibility, not badge rendering.
 - **The exact source soldier is removed** from their assigned squad and the living pool after
   the new leader is offered in Hire. No random removal, fake death or replacement soldier.
   On a failed promotion, source objects/assignment order, Hire offer and ledger are rolled back.
@@ -88,7 +94,11 @@ The kit also ships the module's raw `runtime_assets/` (portraits, prebuilt John/
 voice bundle with its build receipt, voice routes); the installer stages them next to
 the compiled package because `jiangyu compile --clean` does not preserve them.
 
-## Acceptance test (0.11.8 in-game warning display pending)
+## Acceptance test (0.12.1 black badges and tactical getter verification pending)
+
+The user verified the generic perk progression in 0.12.0, but rejected the source-emblem
+overlay and reported Singh's icon still above tactical units. Version 0.12.1 restores black
+letter badges and fixes the native tactical getter path; in-game confirmation is pending.
 
 Versions 0.8.0-0.8.4 verified in game that the native dossier is stocked, visible at
 1 credit, redeemable and restocked. Version 0.9.0 reconnects the recovered 0.6.1 leader
@@ -116,27 +126,31 @@ unmistakable in settings; visual confirmation of that warning remains pending.
 3. Confirm one dossier at base price **100** and unchanged vanilla stock. In Mod Settings,
    change the price to **110**, then back to **100**; existing stock must update without duplicates.
 4. Redeem it. Expect the **FIELD PROMOTION** dialog naming the soldier and criterion.
-5. Open Hire: the new leader (soldier's name, lettered badge, portraits) is listed at 0 credits.
+5. Open Hire: the new leader (soldier's name, black letter badge, portraits) is listed at 0 credits.
    The living soldier count must decrease by exactly one per new promotion, and its exact source
    ID must no longer be in the old squad/reserve or listed as killed. Hire and assign the new leader.
 6. Redeem a second dossier: a different soldier is promoted (badge B); the first is skipped.
-7. **Save, quit to desktop, relaunch, load**: both leaders must still be present in the
-   roster/Hire with name, badge, portraits, unit designation and generated description;
-   confirm the voice bark in a mission.
-8. Disable the option: only the dossier stock should disappear; vanilla dossiers must still work.
-9. Send observations; the agent can pull `Latest.log` (enable **Diagnostic logging** for detail).
-10. **DANGER: make a separate backup of `test.save` first** and confirm it is non-Ironman. Load it
+7. Inspect the leader's perks: it should have the generic initial perk and 16-entry infantry
+   tree from Tiers 1–4, not Singh's donor tree. Confirm black letter badges in strategy/drag views
+   and above the promoted squad in tactical, with no Singh emblem (also when selected/status changes).
+8. Buy a perk, **save, quit to desktop, relaunch, load**, and confirm the leader's identity,
+   badge and generic progression rebuild while the purchased perk remains present. Confirm the voice bark.
+9. Disable the option: only the dossier stock should disappear; vanilla dossiers must still work.
+10. Send observations; the agent can pull `Latest.log` (enable **Diagnostic logging** for detail).
+11. **DANGER: make a separate backup of `test.save` first** and confirm it is non-Ironman. Load it
     and enable **I HAVE A BACKUP - REMOVE ALL SFP LEADERS FROM test.save (ONE-SHOT)** only if you
     intend to remove all matching promoted leaders and save over that file. Verify SFP entries disappear from
     all five native roster lists and deployment while unrelated leaders and promotion records remain;
     cleanup must wait for native load completion even if the toggle was already armed at startup.
     The setting must turn itself off. Duplicate ledger IDs abort without saving; other save
     filenames are untouched. Save, quit and reload to confirm the result persists.
-11. Complete missions with deployed soldiers (including one wounded soldier), then promote one.
+12. Complete missions with deployed soldiers (including one wounded soldier), then promote one.
     Check the leader's unit title/description for the correct unit, commander, missions and wound
     history. Earlier service is not backfilled; new mission service should persist after restart.
-12. Confirm generic faces with the default setting, toggle **Use generic heads for promoted
+13. Confirm generic faces with the default setting, toggle **Use generic heads for promoted
     leaders** off and back on, and verify the preference survives save/load.
+14. Promote a squaddie from a previously promoted squad: its badge should receive the new
+    promotion letter on the same black shield, not the source squad's letter or Singh's emblem.
 
 When loading a 0.9.x preview save, opening Black Market also removes matching old duplicate
 sources once. Count those separately from the one soldier consumed by each new dossier.

@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.12.1
+
+- Restore the bundled black shields with dynamic promotion letters; remove the rejected
+  source-emblem overlay. Applies on reconstruction to existing leaders too, without changing saves.
+- Override native GetBadge/GetBadgeWhite only for SFP leaders: tactical infantry otherwise
+  reads Singh's shared entity sprites instead of the rewritten leader badge fields.
+- Replace the inherited white/status variant with the same letter shield and preserve sprite
+  pivot and pixels-per-unit. No shared vanilla templates or acquired perks are changed.
+- Add production badge-generation and tactical getter regression checks with simulated Unity/native
+  APIs. Generic perks were accepted in game on 0.12.0; this badge correction awaits gameplay testing.
+
+## 0.12.0
+
+- Replace the promoted leader's donor perk tree with the Generic Low Level Squad Leaders
+  infantry progression (16 perks across Tiers 1–4) and its generic initial perk. The tree
+  assignment changes the template only; already acquired perks remain in the saved leader state.
+- Persist the source leader template ID in each promotion record. Rebuilt badges overlay the
+  promotion letter on the source unit's emblem, including the tactical/drag variants; nested SFP
+  promotions resolve to their original source. Older records without provenance keep generic art.
+- Validate the generated progression against the expected native perk IDs and tiers before
+  registering a promoted leader. Add save-compatibility and provenance-chain regressions.
+
 ## 0.11.8
 
 - Keep the one-time `test.save` cleanup, but make its destructive scope and required backup prominent

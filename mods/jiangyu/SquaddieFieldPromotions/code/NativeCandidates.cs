@@ -27,13 +27,15 @@ internal static class NativeCandidates
                 throw new InvalidOperationException("Invalid native squaddie identity.");
             if (!state.Squaddies.IsAlive(id))
                 throw new InvalidOperationException("Living squaddie collection changed during review.");
+            var currentLeader = soldier.GetCurrentLeader();
             var lastLeader = soldier.GetLastLeaderTemplate();
-            string lastUnitTitle = lastLeader?.UnitTitle?.GetRawDefaultTranslation();
-            string lastCommander = PromotionIdentity.CommanderName(lastLeader?.SpeakerTemplate);
+            var sourceLeader = currentLeader?.LeaderTemplate ?? lastLeader;
+            string lastUnitTitle = sourceLeader?.UnitTitle?.GetRawDefaultTranslation();
+            string lastCommander = PromotionIdentity.CommanderName(sourceLeader?.SpeakerTemplate);
             snapshots.Add(new Candidate(id, soldier.Name, soldier.Nickname,
                 (int)soldier.GetGender(), (int)soldier.GetSkinColor(), soldier.GetMissionsParticipated(),
-                ReadXp(xpApi, id), soldier.GetCurrentLeader() != null, lastUnitTitle, lastCommander,
-                ReadRank(rankApi, id)));
+                ReadXp(xpApi, id), currentLeader != null, lastUnitTitle, lastCommander,
+                ReadRank(rankApi, id), sourceLeader?.GetID() ?? ""));
         }
         if (count != collection.Count)
             throw new InvalidOperationException("Living squaddie count changed during review.");

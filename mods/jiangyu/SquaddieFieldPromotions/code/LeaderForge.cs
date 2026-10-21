@@ -36,7 +36,7 @@ internal sealed class LeaderForge
     internal void Unload() => _voices?.UnpatchOnUnload();
 
     internal static PromotionRecord CreateRecord(StrategyState state, Selection selection, int badgeIndex,
-        SquaddieServiceRecord service)
+        SquaddieServiceRecord service, string sourceLeaderTemplateId = "")
     {
         var soldier = selection.Soldier;
         string token = Guid.NewGuid().ToString("N");
@@ -53,7 +53,7 @@ internal sealed class LeaderForge
             BadgeIndex = badgeIndex,
             InitialAttributes = PromotionRules.Attributes(selection.UsesXp ? soldier.Xp : null),
         };
-        PromotionIdentity.Populate(record, soldier, service);
+        PromotionIdentity.Populate(record, soldier, service, sourceLeaderTemplateId);
         record.Validate();
         return record;
     }
@@ -157,6 +157,7 @@ internal sealed class LeaderForge
                 Convert.ToInt32(existing.SkinColor) != record.SkinColor)
                 throw new InvalidOperationException("Native leader template ID collision / identity mismatch.");
             ApplyIdentityText(record, existing);
+            ApplyGenericProgression(existing);
             SetHeadMode(record, forceGenericHead);
             return "reuse=registered, badge=" + DynamicBadgeFactory.LabelForIndex(record.BadgeIndex);
         }
@@ -213,6 +214,7 @@ internal sealed class LeaderForge
             string head = ApplyStandaloneVisuals(leader, speaker, voiceDonor, art, female, forceGenericHead);
             string badgeLabel = DynamicBadgeFactory.LabelForIndex(record.BadgeIndex);
             string badge = DynamicBadgeFactory.Apply(leader, art, badgeLabel, _pinned);
+            ApplyGenericProgression(leader);
             leader.QualityLevel = 1;
             leader.HiringCosts = 0;
             leader.InitialAttributes = new Il2CppStructArray<byte>(record.InitialAttributes);
@@ -270,6 +272,33 @@ internal sealed class LeaderForge
             return "native-gender-head";
         }
         return "native-gender-skin-head";
+    }
+
+    private static void ApplyGenericProgression(UnitLeaderTemplate leader)
+    {
+        var source = DataTemplateLoader.Get<UnitLeaderTemplate>(PromotionProgression.TemplateId, false);
+        var initialPerk = DataTemplateLoader.Get<PerkTemplate>(PromotionProgression.InitialPerkId, false);
+        if (source?.PerkTrees == null || source.PerkTrees.Length != 1 || source.PerkTrees[0] == null ||
+            initialPerk == null)
+            throw new InvalidOperationException("Generic infantry promotion templates are missing.");
+
+        var tree = source.PerkTrees[0];
+        var perks = tree.Perks;
+        var expected = PromotionProgression.GenericInfantryPerks;
+        if (perks == null || perks.Length != expected.Length)
+            throw new InvalidOperationException("Generic infantry perk tree has an unexpected entry count.");
+        for (int i = 0; i < expected.Length; i++)
+            if (perks[i] == null || perks[i].Skill == null ||
+                perks[i].Skill.GetID() != expected[i].SkillId || perks[i].Tier != expected[i].Tier)
+                throw new InvalidOperationException("Generic infantry perk tree failed validation.");
+
+        var trees = new Il2CppReferenceArray<PerkTreeTemplate>(1);
+        trees[0] = tree;
+        leader.InitialPerk = initialPerk;
+        leader.PerkTrees = trees;
+        if (leader.InitialPerk == null || leader.InitialPerk.GetID() != PromotionProgression.InitialPerkId ||
+            leader.PerkTrees == null || leader.PerkTrees.Length != 1 || leader.PerkTrees[0] != tree)
+            throw new InvalidOperationException("Generic infantry progression assignment failed.");
     }
 
     internal bool RefreshIdentity(PromotionRecord record)

@@ -28,6 +28,8 @@ public sealed class PromotionRecord
     public int MissionsParticipated { get; set; }
     public string SourceUnitTitle { get; set; } = "";
     public string SourceCommander { get; set; } = "";
+    // Optional in older save sidecars; blank provenance deliberately falls back to generic art.
+    public string SourceLeaderTemplateId { get; set; } = "";
     public string VeterancyRank { get; set; } = "";
     public string UnitTitle { get; set; } = "";
     public string UnitDescription { get; set; } = "";
@@ -35,6 +37,7 @@ public sealed class PromotionRecord
 
     public void Validate()
     {
+        SourceLeaderTemplateId ??= "";
         if (!ValidId(LeaderId, LeaderPrefix) || !ValidId(SpeakerId, SpeakerPrefix) ||
             !string.Equals(LeaderId.Substring(LeaderPrefix.Length),
                            SpeakerId.Substring(SpeakerPrefix.Length), StringComparison.Ordinal))
@@ -51,6 +54,7 @@ public sealed class PromotionRecord
         if (string.IsNullOrWhiteSpace(UnitTitle) || UnitTitle.Length > 180 ||
             string.IsNullOrWhiteSpace(UnitDescription) || UnitDescription.Length > 8000 ||
             (SourceUnitTitle?.Length ?? 0) > 120 || (SourceCommander?.Length ?? 0) > 100 ||
+            SourceLeaderTemplateId.Length > 256 || SourceLeaderTemplateId.Any(char.IsControl) ||
             (VeterancyRank?.Length ?? 0) > 64)
             throw new InvalidDataException("Promotion record title/description/service identity invalid.");
         if (InitialAttributes == null || InitialAttributes.Length != 7)

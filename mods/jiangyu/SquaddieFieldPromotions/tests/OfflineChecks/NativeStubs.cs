@@ -81,6 +81,7 @@ namespace Il2CppMenace.Strategy
         public Il2CppMenace.Tools.LocalizedMultiLine UnitDescription;
         public bool IsInfantry = true;
         public UnitLeaderTemplate InfantryUnitTemplate;
+        public UnityEngine.Sprite Badge, BadgeWhite, BadgeMini, BadgeDragged, BadgeUnitWindow, SlotBadge, BigBadge;
         public string Id;
         public string GetID() => Id;
         // Native v0.7.17 getters select the entity's text for infantry (ActorType == 0).
@@ -88,6 +89,10 @@ namespace Il2CppMenace.Strategy
             IsInfantry ? InfantryUnitTemplate?.UnitTitle : UnitTitle) as Il2CppMenace.Tools.LocalizedLine;
         public Il2CppMenace.Tools.LocalizedMultiLine GetUnitDescription() => DisplayText("GetUnitDescription",
             IsInfantry ? InfantryUnitTemplate?.UnitDescription : UnitDescription) as Il2CppMenace.Tools.LocalizedMultiLine;
+        public UnityEngine.Sprite GetBadge() => DisplayText("GetBadge",
+            IsInfantry ? InfantryUnitTemplate?.Badge : Badge) as UnityEngine.Sprite;
+        public UnityEngine.Sprite GetBadgeWhite() => DisplayText("GetBadgeWhite",
+            IsInfantry ? InfantryUnitTemplate?.BadgeWhite : BadgeWhite) as UnityEngine.Sprite;
         private object DisplayText(string method, object nativeResult)
         {
             var info = new Jiangyu.Sdk.PatchInfo { Instance = this, Result = nativeResult };
@@ -351,10 +356,6 @@ namespace SquaddieFieldPromotions
                 foreach (object value in values) if (value != null) yield return value;
         }
     }
-    internal static class DynamicBadgeFactory
-    {
-        internal static string LabelForIndex(int index) => ((char)('A' + index % 26)).ToString();
-    }
     internal static class NativeCandidates
     {
         internal static bool Fail;
@@ -384,7 +385,7 @@ namespace SquaddieFieldPromotions
         internal bool HasPendingVoices => Installed.Count + Rehydrated.Count > 0 && VoicePrepareCalls == 0;
         internal void Unload() => Unloaded = true;
         internal static PromotionRecord CreateRecord(Il2CppMenace.States.StrategyState state, Selection selection,
-            int badgeIndex, SquaddieServiceRecord service = null)
+            int badgeIndex, SquaddieServiceRecord service = null, string sourceLeaderTemplateId = "")
         {
             string token = Guid.NewGuid().ToString("N");
             var record = new PromotionRecord
@@ -394,7 +395,7 @@ namespace SquaddieFieldPromotions
                 Nickname = selection.Soldier.Nickname, Gender = selection.Soldier.Gender, SkinColor = selection.Soldier.SkinColor,
                 BadgeIndex = badgeIndex, InitialAttributes = PromotionRules.Attributes(selection.UsesXp ? selection.Soldier.Xp : null),
             };
-            PromotionIdentity.Populate(record, selection.Soldier, service);
+            PromotionIdentity.Populate(record, selection.Soldier, service, sourceLeaderTemplateId);
             record.Validate();
             return record;
         }

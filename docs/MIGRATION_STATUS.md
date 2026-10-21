@@ -59,6 +59,12 @@ KDL counts below are **source files**, not patch-operation counts.
 | WeaponRangesRebalanced | 2.9.2 | Shared SuiteSystem host, ranges/linked skills/override JSON |
 | CinematicActionCamera | 1.2.2 | Windows test install and post-install startup log verified on MENACE 0.7.17+22362; manifests/DLLs verified, settings preserved, backup retained; no camera startup errors/warnings; positive user feedback but explicit allied Jetpack auto-follow acceptance still pending (#60) |
 
+Experimental package (not included in the default Suite): **SquaddieFieldPromotions 0.12.1**.
+The user accepted the generic infantry perk tree in 0.12.0, but rejected source-emblem badges
+and reported Singh's tactical overhead icon (#67). The 0.12.1 candidate restores black dynamic
+letter shields and overrides the two native infantry badge getters only for SFP leaders.
+Local build and regression checks passed; Windows installation and gameplay confirmation pending.
+
 ## Evidence levels: do not confuse them
 
 - **Current local builds:** both changed icon packages rebuilt through the Jiangyu CLI;

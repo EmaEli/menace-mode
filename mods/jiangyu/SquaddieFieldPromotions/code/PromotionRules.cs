@@ -19,15 +19,17 @@ internal sealed class Candidate
     internal string LastUnitTitle { get; }
     internal string LastCommander { get; }
     internal string VeterancyRank { get; }
+    internal string SourceLeaderTemplateId { get; }
 
     internal Candidate(int id, string name, string nickname, int gender, int skinColor,
         int missions, int? xp, bool assigned, string lastUnitTitle = "", string lastCommander = "",
-        string veterancyRank = "")
+        string veterancyRank = "", string sourceLeaderTemplateId = "")
     {
         Id = id; Name = name; Nickname = nickname; Gender = gender;
         SkinColor = skinColor; Missions = missions; Xp = xp; Assigned = assigned;
         LastUnitTitle = lastUnitTitle ?? ""; LastCommander = lastCommander ?? "";
         VeterancyRank = veterancyRank ?? "";
+        SourceLeaderTemplateId = sourceLeaderTemplateId ?? "";
     }
 }
 

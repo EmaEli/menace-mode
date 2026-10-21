@@ -8,6 +8,7 @@ using Il2CppMenace.Strategy;
 using Il2CppMenace.Tools;
 using Il2CppMenace.UI;
 using Il2CppMenace.UI.Strategy;
+using System.Text.Json;
 
 int checks = 0;
 void Check(bool value, string name)
@@ -16,8 +17,9 @@ void Check(bool value, string name)
     checks++;
 }
 Candidate C(int id, int missions = 0, int? xp = null, bool assigned = false,
-    string lastUnitTitle = "", string lastCommander = "", string rank = "") =>
-    new(id, "Soldier", "Nickname", 0, 1, missions, xp, assigned, lastUnitTitle, lastCommander, rank);
+    string lastUnitTitle = "", string lastCommander = "", string rank = "", string sourceLeaderTemplateId = "") =>
+    new(id, "Soldier", "Nickname", 0, 1, missions, xp, assigned, lastUnitTitle, lastCommander, rank,
+        sourceLeaderTemplateId);
 void Reject(Action action, string name)
 {
     try { action(); } catch (InvalidDataException) { Check(true, name); return; }
@@ -82,6 +84,34 @@ Check(PromotionIdentity.TitleFor(0, "81st Astral Assault").StartsWith("81st Astr
     "promotion title inherits the squaddie's unit identity");
 Check(!PromotionIdentity.TitleFor(0, "15th Vanguard Division").Contains("15th Vanguard Division") &&
     PromotionIdentity.TitleFor(0, "") != PromotionIdentity.TitleFor(1, ""), "generic title fallback is varied and not the vanilla placeholder");
+Check(PromotionProgression.GenericInfantryPerks.Length == 16 &&
+    PromotionProgression.GenericInfantryPerks.Count(perk => perk.Tier == 1) == 5 &&
+    PromotionProgression.GenericInfantryPerks.Count(perk => perk.Tier == 2) == 5 &&
+    PromotionProgression.GenericInfantryPerks.Count(perk => perk.Tier == 3) == 4 &&
+    PromotionProgression.GenericInfantryPerks.Count(perk => perk.Tier == 4) == 2,
+    "generic promotion tree has all 16 perks in the chosen tier distribution");
+Check(JsonSerializer.Deserialize<PromotionRecord>("{}").SourceLeaderTemplateId == "",
+    "older save sidecars without provenance default to unavailable");
+var provenanceCandidate = C(703, sourceLeaderTemplateId: "squad_leader.weiwu");
+var provenanceRecord = LeaderForge.CreateRecord(null, new Selection(provenanceCandidate, 1, false, false),
+    2, null, PromotionProgression.RootSourceTemplateId(provenanceCandidate.SourceLeaderTemplateId, new PromotionLedger()));
+Check(provenanceRecord.SourceLeaderTemplateId == "squad_leader.weiwu",
+    "new promotion records retain a safe source leader template ID");
+var rootSourceRecord = R(new Selection(C(701), 1, false, false));
+rootSourceRecord.SourceLeaderTemplateId = "squad_leader.lim";
+var chainedSourceRecord = R(new Selection(C(702), 1, false, false), badge: 1);
+chainedSourceRecord.SourceLeaderTemplateId = rootSourceRecord.LeaderId;
+var provenanceLedger = new PromotionLedger { Records = new() { rootSourceRecord, chainedSourceRecord } };
+Check(PromotionProgression.RootSourceTemplateId(chainedSourceRecord.LeaderId, provenanceLedger) == "squad_leader.lim" &&
+    PromotionProgression.RootSourceTemplateId("squad_leader.weiwu", provenanceLedger) == "squad_leader.weiwu" &&
+    PromotionProgression.RootSourceTemplateId(PromotionRecord.LeaderPrefix + new string('a', 32), provenanceLedger) == "",
+    "nested promotions keep their original source and unknown old sources are not guessed");
+rootSourceRecord.SourceLeaderTemplateId = chainedSourceRecord.LeaderId;
+Check(PromotionProgression.RootSourceTemplateId(rootSourceRecord.LeaderId, provenanceLedger) == "",
+    "cyclic source provenance is rejected safely");
+var invalidSourceRecord = R(new Selection(C(704), 1, false, false));
+invalidSourceRecord.SourceLeaderTemplateId = "bad\nsource";
+Reject(() => invalidSourceRecord.Validate(), "control characters are rejected from source template IDs");
 var serviceLedger = new PromotionLedger();
 var firstMission = new MissionServiceSnapshot("operation.1:0:100", new[]
 {
@@ -155,6 +185,8 @@ donorUnitDescription.SetDefaultTranslation("Source unit description");
 var donorSpeakerDescription = new LocalizedMultiLine(LocaCategory.Items, "Description", false);
 donorSpeakerDescription.SetDefaultTranslation("Source speaker description");
 var textSource = new UnitLeaderTemplate { UnitTitle = donorTitle, UnitDescription = donorUnitDescription };
+textSource.Badge = new UnityEngine.Sprite();
+textSource.BadgeWhite = new UnityEngine.Sprite();
 var speakerDonor = new SpeakerTemplate { Description = donorSpeakerDescription };
 var cloneSpeakerDescription = new LocalizedMultiLine(LocaCategory.Items, "Description", false);
 cloneSpeakerDescription.SetDefaultTranslation("Cloned source description");
@@ -180,6 +212,8 @@ Check(donorTitle.GetRawDefaultTranslation() == "15th Vanguard Division" &&
     "promotion text does not mutate native donors");
 Check(textClone.GetUnitTitle() == donorTitle && textClone.GetUnitDescription() == donorUnitDescription,
     "native infantry getters bypass rewritten leader fields and return shared entity text");
+Check(textClone.GetBadge() == textSource.Badge && textClone.GetBadgeWhite() == textSource.BadgeWhite,
+    "native infantry badge getters reproduce the Singh tactical icon regression");
 try
 {
     PromotionTemplateText.VerifyDisplay(textRecord, textClone);
@@ -235,6 +269,32 @@ var system = new PromotionSystem();
 StrategyState.Current = new();
 DataTemplateLoader.Template = preview;
 system.OnInit();
+var badgeArt = new StandalonePortraitAssets();
+var badgeTexture = new UnityEngine.Texture2D(40, 40, UnityEngine.TextureFormat.RGBA32, false);
+var badgePixels = new UnityEngine.Color32[40 * 40];
+for (int y = 4; y < 36; y++)
+    for (int x = 4; x < 36; x++) badgePixels[y * 40 + x] = new(0, 0, 0, 255);
+for (int y = 12; y < 26; y++)
+    for (int x = 14; x < 24; x++) badgePixels[y * 40 + x] = new(240, 26, 32, 255);
+badgeTexture.SetPixels32(new Il2CppInterop.Runtime.InteropTypes.Arrays.Il2CppStructArray<UnityEngine.Color32>(badgePixels));
+var badgeSource = UnityEngine.Sprite.Create(badgeTexture, new(0, 0, 40, 40), new(.3f, .7f), 73);
+foreach (string name in new[] { "badge.png", "badge_mini.png", "badge_dragged.png", "badge_unit.png", "slot_badge.png", "big_badge.png" })
+    badgeArt.Sprites[name] = badgeSource;
+var badgePinned = new List<UnityEngine.Object>();
+Check(DynamicBadgeFactory.Apply(textClone, badgeArt, "B", badgePinned) == "6/6" && badgePinned.Count == 12,
+    "production badge factory replaces all six bundled variants and pins their private copies");
+Check(textClone.BadgeWhite == textClone.Badge && textClone.Badge != badgeSource &&
+    textClone.Badge.pixelsPerUnit == 73 && textClone.Badge.pivot.x == badgeSource.pivot.x &&
+    textClone.Badge.pivot.y == badgeSource.pivot.y,
+    "tactical overlay uses the same letter shield with original sprite scale and pivot");
+Check(badgeTexture.GetPixels32().SequenceEqual(badgePixels) &&
+    textClone.Badge.texture.GetPixels32()[0].a == 0 &&
+    !textClone.Badge.texture.GetPixels32().SequenceEqual(badgePixels),
+    "letter generation preserves source pixels and transparent background while changing the letter");
+Check(textClone.GetBadge() == textClone.Badge && textClone.GetBadgeWhite() == textClone.BadgeWhite,
+    "tactical getter callbacks expose SFP shield sprites instead of shared infantry badges");
+Check(DynamicBadgeFactory.LabelForIndex(25) == "Z" && DynamicBadgeFactory.LabelForIndex(26) == "AA" &&
+    DynamicBadgeFactory.LabelForIndex(52) == "BA", "production promotion labels continue beyond Z");
 Check(textClone.GetUnitTitle() == textClone.UnitTitle &&
     textClone.GetUnitDescription() == textClone.UnitDescription,
     "SFP native getter postfixes expose generated infantry identity");
@@ -247,6 +307,10 @@ var secondTextClone = new UnitLeaderTemplate
     UnitTitle = donorTitle, UnitDescription = donorUnitDescription,
     SpeakerTemplate = new SpeakerTemplate { Description = donorSpeakerDescription },
 };
+DynamicBadgeFactory.Apply(secondTextClone, badgeArt, "C", new List<UnityEngine.Object>());
+Check(secondTextClone.GetBadge() != textClone.GetBadge() &&
+    !secondTextClone.GetBadge().texture.GetPixels32().SequenceEqual(textClone.GetBadge().texture.GetPixels32()),
+    "separate promoted squads retain different tactical letters");
 PromotionTemplateText.Apply(secondTextRecord, secondTextClone, textSource,
     new UnitLeaderTemplate { SpeakerTemplate = speakerDonor });
 PromotionTemplateText.VerifyDisplay(secondTextRecord, secondTextClone);
@@ -261,6 +325,10 @@ var vanillaInfantry = new UnitLeaderTemplate
 };
 Check(vanillaInfantry.GetUnitTitle() == donorTitle && vanillaInfantry.GetUnitDescription() == donorUnitDescription,
     "vanilla infantry keeps shared entity text despite having different leader fields");
+vanillaInfantry.Badge = textClone.Badge;
+vanillaInfantry.BadgeWhite = textClone.BadgeWhite;
+Check(vanillaInfantry.GetBadge() == textSource.Badge && vanillaInfantry.GetBadgeWhite() == textSource.BadgeWhite,
+    "vanilla infantry badge getter results and shared donor sprites remain unchanged");
 var vanillaPilot = new UnitLeaderTemplate
 {
     Id = "squad_leader.pilot", IsInfantry = false, UnitTitle = donorTitle, UnitDescription = donorUnitDescription,
@@ -270,6 +338,8 @@ Check(vanillaPilot.GetUnitTitle() == donorTitle && vanillaPilot.GetUnitDescripti
 var incompletePromotion = new UnitLeaderTemplate { Id = textRecord.LeaderId, InfantryUnitTemplate = textSource };
 Check(incompletePromotion.GetUnitTitle() == donorTitle && incompletePromotion.GetUnitDescription() == donorUnitDescription,
     "missing promoted text preserves the original getter result");
+Check(incompletePromotion.GetBadge() == textSource.Badge && incompletePromotion.GetBadgeWhite() == textSource.BadgeWhite,
+    "missing SFP sprites preserve native getter results rather than blanking the HUD");
 var anonymousInfantry = new UnitLeaderTemplate { InfantryUnitTemplate = textSource, UnitTitle = textClone.UnitTitle };
 Check(anonymousInfantry.GetUnitTitle() == donorTitle, "missing template ID cannot receive the SFP override");
 system.OnTemplatesApplied();
@@ -500,6 +570,8 @@ Open();
 Check(!StrategyState.Current.BlackMarket.ContainsItem(preview), "unexpected preview price fails closed");
 preview.Price = PromotionSystem.DefaultPrice;
 system.OnUnload();
+Check(textClone.GetBadge() == textSource.Badge && textClone.GetBadgeWhite() == textSource.BadgeWhite,
+    "unloaded badge callbacks leave native tactical results untouched");
 Check(textClone.GetUnitTitle() == donorTitle && textClone.GetUnitDescription() == donorUnitDescription,
     "unloaded display callbacks leave native results untouched");
 Open();

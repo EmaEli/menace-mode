@@ -76,6 +76,8 @@ public sealed class PromotionSystem : JiangyuSystem
         Require(typeof(Roster), "AddHirableLeader", new[] { typeof(UnitLeaderTemplate) }, typeof(void));
         Require(typeof(UnitLeaderTemplate), "GetUnitTitle", Type.EmptyTypes, typeof(LocalizedLine));
         Require(typeof(UnitLeaderTemplate), "GetUnitDescription", Type.EmptyTypes, typeof(LocalizedMultiLine));
+        Require(typeof(UnitLeaderTemplate), "GetBadge", Type.EmptyTypes, typeof(UnityEngine.Sprite));
+        Require(typeof(UnitLeaderTemplate), "GetBadgeWhite", Type.EmptyTypes, typeof(UnityEngine.Sprite));
         Require(typeof(SaveState), "GetFilePath", Type.EmptyTypes, typeof(string));
         Require(typeof(SaveState), "IsLoading", Type.EmptyTypes, typeof(bool));
         Require(typeof(SaveState), "Close", Type.EmptyTypes, typeof(void));
@@ -99,6 +101,9 @@ public sealed class PromotionSystem : JiangyuSystem
         // Override only our leaders; never change the shared vanilla entity template.
         Context.Patches.Postfix("Il2CppMenace.Strategy.UnitLeaderTemplate", "GetUnitTitle", 0, LeaderTitle);
         Context.Patches.Postfix("Il2CppMenace.Strategy.UnitLeaderTemplate", "GetUnitDescription", 0, LeaderDescription);
+        // UnitHUD -> UnitActor -> these getters otherwise return the shared Singh sprites.
+        Context.Patches.Postfix("Il2CppMenace.Strategy.UnitLeaderTemplate", "GetBadge", 0, LeaderBadge);
+        Context.Patches.Postfix("Il2CppMenace.Strategy.UnitLeaderTemplate", "GetBadgeWhite", 0, LeaderBadgeWhite);
         Context.Patches.Postfix("Il2CppMenace.Strategy.BlackMarket", "Restock", 2, _ =>
         {
             Stock();
@@ -204,6 +209,18 @@ public sealed class PromotionSystem : JiangyuSystem
         if (leader?.UnitDescription != null) info.Result = leader.UnitDescription;
     }
 
+    private void LeaderBadge(PatchInfo info)
+    {
+        var leader = PromotedTemplate(info);
+        if (leader?.Badge != null) info.Result = leader.Badge;
+    }
+
+    private void LeaderBadgeWhite(PatchInfo info)
+    {
+        var leader = PromotedTemplate(info);
+        if (leader?.BadgeWhite != null) info.Result = leader.BadgeWhite;
+    }
+
     private void Promote(PatchInfo info)
     {
         if (!IsPreview(info.Instance)) return;
@@ -228,7 +245,8 @@ public sealed class PromotionSystem : JiangyuSystem
                     if (!_forge.AssetsPresent)
                         throw new InvalidOperationException("Bundled portrait assets are missing; reinstall the mod.");
                     var record = LeaderForge.CreateRecord(state, selection, ledger.NextBadgeIndex(),
-                        ledger.FindServiceRecord(selection.Soldier.Id));
+                        ledger.FindServiceRecord(selection.Soldier.Id),
+                        PromotionProgression.RootSourceTemplateId(selection.Soldier.SourceLeaderTemplateId, ledger));
                     var source = new SourceSquaddieRemoval(state, record);
                     if (!source.Present) throw new InvalidOperationException("Selected source soldier no longer exists.");
                     string detail;
