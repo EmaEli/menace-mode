@@ -61,6 +61,8 @@ consumer built against 0.5.x (Field Logistics, Starting Options) failed `OnInit`
   read-only list indexer and separate count interface, avoiding that enumerator. Equipped/
   temporary exclusions, top-up limits and native AddItem behavior are unchanged. Regression
   checks use stock lists whose MoveNext always throws; actual gameplay remains a separate gate.
+  Canonical Windows BuildOnly/install passed on 21 October 2026; installed manifest/file
+  0.8.2/0.8.2.0 and assembly 1.0.0.0 verified. User gameplay check remains pending.
 - 0.4.1 adds a shared tactical HUD input guard (#43). IMGUI consumers register a live
   rectangle provider with `HudInputGuard.Register(owner, provider)` (GUI coordinates, null
   when hidden) and call `Unregister(owner)` on unload. One companion-owned Harmony guard
