@@ -63,7 +63,18 @@ Experimental package (not included in the default Suite): **SquaddieFieldPromoti
 The user accepted the generic infantry perk tree in 0.12.0, but rejected source-emblem badges
 and reported Singh's tactical overhead icon (#67). The 0.12.1 candidate restores black dynamic
 letter shields and overrides the two native infantry badge getters only for SFP leaders.
-Local build and regression checks passed; Windows installation and gameplay confirmation pending.
+Source revision: `59a422f` on `dev`. Local real-reference build (zero warnings/errors), 202 C#
+checks (native/Unity APIs simulated), 16 Python authoring tests and BuildKit verification passed.
+Canonical Windows BuildOnly and installation passed on MENACE 0.7.17+22362 with private SDK
+10.0.113: 202 behavior checks plus 6 installed-settings helper checks, zero build warnings/errors.
+Installed manifest/assembly: **0.12.1 / 0.12.1.0**; only SFP replaced, installed settings and
+Jiangyu loader reused. No saves or UserData modified. Backup/rollback journal outside Mods:
+`_MENACE_Backups/20261021-121656-c94708eb12784d92baff3f0b895e8fcc`.
+Candidate ZIP SHA256: `7ba269f1e757a7caa1c9689351cc932cc4858489910e9885d688006395ed2f8c`.
+Installed DLL SHA256: `1987bbfe60b22880adc0733a5ab1dfa018dbeef47e9a42f9f78544d7bf45a5b5`.
+Installer log: `M:\SFP-0.12.1-20261021-Build\Temp\MENACE-install.log`.
+**No 0.12.1 startup or graphical acceptance yet**; existing promoted leaders should rebuild
+black letter badges on relaunch/load, including the native tactical overhead path.
 
 ## Evidence levels: do not confuse them
 
