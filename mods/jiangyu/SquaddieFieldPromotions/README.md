@@ -4,6 +4,10 @@
 Tracked in [#27](https://github.com/EmaEli/menace-mode/issues/27) and
 [#53](https://github.com/EmaEli/menace-mode/issues/53).
 
+Vehicle crew promotions ([#66](https://github.com/EmaEli/menace-mode/issues/66)) are
+**not implemented**; see the
+[identity and promotion proposal](../../../docs/SFP_VEHICLE_PROMOTIONS_DESIGN.md).
+
 ## Requirements
 
 - MENACE **0.7.17+22362**, MelonLoader and Jiangyu **1.4.8**.
