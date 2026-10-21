@@ -76,6 +76,15 @@ Installer log: `M:\SFP-0.12.1-20261021-Build\Temp\MENACE-install.log`.
 **No 0.12.1 startup or graphical acceptance yet**; existing promoted leaders should rebuild
 black letter badges on relaunch/load, including the native tactical overhead path.
 
+**21 October — SFP #68 voice-pitch prototype integrated into `dev`:** merge `f6edd42` brings
+in five persisted, deterministic pitch presets shared by tactical and Hire barks; old sidecars
+default to neutral. This is source-only WIP, not the installed 0.12.1 candidate. The merged source
+builds against local MENACE 0.7.17 references with 0 warnings/errors; 217 C# behavior checks
+(native/Unity APIs simulated) and 17 Python authoring tests pass. It has **not** been Windows-built,
+installed or play-tested. All ten gender/pitch profiles currently initialize eagerly, creating
+about 780 conversation clones; load-time and memory cost need measurement before packaging. Keep
+issue #68 open and do not deploy this prototype.
+
 ## Evidence levels: do not confuse them
 
 - **Current local builds:** both changed icon packages rebuilt through the Jiangyu CLI;

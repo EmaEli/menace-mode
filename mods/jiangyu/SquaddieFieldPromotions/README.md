@@ -5,7 +5,8 @@
 > index. Existing save records remain neutral. Per-preset native Stem SoundBanks
 > and tactical speaker tags reuse the same John/Jane WAV assets. Tactical and
 > Hire barks select the same preset. **Not Windows-compiled, performance-tested,
-> or verified in MENACE.** Current release/installer stays 0.11.8; see issue #68.
+> or verified in MENACE. The installed 0.12.1 test candidate predates this prototype;
+> do not deploy it until the load/memory and gameplay gates in issue #68 pass.
 
 **Experimental: promotes real squaddies to hirable leaders and persists them across save/load.**
 Tracked in [#27](https://github.com/EmaEli/menace-mode/issues/27) and
