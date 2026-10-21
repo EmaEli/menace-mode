@@ -50,9 +50,10 @@ class Transform { public Vector3 position; public void SetPositionAndRotation(Ve
 class Camera { public Transform transform=new(); public float fieldOfView,nearClipPlane,farClipPlane; }
 class Element { public Transform transform=new(); }
 class Actor {
-    public Vector3 Position,Forward; public bool Moving,Vehicle;
+    public Vector3 Position,Forward; public bool Moving,Vehicle; public string Id="tank";
     public Vector3 GetPos()=>Position; public Vector3 GetForward()=>Forward;
     public bool IsMoving()=>Moving; public bool IsVehicle()=>Vehicle;
+    public Actor GetTemplate()=>this; public string GetID()=>Id;
 }
 class Setting { public float Value; public Setting(float value){Value=value;} }
 partial class CameraChecks {
@@ -62,16 +63,19 @@ partial class CameraChecks {
     bool _manual; EventKind _autoKind; Vector3? _autoAttackTarget;
     Vector3 _heading,_lastElementPosition,_smoothedPosition; Quaternion _smoothedRotation;
     float _orbitYaw,_orbitPitch,_savedFar=100,_cachedVehicleDistance=8,_cachedVehicleHeight=4;
-    Setting _distance=new(3.2f),_height=new(1.75f),_shoulder=new(0.55f),_fieldOfView=new(66);
+    float _cachedDistance=3.2f,_cachedHeight=1.75f,_cachedWalkerDistance=13,_cachedWalkerHeight=7;
+    Setting _shoulder=new(0.55f),_fieldOfView=new(66);
     static int checks;
     static void Check(bool ok){checks++;if(!ok)throw new Exception("Camera geometry check "+checks+" failed");}
     static bool Near(Vector3 a,Vector3 b)=>(a-b).sqrMagnitude<0.00001f;
     public static void Main(){
-        foreach(bool vehicle in new[]{false,true})
+        foreach(int type in new[]{0,1,2})
         foreach(int dx in new[]{-1,0,1}) foreach(int dz in new[]{-1,0,1}) {
             if(dx==0&&dz==0)continue;
+            bool vehicle=type!=0,walker=type==2;
             var c=new CameraChecks(); c._autoKind=EventKind.Firing;
             c._trackedActor.Position=new(10,2,10); c._trackedActor.Vehicle=vehicle;
+            c._trackedActor.Id=walker?"vehicle.WALKER":"tank";
             c._trackedActor.Forward=new(-dx,0,-dz); c._trackedActor.Moving=true;
             c._trackedElement.transform.position=new(30,2,30);
             Vector3 target=new(10+dx*20,5,10+dz*20);
@@ -79,11 +83,11 @@ partial class CameraChecks {
             c.SetAutoAttackTarget(EventKind.Firing,target);
             Check(Near(c._heading,bearing));
             c.UpdateThirdPersonCamera();
-            float distance=vehicle?8:3.2f, height=vehicle?4:1.75f;
+            float distance=walker?13:vehicle?8:3.2f, height=walker?7:vehicle?4:1.75f;
             Vector3 desired=c._trackedActor.Position+Vector3.up*height-bearing*distance;
             if(!vehicle)desired+=Vector3.Cross(Vector3.up,bearing)*0.55f;
             Check(Near(c._smoothedPosition,desired*Blend(TransitionSpeed,0.1f)));
-            float lookHeight=vehicle?2.2f:1.38f;
+            float lookHeight=walker?3.85f:vehicle?2.2f:1.38f;
             Check(Near(Quaternion.LastLook,target+Vector3.up*lookHeight-desired));
             Check(Near(c._lastElementPosition,c._trackedElement.transform.position));
             c.SetAutoAttackTarget(EventKind.Firing,new Vector3(10-dx*20,2,10-dz*20));
@@ -117,7 +121,7 @@ class CameraGeometryTests(unittest.TestCase):
             (root / "Program.cs").write_text(HARNESS + "\npartial class CameraChecks {\n" + "\n".join(methods) + "\n}")
             result = subprocess.run([DOTNET, "run", "--project", str(root / "Checks.csproj"), "-c", "Release", "--nologo", "-v", "quiet"], capture_output=True, text=True, timeout=60)
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-            self.assertIn("Camera geometry C# checks: 99 passed", result.stdout)
+            self.assertIn("Camera geometry C# checks: 147 passed", result.stdout)
 
 
 if __name__ == "__main__":

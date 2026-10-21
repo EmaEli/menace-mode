@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.2.0
+
+- Supported garrison occupants receive the exact outgoing Accuracy or AccuracyMult effect configured by MENACE's native `special.stance.deployed` template; the property type and amount are read from the loaded template instead of guessed or hard-coded.
+- The temporary change is limited to attacks from enabled garrison buildings, excludes occupants already in deployed stance, and is restored after hit-chance calculation even if the native calculation throws. Incoming cover and existing building settings are unchanged.
+- Offline regression tests cover both native accuracy property forms and eligibility rules. Live Windows gameplay comparison remains pending for issue #62.
+
 ## 1.1.0
 
 - Safe collapse of occupied multi-tile garrisons is now part of this mod (moved from Building Combat Rules 0.1.2-0.2.0, GitHub issue #50). Installing Garrisonable Buildings alone no longer leaves the reproduced hard crash on `Structure.Die()` of an enterable 1x2/1x3/2x2/2x3/3x3 building unguarded.

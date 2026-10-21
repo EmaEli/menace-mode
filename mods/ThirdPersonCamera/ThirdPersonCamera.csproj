@@ -7,9 +7,9 @@
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
     <AssemblyName>MenaceThirdPersonCamera</AssemblyName>
-    <Version>1.1.1</Version>
-    <AssemblyVersion>1.1.1.0</AssemblyVersion>
-    <FileVersion>1.1.1.0</FileVersion>
+    <Version>1.2.2</Version>
+    <AssemblyVersion>1.2.2.0</AssemblyVersion>
+    <FileVersion>1.2.2.0</FileVersion>
     <PlatformTarget>x64</PlatformTarget>
     <Prefer32Bit>false</Prefer32Bit>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
@@ -24,6 +24,7 @@
     <Reference Include="Il2CppInterop.Runtime"><HintPath>$(MenaceRuntimeDir)/Il2CppInterop.Runtime.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="Il2Cppmscorlib"><HintPath>$(MenaceInteropDir)\Il2Cppmscorlib.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="Assembly-CSharp"><HintPath>$(MenaceInteropDir)\Assembly-CSharp.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="Il2CppSirenix.Serialization"><HintPath>$(MenaceInteropDir)/Il2CppSirenix.Serialization.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="UnityEngine.CoreModule"><HintPath>$(MenaceInteropDir)\UnityEngine.CoreModule.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="Unity.InputSystem"><HintPath>$(MenaceInteropDir)\Unity.InputSystem.dll</HintPath><Private>false</Private></Reference>
   </ItemGroup>

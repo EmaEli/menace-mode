@@ -1,3 +1,32 @@
+## Weapon Mechanics Rebalanced 0.4.14 — #61 muted, impact-gated feedback (Windows install verified; gameplay check pending)
+
+This is a presentation-only change. Mortar ballistics, Scatter, ScatterChance, action economy and damage must remain unchanged. With Debug OFF:
+
+1. Select a mortar with a remembered target and confirm its marker uses a muted dark-red-to-green progression based on effective Scatter; solved Scatter 1 is brighter green.
+2. Fire at a ranged target and watch the marker/`S` value while the shell is in flight. They must remain at the previous value until the impact is observed, then update once.
+3. Repeat with a miss and an exact intended-tile impact. Confirm the solved state appears only after impact, and does not leak between different mortars.
+4. Check the yellow cursor envelope and native blast AoE remain distinct and unchanged. Keep #61 open until the user confirms the live visual/timing behavior.
+
+Validation on 19 October 2026: local Release build succeeded with no WMR warnings; the 13 targeted Python checks passed; BuildKit and ZIP inventory verification passed (2 packages, 102 files), and 17,794 C# regression checks passed. On Windows, the canonical build-only pass used pinned SDK 10.0.113 and built WMR 0.4.14 with no warnings; the existing MenaceModSettings 0.6.1 JIA005 warning recurred. The canonical installer then installed WMR 0.4.14, settings 0.6.1 and the pinned Jiangyu loader. On-disk versions/hashes and the backup of prior WMR 0.4.13 were verified. Backup: `M:\SteamLibrary\steamapps\common\Menace\_MENACE_Backups\20261019-142742-f7467538257b46aa80402e585dc0135e`. The game has not been launched; visible color and impact timing remain unverified.
+
+## Weapon Mechanics Rebalanced 0.4.13 — #59 enemy-only skill correction, retest pending
+
+The 0.4.12 candidate was installed and the user rejected its live balance: enemy mortars remained excessively accurate. The retrieved log had Debug ON, two instantiated `active.enemy_only_launch_medium_mortar_frag` skills and zero ranging events. That separate enemy-only ID was absent from both WMR's baseline and ranging allowlist. This proves missing coverage, not the actual impacts or reset behavior.
+
+0.4.13 covers that skill with Scatter 4 / ScatterChance 80%, preserving its native AP, uses, repetitions, damage and suppression. This is an explicit base-chance correction for the previously untouched enemy-only template; ranging itself still never changes ScatterChance. Managed stand-in tests exercise the actual baseline write, repeated apply, disable/enable restore, missing template and write rejection. They do not run native AI or validate MENACE turn boundaries. In a controlled game test, use the same hostile mortar for each case:
+
+1. Confirm its first firing action in an activation uses the configured base Scatter (light 3, medium 4, 120 mm 5).
+2. Miss target A, then fire at a different target B during the same activation: Scatter should be one lower, independent of the tile.
+3. If a roll lands exactly on the intended tile, the next shot should use Scatter 1, even at a different target. Without an exact hit, repeated shots stop at Scatter 2.
+4. On the mortar's next activation, confirm Scatter returns to its base value. A different mortar must have its own counter.
+5. Verify player mortar per-target ranging, ScatterChance, and non-mortar skills are unchanged.
+
+6. With Debug ON for diagnosis, require `MORTAR BASELINE skill=active.enemy_only_launch_medium_mortar_frag scatter=4 scatterChance=80% enabled=True`, then `MORTAR APPLY` for that skill and `ENEMY MORTAR RESULT`. Capture AP/ammo before/after and `MORTAR TURN RESET` between activations. Missing shot/reset markers are a failed hook check, not evidence of correct ranging. Turn Debug OFF after diagnosis.
+
+0.4.12's earlier offline passes did not prove enemy-skill coverage or gameplay balance. Keep #59 open until the 0.4.13 baseline, native shot/reset hooks and player comparison are verified; track fresh build/deployment evidence in that issue separately from gameplay acceptance.
+
+0.4.13 validation on 19 October: 11 targeting guards plus the production-method baseline/restore test passed; filtered DLL metadata/dependency checks and the C# runner passed 17,789 checks. Local and Windows WMR Release builds passed without warnings. The full Python run had 134/136 passing, with unrelated Overwatch migration-version and camera-wiring failures. The canonical Windows installer passed build-only and installation, verified 0.4.13 / 0.4.13.0 metadata, retained a dated rollback backup, and a before/after hash comparison confirmed 1,095 unrelated-mod/UserData files unchanged. The existing MenaceModSettings 0.6.1 companion was rebuilt at the same version (existing JIA005 warning); the pinned loader was retained at the same version. No 0.4.13 game launch or gameplay acceptance is claimed.
+
 ## Weapon Mechanics Rebalanced 0.4.11 — #56 (user-reported in-game acceptance; per-target visual checklist not recorded)
 
 The 0.4.10 Windows run loaded the new DLL but failed both screen overlays in the
@@ -107,6 +136,26 @@ existing hover-after-casualties, 40 AP, defensive-fire, garrison and AI regressi
   refresh and repeated use. Turn sharing OFF while pending; no delayed transfer later.
 - Repeat with vehicle module absent/present, default vehicle resupply ON/OFF, loaded save,
   actor spawn, mission exit and next mission. Debug/test-loadout options remain OFF.
+
+### Garrisonable Buildings 1.2.0 — #62 (live comparison pending)
+
+- Use one Garrisonable Buildings copy. Compare outgoing hit chance for the same attacker,
+  weapon, target and range in ordinary stance, native deployed stance, and inside a supported
+  garrison. The garrisoned attack should match the native deployed accuracy contribution.
+- Exit and re-enter a supported building; the bonus must disappear outside and must not stack
+  across repeated hit-chance calculations. An occupant already in deployed stance must not
+  receive the contribution twice.
+- Check attack skills only. Non-attack hit-chance queries, unsupported buildings and attacks
+  made outside enabled garrisons must remain unchanged.
+- Verify incoming hit chance still uses the configured building/StrongerCover protection;
+  the new offense behavior must not change cover, AP, concealment or suppression settings.
+- Keep Debug logging OFF normally. If the native effect does not match, enable it temporarily
+  and capture the one-time `resolved native deployed accuracy effect` diagnostic plus the
+  complete `MelonLoader/Latest.log`; turn Debug OFF after diagnosis.
+
+Offline tests exercise the eligibility and Accuracy/AccuracyMult arithmetic. They do not
+prove native template enumeration, Harmony registration, or live hit-chance behavior; keep
+issue #62 open until the Windows gameplay comparison passes.
 
 ### StrongerCover / Garrisonable Buildings / WRR (#38)
 

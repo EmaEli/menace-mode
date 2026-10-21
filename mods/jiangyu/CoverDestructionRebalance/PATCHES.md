@@ -1,8 +1,8 @@
-# Cover Destruction Rebalance v0.3.1 - dynamic patch rule
+# Cover Destruction Rebalance v0.4.1 - Jiangyu rules
 
-The mod no longer keeps a fixed skill-by-skill list.
+The general rebalance is authored in `templates/half-cover-destruction.kdl` for the supported skills.
 
-At startup it obtains every current `SkillTemplate` through `DataTemplateLoader.GetAll<T>()`, then inspects each event handler. If a handler exposes `DestroyHalfCover`, the following rule is applied:
+The authored handler values implement the following vanilla-to-rebalanced tiers:
 
 - `None (0)` -> unchanged
 - `Light (1)` -> unchanged
@@ -10,13 +10,13 @@ At startup it obtains every current `SkillTemplate` through `DataTemplateLoader.
 - `Heavy (3)` -> `Medium (2)`
 - Exception: `active.laser_rifle_gunslinger` `Heavy (3)` -> `Light (1)`
 
-This keeps the original rebalance while automatically following weapon/skill additions in later MENACE patches.
+Unlike the legacy startup scan, new skills and handler-index changes require reviewing the KDL patches after game updates.
 
 ## Mortar exception
 
 After the general rule, `active.launch_light_mortar_frag` and `active.launch_medium_mortar_frag` are forced to `DestroyHalfCover=None (0)`. 120 mm mortar skills are not exempt and use the general tier rule above.
 
 
-## Runtime mortar guard (0.3.1)
+## Runtime mortar guard (0.4.1; legacy 0.3.1 behavior restored)
 
-The startup template pass is retained, but light/medium mortar protection is also enforced immediately before native `AttackHandler.OnTileHit`. This prevents later template/handler replacement from restoring `DestroyHalfCover` for those two skills. The guard is silent in normal play and only logs if installing or executing the guard itself fails.
+The KDL template pass is retained, but light/medium mortar protection is also enforced immediately before native `AttackHandler.OnTileHit(Skill, Tile, Tile, Vector3)` through Jiangyu's mod-owned prefix. It changes the actual handler's attack template, not just a startup lookup. It never skips the original method, restores an obsolete destruction value, or alters 120 mm attacks. The guard is silent in normal play and warns once if execution fails. Jiangyu owns patch-registration diagnostics and unload cleanup.

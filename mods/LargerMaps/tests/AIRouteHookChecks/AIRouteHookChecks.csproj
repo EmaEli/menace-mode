@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net6.0</TargetFramework>
+    <CheckEolTargetFramework>false</CheckEolTargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <HarmonyRuntimeDir>$([System.IO.Path]::GetDirectoryName('$(HarmonyAssemblyPath)'))</HarmonyRuntimeDir>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="0Harmony" HintPath="$(HarmonyAssemblyPath)" />
+    <Reference Include="$(HarmonyRuntimeDir)/MonoMod*.dll" />
+    <Reference Include="$(HarmonyRuntimeDir)/Mono.Cecil*.dll" />
+    <Reference Include="Iced" HintPath="$(HarmonyRuntimeDir)/Iced.dll" />
+    <Compile Include="../../src/LargerMaps/AIRouteDiagnostics.cs" Link="AIRouteDiagnostics.cs" />
+    <Compile Include="../../src/LargerMaps/AIRouteBudget.cs" Link="AIRouteBudget.cs" />
+  </ItemGroup>
+  <Target Name="RequireExistingHarmony" BeforeTargets="ResolveReferences">
+    <Error Condition="!Exists('$(HarmonyAssemblyPath)')" Text="Set HarmonyAssemblyPath to the existing MelonLoader 0Harmony.dll." />
+  </Target>
+</Project>

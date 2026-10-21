@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Version>1.1.1</Version>
+    <Version>1.2.2</Version>
     <AssemblyName>ThirdPersonCameraSettings</AssemblyName>
     <RootNamespace>MenaceThirdPersonCamera.Settings</RootNamespace>
   </PropertyGroup>

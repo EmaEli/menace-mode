@@ -1,8 +1,8 @@
 {
   "name": "GarrisonableBuildings",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "author": "Luca",
-  "description": "Native-style infantry garrisons for selected small buildings, with configurable building-specific inside cover, optional 3x3 support and safe collapse of occupied multi-tile garrisons. Jiangyu port of the legacy GameplaySuite module; options live in the MenaceModSettings window (F9).",
+  "description": "Native-style infantry garrisons for selected small buildings, with configurable inside cover, deployed-style outgoing accuracy, optional 3x3 support and safe occupied collapse. Jiangyu port of the legacy GameplaySuite module; options live in MenaceModSettings.",
   "depends": [
     "Jiangyu >= 1.4.8",
     "MenaceModSettings >= 0.3.0"

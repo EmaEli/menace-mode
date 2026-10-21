@@ -8,23 +8,31 @@ using System.Xml.Linq;
 internal static class ArtifactChecks
 {
     // Metadata-only inspection. Never loads a game/mod assembly into the test process.
-    public static void Run(Action<bool, string> check, string repository)
+    public static void Run(Action<bool, string> check, string repository, IEnumerable<string>? selectedModules = null)
     {
         string packages = Path.Combine(Path.GetFullPath(repository), "mods", "jiangyu");
         using var catalog = JsonDocument.Parse(File.ReadAllText(Path.Combine(repository,
             "mods", "GameplaySuite", "tools", "distribution.json")));
         string[] modules = catalog.RootElement.GetProperty("modules").EnumerateArray().Select(x => x.GetString()!).ToArray();
+        var selected = selectedModules?.ToHashSet(StringComparer.Ordinal);
+        if (selected is not null)
+        {
+            check(selected.Count > 0, "artifact filter must select at least one module");
+            check(selected.IsSubsetOf(modules), "artifact filter contains unknown module");
+        }
         var available = new Dictionary<string, Version>(StringComparer.Ordinal)
         {
             ["Jiangyu"] = Version.Parse(catalog.RootElement.GetProperty("jiangyuVersion").GetString()!)
         };
         foreach (string name in modules)
         {
+            if (selected is not null && !selected.Contains(name)) continue;
             using var info = JsonDocument.Parse(File.ReadAllText(Path.Combine(packages, name, "jiangyu.json")));
             available[name] = Version.Parse(info.RootElement.GetProperty("version").GetString()!);
         }
         foreach (string module in modules)
         {
+            if (selected is not null && !selected.Contains(module)) continue;
             string root = Path.Combine(packages, module);
             using var manifest = JsonDocument.Parse(File.ReadAllText(Path.Combine(root, "jiangyu.json")));
             string version = manifest.RootElement.GetProperty("version").GetString()!;
@@ -86,6 +94,7 @@ internal static class ArtifactChecks
             }
             Console.WriteLine($"{module}: manifest={version}, assembly={assemblyVersion}, file={fileVersion} verified.");
         }
+        if (selected is not null && !selected.Contains("CinematicActionCamera")) return;
         string cameraRoot = Path.Combine(repository, "mods", "ThirdPersonCamera");
         string cameraVersion = XDocument.Load(Path.Combine(cameraRoot, "ThirdPersonCamera.csproj"))
             .Descendants("Version").Single().Value;

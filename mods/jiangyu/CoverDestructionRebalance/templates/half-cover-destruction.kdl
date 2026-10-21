@@ -1,6 +1,6 @@
 // Half-cover destruction tiers, one tier lower than vanilla (Medium->Light,
 // Heavy->Medium; gunslinger laser rifle Heavy->Light). Light/medium infantry
-// mortar HE no longer destroys half cover. Rule: GameplaySuite/packaging/standalone/CoverDestructionRebalance/PATCHES.md.
+// mortar HE no longer destroys half cover. See ../PATCHES.md and the runtime guard in code/.
 
 patch "SkillTemplate" "active.at_wardog_detonate" {
     set "EventHandlers" index=1 {

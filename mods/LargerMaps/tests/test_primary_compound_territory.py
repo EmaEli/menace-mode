@@ -65,7 +65,7 @@ class PrimaryCompoundReferenceTests(unittest.TestCase):
 
     def test_1_4_5_manifest_is_consistent(self):
         data=json.loads((ROOT/'../jiangyu/LargerMaps/jiangyu.json').read_text())
-        self.assertEqual(data['version'],'2.2.0')
-        self.assertIn('<Version>2.2.0</Version>', (ROOT/'../jiangyu/LargerMaps/code/LargerMaps.csproj').read_text())
+        self.assertEqual(data['version'],'2.3.2')
+        self.assertIn('<Version>2.3.2</Version>', (ROOT/'../jiangyu/LargerMaps/code/LargerMaps.csproj').read_text())
 
 if __name__=='__main__':unittest.main()

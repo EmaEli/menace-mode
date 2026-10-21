@@ -1,3 +1,84 @@
+## 2.3.2 - Defer destination AP validation to native Move (MEN-002)
+
+- Fix the recovery's premature destination-cost check: at ConsiderZones.PostProcess,
+  native TileScore.APCost is still uncomputed (zero). Require an existing candidate
+  geometrically closer to the assigned zone, then let normal Move calculate paths,
+  clip them to affordable AP and select/reject movement. No extra path search or
+  cost/path mutation; actor AP and every other recovery guard remain unchanged.
+- Reproduce the zero-cost failure in the managed harness and pin native Reset /
+  Move path-cost call sites to MENACE 0.7.17. Managed/native-byte checks, local
+  clean-source build and canonical Windows BuildOnly/install pass. The previous
+  2.3.1 is backed up outside Mods; settings/unrelated mods are unchanged. Fresh
+  gameplay acceptance remains pending; no movement improvement is claimed yet.
+- 2.3.1 game evidence: zero recovery applications; 29/31 hostiles still stationary
+  in rounds 4–10. History reaches two idle rounds; rounds 6–9 show 20 actors rejected
+  at Progress and nine at TileUtility. The latter guard is deliberately not relaxed.
+
+---
+
+## 2.3.1 - Explain rejected advance recovery (MEN-002)
+
+- With `DiagnoseAIRoutes` enabled, record the first recovery rejection stage and
+  observed idle-round history, plus whether each final choice qualifies as idle.
+  Reuse per-actor/per-round route budgets; diagnostics remain OFF by default.
+- Do not relax any eligibility guard or change native action selection. Diagnostic
+  failures are isolated from recovery itself. This is not an inactivity fix.
+- The first 2.3.0 game run enabled recovery without errors but recorded no recovery
+  applications; 29/31 enemies remained stationary in rounds 4–10. 2.3.1 passed the
+  canonical Windows BuildOnly/install checks on 20 October; focused gameplay and
+  diagnostic-log analysis remain pending.
+
+---
+
+## 2.3.0 - Conditional advance recovery candidate (MEN-002)
+
+- Add `RecoverStalledAdvance` (ON by default; restart required), restricted
+  to reviewed MENACE 0.7.17 and actual maps above 64x64. Hostile factions 5–9 may
+  recover their existing single `AdvanceTowards` order after two observed idle
+  rounds without a position change. Useful native choices reset this history.
+- Restore the native zone distance/inside-utility contributions on existing tile
+  scores only when there are no attack candidates or positive combat/general tile
+  utilities. Normal Move evaluation, action competition, safety, AP, stance and
+  path execution remain native; no additional attack/path search is requested.
+- Exclude allies/civilians, mixed/defensive orders, arrival, garrisons, suppression,
+  morale loss, deployment, sleeping, spent AP and already-moving/moved actors.
+  Keep contacts and enemy positions untouched. No centre target or patrol added.
+- Windows BuildOnly and canonical installation passed. The first gameplay run
+  did not apply recovery; acceptance remains open (see 2.3.1).
+
+---
+
+## 2.2.2 - Observe native Move utility decisions (MEN-002)
+
+- Isolate the `Behavior.Execute` Harmony diagnostic state in its own callback type,
+  allowing it to coexist with the deep profiler's `__state` on the same method.
+- Add opt-in observations of `Move.OnEvaluate`, `OnNewTurn` and `HasUtility`, plus
+  movement counters/flags and stored target-score components when `Idle` wins.
+- No gameplay decisions, settings, pathfinding or native results are changed. The
+  additional probes remain behind `DiagnoseAIRoutes`, OFF by default.
+- Windows BuildOnly and canonical install passed. A game run reported v3 hooks=15/15;
+  31 enemies chose Idle in rounds 4–9 while Move evaluation returned 0. The cause is
+  still unknown; no gameplay behavior was changed.
+
+---
+
+## 2.2.1 - Keep AI investigation visible through the mission (MEN-002)
+
+- Replaces the session-wide 120-agent / 200-move logging cutoff with independent
+  per-actor, per-round event budgets, repeated-poll suppression and explicit limit
+  warnings/count summaries. Civilians cannot exhaust another actor's budget.
+- Existing opt-in `DiagnoseAIRoutes` now records round-start/end positions, AP,
+  sleep/turn state, zone distance, known-contact identities/TTL, native action
+  scores, attack candidates, movement state, actual movement completion, skill-use
+  acceptance and effect processing. A selected destination is not called arrival;
+  accepted skill use/effect processing is not proof of a hit or kill.
+- No gameplay settings/decisions, pathfinder, orders or native scores changed.
+  Diagnostics remain OFF by default, independent of deep pathfinding profiling.
+- Added executable managed budget/distance checks and source/native-contract
+  regression guards. Windows startup and mission coverage require a fresh game run.
+
+---
+
 ## 2.2.0 - Terrain stamp footprint kept at vanilla world size (MEN-008)
 
 - MEN-008 (#14): `ScatterStamps` writes each landform stamp texture 1:1 into the fixed 513x513 heightmap / 1024x1024 alphamaps, so on enlarged maps every basin, hill and plateau grew with the world size (about 1.3x at 64x64, 1.7x at 96x96) while the stamp prefab (water plane, rocks) kept its authored size. A lake therefore rendered as a flat slab hanging inside a much larger basin, with a visible step down to the lake floor at its edge.

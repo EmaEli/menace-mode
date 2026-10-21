@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using Il2CppInterop.Runtime.InteropTypes;
 using Il2CppMenace.Items;
 using Il2CppMenace.Tactical;
@@ -161,10 +162,54 @@ internal static class Native
         catch { return false; }
     }
 
+    private static bool HasIndirectFireMetadata(Skill skill)
+    {
+        if (!Valid(skill)) return true;
+        var template = skill.GetTemplate();
+        if (!Valid(template)) return true;
+        var tags = template.Tags;
+        if (tags != null)
+        {
+            for (int i = 0; i < tags.Count; i++)
+            {
+                var tag = tags[i];
+                if (Valid(tag) && tag.TagType == TagType.INDIRECT_FIRE) return true;
+            }
+        }
+
+        var item = skill.GetItem();
+        if (!Valid(item)) return false;
+        var itemTemplate = item.GetTemplate();
+        if (!Valid(itemTemplate)) return true;
+        return itemTemplate.HasTag(TagType.INDIRECT_FIRE, false);
+    }
+
+    private static bool TryFindWeaponItemSkill(Skill skill, out Skill? itemSkill, out bool unsafeChain)
+    {
+        if (!Valid(skill))
+        {
+            itemSkill = null;
+            unsafeChain = true;
+            return false;
+        }
+
+        return SkillSourceChain.TryFindItemOwner(
+            skill,
+            static current => current.SourceSkill,
+            static current => Valid(current.GetItem()),
+            HasIndirectFireMetadata,
+            Key,
+            out itemSkill,
+            out unsafeChain);
+    }
+
     public static WeaponRole Role(Skill skill)
     {
-        if (!Valid(skill) || !Valid(skill.GetItem())) return WeaponRole.Unknown;
-        var itemTemplate = skill.GetItem().GetTemplate();
+        if (!TryFindWeaponItemSkill(skill, out var itemSkill, out bool unsafeChain) ||
+            unsafeChain || !Valid(itemSkill)) return WeaponRole.Unknown;
+        var item = itemSkill.GetItem();
+        if (!Valid(item)) return WeaponRole.Unknown;
+        var itemTemplate = item.GetTemplate();
         if (!Valid(itemTemplate)) return WeaponRole.Unknown;
         return itemTemplate.SlotType switch
         {
@@ -199,31 +244,11 @@ internal static class Native
 
     public static bool IsIndirectFire(Skill skill)
     {
-        if (!Valid(skill)) return true;
-        try
-        {
-            // Classify the executed attack, not sibling attacks granted by its item.
-            // Recursive item tags misclassify the K-PAC rifle when its launcher is indirect.
-            var attackTemplate = skill.GetTemplate();
-            if (!Valid(attackTemplate)) return true;
-            var tags = attackTemplate.Tags;
-            if (tags != null)
-            {
-                for (int i = 0; i < tags.Count; i++)
-                {
-                    var tag = tags[i];
-                    if (Valid(tag) && tag.TagType == TagType.INDIRECT_FIRE) return true;
-                }
-            }
-
-            var item = skill.GetItem();
-            // Native built-in vehicle/turret attacks may have no conventional item.
-            if (!Valid(item)) return false;
-            var itemTemplate = item.GetTemplate();
-            if (!Valid(itemTemplate)) return true;
-            return itemTemplate.HasTag(TagType.INDIRECT_FIRE, false);
-        }
-        catch { return true; } // Metadata errors must not admit an unknown attack.
+        // Inspect the executed skill and its SourceSkill chain through the first skill
+        // with an item. A derived direct-fire mode may have no Item of its own, but its
+        // origin still identifies the infantry slot and indirect-fire restriction.
+        // Metadata/cycle failures fail closed; itemless native vehicle attacks remain supported.
+        return !TryFindWeaponItemSkill(skill, out _, out bool unsafeChain) || unsafeChain;
     }
 
     private static bool SupportedBase(Skill skill)
@@ -235,7 +260,7 @@ internal static class Native
     }
 
     public static bool SupportedInfantry(Skill skill)
-        => SupportedBase(skill) && Valid(skill.GetItem()) && Role(skill) != WeaponRole.Unknown;
+        => SupportedBase(skill) && Role(skill) != WeaponRole.Unknown;
 
     public static bool SupportedVehicle(Skill skill)
     {
@@ -389,6 +414,10 @@ internal static class Native
         return true;
     }
 
+    // #44: dump 2428 faults in coreclr's devirtualizing JIT while compiling this helper,
+    // despite assembly pre-JIT. Keep the IL2CPP virtual property calls out of optimizing
+    // compilation, including in callers; do not replace native virtual dispatch.
+    [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)]
     private static EntityProperties? CurrentProperties(Actor actor, out string concreteType)
     {
         concreteType = "unknown";

@@ -164,7 +164,10 @@ def main():
     runner = ROOT / "mods/GameplaySuite/tests/OfflineChecks/OfflineChecks.csproj"
     if args.module == "SquaddieFieldPromotions":
         runner = ROOT / "mods/jiangyu/SquaddieFieldPromotions/tests/OfflineChecks/OfflineChecks.csproj"
-    subprocess.run([dotnet, "run", "--project", str(runner), "-c", "Release", "--", str(ROOT)], cwd=ROOT, check=True)
+    offline_args = [dotnet, "run", "--project", str(runner), "-c", "Release", "--", str(ROOT)]
+    if args.module is not None and args.module != "SquaddieFieldPromotions":
+        offline_args.extend(["--modules", ",".join(versions)])
+    subprocess.run(offline_args, cwd=ROOT, check=True)
     revision = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
     sdk = json.loads((ROOT / TOOLS / "distribution.json").read_text())["dotnetSdk"]
     archive, kit = make_archive(payload, versions, revision, sdk)

@@ -9,6 +9,16 @@ RULES = (ROOT / "src/SmokeOverhaul/SmokeAiRules.cs").read_text()
 
 
 class LightweightSmokeTests(unittest.TestCase):
+    def test_free_infantry_grenade_grants_are_off_by_default(self):
+        for key, variable in (
+            ("GiveInfantryFreeSmokeGrenade", "freeGrenade"),
+            ("GiveInfantryFreeFragGrenade", "freeFragGrenade"),
+        ):
+            toggle = next(line for line in PLUGIN.splitlines() if f's.AddToggle("{key}"' in line)
+            self.assertTrue(toggle.rstrip().endswith(", false);"), toggle)
+            self.assertIn(f'bool {variable} = Setting("{key}", false);', PLUGIN)
+            self.assertIn(f'public static bool {key} {{ get; private set; }} = false;', PLUGIN)
+
     def test_pinned_ap_only_for_actual_pinned_hand_thrown_smoke(self):
         cost = AI.split("internal static void ApplyPinnedSmokeApCost(", 1)[1].split("private static void AiSmokeSceneChanged(", 1)[0]
         for guard in ("!AiSmokeOnMainThread", "!RuntimeSettings.Enabled", "!RuntimeSettings.AllowSmokeWhilePinnedDown", "cost <= 0",

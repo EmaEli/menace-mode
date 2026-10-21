@@ -23,6 +23,32 @@ internal static class MortarScatterChecks
             check(MortarScatterRules.EffectiveScatter(baseScatter, 20, solved) == Math.Max(0, baseScatter),
                 "ranging never widens naturally small scatter (e.g. smoke)");
 
+        check(MortarScatterRules.ColorProgress(5, 4, false) == 0.25f,
+            "scatter color starts dark red after one correction");
+        check(MortarScatterRules.ColorProgress(5, 3, false) == 0.5f,
+            "scatter color has intermediate shades while ranging");
+        check(MortarScatterRules.ColorProgress(5, 2, false) == 0.75f,
+            "scatter color moves toward green as scatter tightens");
+        check(MortarScatterRules.ColorProgress(5, 1, true) == 1f,
+            "a solved firing solution is green");
+        check(MortarScatterRules.ColorProgress(5, 8, false) == 0f,
+            "scatter color progress is clamped at the starting value");
+
+        var turn = new MortarTurnScatterState();
+        check(turn.EffectiveScatter(5) == 5, "enemy mortar starts an activation at maximum scatter");
+        turn.RecordShot(false);
+        check(turn.EffectiveScatter(5) == 4, "second enemy mortar shot tightens regardless of target");
+        turn.RecordShot(false);
+        check(turn.EffectiveScatter(5) == 3, "each later enemy mortar shot tightens by one");
+        turn.RecordShot(true);
+        check(turn.EffectiveScatter(5) == 1, "an exact impact solves enemy mortar scatter");
+        turn.RecordShot(false);
+        check(turn.EffectiveScatter(5) == 1, "solved scatter stays at one for the activation");
+        turn.Reset();
+        check(turn.EffectiveScatter(5) == 5, "the next activation restores maximum scatter");
+        for (int i = 0; i < 8; i++) turn.RecordShot(false);
+        check(turn.EffectiveScatter(5) == 2, "enemy mortar misses cannot tighten below two");
+
         for (int radius = 0; radius <= 5; radius++)
         {
             int segments = 0;

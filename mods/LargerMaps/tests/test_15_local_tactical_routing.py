@@ -38,6 +38,6 @@ class TestNativeAiCandidateLimits(unittest.TestCase):
         self.assertIn('new(NativeMethod.PathfindingProcessFindPath, 0x2FE, 2, "C1E106", 0x07, 0x07',NATIVE)
     def test_version(self):
         self.assertNotIn('private const string Version', PLUGIN)
-        self.assertEqual(json.loads((ROOT/'../jiangyu/LargerMaps/jiangyu.json').read_text())['version'],'2.2.0')
+        self.assertEqual(json.loads((ROOT/'../jiangyu/LargerMaps/jiangyu.json').read_text())['version'],'2.3.2')
 
 if __name__=='__main__': unittest.main()

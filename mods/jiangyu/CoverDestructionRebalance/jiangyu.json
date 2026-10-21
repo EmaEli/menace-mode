@@ -1,8 +1,8 @@
 {
   "name": "CoverDestructionRebalance",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "author": "Luca",
-  "description": "Reduces half-cover destruction by one tier (Medium->Light, Heavy->Medium, gunslinger laser rifle Heavy->Light) and stops light/medium infantry mortar HE from destroying sandbags and low walls. Jiangyu port of the legacy Modpack Loader standalone (0.3.1).",
+  "description": "Reduces half-cover destruction by one tier (Medium->Light, Heavy->Medium, gunslinger laser rifle Heavy->Light). Template patches and an impact-time runtime guard protect half-cover from light/medium infantry mortar HE; 120 mm mortars retain the normal rebalance.",
   "depends": [
     "Jiangyu >= 1.4.8"
   ]

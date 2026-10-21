@@ -14,8 +14,8 @@ using MenaceModSettings;
 using MenaceModSuite.Shared;
 using UnityEngine;
 
-[assembly: AssemblyVersion("0.6.4.0")]
-[assembly: AssemblyFileVersion("0.6.4.0")]
+[assembly: AssemblyVersion("0.7.0.0")]
+[assembly: AssemblyFileVersion("0.7.0.0")]
 
 namespace SmokeOverhaul;
 
@@ -23,7 +23,7 @@ namespace SmokeOverhaul;
 public sealed partial class Plugin : IHostedPlugin
 {
     internal const string ModName = "Smoke Overhaul";
-    internal const string Version = "0.6.4";
+    internal const string Version = "0.7.0";
 
     private static ModLog? _log;
     private static readonly Dictionary<string, PatchedTemplate> PatchedTemplates = new(StringComparer.OrdinalIgnoreCase);
@@ -302,10 +302,10 @@ public sealed partial class Plugin : IHostedPlugin
             s.AddSlider("ThrownGrenadeApCost", "AP cost for thrown grenade skills", 0f, 60f, 20f);
 
             s.AddHeader("Infantry smoke grenades");
-            s.AddToggle("GiveInfantryFreeSmokeGrenade", "Give every infantry unit 3 smoke grenades", true);
+            s.AddToggle("GiveInfantryFreeSmokeGrenade", "Give every infantry unit 3 smoke grenades", false);
 
             s.AddHeader("Infantry fragmentation grenades");
-            s.AddToggle("GiveInfantryFreeFragGrenade", "Give every infantry unit 3 Tier 2 fragmentation grenades", true);
+            s.AddToggle("GiveInfantryFreeFragGrenade", "Give every infantry unit 3 Tier 2 fragmentation grenades", false);
 
             s.AddHeader("Smoke delivery");
             s.AddToggle("CaliberBasedSmokeFootprints", "Caliber-based smoke footprints (infantry/light 1 tile, 80mm cross, 120mm 3x3)", true);
@@ -338,8 +338,8 @@ public sealed partial class Plugin : IHostedPlugin
         int maximum = SliderInt("MaximumAccuracyPenalty", 60, 0, 100);
         int durationMultiplier = SliderInt("SmokeDurationMultiplier", 2, 1, 4);
         int grenadeApCost = SliderInt("ThrownGrenadeApCost", 20, 0, 60);
-        bool freeGrenade = Setting("GiveInfantryFreeSmokeGrenade", true);
-        bool freeFragGrenade = Setting("GiveInfantryFreeFragGrenade", true);
+        bool freeGrenade = Setting("GiveInfantryFreeSmokeGrenade", false);
+        bool freeFragGrenade = Setting("GiveInfantryFreeFragGrenade", false);
         bool caliberFootprints = Setting("CaliberBasedSmokeFootprints", true);
         bool aiSmoke = Setting("EnableAISmokeUsage", true);
         bool fastAiSmoke = Setting("FastAISmokeSelection", true);
@@ -1724,8 +1724,8 @@ internal static class RuntimeSettings
     public static int MaximumAccuracyPenalty { get; private set; } = 60;
     public static int SmokeDurationMultiplier { get; private set; } = 2;
     public static int ThrownGrenadeApCost { get; private set; } = 20;
-    public static bool GiveInfantryFreeSmokeGrenade { get; private set; } = true;
-    public static bool GiveInfantryFreeFragGrenade { get; private set; } = true;
+    public static bool GiveInfantryFreeSmokeGrenade { get; private set; } = false;
+    public static bool GiveInfantryFreeFragGrenade { get; private set; } = false;
     public static bool CaliberBasedSmokeFootprints { get; private set; } = true;
     public static bool EnableAISmokeUsage { get; private set; } = true;
     public static bool FastAISmokeSelection { get; private set; } = true;

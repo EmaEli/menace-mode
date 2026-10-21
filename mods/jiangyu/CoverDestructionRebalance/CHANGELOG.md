@@ -1,3 +1,11 @@
+0.4.1 (candidate; #58 gameplay verification pending)
+- Restores the light/medium infantry mortar impact-time guard omitted during the Jiangyu migration to 0.4.0.
+- Uses Jiangyu's mod-owned AttackHandler.OnTileHit prefix; checks the live handler at every impact, including replacement handlers and area-of-effect tiles.
+- Keeps normal damage/effects and all 120 mm mortar/general tier rules unchanged. Successful impacts are silent; guard failures warn once per initialization.
+
+0.4.0
+- Jiangyu migration: authored KDL template patches replaced the legacy dynamic startup scan. The legacy runtime mortar guard was omitted.
+
 0.3.1
 - Fixes light/medium mortar sandbag protection when MENACE or Modpack Loader rebuilds skill handlers after the startup template pass.
 - Adds a silent runtime `AttackHandler.OnTileHit` guard that forces `DestroyHalfCover=None` for `active.launch_light_mortar_frag` and `active.launch_medium_mortar_frag` immediately before native impact handling.

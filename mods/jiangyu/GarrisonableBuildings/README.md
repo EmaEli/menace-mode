@@ -1,4 +1,4 @@
-# Garrisonable Buildings 1.1.0
+# Garrisonable Buildings 1.2.0
 
 MENACE mod that reuses the game's native `Building` container system so infantry can garrison selected small map structures.
 
@@ -53,6 +53,12 @@ Default values:
 
 All four values are configurable in the **Garrisonable Buildings** Mod Settings panel.
 
+## Garrisoned occupant offense
+
+While a unit is inside a supported garrison, its outgoing attacks receive the same native accuracy property and amount as MENACE's `special.stance.deployed` effect. The value is read from the loaded game template rather than hard-coded, and is applied only for hit-chance calculations by attack skills while the unit is inside a building enabled by this mod and is not already in the deployed stance.
+
+The change is temporary: the original accuracy property is restored after hit-chance calculation, including when the calculation throws. It does not change incoming cover, building cover settings, AP costs or attacks made outside supported garrisons. There is no separate accuracy slider.
+
 ## StrongerCover compatibility
 
 Garrisonable Buildings works without StrongerCover.
@@ -92,34 +98,9 @@ The whitelist excludes tanks, generators, antenna/radar towers, factory connecto
 
 The 3x3 military large bunker is still excluded; current 3x3 support is limited to clearly above-ground civilian buildings.
 
-## Build / deploy
+## Build
 
-Run `build-and-deploy.bat`.
-
-The package deploys to `MENACE/Mods/GarrisonableBuildings/`.
-
-## Build a Nexus release ZIP
-
-Run:
-
-```text
-build-nexus-release.bat
-```
-
-The script builds the Release DLL without deploying it to the game and creates:
-
-```text
-artifacts\GarrisonableBuildings-1.0.4.zip
-```
-
-The archive contains the installable modpack structure:
-
-```text
-GarrisonableBuildings\
-  modpack.json
-  dlls\
-    GarrisonableBuildings.dll
-```
+From `mods/jiangyu/GarrisonableBuildings/`, run `jiangyu compile --release --clean`. The clean flag is required after editing shared GameplaySuite sources. This builds the package without deploying it to the game; the compiled package is written under `compiled/`.
 
 
 ## Diagnostics

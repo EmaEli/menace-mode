@@ -1,0 +1,12 @@
+{
+  "source": "SkillTemplate export cached under game_files/v0.7.16; ID confirmed twice in the Windows WMR 0.4.12 test log on 19 October 2026. Cached numeric values are not a fresh 0.7.17 export.",
+  "id": "active.enemy_only_launch_medium_mortar_frag",
+  "cached_native": {
+    "Scatter": 2,
+    "ScatterChance": 50,
+    "ActionPointCost": 50,
+    "Uses": 10,
+    "Repetitions": 1
+  },
+  "wmr_overrides": {"Scatter": 4, "ScatterChance": 80}
+}

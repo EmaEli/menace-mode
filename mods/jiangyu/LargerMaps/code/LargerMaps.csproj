@@ -9,7 +9,7 @@
   -->
   <PropertyGroup>
     <!-- Keep in step with jiangyu.json so the DLL metadata identifies the shipped build. -->
-    <Version>2.2.0</Version>
+    <Version>2.3.2</Version>
     <AssemblyName>LargerMaps</AssemblyName>
     <RootNamespace>LargerMaps</RootNamespace>
     <ImplicitUsings>disable</ImplicitUsings>

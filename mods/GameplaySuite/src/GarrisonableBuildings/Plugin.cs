@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -13,9 +14,10 @@ namespace GarrisonableBuildings;
 public sealed partial class Plugin : IHostedPlugin
 {
     private const string ModName = "Garrisonable Buildings";
-    private const string Version = "1.1.0";
+    private const string Version = "1.2.0";
     private const string BuildingCoverProfileName = "cover_inside_building";
     private const string StrongerCoverSettingsGroup = "StrongerCover";
+    private const string DeployedAccuracySkillTemplateId = "special.stance.deployed";
     private const int VanillaContainerAP = 30;
     private const int RetryEveryUpdates = 120;
     private const int MaxAttempts = 30;
@@ -90,15 +92,34 @@ public sealed partial class Plugin : IHostedPlugin
     private static Type _entityTemplateType;
     private static MethodInfo _dataTemplateGetGeneric;
     private static Type _actorType;
+    private static Type _skillType;
+    private static Type _skillTemplateType;
     private static Type _movementSystemType;
     private static object _buildingInsideCover;
 
     private static readonly HashSet<string> _handled = new(StringComparer.OrdinalIgnoreCase);
+    private static readonly HashSet<string> _enabledGarrisonIds = new(StringComparer.OrdinalIgnoreCase);
     private static int _updateCounter;
     private static int _attempts;
     private static bool _finished;
     private static int _apOverrideDepth;
+    [ThreadStatic]
+    private static int _garrisonAccuracyOverrideDepth;
     private static bool _debugLogging;
+    private static bool _nativeAccuracyPropertyResolved;
+    private static int _nativeAccuracyPropertyType = -1;
+    private static string _nativeAccuracyPropertyName;
+    private static int _nativeAccuracyAmount;
+    private static float _nativeAccuracyAmountMult;
+
+    private sealed class GarrisonAccuracyOverrideState
+    {
+        public object Properties;
+        public string PropertyName;
+        public int PropertyType;
+        public object OriginalValue;
+        public bool Restored;
+    }
 
     public void Initialize(ModLog logger, HarmonyLib.Harmony harmony)
     {
@@ -137,6 +158,7 @@ public sealed partial class Plugin : IHostedPlugin
         DebugMsg($"{ModName} {Version}: initializing. 3x3 enabled={Enable3x3Buildings()}, safe collapse={_safeCollapse}.");
 
         ResolveTypes();
+        InstallGarrisonAccuracyHook(harmony);
         InstallAPCostHooks(harmony);
         InstallSafeCollapseHooks(harmony);
         TryApply("initialize");
@@ -182,6 +204,14 @@ public sealed partial class Plugin : IHostedPlugin
         _actorType =
             FindType("Il2CppMenace.Tactical.Actor") ??
             FindType("Menace.Tactical.Actor");
+
+        _skillType =
+            FindType("Il2CppMenace.Tactical.Skills.Skill") ??
+            FindType("Menace.Tactical.Skills.Skill");
+
+        _skillTemplateType =
+            FindType("Il2CppMenace.Tactical.Skills.SkillTemplate") ??
+            FindType("Menace.Tactical.Skills.SkillTemplate");
 
         _movementSystemType =
             FindType("Il2CppTactical.MovementSystem") ??
@@ -240,6 +270,8 @@ public sealed partial class Plugin : IHostedPlugin
             StopIfTimedOut();
             return;
         }
+
+        TryResolveNativeDeployedAccuracyProperty();
 
         object bunkerInsideCover = GetMember(bunker, "ProvidesCoverInside");
         if (bunkerInsideCover == null)
@@ -320,6 +352,7 @@ public sealed partial class Plugin : IHostedPlugin
             }
 
             _handled.Add(id);
+            _enabledGarrisonIds.Add(id);
             if (candidate.ExtraAP > 0) _enabledExtraAP[id] = candidate.ExtraAP;
 
             string apNote = candidate.ExtraAP > 0
@@ -328,12 +361,15 @@ public sealed partial class Plugin : IHostedPlugin
             DebugMsg($"{ModName}: ENABLED {id} ({candidate.Name}) footprint={width}x{height} ContainerType=Building cover={BuildingCoverProfileName}.{apNote}");
         }
 
-        if (_handled.Count == Candidates.Length)
+        if (_handled.Count == Candidates.Length && _nativeAccuracyPropertyResolved)
         {
             _finished = true;
-            DebugMsg($"{ModName} {Version}: initialization complete. {_handled.Count}/{Candidates.Length} candidates resolved; {_enabledExtraAP.Count} enabled building template(s) use size-based AP surcharges; 3x3 enabled={Enable3x3Buildings()}.");
+            DebugMsg($"{ModName} {Version}: initialization complete. {_handled.Count}/{Candidates.Length} candidates resolved; deployed accuracy effect={_nativeAccuracyPropertyName}; {_enabledExtraAP.Count} enabled building template(s) use size-based AP surcharges; 3x3 enabled={Enable3x3Buildings()}.");
             return;
         }
+
+        if (_handled.Count == Candidates.Length && (_attempts == 1 || _attempts % 5 == 0))
+            DebugWarning($"{ModName}: building candidates are resolved, but the native deployed accuracy effect is not available yet; retrying.");
 
         StopIfTimedOut();
     }
@@ -596,6 +632,221 @@ public sealed partial class Plugin : IHostedPlugin
         }
     }
 
+    private static void InstallGarrisonAccuracyHook(HarmonyLib.Harmony harmony)
+    {
+        try
+        {
+            if (_skillType == null)
+            {
+                DebugWarning($"{ModName}: outgoing garrison accuracy hook not installed because Skill type was not resolved.");
+                return;
+            }
+
+            MethodInfo getHitchance = _skillType
+                .GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
+                .FirstOrDefault(method =>
+                {
+                    if (method.Name != "GetHitchance") return false;
+                    ParameterInfo[] parameters = method.GetParameters();
+                    return parameters.Length == 7 && parameters[2].ParameterType.Name == "EntityProperties";
+                });
+
+            if (getHitchance == null)
+            {
+                DebugWarning($"{ModName}: outgoing garrison accuracy hook not installed because Skill.GetHitchance/7 was not found.");
+                return;
+            }
+
+            const BindingFlags patchFlags = BindingFlags.Static | BindingFlags.NonPublic;
+            harmony.Patch(
+                getHitchance,
+                prefix: new HarmonyMethod(typeof(Plugin).GetMethod(nameof(SkillGetHitchancePrefix), patchFlags)),
+                postfix: new HarmonyMethod(typeof(Plugin).GetMethod(nameof(SkillGetHitchancePostfix), patchFlags)),
+                finalizer: new HarmonyMethod(typeof(Plugin).GetMethod(nameof(SkillGetHitchanceFinalizer), patchFlags)));
+
+            DebugMsg($"{ModName}: hooked Skill.GetHitchance to mirror the native deployed-stance accuracy effect for supported garrisons.");
+        }
+        catch (Exception ex)
+        {
+            DebugError($"{ModName}: failed to install outgoing garrison accuracy hook: {ex.GetType().Name}: {ex.Message}");
+        }
+    }
+
+    private static void TryResolveNativeDeployedAccuracyProperty()
+    {
+        if (_nativeAccuracyPropertyResolved || _dataTemplateGetGeneric == null) return;
+
+        if (_skillTemplateType == null)
+        {
+            _skillTemplateType =
+                FindType("Il2CppMenace.Tactical.Skills.SkillTemplate") ??
+                FindType("Menace.Tactical.Skills.SkillTemplate");
+        }
+
+        if (_skillTemplateType == null)
+        {
+            if (_attempts == 1 || _attempts % 5 == 0)
+                DebugWarning($"{ModName}: SkillTemplate type is not available for native deployed-accuracy lookup yet.");
+            return;
+        }
+
+        try
+        {
+            MethodInfo getSkillTemplate = _dataTemplateGetGeneric.MakeGenericMethod(_skillTemplateType);
+            object deployedTemplate = getSkillTemplate.Invoke(
+                null,
+                new object[] { DeployedAccuracySkillTemplateId, false });
+            object handlers = GetMember(deployedTemplate, "EventHandlers");
+            if (handlers is not IEnumerable handlerCollection)
+            {
+                if (_attempts == 1 || _attempts % 5 == 0)
+                    DebugWarning($"{ModName}: native deployed stance template is not ready; retrying accuracy-effect lookup.");
+                return;
+            }
+
+            foreach (object handler in handlerCollection)
+            {
+                if (handler == null || !handler.GetType().Name.EndsWith("StanceDeployed", StringComparison.Ordinal)) continue;
+                if (GetMember(handler, "Properties") is not IEnumerable propertyChanges) continue;
+
+                foreach (object propertyChange in propertyChanges)
+                {
+                    if (propertyChange == null) continue;
+
+                    object rawPropertyType = GetMember(propertyChange, "PropertyType");
+                    int propertyType = ToInt(rawPropertyType, -1);
+                    string propertyTypeName = rawPropertyType?.ToString();
+                    bool isAccuracyMultiplier = propertyType == GarrisonAccuracyRules.AccuracyMultiplierPropertyType ||
+                                                propertyTypeName == "AccuracyMult";
+                    bool isAccuracy = propertyType == GarrisonAccuracyRules.AccuracyPropertyType ||
+                                      propertyTypeName == "Accuracy";
+                    if (!isAccuracyMultiplier && !isAccuracy) continue;
+
+                    int amount = ToInt(GetMember(propertyChange, "Amount"), 0);
+                    object rawAmountMult = GetMember(propertyChange, "AmountMult");
+                    float amountMult;
+                    try { amountMult = Convert.ToSingle(rawAmountMult); }
+                    catch { continue; }
+
+                    if (isAccuracyMultiplier &&
+                        (amountMult <= 0f || amountMult > 4f || float.IsNaN(amountMult) || float.IsInfinity(amountMult)))
+                        continue;
+                    if (isAccuracy && (amount <= 0 || amount > 1000)) continue;
+
+                    _nativeAccuracyPropertyType = isAccuracyMultiplier
+                        ? GarrisonAccuracyRules.AccuracyMultiplierPropertyType
+                        : GarrisonAccuracyRules.AccuracyPropertyType;
+                    _nativeAccuracyPropertyName = isAccuracyMultiplier ? "AccuracyMult" : "Accuracy";
+                    _nativeAccuracyAmount = amount;
+                    _nativeAccuracyAmountMult = amountMult;
+                    _nativeAccuracyPropertyResolved = true;
+
+                    string effectAmount = isAccuracyMultiplier
+                        ? $"x{amountMult:0.###}"
+                        : $"+{amount}";
+                    DebugMsg($"{ModName}: resolved native deployed accuracy effect {_nativeAccuracyPropertyName} {effectAmount}.");
+                    return;
+                }
+            }
+
+            if (_attempts == 1 || _attempts % 5 == 0)
+                DebugWarning($"{ModName}: native deployed stance template has no readable Accuracy or AccuracyMult property yet; retrying.");
+        }
+        catch (Exception ex)
+        {
+            if (_attempts == 1 || _attempts % 5 == 0)
+                DebugWarning($"{ModName}: native deployed accuracy lookup failed: {ex.GetType().Name}: {ex.Message}");
+        }
+    }
+
+    private static void SkillGetHitchancePrefix(object __instance, object[] __args, out GarrisonAccuracyOverrideState __state)
+    {
+        __state = null;
+        if (!_nativeAccuracyPropertyResolved || _garrisonAccuracyOverrideDepth > 0 ||
+            __instance == null || __args == null || __args.Length < 3)
+            return;
+
+        try
+        {
+            object skillTemplate = InvokeNoArg(__instance, "GetTemplate");
+            bool isAttack = ToBool(GetMember(skillTemplate, "IsAttack"), false);
+            object actor = InvokeNoArg(__instance, "GetActor");
+            int stance = ToInt(InvokeNoArg(actor, "GetStance"), -1);
+            object container = InvokeNoArg(actor, "GetContainerEntity");
+            string containerId = GetTemplateId(container);
+
+            if (!GarrisonAccuracyRules.ShouldApply(
+                    containerId,
+                    _enabledGarrisonIds,
+                    isAttack,
+                    stance,
+                    deployedStance: 1))
+                return;
+
+            object properties = __args[2];
+            object rawAccuracyValue = GetMember(properties, _nativeAccuracyPropertyName);
+            if (rawAccuracyValue == null) return;
+
+            float originalValue;
+            try { originalValue = Convert.ToSingle(rawAccuracyValue); }
+            catch { return; }
+            if (float.IsNaN(originalValue) || float.IsInfinity(originalValue)) return;
+
+            float modifiedValue = GarrisonAccuracyRules.Apply(
+                originalValue,
+                _nativeAccuracyPropertyType,
+                _nativeAccuracyAmount,
+                _nativeAccuracyAmountMult);
+            if (Math.Abs(modifiedValue - originalValue) < 0.00001f ||
+                !TrySetAccuracyValue(properties, _nativeAccuracyPropertyName, _nativeAccuracyPropertyType, modifiedValue))
+                return;
+
+            __state = new GarrisonAccuracyOverrideState
+            {
+                Properties = properties,
+                PropertyName = _nativeAccuracyPropertyName,
+                PropertyType = _nativeAccuracyPropertyType,
+                OriginalValue = rawAccuracyValue
+            };
+            _garrisonAccuracyOverrideDepth++;
+        }
+        catch (Exception ex)
+        {
+            DebugWarning($"{ModName}: hit-chance accuracy prefix failed: {ex.GetType().Name}: {ex.Message}");
+        }
+    }
+
+    private static void SkillGetHitchancePostfix(GarrisonAccuracyOverrideState __state)
+    {
+        RestoreGarrisonAccuracy(__state);
+    }
+
+    private static Exception SkillGetHitchanceFinalizer(Exception __exception, GarrisonAccuracyOverrideState __state)
+    {
+        RestoreGarrisonAccuracy(__state);
+        return __exception;
+    }
+
+    private static void RestoreGarrisonAccuracy(GarrisonAccuracyOverrideState state)
+    {
+        if (state == null || state.Restored) return;
+
+        try
+        {
+            if (!TrySetAccuracyValue(state.Properties, state.PropertyName, state.PropertyType, state.OriginalValue))
+                DebugWarning($"{ModName}: failed to restore temporary garrison {state.PropertyName} after hit-chance calculation.");
+        }
+        catch (Exception ex)
+        {
+            DebugWarning($"{ModName}: restoring temporary garrison {state.PropertyName} failed: {ex.GetType().Name}: {ex.Message}");
+        }
+        finally
+        {
+            state.Restored = true;
+            if (_garrisonAccuracyOverrideDepth > 0) _garrisonAccuracyOverrideDepth--;
+        }
+    }
+
     private static void MovementGetPathPrefix(object[] __args, out APCostOverrideState __state)
     {
         __state = null;
@@ -732,6 +983,18 @@ public sealed partial class Plugin : IHostedPlugin
         return _enabledExtraAP.TryGetValue(id, out int extraAP) ? extraAP : 0;
     }
 
+    private static string GetTemplateId(object entity)
+    {
+        if (entity == null) return null;
+
+        object template = InvokeNoArg(entity, "GetTemplate");
+        if (template == null) return null;
+
+        string id = InvokeNoArg(template, "GetID") as string;
+        if (string.IsNullOrEmpty(id)) id = GetMember(template, "m_ID") as string;
+        return id;
+    }
+
     private static bool Enable3x3Buildings() => ReadBool("Enable3x3Buildings", false);
 
     private static void DebugMsg(string message)
@@ -796,6 +1059,9 @@ public sealed partial class Plugin : IHostedPlugin
             if (!_handled.Contains(candidate.Id))
                 DebugWarning($"{ModName}: unresolved after {MaxAttempts} attempts: {candidate.Id} ({candidate.Name}).");
         }
+
+        if (!_nativeAccuracyPropertyResolved)
+            DebugWarning($"{ModName}: native deployed accuracy property could not be resolved; garrisoned outgoing accuracy will remain unchanged.");
 
         DebugWarning($"{ModName}: stopped retrying. Send Latest.log if any candidate stayed unresolved.");
     }
@@ -895,6 +1161,18 @@ public sealed partial class Plugin : IHostedPlugin
         return false;
     }
 
+    private static bool TrySetAccuracyValue(object properties, string propertyName, int propertyType, object value)
+    {
+        try
+        {
+            object nativeValue = GarrisonAccuracyRules.ToPropertyValue(Convert.ToSingle(value), propertyType);
+            return nativeValue != null && TrySetMember(properties, propertyName, nativeValue);
+        }
+        catch { }
+
+        return false;
+    }
+
     private static bool TrySetEnumMember(object obj, string name, int numericValue)
     {
         if (obj == null || string.IsNullOrEmpty(name)) return false;
@@ -942,6 +1220,13 @@ public sealed partial class Plugin : IHostedPlugin
     {
         if (value == null) return fallback;
         try { return Convert.ToInt32(value); }
+        catch { return fallback; }
+    }
+
+    private static bool ToBool(object value, bool fallback)
+    {
+        if (value == null) return fallback;
+        try { return Convert.ToBoolean(value); }
         catch { return fallback; }
     }
 }

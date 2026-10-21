@@ -1,3 +1,21 @@
+## 0.4.14 — muted mortar feedback, defer display update until impact (#61; live check pending)
+
+- Ranging markers now use a muted dark-red-to-green palette based on effective Scatter, with a brighter green for a solved shot.
+- The displayed ranging value and color remain at their prior state while a shell is in flight and advance only after the impact callback is observed. If the impact hook is unavailable, the feedback stays hidden rather than updating early.
+- Presentation only: mortar ballistics, Scatter, ScatterChance, action economy and damage are unchanged. Offline checks do not establish in-game visibility or timing.
+
+## 0.4.13 — cover the actual enemy-only mortar skill (#59; retest pending)
+
+- The 0.4.12 PC test failed balance acceptance. Its log instantiates `active.enemy_only_launch_medium_mortar_frag`, which WMR omitted from both its baseline adjustments and ranging allowlist; no mortar ranging events were logged despite Debug being enabled.
+- The enemy-only medium skill now receives the medium dispersion baseline (Scatter 4, ScatterChance 80%) and participates in per-activation ranging. This changes its previously untouched base ScatterChance, not the chance during ranging. Native enemy AP cost, ammunition, repetitions, damage and suppression remain unchanged.
+- Added a debug-only baseline readback and skill ID on shot diagnostics, plus regression guards based on the observed enemy skill. Offline checks cannot establish native shot/reset behavior or balance; #59 remains open.
+
+## 0.4.12 — hostile mortar activation ranging (#59; live acceptance pending)
+
+- Hostile mortars now tighten Scatter by one for each later firing action during the same actor activation, independent of target tile; misses stop at Scatter 2.
+- An exact impact on the intended tile makes subsequent shots from that physical mortar use Scatter 1 until its next activation. The counter resets on Agent.OnTurnStart.
+- Player per-target ranging, ScatterChance, mortar action economy and damage are unchanged. Offline rule/source checks do not establish in-game behavior.
+
 ## 0.4.11 — observed Unity proxy failures (#56; visual retest pending)
 
 - The Windows 0.4.10 test loaded successfully but both screen overlays failed with `NotSupportedException: Method unstripping failed`. Its `GUI.DrawTexture(Rect, Texture)` overload chain ends in an explicit unsupported proxy stub. Solid lines now use the native `GUI.Label(Rect, GUIContent, GUIStyle)` entry point with a white background texture; background tint is isolated/restored too.
