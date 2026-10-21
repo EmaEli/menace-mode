@@ -48,10 +48,12 @@ internal sealed class FieldVoiceSystem
 
     private sealed class VoiceProfile
     {
-        internal VoiceProfile(string key, string speakerId, string bankName, string conversationPrefix,
-            string assetPrefix, string audioFolder)
+        internal VoiceProfile(string key, string sourceKey, int pitchPreset, string speakerId, string bankName,
+            string conversationPrefix, string assetPrefix, string audioFolder)
         {
             Key = key;
+            SourceKey = sourceKey;
+            PitchPreset = pitchPreset;
             SpeakerId = speakerId;
             BankName = bankName;
             BankId = StableId(bankName);
@@ -61,6 +63,9 @@ internal sealed class FieldVoiceSystem
         }
 
         internal string Key { get; }
+        internal string SourceKey { get; }
+        internal int PitchPreset { get; }
+        internal float Pitch => VoicePitchProfiles.Pitch(PitchPreset);
         internal string SpeakerId { get; }
         internal string BankName { get; }
         internal int BankId { get; }
@@ -684,10 +689,19 @@ internal sealed class FieldVoiceSystem
         }
     }
 
-    internal string BindSpeaker(object speaker, bool female)
+    private VoiceProfile GetProfile(bool female, int pitchPreset)
+    {
+        if (!VoicePitchProfiles.IsValid(pitchPreset))
+            throw new ArgumentOutOfRangeException(nameof(pitchPreset));
+        var sourceKey = female ? "jane" : "john";
+        return _voiceProfiles.First(p => p.SourceKey == sourceKey && p.PitchPreset == pitchPreset);
+    }
+
+    internal string BindSpeaker(object speaker, bool female, int pitchPreset)
     {
         if (!Ready || speaker == null) return "native-fallback";
-        var tag = female ? "sfp_jane" : "sfp_john";
+        var profile = GetProfile(female, pitchPreset);
+        var tag = profile.SpeakerId;
         // Never mutate the donors! Each SFP leader has a unique, owned SpeakerTemplate.
         if (!SetMemberValue(speaker, "Tags", tag + " marine " + (female ? "female" : "male") + " infantry"))
             throw new InvalidOperationException("Cannot set cloned speaker.Tags for John/Jane.");
@@ -700,7 +714,7 @@ internal sealed class FieldVoiceSystem
             new[] { tag, "marine", female ? "female" : "male", "infantry" });
         if (!SetMemberValue(speaker, "m_SplitTags", tags))
             throw new InvalidOperationException("Cannot update cloned speaker.m_SplitTags.");
-        return female ? "Jane" : "John";
+        return profile.Key;
     }
 
     /// <summary>
@@ -710,11 +724,11 @@ internal sealed class FieldVoiceSystem
     /// BOTH genders kept Sachin's selection/hired speech despite correct
     /// John/Jane tactical barks. Reuse the already registered private banks.
     /// </summary>
-    internal string BindHiringBarks(UnitLeaderTemplate leader, bool female)
+    internal string BindHiringBarks(UnitLeaderTemplate leader, bool female, int pitchPreset)
     {
         if (leader == null) throw new ArgumentNullException(nameof(leader));
         if (!Ready) throw new InvalidOperationException("John/Jane voices are not prepared.");
-        VoiceProfile profile = _voiceProfiles.First(p => p.Key == (female ? "jane" : "john"));
+        VoiceProfile profile = GetProfile(female, pitchPreset);
         if (!profile.BankRegistered || !profile.ClipsApplied || !profile.BankRuntimeRefreshed)
             throw new InvalidOperationException("The requested John/Jane SoundBank is not fully ready.");
         BarkSpec selectedBark = VoiceBarks.First(b => b.Key == "ready");
@@ -745,13 +759,19 @@ internal sealed class FieldVoiceSystem
 
     private static List<VoiceProfile> CreateVoiceProfiles()
     {
-        // The two standalone voice banks are shared by arbitrarily many dynamic
-        // leaders. They are NOT tied to any of the original fourteen fixed IDs.
-        return new List<VoiceProfile>
+        // Original two neutral bank IDs/paths/tags stay unchanged. Additional
+        // profiles have isolated banks and conversations but reuse WAV AudioClips.
+        var profiles = new List<VoiceProfile>();
+        foreach (var gender in new[] { "john", "jane" })
+        for (int index = 0; index < VoicePitchProfiles.Count; index++)
         {
-            new("john", "sfp_john", "sfp_tactical_barks_john", "SFPJohn", "cl2_john", "john"),
-            new("jane", "sfp_jane", "sfp_tactical_barks_jane", "SFPJane", "cl2_jane", "jane")
-        };
+            string suffix = index == 0 ? "" : "_p" + index;
+            string title = gender == "john" ? "John" : "Jane";
+            profiles.Add(new VoiceProfile(gender + suffix, gender, index,
+                "sfp_" + gender + suffix, "sfp_tactical_barks_" + gender + suffix,
+                "SFP" + title + (index == 0 ? "" : "P" + index), "cl2_" + gender, gender));
+        }
+        return profiles;
     }
 
     private static int StableId(string value)
@@ -775,7 +795,7 @@ internal sealed class FieldVoiceSystem
         $"sfp_{profile.Key}_{bark.Key}_{sourceIndex + 1}";
 
     private static string GetRouteKey(VoiceProfile profile, BarkSpec bark, int sourceIndex) =>
-        $"{profile.Key}|{bark.Key}|{sourceIndex}";
+        $"{profile.SourceKey}|{bark.Key}|{sourceIndex}";
 
     private static string GetVariationAssetName(VoiceProfile profile, string wavPath) =>
         $"{profile.AssetPrefix}_{Path.GetFileNameWithoutExtension(wavPath)}";
@@ -1114,7 +1134,7 @@ internal sealed class FieldVoiceSystem
                 var sourceId = bark.SourceItemIds[sourceIndex];
                 var customId = GetCustomItemId(profile, bark, sourceIndex);
                 patched = patched.Replace(sourceId.ToString(), customId.ToString());
-                var subtitleKey = $"{profile.Key}|{bark.Key}|{sourceIndex}";
+                var subtitleKey = $"{profile.SourceKey}|{bark.Key}|{sourceIndex}";
                 if (!RouteSubtitles.TryGetValue(subtitleKey, out var exactSubtitle))
                     throw new InvalidOperationException($"Missing exact subtitle for voice route {subtitleKey}.");
                 patched = ReplaceSerializedTextForSoundItem(patched, customId, exactSubtitle);
@@ -1521,7 +1541,7 @@ internal sealed class FieldVoiceSystem
                 throw new InvalidDataException("Missing semantic voice route " + key);
             foreach (var asset in assets)
             {
-                if (!asset.StartsWith("cl2_" + profile.Key + "_", StringComparison.Ordinal))
+                if (!asset.StartsWith("cl2_" + profile.SourceKey + "_", StringComparison.Ordinal))
                     throw new InvalidDataException("Wrong gender in voice route " + key);
                 required.Add(asset);
             }
@@ -1772,6 +1792,24 @@ internal sealed class FieldVoiceSystem
                 throw new InvalidOperationException($"Could not assign Sound.id for {profile.Key}/{bark.Key}[{sourceIndex}].");
             SetMemberValue(selected, "name", GetSoundName(profile, bark, sourceIndex));
             SetMemberValue(selected, "Name", GetSoundName(profile, bark, sourceIndex));
+
+            if (profile.PitchPreset != 0)
+            {
+                // Only mutate deep-copied Sound and SoundVariation records.
+                // Variation pitch stays neutral; profile pitch is applied once.
+                RequireSet(selected, "randomizePitch", false);
+                RequireSet(selected, "fixedPitch", profile.Pitch);
+                var pitchVariations = GetMemberValue(selected, "variations")
+                    ?? GetMemberValue(selected, "Variations")
+                    ?? throw new InvalidOperationException("Pitch profile has no sound variations.");
+                for (int variationIndex = 0; variationIndex < GetCollectionCount(pitchVariations); variationIndex++)
+                {
+                    var variation = GetCollectionItem(pitchVariations, variationIndex)
+                        ?? throw new InvalidOperationException("Pitch profile has a null sound variation.");
+                    RequireSet(variation, "randomizePitch", false);
+                    RequireSet(variation, "fixedPitch", 1.00f);
+                }
+            }
 
             var rawVolume = GetMemberValue(selected, "fixedVolume") ?? GetMemberValue(selected, "FixedVolume");
             var scaledVolume = rawVolume == null ? 0.60f : Convert.ToSingle(rawVolume) * 0.60f;
