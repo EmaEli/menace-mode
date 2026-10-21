@@ -1,6 +1,7 @@
 import json
 import pathlib
 import re
+import struct
 import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
@@ -13,7 +14,7 @@ PROGRESSION_KDL = (ROOT / 'templates' / 'generic-infantry-progression.kdl').read
 class AuthoringTests(unittest.TestCase):
     def test_jiangyu_not_old_modpack(self):
         self.assertEqual(MANIFEST['name'], 'SquaddieFieldPromotions')
-        self.assertEqual(MANIFEST['version'], '0.13.0')
+        self.assertEqual(MANIFEST['version'], '0.14.3')
         self.assertTrue(any(dep.startswith('Jiangyu ') for dep in MANIFEST['depends']))
         self.assertIn('JiangyuSystem', CS)
         self.assertNotIn('IModpackPlugin', CS)
@@ -23,7 +24,7 @@ class AuthoringTests(unittest.TestCase):
         self.assertEqual(MANIFEST['depends'], ['Jiangyu >= 1.4.8', 'MenaceModSettings >= 0.6.1'])
         project = (ROOT / 'code/SquaddieFieldPromotions.csproj').read_text()
         self.assertIn('<Private>false</Private>', project)
-        self.assertIn('<Version>0.13.0</Version>', project)
+        self.assertIn('<Version>0.14.3</Version>', project)
         self.assertIn('$(MenaceModSettingsPath)', project)
 
     def test_no_hotkeys_polling_random_removal_or_fake_death(self):
@@ -98,6 +99,42 @@ class AuthoringTests(unittest.TestCase):
         installer = (ROOT.parents[1] / 'GameplaySuite/tools/Install-IntegratedSuite.ps1').read_text()
         self.assertIn('tree(folder / "runtime_assets")', kit)
         self.assertIn("Join-Path $root 'runtime_assets'", installer)
+
+    def test_portrait_profiles_are_save_scoped_and_match_native_units(self):
+        record = (ROOT / 'code/PromotionRecord.cs').read_text(encoding='utf-8')
+        system = (ROOT / 'code/PromotionSystem.cs').read_text(encoding='utf-8')
+        forge = (ROOT / 'code/LeaderForge.cs').read_text(encoding='utf-8')
+        assets = (ROOT / 'code/StandalonePortraitAssets.cs').read_text(encoding='utf-8')
+        self.assertIn('public string PortraitProfile { get; set; } = "";', record)
+        self.assertIn('TryAssignFirstMatchingProfile(ledger, record)', system)
+        self.assertIn('internal const int BrownSkinColor = 1;', record)
+        self.assertIn('internal const int BlackSkinColor = 2;', record)
+        self.assertIn('internal const int FemaleGender = 1;', record)
+        self.assertIn('skinColor == LegacyWhiteSkinColor', record)
+        self.assertIn('ArePortraitProfilesPresent(_modFolder)', forge)
+        self.assertIn('portrait.ApplyTo(leader, speaker)', forge)
+        self.assertIn('DynamicBadgeFactory.Apply(leader, art', forge)
+        self.assertIn('PromotionPortraitAssignment.Female01', assets)
+        self.assertIn('PromotionPortraitAssignment.MaleBlack02', assets)
+        files = {
+            'slot.png': (162, 162), 'slot_inactive.png': (162, 162), 'bark.png': (460, 480),
+            'stand_left.png': (1024, 1714), 'stand_right.png': (1024, 1714),
+            'stand_right_inactive.png': (1024, 1714),
+        }
+        for profile in ('promoted_male_01', 'promoted_female_01', 'promoted_male_02'):
+            portrait_dir = ROOT / 'runtime_assets' / profile
+            candidate_dir = ROOT / 'portrait_candidates' / profile
+            for name, expected_size in files.items():
+                data = (portrait_dir / name).read_bytes()
+                candidate = (candidate_dir / name).read_bytes()
+                self.assertGreaterEqual(len(data), 29, f'{profile}/{name}')
+                self.assertEqual(data[:8], b'\x89PNG\r\n\x1a\n', f'{profile}/{name}')
+                self.assertEqual(data[12:16], b'IHDR', f'{profile}/{name}')
+                width, height, bit_depth, color_type, _, _, _ = struct.unpack('>IIBBBBB', data[16:29])
+                self.assertEqual((width, height), expected_size, f'{profile}/{name}')
+                self.assertEqual((bit_depth, color_type), (8, 6), f'{profile}/{name} must be 8-bit RGBA')
+                if (profile, name) != ('promoted_male_01', 'slot.png'):
+                    self.assertEqual(data, candidate, f'{profile}/{name} must match its candidate')
 
     def test_native_infantry_display_getters_are_overridden_only_for_sfp(self):
         for method, callback in (('GetUnitTitle', 'LeaderTitle'), ('GetUnitDescription', 'LeaderDescription')):
@@ -232,6 +269,71 @@ class AuthoringTests(unittest.TestCase):
         self.assertIn('RequireSet(variation, "fixedPitch", 1.00f)', voice)
         self.assertIn('for (int index = 0; index < VoicePitchProfiles.Count; index++)', voice)
         self.assertNotIn('UnityEngine.AudioSource', voice)
+
+    def test_ready_barks_match_contextual_recordings_and_subtitles(self):
+        voice = (ROOT / 'code' / 'FieldVoiceSystem.cs').read_text(encoding='utf-8')
+        routes = json.loads((ROOT / 'runtime_assets/voice/voice_routes.json').read_text(encoding='utf-8'))['routes']
+        expected = {
+            'ready_quiet': [
+                ('Everyone hear that?', ('enemy_hidden', 0)),
+                ("I don't like the sound of that.", ('enemy_hidden', 1)),
+                ('Everyone hear that?', ('enemy_hidden', 0)),
+            ],
+            'ready_shouty': [
+                ("I'm taking fire.", ('taking_fire', 0)),
+                ('Taking heavy fire!', ('taking_fire', 1)),
+                ('Might need a little backup.', ('suppressed', 0)),
+                ("If you're up for it, I could use some help.", ('suppressed', 1)),
+                ('Take cover!', ('taking_fire', 3)),
+                ('Give us some cover fire!', ('ally_suppressed', 1)),
+                ("Go, I'll cover you.", ('ally_suppressed', 0)),
+                ('Find cover!', ('ally_taking_fire', 1)),
+                ('Not good.', ('morale_wavering', 0)),
+                ('Ah, hell.', ('morale_wavering', 1)),
+            ],
+        }
+        for gender in ('john', 'jane'):
+            for bark, entries in expected.items():
+                for index, (caption, (source_bark, source_index)) in enumerate(entries):
+                    self.assertIn(f'["{gender}|{bark}|{index}"] = "{caption}"', voice)
+                    target_assets = routes[f'{gender}|{bark}|{index}']
+                    source_assets = routes[f'{gender}|{source_bark}|{source_index}']
+                    self.assertEqual(target_assets, source_assets, f'{gender} {bark} {index}')
+
+    def test_normal_ready_variants_have_independent_captioned_click_routes(self):
+        voice = (ROOT / 'code' / 'FieldVoiceSystem.cs').read_text(encoding='utf-8')
+        routes = json.loads((ROOT / 'runtime_assets/voice/voice_routes.json').read_text(encoding='utf-8'))['routes']
+        variants = {
+            'ready_ack_right': ('Right.', ('move_done', 0)),
+            'ready_ack_stay_sharp': ('Stay sharp.', ('move_done', 1)),
+            'ready_ack_got_this': ("I've got this.", ('move_done', 2)),
+            'ready_ack_alright_move': ("Alright, let's move!", ('moving', 0)),
+            'ready_ack_move': ("Let's move!", ('moving', 2)),
+        }
+        for bark, (caption, (source_bark, source_index)) in variants.items():
+            self.assertIn(f'new("{bark}", "Lim/click_bark", "click_bark_{bark}"', voice)
+            for gender in ('john', 'jane'):
+                self.assertIn(f'["{gender}|{bark}|0"] = "{caption}"', voice)
+                target_assets = routes[f'{gender}|{bark}|0']
+                source_assets = routes[f'{gender}|{source_bark}|{source_index}']
+                self.assertEqual(target_assets, source_assets, f'{gender} {bark}')
+
+    def test_reused_voice_routes_are_covered_by_full_bundle_receipt(self):
+        voice_dir = ROOT / 'runtime_assets/voice'
+        routes = json.loads((voice_dir / 'voice_routes.json').read_text(encoding='utf-8'))['routes']
+        requested = {asset for assets in routes.values() for asset in assets}
+        receipt = json.loads((voice_dir / 'sfp_john_jane_voice.build.json').read_text(encoding='utf-8'))
+        bundled = [clip['assetName'] for clip in receipt['clips']]
+        bundled_names = set(bundled)
+        self.assertEqual(len(bundled), 429)
+        self.assertEqual(len(bundled_names), len(bundled))
+        self.assertTrue(requested <= bundled_names)
+        self.assertLess(len(requested), len(bundled_names))
+        loader = (ROOT / 'code/RuntimeVoiceBundle.cs').read_text(encoding='utf-8')
+        voice = (ROOT / 'code/FieldVoiceSystem.cs').read_text(encoding='utf-8')
+        self.assertIn('receipt.clips.Count < requested.Count', loader)
+        self.assertNotIn('receipt.clips.Count != requested.Count', loader)
+        self.assertNotIn('required.Count != 429', voice)
 
     def test_safety_warning_in_readme(self):
         readme = (ROOT / 'README.md').read_text(encoding='utf-8')

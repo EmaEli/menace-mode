@@ -1,5 +1,43 @@
 # Changelog
 
+## 0.14.3 — associate the approved portrait bank with matching leaders
+
+- Assign the first future male/Brown promotion per save to `promoted_male_01`, the first female
+  promotion to `promoted_female_01`, and the first male/Black promotion to `promoted_male_02`.
+- Keep later promotions in those categories and new male/White promotions on the default portraits;
+  retain 0.14.0 male/White sidecar compatibility.
+- Ship all three six-image sets as runtime assets. Each profile changes only portrait fields; dynamic
+  badges continue to come from the default gendered art.
+
+## 0.14.2 — captioned normal-ready bark variety
+
+- Add five separate tactical click-bark variants using existing John/Jane response recordings.
+- Give each variant its own Sound ID and matching subtitle; do not mix different phrases under the
+  single “Yes, sir.” route. The direct Hire-screen selection field remains a single fixed Sound ID.
+
+## 0.14.1 — correct bespoke portrait target to male Brown
+
+- Assign the first future male/Brown promotion per save (`SkinColor.Brown = 1`, the black-haired
+  variant); male/White (`SkinColor.White = 0`, the redhead) no longer receives new assignments.
+- Preserve 0.14.0 sidecar records that already assigned the profile to a male/White squaddie.
+- Keep the one-assignment-per-save rule, six runtime images, default badges, and existing portraits.
+
+## 0.14.0 — one-off bespoke portrait candidate (initial target; superseded by 0.14.1)
+
+- Assign `promoted_male_01` to only the first future male/White promotion per save and persist that
+  selection in its sidecar record. Existing promotions, other skin/gender combinations and later
+  promotions retain the default balaclava portraits; dynamic badges remain on the default art.
+- Include the six approved portrait images as runtime assets, with `slot.png` normalized to RGBA8.
+- Carry the 0.13.2 voice-map/load fix; portrait and in-game voice playback acceptance remain pending.
+
+## 0.13.2 — experimental voice mapping and bundle-load fix
+
+- Keep the quiet-ready hidden-threat and shouty-ready contextual mappings, but accept intentional
+  reuse: the route table requests 399 unique clips from the unchanged 429-clip John/Jane bundle.
+- Validate that every requested route clip exists in the hash-verified bundle receipt instead of
+  requiring the requested subset to equal the full bundle inventory. This fixes the 0.13.1 runtime
+  fallback to native donor voices (reported as Lim); canonical installation passed, playback acceptance is pending.
+
 ## 0.13.0 — experimental voice-pitch test candidate
 
 - Assign new promoted leaders one of five deterministic pitch presets, derived from badge

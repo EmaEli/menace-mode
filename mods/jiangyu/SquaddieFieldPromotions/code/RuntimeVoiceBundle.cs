@@ -36,7 +36,7 @@ internal sealed class RuntimeVoiceBundle
         var receipt = JsonSerializer.Deserialize<BuildReceipt>(File.ReadAllText(receiptPath));
         if (receipt == null || receipt.schemaVersion != 2 ||
             receipt.bundleFile != BundleFile || receipt.buildTarget != "StandaloneWindows64" ||
-            receipt.clips == null || receipt.clips.Count != requested.Count)
+            receipt.clips == null || receipt.clips.Count < requested.Count)
             throw new InvalidDataException("Incompatible or incomplete SFP voice receipt.");
         if (!string.Equals(receipt.unityVersion, Application.unityVersion, StringComparison.Ordinal))
             throw new InvalidDataException("Voice bundle Unity " + receipt.unityVersion +

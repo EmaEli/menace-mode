@@ -4,6 +4,25 @@
     "john|ready|0": [
       "cl2_john_ready_01_01"
     ],
+    "john|ready_ack_right|0": [
+      "cl2_john_move_done_01_01"
+    ],
+    "john|ready_ack_stay_sharp|0": [
+      "cl2_john_move_done_02_01"
+    ],
+    "john|ready_ack_got_this|0": [
+      "cl2_john_move_done_03_01",
+      "cl2_john_move_done_03_02"
+    ],
+    "john|ready_ack_alright_move|0": [
+      "cl2_john_moving_01_01",
+      "cl2_john_moving_01_02"
+    ],
+    "john|ready_ack_move|0": [
+      "cl2_john_moving_03_01",
+      "cl2_john_moving_03_02",
+      "cl2_john_moving_03_03"
+    ],
     "john|moving|0": [
       "cl2_john_moving_01_01",
       "cl2_john_moving_01_02"
@@ -93,45 +112,44 @@
       "cl2_john_miss_03_03"
     ],
     "john|ready_quiet|0": [
-      "cl2_john_ready_quiet_01_01"
+      "cl2_john_enemy_hidden_01_01"
     ],
     "john|ready_quiet|1": [
-      "cl2_john_ready_quiet_02_01"
+      "cl2_john_enemy_hidden_02_01"
     ],
     "john|ready_quiet|2": [
-      "cl2_john_ready_quiet_03_01"
+      "cl2_john_enemy_hidden_01_01"
     ],
     "john|ready_shouty|0": [
-      "cl2_john_ready_shouty_01_01"
+      "cl2_john_taking_fire_01_01"
     ],
     "john|ready_shouty|1": [
-      "cl2_john_ready_shouty_02_01"
+      "cl2_john_taking_fire_02_01"
     ],
     "john|ready_shouty|2": [
-      "cl2_john_ready_shouty_03_01",
-      "cl2_john_ready_shouty_03_02"
+      "cl2_john_suppressed_01_01"
     ],
     "john|ready_shouty|3": [
-      "cl2_john_ready_shouty_04_01",
-      "cl2_john_ready_shouty_04_02"
+      "cl2_john_suppressed_02_01"
     ],
     "john|ready_shouty|4": [
-      "cl2_john_ready_shouty_05_01"
+      "cl2_john_taking_fire_04_01",
+      "cl2_john_taking_fire_04_02"
     ],
     "john|ready_shouty|5": [
-      "cl2_john_ready_shouty_06_01"
+      "cl2_john_ally_suppressed_02_01"
     ],
     "john|ready_shouty|6": [
-      "cl2_john_ready_shouty_07_01"
+      "cl2_john_ally_suppressed_01_01"
     ],
     "john|ready_shouty|7": [
-      "cl2_john_ready_shouty_08_01"
+      "cl2_john_ally_taking_fire_02_01"
     ],
     "john|ready_shouty|8": [
-      "cl2_john_ready_shouty_09_01"
+      "cl2_john_morale_wavering_01_01"
     ],
     "john|ready_shouty|9": [
-      "cl2_john_ready_shouty_10_01"
+      "cl2_john_morale_wavering_02_01"
     ],
     "john|ready_suppressed|0": [
       "cl2_john_ready_suppressed_01_01"
@@ -569,6 +587,24 @@
     "jane|ready|0": [
       "cl2_jane_ready_01_01"
     ],
+    "jane|ready_ack_right|0": [
+      "cl2_jane_move_done_01_01"
+    ],
+    "jane|ready_ack_stay_sharp|0": [
+      "cl2_jane_move_done_02_01"
+    ],
+    "jane|ready_ack_got_this|0": [
+      "cl2_jane_move_done_03_01",
+      "cl2_jane_move_done_03_02"
+    ],
+    "jane|ready_ack_alright_move|0": [
+      "cl2_jane_moving_01_01"
+    ],
+    "jane|ready_ack_move|0": [
+      "cl2_jane_moving_03_01",
+      "cl2_jane_moving_03_02",
+      "cl2_jane_moving_03_03"
+    ],
     "jane|moving|0": [
       "cl2_jane_moving_01_01"
     ],
@@ -656,45 +692,44 @@
       "cl2_jane_miss_03_03"
     ],
     "jane|ready_quiet|0": [
-      "cl2_jane_ready_quiet_01_01"
+      "cl2_jane_enemy_hidden_01_01"
     ],
     "jane|ready_quiet|1": [
-      "cl2_jane_ready_quiet_02_01"
+      "cl2_jane_enemy_hidden_02_01"
     ],
     "jane|ready_quiet|2": [
-      "cl2_jane_ready_quiet_03_01"
+      "cl2_jane_enemy_hidden_01_01"
     ],
     "jane|ready_shouty|0": [
-      "cl2_jane_ready_shouty_01_01"
+      "cl2_jane_taking_fire_01_01"
     ],
     "jane|ready_shouty|1": [
-      "cl2_jane_ready_shouty_02_01"
+      "cl2_jane_taking_fire_02_01"
     ],
     "jane|ready_shouty|2": [
-      "cl2_jane_ready_shouty_03_01",
-      "cl2_jane_ready_shouty_03_02"
+      "cl2_jane_suppressed_01_01"
     ],
     "jane|ready_shouty|3": [
-      "cl2_jane_ready_shouty_04_01",
-      "cl2_jane_ready_shouty_04_02"
+      "cl2_jane_suppressed_02_01"
     ],
     "jane|ready_shouty|4": [
-      "cl2_jane_ready_shouty_05_01"
+      "cl2_jane_taking_fire_04_01",
+      "cl2_jane_taking_fire_04_02"
     ],
     "jane|ready_shouty|5": [
-      "cl2_jane_ready_shouty_06_01"
+      "cl2_jane_ally_suppressed_02_01"
     ],
     "jane|ready_shouty|6": [
-      "cl2_jane_ready_shouty_07_01"
+      "cl2_jane_ally_suppressed_01_01"
     ],
     "jane|ready_shouty|7": [
-      "cl2_jane_ready_shouty_08_01"
+      "cl2_jane_ally_taking_fire_02_01"
     ],
     "jane|ready_shouty|8": [
-      "cl2_jane_ready_shouty_09_01"
+      "cl2_jane_morale_wavering_01_01"
     ],
     "jane|ready_shouty|9": [
-      "cl2_jane_ready_shouty_10_01"
+      "cl2_jane_morale_wavering_02_01"
     ],
     "jane|ready_suppressed|0": [
       "cl2_jane_ready_suppressed_01_01"

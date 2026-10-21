@@ -1,9 +1,20 @@
-# Squaddie Field Promotions 0.13.0
+# Squaddie Field Promotions 0.14.3
 
-> **Experimental 0.13.0 voice-pitch test candidate installed on the MENACE PC (21 Oct).** New promotions cycle through
+> **Experimental 0.14.3 test build installed on 21 October; in-game acceptance is pending.**
+> It associates the approved #69 portrait sets with the first matching future promotion per save:
+> male/Brown → `promoted_male_01`, female → `promoted_female_01`, male/Black → `promoted_male_02`.
+> Subsequent promotions in a category use the default art; dynamic badges remain unchanged. New
+> male/White promotions keep the default, while 0.14.0 male/White records remain loadable.
+> Version 0.14.2's five separately captioned tactical normal-click responses remain included; each
+> uses existing John/Jane recordings and a matching subtitle, while the direct Hire-screen field stays
+> fixed to “Yes, sir.” Test all features only in a disposable campaign (#69/#70).
+>
+> The 0.13.1 test build loaded SFP but failed to mount John/Jane audio: its routes request 399 unique clips from the unchanged 429-clip receipt. Exact-count guards then kept native donor voices (the reported Lim voice). Version 0.13.2 allows this valid subset while still checking every requested clip.
+>
+> The prior 0.13.0 pitch-only candidate was installed on the MENACE PC (21 Oct). New promotions cycle through
 > five deterministic pitch presets (1.00 / 0.90 / 0.95 / 1.05 / 1.10) by badge index;
 > existing save records stay neutral. Tactical and Hire barks use the same isolated
-> profile, reusing the bundled John/Jane audio. Canonical Windows BuildOnly/install passed;
+> profile, reusing the bundled John/Jane audio. Its canonical Windows BuildOnly/install passed;
 > initial user feedback confirms audible pitch differences and tentatively says badges look
 > correct. Full profile, save/load and startup/memory checks remain pending. Do not use on a
 > valuable save; see #68.
@@ -34,9 +45,13 @@ Vehicle crew promotions ([#66](https://github.com/EmaEli/menace-mode/issues/66))
   - Soldiers already promoted are skipped; unknown XP is never fabricated as zero.
 - The chosen squaddie becomes a **new squad leader in the Hire list (0 credits)**: a
   unique `UnitLeaderTemplate`/`SpeakerTemplate` cloned from the matching vanilla
-  gendered leader, with the soldier's name, nickname, skin, bundled portraits from
+  gendered leader, with the soldier's name, nickname, skin, balaclava portraits from
   `runtime_assets/<gender>/`, a black shield with a dynamic letter (A, B, C, ...), and the John/Jane voice
   bank from `runtime_assets/voice/` when it loads; otherwise the native donor voice stays.
+- The first future male/Brown, female, and male/Black promotions in each save can use the six images
+  in `runtime_assets/promoted_male_01/`, `runtime_assets/promoted_female_01/`, and
+  `runtime_assets/promoted_male_02/`, respectively. Each profile changes portrait fields only,
+  leaving dynamic badges unchanged; later matching promotions use the default artwork.
 - The generated leader receives a persistent `UnitTitle` based on the squaddie's last unit
   (or a varied Imperius designation) and an individual section/badge. Its `UnitDescription`
   carries the prior unit/commander, native lifetime mission count, optional Veterancy rank,
@@ -102,15 +117,28 @@ The kit also ships the module's raw `runtime_assets/` (portraits, prebuilt John/
 voice bundle with its build receipt, voice routes); the installer stages them next to
 the compiled package because `jiangyu compile --clean` does not preserve them.
 
-## Acceptance test (0.13.0 voice-pitch, startup/load and gameplay verification pending)
+## Acceptance test (0.14.3 installed; in-game checks pending)
 
 The user verified the generic perk progression in 0.12.0, but rejected the source-emblem
 overlay and reported Singh's icon still above tactical units. Version 0.12.1 restores black
 letter badges and fixes the native tactical getter path; in-game confirmation is pending.
-Version 0.13.0 adds five persisted pitch profiles; test startup time/memory and compare
-the new leaders' Hire and tactical barks before treating this prototype as accepted.
-Initial user feedback is positive but preliminary: pitch differences are audible between hired
-leaders and the in-game badges appear correct; full profile and persistence checks remain pending.
+Version 0.14.1 targets the first future male/Brown (black-haired) promotion; verify the Hire card,
+tactical views, and save/load reconstruction. It keeps previously persisted 0.14.0 male/White
+assignments loadable without changing saves. Version 0.14.2 adds five separate tactical normal-click
+responses (“Right.”, “Stay sharp.”, “I've got this.”, “Alright, let's move!”, and “Let's move!”),
+each with a matching subtitle; repeatedly select a promoted leader and check that the spoken phrase
+and subtitle stay paired. Hire-screen selection still uses its single fixed “Yes, sir.” sound.
+Version 0.14.3 assigns one portrait set per matching category and save: male/Brown (`male_01`),
+female (`female_01`), and male/Black (`male_02`). Verify each in Hire and tactical views, confirm
+the dynamic badges remain present, and reload the save to verify the assignments persist.
+Version 0.13.0 adds
+five persisted pitch profiles; test startup time/memory and compare the new leaders' Hire and
+tactical barks before treating this prototype as accepted. Version
+0.13.2 retains the 0.13.1 quiet-ready and shouty-ready mappings and fixes the runtime's exact
+bundle-count assumption, which blocked John/Jane voices and caused fallback to native donor
+voices. Canonical Windows BuildOnly/install passed; in-game subtitle/audio confirmation is pending; see #70. Initial 0.13.0 user feedback is positive but preliminary:
+pitch differences are audible between hired leaders and the in-game badges appear correct;
+full profile and persistence checks remain pending.
 
 Versions 0.8.0-0.8.4 verified in game that the native dossier is stocked, visible at
 1 credit, redeemable and restocked. Version 0.9.0 reconnects the recovered 0.6.1 leader

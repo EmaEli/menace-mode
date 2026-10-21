@@ -100,6 +100,61 @@ matching Hire/tactical playback, save/load persistence, startup/memory remain to
 fresh `Latest.log` was retrieved after the session; no SFP-tagged warning/error was found. The eager
 ten-profile setup (~780 conversation clones) is still a performance gate.
 
+**0.13.2 voice-load fix (21 October, #70):** the 0.13.1 test installation loaded, but the fresh
+Latest.log showed the John/Jane bank rejected before playback. The routes request 399 unique clips
+from the unchanged receipt's 429 clips; all 399 are present, with 30 receipt clips unused after
+intentional route reuse. Exact-count guards incorrectly treated that valid subset as incomplete,
+so leaders retained their native donor voices (reported as Lim). Version 0.13.2 removes only those
+exact-count assumptions; bundle hash, Unity version, receipt metadata, route coverage and requested
+clip membership checks remain. Nineteen authoring tests and 217 offline behavior checks pass;
+BuildKit verified the 143-file candidate ZIP (SHA256 `a2349e50ad25868f66ee4e381708b1ddfce7288a44ead4398d8e75cdd7645ffb`). Canonical Windows BuildOnly and installation passed on menace-pc with pinned .NET 10.0.113,
+zero warnings/errors, 217 behavior checks and 6 installed-settings helper checks. Installed SFP
+manifest/DLL were verified as 0.13.2/0.13.2.0; MenaceModSettings 0.8.2 and Jiangyu.Loader were
+reused. The installer backed up the previous SFP folder to
+`M:\SteamLibrary\steamapps\common\Menace\_MENACE_Backups\20261021-161246-6500a31265f74a8493ce74649910998b`;
+no saves or unrelated mods were changed. MENACE remains closed. In-game audio/subtitle acceptance
+and a fresh Latest.log await the user's test launch.
+
+**0.14.0 one-off portrait test candidate (#69), installed 21 October:** `dev` includes the approved
+six-image `promoted_male_01` set as runtime assets (`slot.png` normalized to RGBA8). Promotion records
+persist the profile, assigned only to the first future male/White promotion in each save; existing
+records, other skin/gender combinations and later promotions keep the default balaclava portraits
+and badges. Twenty authoring tests, 144 distribution tests, and 225 offline behavior checks pass.
+BuildKit archive integrity and clean extracted-source/DLL metadata verification passed locally. The
+canonical Windows BuildOnly and install both passed using private .NET 10.0.113, with zero build
+warnings/errors, 225 behavior checks and 6 installed-settings helper checks. Installed SFP was verified
+as manifest 0.14.0 / DLL 0.14.0.0; MenaceModSettings and Jiangyu.Loader were reused and not replaced.
+The previous SFP folder (0.13.2) is backed up outside Mods at
+`M:\SteamLibrary\steamapps\common\Menace\_MENACE_Backups\20261021-162516-7e89a80d491649eb9fe6096cb9fbc073`;
+no saves or unrelated mods were changed. MENACE remains closed. The carried 0.13.2 voice mapping fix
+and new portrait assignment still need in-game acceptance; retrieve a fresh Latest.log after the user
+launches the test build (#69/#70).
+
+**0.14.1 follow-up to #69 (corrected target):** MENACE 0.7.17 proxy enums confirm
+`SkinColor.Brown = 1` is the black-haired variant and `SkinColor.White = 0` is the redhead. New
+assignments target only male/Brown; records written by 0.14.0 remain loadable, and no saves are
+migrated. Twenty authoring tests, 144 distribution tests and 226 offline behavior checks pass; the
+149-file BuildKit passed integrity and clean extracted-source/DLL metadata verification locally.
+Canonical Windows BuildOnly passed with pinned .NET 10.0.113, zero warnings/errors, 226 behavior
+checks and 6 installed-settings helper checks. The final pre-install check found `Menace.exe` running,
+so installation was not attempted; no live Mods or saves were changed. Install after the user closes
+the game.
+
+**0.14.3 three-profile portrait test candidate for #69, installed 21 October:** MENACE 0.7.17 proxy
+values confirm Brown=1 and Black=2. The first future male/Brown, female, and male/Black promotions per
+save receive `promoted_male_01`, `promoted_female_01`, and `promoted_male_02`, respectively; later
+promotions in each category keep default art. New male/White promotions keep default art, and 0.14.0
+male/White records remain loadable. Dynamic badges are unchanged. Twenty-one authoring tests, 19
+distribution tests, and 230 behavior checks pass; the local build, 161-file BuildKit inventory, and
+clean extracted-source/DLL metadata verification passed. Canonical Windows BuildOnly and installation
+passed with pinned .NET 10.0.113, zero warnings/errors, 230 behavior checks, and 6 installed-settings
+helper checks. Installed SFP was verified as manifest 0.14.3 / DLL 0.14.3.0; the installer reused
+MenaceModSettings and Jiangyu.Loader. The backup journal lists only the SFP folder and its legacy
+root-DLL conflict target; the prior SFP folder was 0.14.2, backed up outside Mods at
+`M:\SteamLibrary\steamapps\common\Menace\_MENACE_Backups\20261021-182954-4fec73ee932f4100a3c6b10aa3789f98`.
+No saves or unrelated mods were changed, and MENACE remains closed. In-game portrait, dynamic badge,
+and save/load acceptance remains pending; retrieve a fresh Latest.log after the next test launch.
+
 ## Evidence levels: do not confuse them
 
 - **Current local builds:** both changed icon packages rebuilt through the Jiangyu CLI;

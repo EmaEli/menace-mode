@@ -17,8 +17,9 @@ void Check(bool value, string name)
     checks++;
 }
 Candidate C(int id, int missions = 0, int? xp = null, bool assigned = false,
-    string lastUnitTitle = "", string lastCommander = "", string rank = "", string sourceLeaderTemplateId = "") =>
-    new(id, "Soldier", "Nickname", 0, 1, missions, xp, assigned, lastUnitTitle, lastCommander, rank,
+    string lastUnitTitle = "", string lastCommander = "", string rank = "", string sourceLeaderTemplateId = "",
+    int gender = 0, int skinColor = 1) =>
+    new(id, "Soldier", "Nickname", gender, skinColor, missions, xp, assigned, lastUnitTitle, lastCommander, rank,
         sourceLeaderTemplateId);
 void Reject(Action action, string name)
 {
@@ -65,7 +66,7 @@ Check(selection.LivingCount == 3, "assigned and unassigned included");
 Check(PromotionRules.Choose(new[] { C(4, xp: 200, assigned: true), C(1, xp: 2) }).Soldier.Id == 4, "assigned top XP eligible");
 selection = PromotionRules.Choose(new[] { C(1, 2), C(3, 9), C(2, 9) });
 Check(!selection.UsesXp && !selection.PartialXp && selection.Soldier.Id == 2, "no Veterancy: native missions with ID tie");
-selection = PromotionRules.Choose(new[] { C(1, 2, 999), C(2, 3) });
+selection = PromotionRules.Choose(new[] { C(1, 2, 999), C(2, 3, skinColor: 1) });
 Check(!selection.UsesXp && selection.PartialXp && selection.Soldier.Id == 2, "partial XP does not mix metrics");
 PromotionRecord R(Selection s, int badge = 0, SquaddieServiceRecord service = null) =>
     LeaderForge.CreateRecord(null, s, badge, service);
@@ -102,6 +103,56 @@ Check(PromotionProgression.GenericInfantryPerks.Length == 16 &&
     "generic promotion tree has all 16 perks in the chosen tier distribution");
 Check(JsonSerializer.Deserialize<PromotionRecord>("{}").SourceLeaderTemplateId == "",
     "older save sidecars without provenance default to unavailable");
+Check(JsonSerializer.Deserialize<PromotionRecord>("{}").PortraitProfile == "",
+    "older save sidecars without portrait assignments keep default artwork");
+PromotionRecord PortraitCandidate(int id, int gender, int skinColor) =>
+    R(new Selection(C(id, gender: gender, skinColor: skinColor), 1, false, false));
+var portraitLedger = new PromotionLedger();
+var femaleBrownPortrait = PortraitCandidate(910, 1, 1);
+var firstBrownMalePortrait = PortraitCandidate(912, 0, 1);
+var whiteMalePortrait = PortraitCandidate(911, 0, 0);
+var blackMalePortrait = PortraitCandidate(917, 0, 2);
+femaleBrownPortrait.BadgeIndex = 0;
+firstBrownMalePortrait.BadgeIndex = 1;
+blackMalePortrait.BadgeIndex = 2;
+Check(PromotionPortraitAssignment.TryAssignFirstMatchingProfile(portraitLedger, femaleBrownPortrait) &&
+    femaleBrownPortrait.PortraitProfile == PromotionPortraitAssignment.Female01,
+    "first future female promotion receives the female portrait profile");
+portraitLedger.Records.Add(femaleBrownPortrait);
+Check(!PromotionPortraitAssignment.TryAssignFirstMatchingProfile(portraitLedger, PortraitCandidate(918, 1, 0)),
+    "later female promotions keep the default portrait after female_01 is claimed");
+Check(!PromotionPortraitAssignment.TryAssignFirstMatchingProfile(portraitLedger, whiteMalePortrait) &&
+    whiteMalePortrait.PortraitProfile == "", "male White/redhead promotion keeps the default portrait");
+Check(PromotionPortraitAssignment.TryAssignFirstMatchingProfile(portraitLedger, firstBrownMalePortrait) &&
+    firstBrownMalePortrait.PortraitProfile == PromotionPortraitAssignment.MaleBrown01,
+    "first future male Brown promotion receives promoted_male_01");
+portraitLedger.Records.Add(firstBrownMalePortrait);
+var laterBrownMalePortrait = PortraitCandidate(913, 0, 1);
+Check(!PromotionPortraitAssignment.TryAssignFirstMatchingProfile(portraitLedger, laterBrownMalePortrait) &&
+    laterBrownMalePortrait.PortraitProfile == "", "later male Brown promotions keep the default portrait");
+Check(PromotionPortraitAssignment.TryAssignFirstMatchingProfile(portraitLedger, blackMalePortrait) &&
+    blackMalePortrait.PortraitProfile == PromotionPortraitAssignment.MaleBlack02,
+    "first future male Black promotion receives promoted_male_02");
+portraitLedger.Records.Add(blackMalePortrait);
+Check(!PromotionPortraitAssignment.TryAssignFirstMatchingProfile(portraitLedger, PortraitCandidate(919, 0, 2)),
+    "later male Black promotions keep the default portrait after male_02 is claimed");
+Check(JsonSerializer.Deserialize<PromotionRecord>(JsonSerializer.Serialize(firstBrownMalePortrait)).PortraitProfile ==
+    PromotionPortraitAssignment.MaleBrown01, "portrait assignment persists in the save record");
+var duplicatePortrait = PortraitCandidate(914, 0, 1);
+duplicatePortrait.BadgeIndex = 3;
+duplicatePortrait.PortraitProfile = PromotionPortraitAssignment.MaleBrown01;
+Reject(() => new PromotionLedger { Records = new() { firstBrownMalePortrait, duplicatePortrait } }.Validated(),
+    "a portrait profile cannot be assigned twice in one save");
+var legacyWhitePortrait = PortraitCandidate(915, 0, 0);
+legacyWhitePortrait.PortraitProfile = PromotionPortraitAssignment.MaleBrown01;
+Check(new PromotionLedger { Records = new() { legacyWhitePortrait } }.Validated().Single() == legacyWhitePortrait,
+    "0.14.0 male White portrait assignment remains loadable");
+var ineligiblePortrait = PortraitCandidate(916, 1, 1);
+ineligiblePortrait.PortraitProfile = PromotionPortraitAssignment.MaleBrown01;
+Reject(() => ineligiblePortrait.Validate(), "male_01 cannot be stored on another gender");
+var wrongSkinPortrait = PortraitCandidate(920, 0, 1);
+wrongSkinPortrait.PortraitProfile = PromotionPortraitAssignment.MaleBlack02;
+Reject(() => wrongSkinPortrait.Validate(), "male_02 requires the native Black skin color");
 var provenanceCandidate = C(703, sourceLeaderTemplateId: "squad_leader.weiwu");
 var provenanceRecord = LeaderForge.CreateRecord(null, new Selection(provenanceCandidate, 1, false, false),
     2, null, PromotionProgression.RootSourceTemplateId(provenanceCandidate.SourceLeaderTemplateId, new PromotionLedger()));
@@ -447,7 +498,9 @@ Check(UIManager.Current.Last.Text.Contains("is now a squad leader"), "promotion 
 Check(!UIManager.Current.Last.Label.enableRichText, "names cannot inject markup");
 Check(LeaderForge.Last.Installed.Count == 1 && StrategyState.Current.Roster.Hirable.Count == 1, "leader installed once into Hire");
 Check(liveLedger.Records.Count == 1 && liveLedger.Records[0].SourceSquaddieId == selection.Soldier.Id &&
-    liveLedger.Records[0].LeaderId == LeaderForge.Last.Installed[0] && system.Context.State.Saves == 1, "promotion recorded in Jiangyu mod state");
+    liveLedger.Records[0].LeaderId == LeaderForge.Last.Installed[0] &&
+    liveLedger.Records[0].PortraitProfile == PromotionPortraitAssignment.MaleBrown01 &&
+    system.Context.State.Saves == 1, "first eligible portrait assignment recorded with the promotion");
 Check(liveLedger.Records[0].SourceRemoved && !StrategyState.Current.Squaddies.IsAlive(firstSource.Id) &&
     squad.m_SquaddieIds.SequenceEqual(new[] { 80, 81 }), "exact promoted soldier removed from assigned squad and pool");
 Check(LeaderForge.Last.HeadModes.Last(), "new promoted leader uses generic heads by default");
@@ -509,7 +562,8 @@ Redeem(preview);
 Check(liveLedger.Records.Count == 1 && StrategyState.Current.Roster.Hirable.Count == 1 &&
     StrategyState.Current.Squaddies.m_AliveSquaddies.Contains(secondSource), "failed removal readback rolls back Hire and source");
 StrategyState.Current.Squaddies.FailReadback = false;
-Check(Redeem(preview).Skip && liveLedger.Records.Count == 2 && liveLedger.Records[1].BadgeIndex == 1, "next promotion gets the next badge");
+Check(Redeem(preview).Skip && liveLedger.Records.Count == 2 && liveLedger.Records[1].BadgeIndex == 1 &&
+    liveLedger.Records[1].PortraitProfile == "", "next promotion gets the next badge and keeps the default portrait");
 Check(!StrategyState.Current.Squaddies.IsAlive(secondSource.Id), "unassigned promoted source also removed");
 Check(UIManager.Current.Last.Text.Contains("1 already promoted skipped") || liveLedger.Records[1].SourceSquaddieId == excluded.Soldier.Id, "second leader from a different soldier");
 Log.Warnings.Clear();
@@ -552,8 +606,9 @@ File.WriteAllText(savePath + PromotionSystem.SidecarSuffix, System.Text.Json.Jso
 system.Context.Coroutines.RunAll(); // Drain the pending (donor-less) voice wait so a new one can be scheduled.
 Load(savePath);
 Check(LeaderForge.Last.Rehydrated.SequenceEqual(savedLedger.Records.Select(r => r.LeaderId)) &&
-    LeaderForge.Last.Refreshed.SequenceEqual(savedLedger.Records.Select(r => r.LeaderId)) && Log.Warnings.Count == 0,
-    "every saved leader is rebuilt before and refreshed after roster load");
+    LeaderForge.Last.Refreshed.SequenceEqual(savedLedger.Records.Select(r => r.LeaderId)) &&
+    savedLedger.Records[0].PortraitProfile == PromotionPortraitAssignment.MaleBrown01 && Log.Warnings.Count == 0,
+    "every saved leader and its portrait assignment are rebuilt before roster load");
 Check(system.Context.Coroutines.Started.Count == 1, "rebuilt leaders schedule voice binding");
 var broken = R(PromotionRules.Choose(new[] { C(9, 1) }), 5); broken.Name = "Broken";
 savedLedger.Records.Add(broken);

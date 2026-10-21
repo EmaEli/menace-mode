@@ -247,6 +247,7 @@ public sealed class PromotionSystem : JiangyuSystem
                     var record = LeaderForge.CreateRecord(state, selection, ledger.NextBadgeIndex(),
                         ledger.FindServiceRecord(selection.Soldier.Id),
                         PromotionProgression.RootSourceTemplateId(selection.Soldier.SourceLeaderTemplateId, ledger));
+                    PromotionPortraitAssignment.TryAssignFirstMatchingProfile(ledger, record);
                     var source = new SourceSquaddieRemoval(state, record);
                     if (!source.Present) throw new InvalidOperationException("Selected source soldier no longer exists.");
                     string detail;

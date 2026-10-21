@@ -24,6 +24,8 @@ public sealed class PromotionRecord
     public string Nickname { get; set; } = "";
     public int Gender { get; set; }
     public int SkinColor { get; set; }
+    // Empty on old sidecars and all leaders except the one assigned bespoke artwork.
+    public string PortraitProfile { get; set; } = "";
     public int BadgeIndex { get; set; }
     // Neutral when omitted from an older sidecar: no save migration required.
     public int VoicePitchPreset { get; set; }
@@ -40,6 +42,7 @@ public sealed class PromotionRecord
     public void Validate()
     {
         SourceLeaderTemplateId ??= "";
+        PortraitProfile ??= "";
         if (!ValidId(LeaderId, LeaderPrefix) || !ValidId(SpeakerId, SpeakerPrefix) ||
             !string.Equals(LeaderId.Substring(LeaderPrefix.Length),
                            SpeakerId.Substring(SpeakerPrefix.Length), StringComparison.Ordinal))
@@ -53,6 +56,12 @@ public sealed class PromotionRecord
             throw new InvalidDataException("Promotion record gender must match the native MENACE genders.");
         if (SkinColor < 0 || SkinColor > 2)
             throw new InvalidDataException("Promotion record skin color must match the native MENACE palette.");
+        if (PortraitProfile.Length > 64 ||
+            (PortraitProfile.Length > 0 && !PromotionPortraitAssignment.IsKnownProfile(PortraitProfile)))
+            throw new InvalidDataException("Promotion record portrait profile is invalid.");
+        if (PortraitProfile.Length > 0 &&
+            !PromotionPortraitAssignment.IsCompatible(PortraitProfile, Gender, SkinColor))
+            throw new InvalidDataException("The portrait profile does not match the recorded native gender/skin.");
         if (!VoicePitchProfiles.IsValid(VoicePitchPreset))
             throw new InvalidDataException("Promotion record voice pitch preset is invalid.");
         if (string.IsNullOrWhiteSpace(UnitTitle) || UnitTitle.Length > 180 ||
@@ -112,6 +121,7 @@ public sealed class PromotionLedger
         var guids = new HashSet<int>();
         var squaddies = new HashSet<int>();
         var badges = new HashSet<int>();
+        var portraitProfiles = new HashSet<string>(StringComparer.Ordinal);
         foreach (var record in records)
         {
             if (record == null) throw new InvalidDataException("Promotion ledger contains a null record.");
@@ -119,6 +129,8 @@ public sealed class PromotionLedger
             if (!leaderIds.Add(record.LeaderId) || !guids.Add(record.NumericGuid) || !badges.Add(record.BadgeIndex) ||
                 (record.SourceSquaddieId > 0 && !squaddies.Add(record.SourceSquaddieId)))
                 throw new InvalidDataException("Promotion ledger contains duplicate identities.");
+            if (record.PortraitProfile.Length > 0 && !portraitProfiles.Add(record.PortraitProfile))
+                throw new InvalidDataException("Promotion ledger contains a duplicate portrait profile.");
         }
         ServiceRecords ??= new List<SquaddieServiceRecord>();
         ProcessedMissionKeys ??= new List<string>();
@@ -163,6 +175,56 @@ public sealed class PromotionLedger
     {
         Validated();
         return ServiceRecords.FirstOrDefault(record => record.SquaddieId == squaddieId);
+    }
+}
+
+/// <summary>Assigns each bespoke portrait once per save to the first future matching promotion.</summary>
+internal static class PromotionPortraitAssignment
+{
+    internal const string MaleBrown01 = "promoted_male_01";
+    internal const string Female01 = "promoted_female_01";
+    internal const string MaleBlack02 = "promoted_male_02";
+    // MENACE 0.7.17 values are verified in its native proxy dump.
+    internal const int MaleGender = 0;
+    internal const int FemaleGender = 1;
+    internal const int BrownSkinColor = 1;
+    internal const int BlackSkinColor = 2;
+    // 0.14.0 persisted this profile on male White records; keep those sidecars loadable.
+    internal const int LegacyWhiteSkinColor = 0;
+
+    internal static bool IsKnownProfile(string profile) =>
+        profile == MaleBrown01 || profile == Female01 || profile == MaleBlack02;
+
+    internal static bool IsCompatible(string profile, int gender, int skinColor)
+    {
+        if (profile == MaleBrown01)
+            return gender == MaleGender &&
+                (skinColor == BrownSkinColor || skinColor == LegacyWhiteSkinColor);
+        if (profile == Female01) return gender == FemaleGender;
+        if (profile == MaleBlack02) return gender == MaleGender && skinColor == BlackSkinColor;
+        return false;
+    }
+
+    private static string ProfileFor(int gender, int skinColor)
+    {
+        if (gender == FemaleGender) return Female01;
+        if (gender == MaleGender && skinColor == BrownSkinColor) return MaleBrown01;
+        if (gender == MaleGender && skinColor == BlackSkinColor) return MaleBlack02;
+        return null;
+    }
+
+    internal static bool TryAssignFirstMatchingProfile(PromotionLedger ledger, PromotionRecord record)
+    {
+        if (ledger == null) throw new ArgumentNullException(nameof(ledger));
+        if (record == null) throw new ArgumentNullException(nameof(record));
+        IReadOnlyList<PromotionRecord> existing = ledger.Validated();
+        record.Validate();
+        if (record.PortraitProfile.Length != 0) return false;
+        string profile = ProfileFor(record.Gender, record.SkinColor);
+        if (profile == null || existing.Any(candidate => candidate.PortraitProfile == profile)) return false;
+        record.PortraitProfile = profile;
+        record.Validate();
+        return true;
     }
 }
 

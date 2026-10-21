@@ -21,6 +21,8 @@ internal sealed class LeaderForge
     private readonly List<UnityEngine.Object> _pinned = new();
     private StandalonePortraitAssets _maleArt;
     private StandalonePortraitAssets _femaleArt;
+    private readonly Dictionary<string, StandalonePortraitAssets> _portraitProfileArt =
+        new(StringComparer.Ordinal);
     private FieldVoiceSystem _voices;
     // Leaders created before John/Jane audio was ready keep the native donor voice until bound.
     private readonly Dictionary<string, (UnitLeaderTemplate Leader, SpeakerTemplate Speaker, bool Female, int PitchPreset)> _pendingVoice =
@@ -31,7 +33,8 @@ internal sealed class LeaderForge
     internal bool VoicesReady => _voices != null && _voices.Ready;
     internal bool HasPendingVoices => _pendingVoice.Count > 0;
     internal bool AssetsPresent =>
-        StandalonePortraitAssets.ArePresent(_modFolder, "male") && StandalonePortraitAssets.ArePresent(_modFolder, "female");
+        StandalonePortraitAssets.ArePresent(_modFolder, "male") && StandalonePortraitAssets.ArePresent(_modFolder, "female") &&
+        StandalonePortraitAssets.ArePortraitProfilesPresent(_modFolder);
 
     internal void Unload() => _voices?.UnpatchOnUnload();
 
@@ -213,6 +216,20 @@ internal sealed class LeaderForge
             leader.Gender = (Il2CppMenace.Tactical.Gender)record.Gender;
             leader.SkinColor = (Il2CppMenace.Tactical.SkinColor)record.SkinColor;
             string head = ApplyStandaloneVisuals(leader, speaker, voiceDonor, art, female, forceGenericHead);
+            string visual = "embedded-" + gender;
+            if (record.PortraitProfile.Length != 0)
+            {
+                if (!_portraitProfileArt.TryGetValue(record.PortraitProfile, out var portrait) ||
+                    portrait == null || !portrait.IsAlive)
+                {
+                    portrait = StandalonePortraitAssets.LoadPortraitProfile(
+                        _modFolder, record.PortraitProfile, _pinned);
+                    _portraitProfileArt[record.PortraitProfile] = portrait;
+                }
+                // Only the six portrait fields change; default gender art still supplies dynamic badges.
+                portrait.ApplyTo(leader, speaker);
+                visual = "embedded-" + record.PortraitProfile;
+            }
             string badgeLabel = DynamicBadgeFactory.LabelForIndex(record.BadgeIndex);
             string badge = DynamicBadgeFactory.Apply(leader, art, badgeLabel, _pinned);
             ApplyGenericProgression(leader);
@@ -236,7 +253,7 @@ internal sealed class LeaderForge
             if (DataTemplateLoader.Get<UnitLeaderTemplate>(record.LeaderId, false) == null ||
                 DataTemplateLoader.Get<SpeakerTemplate>(record.SpeakerId, false) == null)
                 throw new InvalidOperationException("Dynamic template registration failed.");
-            return $"visual=embedded-{gender}, head={head}, voice={voice}, badge={badgeLabel}/{badge}, " +
+            return $"visual={visual}, head={head}, voice={voice}, badge={badgeLabel}/{badge}, " +
                    $"leaderId={record.LeaderId}, guid={record.NumericGuid}";
         }
         catch

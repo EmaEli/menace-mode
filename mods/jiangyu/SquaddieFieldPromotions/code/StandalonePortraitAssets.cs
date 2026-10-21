@@ -12,8 +12,9 @@ namespace SquaddieFieldPromotions;
 
 /// <summary>
 /// Standalone portrait and badge sources, extracted from the author's Generic Low Level
-/// Squad Leaders 4.0.2. There are only TWO unique infantry character image families:
-/// alpha (male) and delta (female). All artwork ships with THIS Jiangyu mod.
+/// Squad Leaders 4.0.2. The balaclava male/female families remain the default; three optional
+/// profiles can override the six portrait fields for the first matching record in each save.
+/// All artwork ships with THIS Jiangyu mod.
 ///
 /// Non-Jiangyu raw artwork is copied AFTER CLI deploy by Build-and-Deploy.cmd.
 /// No Custom Leaders loader, original generic mod, or Menace Modpack Loader is needed.
@@ -21,12 +22,16 @@ namespace SquaddieFieldPromotions;
 /// </summary>
 internal sealed class StandalonePortraitAssets
 {
-    internal static readonly string[] FileNames =
+    internal static readonly string[] PortraitFileNames =
     {
         "slot.png", "slot_inactive.png", "bark.png", "stand_right.png", "stand_left.png",
-        "stand_right_inactive.png", "badge.png", "badge_mini.png", "badge_dragged.png",
-        "badge_unit.png", "slot_badge.png", "big_badge.png"
+        "stand_right_inactive.png"
     };
+    private static readonly string[] BadgeFileNames =
+    {
+        "badge.png", "badge_mini.png", "badge_dragged.png", "badge_unit.png", "slot_badge.png", "big_badge.png"
+    };
+    internal static readonly string[] FileNames = PortraitFileNames.Concat(BadgeFileNames).ToArray();
 
     private readonly Dictionary<string, Sprite> _sprites;
 
@@ -37,6 +42,18 @@ internal sealed class StandalonePortraitAssets
         string root = Path.Combine(modFolder, "runtime_assets", gender);
         return FileNames.All(name => File.Exists(Path.Combine(root, name)));
     }
+
+    internal static bool ArePortraitProfilePresent(string modFolder, string profile)
+    {
+        if (!PromotionPortraitAssignment.IsKnownProfile(profile)) return false;
+        string root = Path.Combine(modFolder, "runtime_assets", profile);
+        return PortraitFileNames.All(name => File.Exists(Path.Combine(root, name)));
+    }
+
+    internal static bool ArePortraitProfilesPresent(string modFolder) =>
+        ArePortraitProfilePresent(modFolder, PromotionPortraitAssignment.MaleBrown01) &&
+        ArePortraitProfilePresent(modFolder, PromotionPortraitAssignment.Female01) &&
+        ArePortraitProfilePresent(modFolder, PromotionPortraitAssignment.MaleBlack02);
 
     internal static StandalonePortraitAssets Load(string modFolder, string gender,
         List<UnityEngine.Object> pinned)
@@ -49,14 +66,34 @@ internal sealed class StandalonePortraitAssets
                 "the CLI deploy step alone does not preserve raw runtime_assets.");
 
         string folder = Path.Combine(modFolder, "runtime_assets", gender);
+        return LoadFiles(folder, gender, FileNames, pinned);
+    }
+
+    internal static StandalonePortraitAssets LoadPortraitProfile(string modFolder, string profile,
+        List<UnityEngine.Object> pinned)
+    {
+        if (!PromotionPortraitAssignment.IsKnownProfile(profile))
+            throw new ArgumentException("Unknown portrait profile", nameof(profile));
+        if (!ArePortraitProfilePresent(modFolder, profile))
+            throw new InvalidOperationException("Standalone " + profile +
+                " portrait files missing from deployed mod. Use Build-and-Deploy.cmd; " +
+                "the CLI deploy step alone does not preserve raw runtime_assets.");
+
+        string folder = Path.Combine(modFolder, "runtime_assets", profile);
+        return LoadFiles(folder, profile, PortraitFileNames, pinned);
+    }
+
+    private static StandalonePortraitAssets LoadFiles(string folder, string assetFamily,
+        IEnumerable<string> fileNames, List<UnityEngine.Object> pinned)
+    {
         var loaded = new Dictionary<string, Sprite>(StringComparer.Ordinal);
-        foreach (string name in FileNames)
+        foreach (string name in fileNames)
         {
             var texture = new Texture2D(2, 2, TextureFormat.RGBA32, false);
             byte[] png = File.ReadAllBytes(Path.Combine(folder, name));
             if (png.Length < 8 || !DecodePng(texture, png))
-                throw new InvalidOperationException("PNG could not be decoded by Unity IL2CPP: " + gender + "/" + name);
-            texture.name = "sfp.embedded." + gender + "." + name;
+                throw new InvalidOperationException("PNG could not be decoded by Unity IL2CPP: " + assetFamily + "/" + name);
+            texture.name = "sfp.embedded." + assetFamily + "." + name;
             texture.filterMode = FilterMode.Bilinear;
             // Runtime-created assets are otherwise destroyed by the scene-change
             // Resources.UnloadUnusedAssets (rehydration runs before Strategy loads).
@@ -64,7 +101,7 @@ internal sealed class StandalonePortraitAssets
             Sprite sprite = Sprite.Create(texture,
                 new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0.5f));
             if (sprite == null)
-                throw new InvalidOperationException("Sprite.Create failed: " + gender + "/" + name);
+                throw new InvalidOperationException("Sprite.Create failed: " + assetFamily + "/" + name);
             sprite.hideFlags = HideFlags.DontUnloadUnusedAsset;
             pinned.Add(texture);
             pinned.Add(sprite);
