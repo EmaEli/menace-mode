@@ -23,7 +23,7 @@ internal sealed class LeaderForge
     private StandalonePortraitAssets _femaleArt;
     private FieldVoiceSystem _voices;
     // Leaders created before John/Jane audio was ready keep the native donor voice until bound.
-    private readonly Dictionary<string, (UnitLeaderTemplate Leader, SpeakerTemplate Speaker, bool Female)> _pendingVoice =
+    private readonly Dictionary<string, (UnitLeaderTemplate Leader, SpeakerTemplate Speaker, bool Female, int PitchPreset)> _pendingVoice =
         new(StringComparer.Ordinal);
 
     internal LeaderForge(string modFolder) => _modFolder = modFolder;
@@ -51,6 +51,7 @@ internal sealed class LeaderForge
             Gender = soldier.Gender,
             SkinColor = soldier.SkinColor,
             BadgeIndex = badgeIndex,
+            VoicePitchPreset = VoicePitchProfiles.ForBadge(badgeIndex),
             InitialAttributes = PromotionRules.Attributes(selection.UsesXp ? soldier.Xp : null),
         };
         PromotionIdentity.Populate(record, soldier, service);
@@ -131,16 +132,16 @@ internal sealed class LeaderForge
         _voices ??= new FieldVoiceSystem(_modFolder);
         if (!_voices.TryPrepare(out status)) return false;
         foreach (var pending in _pendingVoice.Values)
-            BindVoice(pending.Leader, pending.Speaker, pending.Female);
+            BindVoice(pending.Leader, pending.Speaker, pending.Female, pending.PitchPreset);
         _pendingVoice.Clear();
         return true;
     }
 
-    private string BindVoice(UnitLeaderTemplate leader, SpeakerTemplate speaker, bool female)
+    private string BindVoice(UnitLeaderTemplate leader, SpeakerTemplate speaker, bool female, int pitchPreset)
     {
-        string tactical = _voices.BindSpeaker(speaker, female);
+        string tactical = _voices.BindSpeaker(speaker, female, pitchPreset);
         string hiring;
-        try { hiring = _voices.BindHiringBarks(leader, female); }
+        try { hiring = _voices.BindHiringBarks(leader, female, pitchPreset); }
         catch (Exception error) { hiring = "native (" + error.GetType().Name + ")"; }
         return tactical + "/" + hiring;
     }
@@ -201,10 +202,10 @@ internal sealed class LeaderForge
             leader.HiringSelectBarkSound = voiceDonor.HiringSelectBarkSound;
             leader.HiredBarkSound = voiceDonor.HiredBarkSound;
             string voice;
-            if (VoicesReady) voice = BindVoice(leader, speaker, female);
+            if (VoicesReady) voice = BindVoice(leader, speaker, female, record.VoicePitchPreset);
             else
             {
-                _pendingVoice[record.LeaderId] = (leader, speaker, female);
+                _pendingVoice[record.LeaderId] = (leader, speaker, female, record.VoicePitchPreset);
                 voice = "native-" + gender + " (pending John/Jane)";
             }
             ApplyIdentityText(record, leader, source, voiceDonor);
