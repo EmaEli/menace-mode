@@ -1,10 +1,11 @@
 # Squaddie Field Promotions 0.13.0
 
-> **Experimental 0.13.0 voice-pitch test candidate.** New promotions cycle through
+> **Experimental 0.13.0 voice-pitch test candidate installed on the MENACE PC (21 Oct).** New promotions cycle through
 > five deterministic pitch presets (1.00 / 0.90 / 0.95 / 1.05 / 1.10) by badge index;
 > existing save records stay neutral. Tactical and Hire barks use the same isolated
-> profile, reusing the bundled John/Jane audio. Windows build, load/memory benchmark,
-> and in-game audio confirmation are pending. Do not use on a valuable save; see #68.
+> profile, reusing the bundled John/Jane audio. Canonical Windows BuildOnly/install passed;
+> startup/memory measurement and in-game audio confirmation are pending. Do not use on a
+> valuable save; see #68.
 
 **Experimental: promotes real squaddies to hirable leaders and persists them across save/load.**
 Tracked in [#27](https://github.com/EmaEli/menace-mode/issues/27) and

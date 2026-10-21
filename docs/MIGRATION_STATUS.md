@@ -85,6 +85,18 @@ installed or play-tested. All ten gender/pitch profiles currently initialize eag
 about 780 conversation clones; load-time and memory cost need measurement before packaging. Keep
 issue #68 open and do not deploy this prototype.
 
+**0.13.0 Windows test installation (21 October):** the candidate was built with the canonical
+BuildKit/Windows installer using private SDK 10.0.113. Windows compile had 0 warnings/errors;
+217 behavior checks and 6 installed-settings helper checks passed. Installed manifest/assembly
+are **0.13.0 / 0.13.0.0**; the game was closed, only SFP was replaced, settings/Jiangyu loader
+were reused, and saves/UserData were untouched. Backup/rollback journal:
+`_MENACE_Backups/20261021-142022-a23648b4f63b4776b5ab4ba58d78e3da`.
+Candidate ZIP SHA256: `74529d5f0447d1504b3cfff0db21ff57722f92ea2aaed9f1a157e4c8d25fa5e8`.
+Installed DLL SHA256: `CD2B52008C5519A5FC529E19A781B29C591344953879C1FF49ED7D5F07017E7F`.
+Installer log: `M:\SFP-0.13.0-20261021-Build\Temp\MENACE-install.log`.
+The user has not launched the game with 0.13.0 yet; startup/memory and voice playback acceptance
+remain pending. The eager ten-profile setup (~780 conversation clones) is specifically under test.
+
 ## Evidence levels: do not confuse them
 
 - **Current local builds:** both changed icon packages rebuilt through the Jiangyu CLI;

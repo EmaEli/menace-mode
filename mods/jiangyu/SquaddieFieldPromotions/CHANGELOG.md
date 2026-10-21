@@ -6,8 +6,9 @@
   index and persisted in the existing sidecar. Older sidecars default to neutral (1.00).
 - Give each pitch/gender its own Stem bank and tactical speaker tag; tactical and Hire barks
   use the same profile while reusing the bundled John/Jane audio clips.
-- This prototype eagerly prepares ten profiles (about 780 conversation clones). Windows build,
-  startup/memory measurement, and real audio/playback verification are required before release.
+- Canonical Windows BuildOnly and installation passed on 21 October. The prototype eagerly
+  prepares ten profiles (about 780 conversation clones); startup/memory measurement and real
+  audio/playback verification remain required before release.
 
 ## 0.12.1
 
