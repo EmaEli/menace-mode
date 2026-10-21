@@ -54,6 +54,8 @@ internal sealed class LeaderForge
             InitialAttributes = PromotionRules.Attributes(selection.UsesXp ? soldier.Xp : null),
         };
         PromotionIdentity.Populate(record, soldier, service);
+        PerkGeneration.Generate(record, selection.UsesXp ? soldier.Xp : null,
+            MentorPerks.Read(state, soldier.Id, service));
         record.Validate();
         return record;
     }
@@ -157,6 +159,7 @@ internal sealed class LeaderForge
                 Convert.ToInt32(existing.SkinColor) != record.SkinColor)
                 throw new InvalidOperationException("Native leader template ID collision / identity mismatch.");
             ApplyIdentityText(record, existing);
+            if (record.PerkSchemaVersion > 0) DynamicPerkTrees.VerifyOrApply(record, existing, _pinned);
             SetHeadMode(record, forceGenericHead);
             return "reuse=registered, badge=" + DynamicBadgeFactory.LabelForIndex(record.BadgeIndex);
         }
@@ -215,6 +218,7 @@ internal sealed class LeaderForge
             string badge = DynamicBadgeFactory.Apply(leader, art, badgeLabel, _pinned);
             leader.QualityLevel = 1;
             leader.HiringCosts = 0;
+            if (record.PerkSchemaVersion > 0) DynamicPerkTrees.Apply(record, leader, _pinned);
             leader.InitialAttributes = new Il2CppStructArray<byte>(record.InitialAttributes);
             if (leader.InitialAttributes == null || leader.InitialAttributes.Length != record.InitialAttributes.Length)
                 throw new InvalidOperationException("InitialAttributes replacement failed.");
