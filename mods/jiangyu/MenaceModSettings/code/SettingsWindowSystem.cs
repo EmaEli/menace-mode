@@ -34,6 +34,8 @@ public sealed class SettingsWindowSystem : JiangyuSystem
     private EventCallback<GeometryChangedEvent> _onWindowResized;
     private bool _open;
     private string _selected;
+    private IntPtr _inventoryConfirmation;
+    private string _inventoryStatus;
 
     public override void OnInit()
     {
@@ -57,7 +59,12 @@ public sealed class SettingsWindowSystem : JiangyuSystem
         _injection?.Remove();
     }
 
-    public override void OnSceneLoaded(int buildIndex, string sceneName) => HudInputGuard.SceneChanged();
+    public override void OnSceneLoaded(int buildIndex, string sceneName)
+    {
+        _inventoryConfirmation = IntPtr.Zero;
+        _inventoryStatus = null;
+        HudInputGuard.SceneChanged();
+    }
 
     private void OnSettingChanged(string group, string key, object value)
     {
@@ -79,6 +86,7 @@ public sealed class SettingsWindowSystem : JiangyuSystem
 
     private void SetOpen(bool open)
     {
+        _inventoryConfirmation = IntPtr.Zero;
         _open = open;
         if (_overlay == null)
             return;
@@ -238,7 +246,12 @@ public sealed class SettingsWindowSystem : JiangyuSystem
         foreach (var group in groups)
         {
             var name = group.Name;
-            var tab = new TextButton(name).WithStyle("old-text-button").OnClick(() => { _selected = name; Render(); });
+            var tab = new TextButton(name).WithStyle("old-text-button").OnClick(() =>
+            {
+                _inventoryConfirmation = IntPtr.Zero;
+                _selected = name;
+                Render();
+            });
             tab.Root.style.marginBottom = new StyleLength(4f);
             tab.Root.style.opacity = new StyleFloat(name == _selected ? 1f : 0.6f);
             _tabs.Add(tab.Root);
@@ -255,12 +268,61 @@ public sealed class SettingsWindowSystem : JiangyuSystem
         }
         foreach (var def in current.Definitions)
             _rows.Add(SettingRows.Build(current.Name, def));
+        if (current.Name == OwnGroup) RenderInventoryDebug();
+    }
+
+    private void RenderInventoryDebug()
+    {
+        _rows.Add(SettingRows.Text("DEBUG - TEST INVENTORY", 16f));
+        var warning = SettingRows.Text(
+            "Top up obtainable equipment, vehicles, crafting items and materials to 10 reserve copies each. "
+            + "Includes weapon variants. Does not redeem dossiers/tokens/vouchers or change equipped items. "
+            + "CHEAT: marks the campaign as cheated; changes persist in saves. Use a separate test save. Campaign screens only.", 13f);
+        warning.style.whiteSpace = new StyleEnum<WhiteSpace>(WhiteSpace.Normal);
+        _rows.Add(warning);
+        bool available = InventoryDebugActions.TryGetCampaign(out _);
+        var button = new TextButton(_inventoryConfirmation == IntPtr.Zero
+            ? "DEBUG: STOCK 10 OF EVERY ITEM" : "CONFIRM: MODIFY THIS CAMPAIGN INVENTORY").OnClick(() =>
+        {
+            if (!InventoryDebugActions.TryGetCampaign(out var state))
+            {
+                _inventoryConfirmation = IntPtr.Zero;
+                _inventoryStatus = "Open the Armory or another campaign screen first.";
+            }
+            else if (_inventoryConfirmation != state.Pointer)
+            {
+                _inventoryConfirmation = state.Pointer;
+                _inventoryStatus = "Press CONFIRM to apply. Close this window or Cancel to abort.";
+            }
+            else
+            {
+                var confirmed = _inventoryConfirmation;
+                _inventoryConfirmation = IntPtr.Zero;
+                _inventoryStatus = InventoryDebugActions.Grant(confirmed);
+            }
+            Render();
+        });
+        button.Root.SetEnabled(available);
+        _rows.Add(button.Root);
+        if (_inventoryConfirmation != IntPtr.Zero)
+            _rows.Add(new TextButton("CANCEL").OnClick(() =>
+            {
+                _inventoryConfirmation = IntPtr.Zero;
+                _inventoryStatus = "Cancelled: inventory unchanged.";
+                Render();
+            }).Root);
+        var status = SettingRows.Text(_inventoryStatus ?? (available
+            ? "Nothing is granted automatically. Existing stock above 10 is kept."
+            : "Unavailable: open a campaign screen, outside battle."), 13f);
+        status.style.whiteSpace = new StyleEnum<WhiteSpace>(WhiteSpace.Normal);
+        _rows.Add(status);
     }
 
     private void ResetSelected()
     {
         if (_selected == null)
             return;
+        _inventoryConfirmation = IntPtr.Zero;
         ModSettings.ResetGroup(_selected);
         Render();
     }

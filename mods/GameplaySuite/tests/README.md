@@ -26,6 +26,11 @@ From the repository root:
 - Private log aggregates: `python3 mods/GameplaySuite/tools/analyze_mission_log.py`
   followed by the private log path. It emits allowlisted counts/identifiers only,
   not raw messages, settings or actor/save names. Quiet modules are not action tests.
+- Debug inventory (#65): `test_inventory_debug.py` executes the production catalog/top-up
+  sources using `mods/jiangyu/MenaceModSettings/tests/InventoryDebugChecks`, with managed
+  native stand-ins. Covers campaign guards, K-PAC GL, rewards/crafting, exclusions,
+  ten reserve copies, existing equipment, repeated clicks and partial failures.
+  Does not execute native item creation, vehicle registration, UI clicks or saving.
 
 The runner targets .NET 10 (also used by the local Jiangyu CLI), has no external packages
 and does not load game assemblies. Name tests use managed stand-ins for native localized

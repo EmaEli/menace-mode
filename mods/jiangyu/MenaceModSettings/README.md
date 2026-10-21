@@ -28,6 +28,19 @@ consumer built against 0.5.x (Field Logistics, Starting Options) failed `OnInit`
 
 ## What it does
 
+- **0.7.0 — debug inventory (#65):** on a campaign screen, press **End → MenaceModSettings →
+  DEBUG: STOCK 10 OF EVERY ITEM**, then press **CONFIRM**. Tops up to ten **unequipped reserve**
+  copies per obtainable item: market equipment (including K-PAC with Launcher), reward-table
+  items, blueprint results/materials, starting unlocks and commodities. Ignores campaign
+  progress/market randomness. No automatic grants; repeated clicks only replace missing stock.
+  Preserves equipped items and stock above ten; uses native AddItem so vehicle records are
+  created normally. Excludes FutureContent/Dev and non-obtainable enemy equipment.
+  Dossiers, tokens, vouchers and recruits are excluded: native AddItem redeems them immediately,
+  rather than storing them. This is not a roster/ship-upgrade unlocker.
+  **Use a separate test save:** changes persist when saved and mark the campaign as cheated.
+  Cancel, closing the window, changing tabs or scenes clears confirmation. Reopen Armory/Market
+  afterward to refresh the list. Reports partial failures without pretending to roll back;
+  retrying fills only remaining shortages. Windows/gameplay verification pending.
 - 0.4.1 adds a shared tactical HUD input guard (#43). IMGUI consumers register a live
   rectangle provider with `HudInputGuard.Register(owner, provider)` (GUI coordinates, null
   when hidden) and call `Unregister(owner)` on unload. One companion-owned Harmony guard

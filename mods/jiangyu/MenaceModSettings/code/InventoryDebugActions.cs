@@ -1,0 +1,117 @@
+using Il2CppMenace.Items;
+using Il2CppMenace.States;
+using Il2CppMenace.Strategy;
+using Il2CppMenace.Tools;
+using Il2CppMenace.UI;
+using Il2CppMenace.UI.Strategy;
+using Il2CppInterop.Runtime.InteropTypes;
+
+namespace MenaceModSettings;
+
+internal static class InventoryDebugActions
+{
+    internal static bool TryGetCampaign(out StrategyState state)
+    {
+        state = null;
+        try
+        {
+            // A strategy singleton also exists during combat/title transitions. Require an
+            // actual open strategy screen; never grant from a tactical or loading screen.
+            if (UIManager.Get()?.GetActiveScreen()?.TryCast<StrategyUIScreen>() == null) return false;
+            state = StrategyState.Get();
+            return state?.OwnedItems != null;
+        }
+        catch { return false; }
+    }
+
+    internal static string Grant(IntPtr confirmedCampaign)
+    {
+        if (!TryGetCampaign(out var state) || state.Pointer != confirmedCampaign)
+            return "Not applied: return to the campaign screen and confirm again.";
+        try
+        {
+            // Complete the read-only catalog before changing any inventory. Do not use
+            // Resources.FindObjectsOfTypeAll: native templates live in the loader cache.
+            var templates = CollectObtainable();
+            if (templates.Count == 0) return "Not applied: no obtainable item templates found.";
+            var owned = state.OwnedItems;
+            var result = InventoryDebugStock.TopUp(templates, t => t.GetID(),
+                t => CountReserve(owned, t), t => owned.AddItem(t, false, false) != null,
+                () => state.SetHasCheatBeenUsed());
+            return $"Debug inventory: {result.Added} copies added; {result.Types} item types checked; "
+                + $"{result.Failed} failed. Reopen the Armory/Market to refresh."
+                + (result.Failed > 0 ? " Partial changes remain; retry only fills missing copies." : "");
+        }
+        catch (Exception error)
+        {
+            return "Debug inventory could not complete (some additions may remain): " + error.Message;
+        }
+    }
+
+    private static int CountReserve(OwnedItems owned, BaseItemTemplate template)
+    {
+        // Equipped items are preserved and do not consume the ten reserve copies.
+        int count = 0;
+        var items = owned.GetInstances(template);
+        if (items == null) return 0;
+        foreach (var item in ReadNative<BaseItem>(items))
+            if (item != null && item.GetContainer() == null && !item.IsTemporary()) count++;
+        return count;
+    }
+
+    private static IEnumerable<T> ReadNative<T>(Il2CppObjectBase collection) where T : Il2CppObjectBase
+    {
+        // Il2CppInterop does not flatten inherited collection interfaces. Enumerate through
+        // native non-generic IEnumerable, as the suite template-loader shim does.
+        var enumerable = collection?.TryCast<Il2CppSystem.Collections.IEnumerable>();
+        if (enumerable == null) throw new InvalidOperationException("Native catalog collection unavailable");
+        var iterator = enumerable.GetEnumerator();
+        while (iterator.MoveNext())
+        {
+            var item = iterator.Current?.TryCast<T>();
+            if (item != null) yield return item;
+        }
+    }
+
+    private static List<BaseItemTemplate> CollectObtainable()
+    {
+        var result = new Dictionary<string, BaseItemTemplate>(StringComparer.Ordinal);
+        void Include(BaseItemTemplate item)
+        {
+            // OwnedItems.AddItem automatically REDEEMS IRedeemable (dossiers, tokens,
+            // vouchers, recruits). They cannot be stocked and must not be invoked here.
+            if (item == null || item.ContentVisibility != ContentVisibilityType.Regular
+                || item.TryCast<IRedeemable>() != null) return;
+            string id = item.GetID();
+            if (!string.IsNullOrWhiteSpace(id)) result.TryAdd(id, item);
+        }
+
+        foreach (var item in ReadNative<BaseItemTemplate>(DataTemplateLoader.GetAll<BaseItemTemplate>()))
+        {
+            if (item == null) continue;
+            if (item.BlackMarketMaxQuantity > 0 || item.TryCast<CommodityTemplate>() != null)
+                Include(item);
+        }
+        foreach (var table in ReadNative<RewardTableTemplate>(DataTemplateLoader.GetAll<RewardTableTemplate>()))
+        {
+            if (table == null || table.ContentVisibility != ContentVisibilityType.Regular || table.Items == null) continue;
+            foreach (var item in table.Items) Include(item);
+        }
+        foreach (var blueprint in ReadNative<BlueprintTemplate>(DataTemplateLoader.GetAll<BlueprintTemplate>()))
+        {
+            if (blueprint == null || blueprint.ContentVisibility != ContentVisibilityType.Regular) continue;
+            Include(blueprint);
+            Include(blueprint.GetCraftingResult());
+            var materials = blueprint.GetCraftingMaterials();
+            if (materials != null)
+                foreach (var material in materials) Include(material.Template);
+        }
+        foreach (var difficulty in ReadNative<GlobalDifficultyTemplate>(DataTemplateLoader.GetAll<GlobalDifficultyTemplate>()))
+        {
+            if (difficulty == null || difficulty.ContentVisibility != ContentVisibilityType.Regular
+                || difficulty.InitialAdditionalUnlockedItems == null) continue;
+            foreach (var item in difficulty.InitialAdditionalUnlockedItems) Include(item);
+        }
+        return result.OrderBy(pair => pair.Key, StringComparer.Ordinal).Select(pair => pair.Value).ToList();
+    }
+}
