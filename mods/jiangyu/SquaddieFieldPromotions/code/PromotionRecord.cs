@@ -25,6 +25,8 @@ public sealed class PromotionRecord
     public int Gender { get; set; }
     public int SkinColor { get; set; }
     public int BadgeIndex { get; set; }
+    // Neutral when omitted from an older sidecar: no save migration required.
+    public int VoicePitchPreset { get; set; }
     public int MissionsParticipated { get; set; }
     public string SourceUnitTitle { get; set; } = "";
     public string SourceCommander { get; set; } = "";
@@ -51,6 +53,8 @@ public sealed class PromotionRecord
             throw new InvalidDataException("Promotion record gender must match the native MENACE genders.");
         if (SkinColor < 0 || SkinColor > 2)
             throw new InvalidDataException("Promotion record skin color must match the native MENACE palette.");
+        if (!VoicePitchProfiles.IsValid(VoicePitchPreset))
+            throw new InvalidDataException("Promotion record voice pitch preset is invalid.");
         if (string.IsNullOrWhiteSpace(UnitTitle) || UnitTitle.Length > 180 ||
             string.IsNullOrWhiteSpace(UnitDescription) || UnitDescription.Length > 8000 ||
             (SourceUnitTitle?.Length ?? 0) > 120 || (SourceCommander?.Length ?? 0) > 100 ||
@@ -159,5 +163,26 @@ public sealed class PromotionLedger
     {
         Validated();
         return ServiceRecords.FirstOrDefault(record => record.SquaddieId == squaddieId);
+    }
+}
+
+/// <summary>
+/// Bounded deterministic voice profiles. Index zero preserves the unchanged
+/// voice on pre-feature JSON save sidecars.
+/// </summary>
+internal static class VoicePitchProfiles
+{
+    private static readonly float[] Multipliers = { 1.00f, 0.90f, 0.95f, 1.05f, 1.10f };
+    internal static int Count => Multipliers.Length;
+    internal static bool IsValid(int preset) => preset >= 0 && preset < Count;
+    internal static int ForBadge(int badgeIndex)
+    {
+        if (badgeIndex < 0) throw new ArgumentOutOfRangeException(nameof(badgeIndex));
+        return badgeIndex % Count;
+    }
+    internal static float Pitch(int preset)
+    {
+        if (!IsValid(preset)) throw new ArgumentOutOfRangeException(nameof(preset));
+        return Multipliers[preset];
     }
 }

@@ -393,7 +393,7 @@ namespace SquaddieFieldPromotions
                 LeaderId = PromotionRecord.LeaderPrefix + token, SpeakerId = PromotionRecord.SpeakerPrefix + token,
                 NumericGuid = NextGuid++, SourceSquaddieId = selection.Soldier.Id, Name = selection.Soldier.Name,
                 Nickname = selection.Soldier.Nickname, Gender = selection.Soldier.Gender, SkinColor = selection.Soldier.SkinColor,
-                BadgeIndex = badgeIndex, InitialAttributes = PromotionRules.Attributes(selection.UsesXp ? selection.Soldier.Xp : null),
+                BadgeIndex = badgeIndex, VoicePitchPreset = VoicePitchProfiles.ForBadge(badgeIndex), InitialAttributes = PromotionRules.Attributes(selection.UsesXp ? selection.Soldier.Xp : null),
             };
             PromotionIdentity.Populate(record, selection.Soldier, service, sourceLeaderTemplateId);
             record.Validate();

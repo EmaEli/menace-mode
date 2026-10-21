@@ -1,5 +1,12 @@
 # Squaddie Field Promotions 0.12.1
 
+> **Unreleased source branch — voice pitch prototype.** Five persistent pitch
+> presets (1.00 / 0.90 / 0.95 / 1.05 / 1.10) are assigned to new promotions by badge
+> index. Existing save records remain neutral. Per-preset native Stem SoundBanks
+> and tactical speaker tags reuse the same John/Jane WAV assets. Tactical and
+> Hire barks select the same preset. **Not Windows-compiled, performance-tested,
+> or verified in MENACE.** Current release/installer stays 0.11.8; see issue #68.
+
 **Experimental: promotes real squaddies to hirable leaders and persists them across save/load.**
 Tracked in [#27](https://github.com/EmaEli/menace-mode/issues/27) and
 [#53](https://github.com/EmaEli/menace-mode/issues/53).

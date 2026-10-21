@@ -217,6 +217,22 @@ class AuthoringTests(unittest.TestCase):
                 for operation in patch['set']:
                     self.assertNotIn(operation['fieldPath'], ('Title', 'ShortName', 'Description'))
 
+    def test_isolated_persistent_voice_pitch_profiles(self):
+        record = (ROOT / 'code/PromotionRecord.cs').read_text(encoding='utf-8')
+        forge = (ROOT / 'code/LeaderForge.cs').read_text(encoding='utf-8')
+        voice = (ROOT / 'code/FieldVoiceSystem.cs').read_text(encoding='utf-8')
+        self.assertIn('public int VoicePitchPreset { get; set; }', record)
+        self.assertIn('1.00f, 0.90f, 0.95f, 1.05f, 1.10f', record)
+        self.assertIn('VoicePitchPreset = VoicePitchProfiles.ForBadge(badgeIndex)', forge)
+        self.assertIn('record.VoicePitchPreset', forge)
+        self.assertIn('pending.PitchPreset', forge)
+        self.assertIn('GetProfile(female, pitchPreset)', voice)
+        self.assertIn('profile.SourceKey', voice)
+        self.assertIn('RequireSet(selected, "fixedPitch", profile.Pitch)', voice)
+        self.assertIn('RequireSet(variation, "fixedPitch", 1.00f)', voice)
+        self.assertIn('for (int index = 0; index < VoicePitchProfiles.Count; index++)', voice)
+        self.assertNotIn('UnityEngine.AudioSource', voice)
+
     def test_safety_warning_in_readme(self):
         readme = (ROOT / 'README.md').read_text(encoding='utf-8')
         self.assertIn(f"## Acceptance test ({MANIFEST['version']} ", readme)
