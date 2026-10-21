@@ -49,7 +49,7 @@ KDL counts below are **source files**, not patch-operation counts.
 | GarrisonableBuildings | 1.2.0 | Shared SuiteSystem host; #62 native deployed-stance accuracy mirror, live comparison pending |
 | InfantryAssault | 0.5.9 | Shared SuiteSystem host + 2 KDL files; defensive suppression fix candidate #47 |
 | LargerMaps | 2.3.2 | Jiangyu system; recovery ON-default, selective positioning OFF; Windows installed and ON/OFF gameplay compared; user accepted the bounded gameplay improvement and MEN-002 is closed; distinct slowdown #57 remains separate |
-| Overwatch | 0.32.3.8 | Shared SuiteSystem host, native reactions/HUD; isolated hostile-turn JIT guard |
+| Overwatch | 0.32.3.9 | Shared SuiteSystem host, native reactions/HUD; JIT guard plus bounded derived-weapon source fallback; ARC Range and PPP CQB verified in live Overwatch, K-PAC with GL pending |
 | SmokeOverhaul | 0.7.0 | Shared SuiteSystem host; bounded AI smoke rules retained, free infantry grenade grants opt-in OFF (#51); package delivered to Downloads, installation not verified |
 | SquaddieVeterancy | 1.10.2 | Shared SuiteSystem host, native hooks/HUD/save sidecars |
 | StartingOptions | 0.1.1 | Shared SuiteSystem host, new-campaign settings |

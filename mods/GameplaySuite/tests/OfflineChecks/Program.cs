@@ -1,4 +1,5 @@
 using MenaceModSettings;
+using MenaceOverwatch;
 
 int checks = 0;
 void Check(bool condition, string message)
@@ -52,6 +53,7 @@ CoordinatedFireChecks.Run(Check);
 SmokeAiChecks.Run(Check);
 AssaultDefenseChecks.Run(Check);
 MortarScatterChecks.Run(Check);
+OverwatchSourceSkillChecks.Run(Check);
 LargerMaps.Plugin.RunPlanningChecks(Check);
 if (args.Length > 0 && args[0] == "--mortar-proxies")
     MortarProxyChecks.Run(Check, args[1], args[2]);

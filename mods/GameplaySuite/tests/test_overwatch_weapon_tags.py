@@ -5,8 +5,11 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = (ROOT / "src/Overwatch/Native.cs").read_text()
+CHAIN = (ROOT / "src/Overwatch/SkillSourceChain.cs").read_text()
 INDIRECT = SOURCE.split("public static bool IsIndirectFire(Skill skill)", 1)[1].split(
     "private static bool SupportedBase", 1)[0]
+ITEM_METADATA = SOURCE.split("private static bool HasIndirectFireMetadata", 1)[1].split(
+    "private static bool TryFindWeaponItemSkill", 1)[0]
 
 
 class OverwatchWeaponTagTests(unittest.TestCase):
@@ -20,23 +23,28 @@ class OverwatchWeaponTagTests(unittest.TestCase):
         excluded = ["indirect_fire" in s["tags"] or "indirect_fire" in fixture["direct_item_tags"] for s in attacks]
         self.assertEqual(excluded, [False, False, True])
 
-    def test_checks_executed_skill_before_direct_item_tags(self):
-        self.assertIn("var attackTemplate = skill.GetTemplate();", INDIRECT)
-        self.assertIn("var tags = attackTemplate.Tags;", INDIRECT)
-        self.assertIn("tag.TagType == TagType.INDIRECT_FIRE", INDIRECT)
-        self.assertIn("itemTemplate.HasTag(TagType.INDIRECT_FIRE, false)", INDIRECT)
-        self.assertNotIn("HasTag(TagType.INDIRECT_FIRE)", INDIRECT)
-        self.assertLess(INDIRECT.index("attackTemplate.Tags"), INDIRECT.index("skill.GetItem()"))
+    def test_checks_every_source_skill_and_its_direct_item_tags(self):
+        self.assertIn("var template = skill.GetTemplate();", ITEM_METADATA)
+        self.assertIn("var tags = template.Tags;", ITEM_METADATA)
+        self.assertIn("tag.TagType == TagType.INDIRECT_FIRE", ITEM_METADATA)
+        self.assertIn("itemTemplate.HasTag(TagType.INDIRECT_FIRE, false)", ITEM_METADATA)
+        self.assertNotIn("HasTag(TagType.INDIRECT_FIRE)", ITEM_METADATA)
+        self.assertLess(ITEM_METADATA.index("template.Tags"), ITEM_METADATA.index("skill.GetItem()"))
 
     def test_metadata_errors_fail_closed_but_native_itemless_attacks_are_allowed(self):
-        self.assertIn("if (!Valid(skill)) return true;", INDIRECT)
-        self.assertIn("if (!Valid(attackTemplate)) return true;", INDIRECT)
-        self.assertIn("if (!Valid(itemTemplate)) return true;", INDIRECT)
-        self.assertIn("catch { return true; }", INDIRECT)
-        self.assertIn("if (!Valid(item)) return false;", INDIRECT)
+        self.assertIn("if (!Valid(skill)) return true;", ITEM_METADATA)
+        self.assertIn("if (!Valid(template)) return true;", ITEM_METADATA)
+        self.assertIn("if (!Valid(itemTemplate)) return true;", ITEM_METADATA)
+        self.assertIn("if (!Valid(item)) return false;", ITEM_METADATA)
+        self.assertIn("return !TryFindWeaponItemSkill(skill, out _, out bool unsafeChain) || unsafeChain;", INDIRECT)
 
-    def test_no_speculative_source_skill_or_role_fallback(self):
-        self.assertNotIn("SourceSkill", SOURCE)
+    def test_source_skill_fallback_is_bounded_cycle_guarded_and_role_limited(self):
+        self.assertIn("current => current.SourceSkill", SOURCE)
+        self.assertIn("MaximumDepth = 8", CHAIN)
+        self.assertIn("Span<long> visited = stackalloc long[MaximumDepth]", CHAIN)
+        self.assertIn("visited[i] != pointer", CHAIN)
+        self.assertIn("unsafeChain || !Valid(itemSkill)", SOURCE)
+        self.assertIn("return !TryFindWeaponItemSkill(skill, out _, out bool unsafeChain) || unsafeChain;", SOURCE)
         supported = SOURCE.split("private static bool SupportedBase", 1)[1].split("public static List<Skill> Attacks", 1)[0]
         for gate in ("IsIndirectFire(skill)", "skill.IsAttack()", "skill.IsActive()", "skill.IsTargeted()",
                      "!skill.IsMovementSkill()", "!skill.IsBackgroundOnly()", "Role(skill) != WeaponRole.Unknown"):

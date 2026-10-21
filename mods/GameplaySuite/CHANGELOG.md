@@ -1,3 +1,9 @@
+## Overwatch 0.32.3.9 — #24 derived infantry weapon discovery (partially game-verified)
+
+- Follow MENACE 0.7.17's native `Skill.SourceSkill` chain only when an infantry attack has no direct item, to recover its weapon slot for Overwatch.
+- Keep attack/targeting gates on the executed skill; indirect-fire metadata is checked through the first item-bearing source. Cycles, invalid metadata and chains longer than eight fail closed. Native itemless vehicle attacks remain eligible.
+- Managed chain regressions and source checks pass. In the 21 Oct live run, ARC Range and PPP CQB appeared as Squad and fired during Overwatch. K-PAC with GL remains untested, so the live check is partial.
+
 ## Weapon Mechanics Rebalanced 0.4.13 — #59 enemy-only mortar coverage (retest pending)
 
 - The user rejected the deployed 0.4.12 mortar balance. Its Debug log identifies `active.enemy_only_launch_medium_mortar_frag`, absent from WMR's baseline and ranging allowlist.

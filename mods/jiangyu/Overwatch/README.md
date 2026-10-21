@@ -1,4 +1,10 @@
-# Overwatch 0.32.3.8
+# Overwatch 0.32.3.9
+
+## 0.32.3.9 — #24 derived infantry weapon discovery (partially game-verified)
+
+- Resolve an infantry weapon's role through MENACE's bounded `Skill.SourceSkill` chain when a derived attack has no direct item.
+- Keep the executed skill's own attack checks; reject indirect-fire metadata from the skill through its first item-bearing source, and fail closed on cycles, invalid metadata or chains beyond eight skills.
+- Direct item/slot classification remains authoritative. Native itemless vehicle attacks remain supported. ARC Range and PPP CQB were confirmed as Squad and fired in Overwatch; K-PAC with GL remains untested.
 
 ## 0.32.3.8 — #44 JIT mitigation candidate (not game-verified)
 
