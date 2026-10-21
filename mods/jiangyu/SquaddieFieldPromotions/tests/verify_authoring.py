@@ -13,7 +13,7 @@ PROGRESSION_KDL = (ROOT / 'templates' / 'generic-infantry-progression.kdl').read
 class AuthoringTests(unittest.TestCase):
     def test_jiangyu_not_old_modpack(self):
         self.assertEqual(MANIFEST['name'], 'SquaddieFieldPromotions')
-        self.assertEqual(MANIFEST['version'], '0.12.1')
+        self.assertEqual(MANIFEST['version'], '0.13.0')
         self.assertTrue(any(dep.startswith('Jiangyu ') for dep in MANIFEST['depends']))
         self.assertIn('JiangyuSystem', CS)
         self.assertNotIn('IModpackPlugin', CS)
@@ -23,7 +23,7 @@ class AuthoringTests(unittest.TestCase):
         self.assertEqual(MANIFEST['depends'], ['Jiangyu >= 1.4.8', 'MenaceModSettings >= 0.6.1'])
         project = (ROOT / 'code/SquaddieFieldPromotions.csproj').read_text()
         self.assertIn('<Private>false</Private>', project)
-        self.assertIn('<Version>0.12.1</Version>', project)
+        self.assertIn('<Version>0.13.0</Version>', project)
         self.assertIn('$(MenaceModSettingsPath)', project)
 
     def test_no_hotkeys_polling_random_removal_or_fake_death(self):

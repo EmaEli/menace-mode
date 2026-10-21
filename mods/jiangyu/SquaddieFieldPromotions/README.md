@@ -1,12 +1,10 @@
-# Squaddie Field Promotions 0.12.1
+# Squaddie Field Promotions 0.13.0
 
-> **Unreleased source branch — voice pitch prototype.** Five persistent pitch
-> presets (1.00 / 0.90 / 0.95 / 1.05 / 1.10) are assigned to new promotions by badge
-> index. Existing save records remain neutral. Per-preset native Stem SoundBanks
-> and tactical speaker tags reuse the same John/Jane WAV assets. Tactical and
-> Hire barks select the same preset. **Not Windows-compiled, performance-tested,
-> or verified in MENACE. The installed 0.12.1 test candidate predates this prototype;
-> do not deploy it until the load/memory and gameplay gates in issue #68 pass.
+> **Experimental 0.13.0 voice-pitch test candidate.** New promotions cycle through
+> five deterministic pitch presets (1.00 / 0.90 / 0.95 / 1.05 / 1.10) by badge index;
+> existing save records stay neutral. Tactical and Hire barks use the same isolated
+> profile, reusing the bundled John/Jane audio. Windows build, load/memory benchmark,
+> and in-game audio confirmation are pending. Do not use on a valuable save; see #68.
 
 **Experimental: promotes real squaddies to hirable leaders and persists them across save/load.**
 Tracked in [#27](https://github.com/EmaEli/menace-mode/issues/27) and
@@ -102,11 +100,13 @@ The kit also ships the module's raw `runtime_assets/` (portraits, prebuilt John/
 voice bundle with its build receipt, voice routes); the installer stages them next to
 the compiled package because `jiangyu compile --clean` does not preserve them.
 
-## Acceptance test (0.12.1 black badges and tactical getter verification pending)
+## Acceptance test (0.13.0 voice-pitch, startup/load and gameplay verification pending)
 
 The user verified the generic perk progression in 0.12.0, but rejected the source-emblem
 overlay and reported Singh's icon still above tactical units. Version 0.12.1 restores black
 letter badges and fixes the native tactical getter path; in-game confirmation is pending.
+Version 0.13.0 adds five persisted pitch profiles; test startup time/memory and compare
+the new leaders' Hire and tactical barks before treating this prototype as accepted.
 
 Versions 0.8.0-0.8.4 verified in game that the native dossier is stocked, visible at
 1 credit, redeemable and restocked. Version 0.9.0 reconnects the recovered 0.6.1 leader
@@ -142,7 +142,10 @@ unmistakable in settings; visual confirmation of that warning remains pending.
    tree from Tiers 1–4, not Singh's donor tree. Confirm black letter badges in strategy/drag views
    and above the promoted squad in tactical, with no Singh emblem (also when selected/status changes).
 8. Buy a perk, **save, quit to desktop, relaunch, load**, and confirm the leader's identity,
-   badge and generic progression rebuild while the purchased perk remains present. Confirm the voice bark.
+   badge and generic progression rebuild while the purchased perk remains present. Check start/load
+   time and memory. For five new same-gender leaders with badges A–E, compare Hire and tactical barks:
+   they should retain the same voice/profile per leader and cycle through 1.00, 0.90, 0.95, 1.05,
+   1.10; existing leaders from older sidecars should remain neutral.
 9. Disable the option: only the dossier stock should disappear; vanilla dossiers must still work.
 10. Send observations; the agent can pull `Latest.log` (enable **Diagnostic logging** for detail).
 11. **DANGER: make a separate backup of `test.save` first** and confirm it is non-Ironman. Load it

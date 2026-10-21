@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.13.0 — experimental voice-pitch test candidate
+
+- Assign new promoted leaders one of five deterministic pitch presets, derived from badge
+  index and persisted in the existing sidecar. Older sidecars default to neutral (1.00).
+- Give each pitch/gender its own Stem bank and tactical speaker tag; tactical and Hire barks
+  use the same profile while reusing the bundled John/Jane audio clips.
+- This prototype eagerly prepares ten profiles (about 780 conversation clones). Windows build,
+  startup/memory measurement, and real audio/playback verification are required before release.
+
 ## 0.12.1
 
 - Restore the bundled black shields with dynamic promotion letters; remove the rejected
