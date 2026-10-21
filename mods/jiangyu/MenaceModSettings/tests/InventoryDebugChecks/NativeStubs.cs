@@ -15,7 +15,8 @@ namespace Il2CppSystem.Collections
     public class NativeCollection<T> : Il2CppObjectBase, IEnumerable where T : Il2CppObjectBase
     {
         public List<T> Items = new();
-        public IEnumerator GetEnumerator() => new Iterator(Items);
+        public bool ThrowOnEnumerate;
+        public IEnumerator GetEnumerator() => ThrowOnEnumerate ? throw new Exception("stock enumeration failure") : new Iterator(Items);
         private sealed class Iterator : IEnumerator
         {
             private readonly List<T> items; private int index = -1;
@@ -97,8 +98,13 @@ namespace Il2CppMenace.States
         public static StrategyState Current;
         public Il2CppMenace.Strategy.OwnedItems OwnedItems = new();
         public int CheatMarks;
+        public bool ThrowOnCheatMark;
         public static StrategyState Get() => Current;
-        public void SetHasCheatBeenUsed() => CheatMarks++;
+        public void SetHasCheatBeenUsed()
+        {
+            if (ThrowOnCheatMark) throw new Exception("cheat flag failure");
+            CheatMarks++;
+        }
     }
 }
 namespace Il2CppMenace.UI

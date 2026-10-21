@@ -44,8 +44,14 @@ consumer built against 0.5.x (Field Logistics, Starting Options) failed `OnInit`
 - **0.8.0 — inventory failure diagnostics:** reports the item ID, processing stage and exception
   type/message for failures, or explicitly says when `AddItem` returns no item. Shows up to five
   failures and counts any additional ones. Catalog-wide errors identify the phase that failed.
-  Installed on the MENACE test PC through the canonical BuildOnly/installer workflow on 21 October
-  2026; gameplay verification is pending.
+  Installed on the MENACE test PC on 21 October 2026; user reports zero additions and all items
+  failing. The failing stage/exception is not yet known; the inventory action is not verified.
+- **0.8.1 — opt-in inventory log diagnostics:** after the first stock-button click, choose
+  **CONFIRM + LOG DIAGNOSTICS TO Latest.log** instead of normal CONFIRM. Performs the same
+  guarded top-up, but also logs the summary and up to twenty item IDs/stages/error details;
+  catalog-wide failures include the full exception. Normal confirmation and normal gameplay
+  remain silent. Diagnostic logger failures cannot interrupt or repeat additions. This is
+  evidence collection for #65, not a claimed fix for native item creation.
 - 0.4.1 adds a shared tactical HUD input guard (#43). IMGUI consumers register a live
   rectangle provider with `HudInputGuard.Register(owner, provider)` (GUI coordinates, null
   when hidden) and call `Unregister(owner)` on unload. One companion-owned Harmony guard

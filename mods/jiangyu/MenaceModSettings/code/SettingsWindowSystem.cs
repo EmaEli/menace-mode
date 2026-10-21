@@ -305,12 +305,23 @@ public sealed class SettingsWindowSystem : JiangyuSystem
         button.Root.SetEnabled(available);
         _rows.Add(button.Root);
         if (_inventoryConfirmation != IntPtr.Zero)
+        {
+            var diagnostic = new TextButton("CONFIRM + LOG DIAGNOSTICS TO Latest.log").OnClick(() =>
+            {
+                var confirmed = _inventoryConfirmation;
+                _inventoryConfirmation = IntPtr.Zero;
+                _inventoryStatus = InventoryDebugActions.Grant(confirmed, message => Log.Warn(message));
+                Render();
+            });
+            diagnostic.Root.SetEnabled(available);
+            _rows.Add(diagnostic.Root);
             _rows.Add(new TextButton("CANCEL").OnClick(() =>
             {
                 _inventoryConfirmation = IntPtr.Zero;
                 _inventoryStatus = "Cancelled: inventory unchanged.";
                 Render();
             }).Root);
+        }
         var status = SettingRows.Text(_inventoryStatus ?? (available
             ? "Nothing is granted automatically. Existing stock above 10 is kept."
             : "Unavailable: open a campaign screen, outside battle."), 13f);

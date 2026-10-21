@@ -24,28 +24,48 @@ internal static class InventoryDebugActions
         catch { return false; }
     }
 
-    internal static string Grant(IntPtr confirmedCampaign)
+    internal static string Grant(IntPtr confirmedCampaign, Action<string> diagnostics = null)
     {
         if (!TryGetCampaign(out var state) || state.Pointer != confirmedCampaign)
             return "Not applied: return to the campaign screen and confirm again.";
+        // Only the explicit diagnostic confirmation supplies a logger. Normal play is silent.
+        void Report(string message)
+        {
+            try { diagnostics?.Invoke(message); }
+            catch { /* Logging must never interrupt or repeat an inventory operation. */ }
+        }
         string phase = "reading item catalogs";
         try
         {
+            Report("Inventory debug: confirmed diagnostic action; reading item catalogs.");
             // Complete the read-only catalog before changing any inventory. Do not use
             // Resources.FindObjectsOfTypeAll: native templates live in the loader cache.
             var templates = CollectObtainable();
-            if (templates.Count == 0) return "Not applied: no obtainable item templates found.";
+            if (templates.Count == 0)
+            {
+                const string empty = "Not applied: no obtainable item templates found.";
+                Report(empty);
+                return empty;
+            }
             var owned = state.OwnedItems;
             phase = "topping up campaign inventory";
             var result = InventoryDebugStock.TopUp(templates, t => t.GetID(),
                 t => CountReserve(owned, t), t => owned.AddItem(t, false, false) != null,
                 () => state.SetHasCheatBeenUsed());
-            return $"Debug inventory: {result.Added} copies added; {result.Types} item types checked; "
-                + $"{result.Failed} failed. Reopen the Armory/Market to refresh."
+            string summary = $"Debug inventory: {result.Added} copies added; {result.Types} item types checked; "
+                + $"{result.Failed} failed. Reopen the Armory/Market to refresh.";
+            Report(summary);
+            const int maxLogged = 20;
+            foreach (var failure in result.Failures.Take(maxLogged))
+                Report($"Inventory debug failure: {failure.ItemId} [{failure.Stage}]: {failure.Details}");
+            if (result.Failed > maxLogged)
+                Report($"Inventory debug: {result.Failed - maxLogged} further failures omitted.");
+            return summary
                 + (result.Failed > 0 ? FormatFailures(result) : "");
         }
         catch (Exception error)
         {
+            Report($"Inventory debug could not complete while {phase}: {error}");
             return $"Debug inventory could not complete while {phase} "
                 + $"({error.GetType().Name}: {error.Message}). Some changes may remain; retry only fills missing copies.";
         }

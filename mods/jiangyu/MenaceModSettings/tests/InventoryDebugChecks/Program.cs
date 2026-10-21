@@ -64,19 +64,52 @@ result = InventoryDebugActions.Grant(state.Pointer);
 Check(result.Contains("1 copies added"), "Refill only missing reserve");
 owned.Stock[craft.Id].Items.Clear(); owned.Fail.Add(craft.Id);
 owned.Stock[reward.Id].Items.Clear(); owned.Throw.Add(reward.Id);
-result = InventoryDebugActions.Grant(state.Pointer);
+var diagnosticLog = new List<string>();
+result = InventoryDebugActions.Grant(state.Pointer, diagnosticLog.Add);
 Check(result.Contains("2 failed") && result.Contains("Partial changes"), "Null and throwing AddItem reported");
 Check(result.Contains("crafted.weapon [add item]: AddItem returned no item."), "Null AddItem identifies item and reason");
 Check(result.Contains("reward.weapon [add item]: Exception: add failure"), "Thrown AddItem identifies item and exception");
+Check(diagnosticLog.Any(line => line.Contains("2 failed")), "Diagnostic summary written on explicit request");
+Check(diagnosticLog.Any(line => line.Contains("crafted.weapon [add item]: AddItem returned no item.")), "Null failure logged");
+Check(diagnosticLog.Any(line => line.Contains("reward.weapon [add item]: Exception: add failure")), "Exception failure logged");
+owned.Stock[kpac.Id].ThrowOnEnumerate = true;
+diagnosticLog.Clear();
+InventoryDebugActions.Grant(state.Pointer, diagnosticLog.Add);
+Check(diagnosticLog.Any(line => line.Contains(kpac.Id + " [read current stock]: Exception: stock enumeration failure")),
+    "Native stock-read failure distinguished from addition failure");
+owned.Stock[kpac.Id].ThrowOnEnumerate = false;
+state.ThrowOnCheatMark = true;
+diagnosticLog.Clear(); calls = owned.Calls;
+InventoryDebugActions.Grant(state.Pointer, diagnosticLog.Add);
+Check(diagnosticLog.Any(line => line.Contains("[mark campaign cheated]: Exception: cheat flag failure")) && owned.Calls == calls,
+    "Cheat flag failure logged and prevents additions");
+state.ThrowOnCheatMark = false;
 owned.Fail.Clear(); owned.Throw.Clear();
-Check(InventoryDebugActions.Grant(state.Pointer).Contains("20 copies added"), "Retry fills just failed items");
+Check(InventoryDebugActions.Grant(state.Pointer, _ => throw new Exception("logger failure")).Contains("20 copies added"),
+    "Broken diagnostic logger cannot prevent top-up or duplicate additions");
+diagnosticLog.Clear();
+Check(InventoryDebugActions.Grant((IntPtr)99, diagnosticLog.Add).StartsWith("Not applied") && diagnosticLog.Count == 0,
+    "Stale diagnostic confirmation makes no changes or diagnostic calls");
 DataTemplateLoader.Throw = true; calls = owned.Calls;
 Check(InventoryDebugActions.Grant(state.Pointer).Contains("could not complete") && owned.Calls == calls,
     "Catalog failure before first write");
-Check(InventoryDebugActions.Grant(state.Pointer).Contains("while reading item catalogs (Exception: catalog failure)"),
+Check(InventoryDebugActions.Grant(state.Pointer, diagnosticLog.Add).Contains("while reading item catalogs (Exception: catalog failure)"),
     "Catalog failure reports phase and exception");
+Check(diagnosticLog.Any(line => line.Contains("reading item catalogs: System.Exception: catalog failure")),
+    "Catalog diagnostic includes full exception");
 DataTemplateLoader.Throw = false; DataTemplateLoader.Catalog.Clear();
-Check(InventoryDebugActions.Grant(state.Pointer).StartsWith("Not applied"), "Empty catalog not reported as success");
+diagnosticLog.Clear();
+Check(InventoryDebugActions.Grant(state.Pointer, diagnosticLog.Add).StartsWith("Not applied"), "Empty catalog not reported as success");
+Check(diagnosticLog.Last().Contains("no obtainable item templates"), "Empty catalog reason logged");
+var manyItems = Enumerable.Range(0, 25).Select(n => Item($"failed.{n:00}", 1)).ToArray();
+DataTemplateLoader.Set<BaseItemTemplate>(manyItems);
+foreach (var item in manyItems) owned.Fail.Add(item.Id);
+diagnosticLog.Clear();
+result = InventoryDebugActions.Grant(state.Pointer, diagnosticLog.Add);
+Check(result.Contains("0 copies added") && result.Contains("25 failed"), "All-item failure reproduced with stand-ins");
+Check(result.Contains("first 5 shown; 20 more not shown"), "UI diagnostics bounded independently");
+Check(diagnosticLog.Count(line => line.StartsWith("Inventory debug failure:")) == 20, "Log failure details bounded to twenty");
+Check(diagnosticLog.Last().Contains("5 further failures omitted"), "Log omission count correct");
 for (int count = 0; count <= 25; count++)
 {
     int additions = 0, marks = 0;

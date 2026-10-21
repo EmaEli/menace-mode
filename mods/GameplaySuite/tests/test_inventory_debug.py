@@ -26,6 +26,8 @@ class InventoryDebugTests(unittest.TestCase):
         self.assertIn('if (current.Name == OwnGroup) RenderInventoryDebug();', source)
         self.assertIn('_inventoryConfirmation != state.Pointer', source)
         self.assertIn('_inventoryStatus = InventoryDebugActions.Grant(confirmed);', source)
+        self.assertIn('CONFIRM + LOG DIAGNOSTICS TO Latest.log', source)
+        self.assertIn('InventoryDebugActions.Grant(confirmed, message => Log.Warn(message))', source)
         self.assertIn('button.Root.SetEnabled(available);', source)
         self.assertIn('new TextButton("CANCEL")', source)
         self.assertNotIn('InventoryDebugActions.Grant', source.split('public override void OnInit()')[1].split('public override void OnUnload()')[0])
