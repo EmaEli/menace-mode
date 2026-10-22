@@ -3415,11 +3415,18 @@ internal sealed class ProbeRuntime : IDisposable
         {
             long ptr = Key(element);
             if (ptr == 0) return 0;
+
+            // Prefer the native Element.GetEntity() wrapper over raw field reads.
+            try
+            {
+                long managedPtr = Key(element.GetEntity());
+                if (managedPtr != 0) return managedPtr;
+            }
+            catch { }
+
+            // Fallback: Element.m_Entity is at +0x30 (verified MENACE 0.7.14-0.7.17).
             var obj = new GameObj(new IntPtr(ptr));
-            // MENACE 0.7.14 Element.Entity is at +0x30. Use the SDK's
-            // name-first lookup with the verified offset as fallback because
-            // IL2CPP metadata does not always expose the friendly field name.
-            return obj.ReadPtr("Entity", 0x30).ToInt64();
+            return obj.ReadPtr("m_Entity", 0x30).ToInt64();
         }
         catch { return 0; }
     }

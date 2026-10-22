@@ -2,15 +2,15 @@ using MenaceModSettings;
 using MenaceModSuite.Shared;
 using UnityEngine;
 
-[assembly: AssemblyVersion("1.10.2.0")]
-[assembly: AssemblyFileVersion("1.10.2.0")]
+[assembly: AssemblyVersion("1.10.3.0")]
+[assembly: AssemblyFileVersion("1.10.3.0")]
 
 namespace SquaddieProbe;
 
 // Host-agnostic core; the Jiangyu host binding lives in mods/jiangyu/SquaddieVeterancy/code.
 public sealed partial class Plugin : IHostedPlugin
 {
-    private const string Version = "1.10.2";
+    private const string Version = "1.10.3";
     private const string SettingsGroup = "Squaddie Veterancy";
 
     private ModLog? _logger;

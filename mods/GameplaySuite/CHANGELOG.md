@@ -1,3 +1,9 @@
+## Squaddie Veterancy 1.10.3 — #21 Field Repair Kit author report (not game-verified)
+
+- Resolve an element's owner Entity through the native `Element.GetEntity()` wrapper first. The raw
+  `m_Entity` read (+0x30, verified in the 0.7.16/0.7.17 dumps) remains only as a fallback; its field-name
+  lookup now uses the real name `m_Entity` instead of `Entity`. No XP, HP, mapping or save changes.
+
 ## Overwatch 0.32.3.9 — #24 derived infantry weapon discovery (partially game-verified)
 
 - Follow MENACE 0.7.17's native `Skill.SourceSkill` chain only when an infantry attack has no direct item, to recover its weapon slot for Overwatch.
