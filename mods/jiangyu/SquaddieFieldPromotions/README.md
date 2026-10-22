@@ -1,4 +1,4 @@
-# Squaddie Field Promotions 0.15.9
+# Squaddie Field Promotions 0.17.0
 
 > **Experimental 0.17.0 test candidate; in-game acceptance is pending.**
 > Version 0.15.9 raises the active and inactive slot crops for `promoted_female_04` and
@@ -10,6 +10,9 @@
 > assigned voices remain loadable without rerolling. The other 55 profiles are unchanged; the original 30
 > eligible profiles still have 138/180 silent routes. BlackOps uses the complete ASR inventory for curation,
 > not the former 42-clip sample; only five clips have user wording checks. Listening remains pending.
+> Canonical Windows BuildOnly/install passed on 22 October (SDK 10.0.113, zero build warnings/errors).
+> Installed manifest/DLL versions are 0.17.0/0.17.0.0; all 607 legacy recordings passed decoded-audio
+> comparison. Unrelated mods and UserData were unchanged. Native playback/gameplay is not yet verified.
 > See [voice curation](VOICE_CURATION.md) for the retained/retired lists and limits.
 > XCOM leaders use only their assigned speaker: every unmapped event is silent, with no caption,
 > rather than borrowing John/Jane audio. This includes tactical reactions, hiring and promotion barks.

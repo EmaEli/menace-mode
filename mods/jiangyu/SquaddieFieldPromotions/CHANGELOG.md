@@ -7,6 +7,7 @@
 - Preserve legacy same-wording playback, all other 55 profiles/607 recordings, five user wording checks and saved assignments.
 - Account for all 1,525 contents/2,460 aliases privately; uncertain recordings and alternate deliveries remain outside the test pool.
 - Native timing/speaker presentation is retained. Direct hiring/promotion barks use each route's first clip. Listening/gameplay acceptance remains pending.
+- Canonical Windows BuildOnly/install passed with SDK 10.0.113, zero build warnings/errors and verified 0.17.0 manifest/DLL metadata; 607 legacy PCM fingerprints match, and unrelated mods/UserData are unchanged. No 0.17.0 in-game acceptance is claimed.
 
 ## 0.16.0 — integrate the curated private BlackOps voice (#73)
 
