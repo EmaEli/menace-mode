@@ -105,6 +105,9 @@ internal sealed class PromotionVoiceSet
     public string[] RoleEvidence { get; set; } = Array.Empty<string>();
     public Dictionary<string, PromotionVoiceRoute> Routes { get; set; } = new(StringComparer.Ordinal);
 
+    // Keep sparse profiles loadable for saved assignments, but never assign them anew.
+    internal bool EligibleForAssignment => PromotionVoiceQuality.MeetsMinimum(this);
+
     internal PromotionVoiceRoute ResolveRoute(string key)
     {
         if (Routes.TryGetValue(key, out var route)) return route;
@@ -126,6 +129,23 @@ internal sealed class PromotionVoiceRoute
     internal bool IsSilent { get; set; }
 }
 
+internal static class PromotionVoiceQuality
+{
+    private static readonly string[] RequiredRoutes =
+    {
+        "ready|0", "moving|0", "spotted|0", "kill|0", "taking_fire|0", "miss|0",
+        "grenade_frag|0", "success|0", "emp_success|0", "emp_failed|0",
+        "morale_recovery|0", "ready_quiet|0"
+    };
+
+    // First curation pass: retain the strongest imported profiles, not a claim of
+    // complete coverage or listening verification. Reused route slots are not variety.
+    internal static bool MeetsMinimum(PromotionVoiceSet profile) =>
+        profile.Routes.Count >= 42 && RequiredRoutes.All(profile.Routes.ContainsKey) &&
+        profile.Routes.Values.SelectMany(route => route.Assets)
+            .Distinct(StringComparer.Ordinal).Count() >= 12;
+}
+
 internal static class PromotionVoiceAssignment
 {
     internal static bool TryAssignRotatingProfile(PromotionLedger ledger, PromotionRecord record,
@@ -143,7 +163,7 @@ internal static class PromotionVoiceAssignment
             counts.TryGetValue(existing.VoiceSetId, out int count);
             counts[existing.VoiceSetId] = count + 1;
         }
-        var selected = catalog.Profiles.Where(profile => profile.Gender == gender)
+        var selected = catalog.Profiles.Where(profile => profile.Gender == gender && profile.EligibleForAssignment)
             .OrderBy(profile => counts.TryGetValue(profile.Id, out var count) ? count : 0)
             .ThenBy(profile => profile.Id, StringComparer.Ordinal)
             .FirstOrDefault();

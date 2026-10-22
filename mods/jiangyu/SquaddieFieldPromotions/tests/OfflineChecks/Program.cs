@@ -89,6 +89,8 @@ string voiceCatalogJson = JsonSerializer.Serialize(new
     receiptFile = PromotionVoiceCatalog.ReceiptFile,
     profiles = new[]
     {
+        new { id = "aaa_sparse", sourcePack = "Sparse", gender = "male", kind = "human", roleEvidence = Array.Empty<string>(),
+            routes = new Dictionary<string, object> { ["ready|0"] = new { assets = new[] { "xcom_aaa_sparse_001" }, subtitle = "Ready." } } },
         new { id = "aaron", sourcePack = "Aaron", gender = "male", kind = "human", roleEvidence = Array.Empty<string>(),
             routes = new Dictionary<string, object> { ["ready|0"] = new { assets = new[] { "xcom_aaron_001" }, subtitle = "Ready." } } },
         new { id = "beau", sourcePack = "Beau", gender = "male", kind = "human", roleEvidence = Array.Empty<string>(),
@@ -127,6 +129,57 @@ foreach (var key in allVoiceRouteKeys)
     Check(route.IsSilent == !mapped && (mapped || route.Subtitle == "") &&
         route.Assets.All(asset => asset.StartsWith("xcom_" + profile.Id + "_")),
         "full catalog route uses its own speaker or silence: " + profile.Id + "/" + key);
+}
+var eligibleVoices = fullVoiceCatalog.Profiles.Where(profile => profile.EligibleForAssignment).ToArray();
+Check(eligibleVoices.Length == 30 && eligibleVoices.Count(profile => profile.Gender == "male") == 21 &&
+    eligibleVoices.Count(profile => profile.Gender == "female") == 9,
+    "curated pool retains 30 strongest profiles (21 male, 9 female), not all 55");
+Check(fullVoiceCatalog.Profiles.Where(profile => !profile.EligibleForAssignment).Count() == 25 &&
+    !fullVoiceCatalog.Find("bishopvp").EligibleForAssignment &&
+    !fullVoiceCatalog.Find("fem_bishop_vp").EligibleForAssignment,
+    "sparse profiles including missing selection audio stay compatibility-only");
+var sparseCatalog = PromotionVoiceCatalog.Parse(voiceCatalogJson);
+Check(!PromotionVoiceAssignment.TryAssignRotatingProfile(new PromotionLedger(),
+    new PromotionRecord { Gender = 0 }, sparseCatalog),
+    "no eligible voice returns false rather than selecting a sparse fallback");
+// Give the rotation fixtures real eligible route shapes; the alphabetically first
+// sparse profile deliberately remains in the catalog to catch unfiltered selection.
+foreach (var profile in voiceCatalog.Profiles.Where(profile => profile.Id != "aaa_sparse"))
+    profile.Routes = fullVoiceCatalog.Find("marcusvp").Routes.ToDictionary(pair => pair.Key,
+        pair => new PromotionVoiceRoute { Subtitle = pair.Value.Subtitle,
+            Assets = pair.Value.Assets.Select(asset => asset.Replace("xcom_marcusvp_", "xcom_" + profile.Id + "_")).ToArray() });
+Check(aaronVoice.EligibleForAssignment, "complete route and distinct-clip fixture is eligible");
+var originalReady = aaronVoice.Routes["ready|0"];
+aaronVoice.Routes.Remove("ready|0");
+aaronVoice.Routes["unknown_future_event|99"] = originalReady;
+Check(!aaronVoice.EligibleForAssignment, "route count alone cannot hide a missing selection response");
+aaronVoice.Routes.Remove("unknown_future_event|99");
+aaronVoice.Routes["ready|0"] = originalReady;
+var originalRoutes = aaronVoice.Routes;
+aaronVoice.Routes = originalRoutes.ToDictionary(pair => pair.Key,
+    pair => new PromotionVoiceRoute { Subtitle = pair.Value.Subtitle, Assets = originalReady.Assets });
+Check(!aaronVoice.EligibleForAssignment, "42 routes reusing one clip do not count as recording variety");
+aaronVoice.Routes = originalRoutes;
+var savedSparseVoice = new PromotionRecord { Gender = 0, VoiceSetId = "aaa_sparse" };
+PromotionVoiceAssignment.ValidateAssignment(savedSparseVoice, voiceCatalog);
+Check(!PromotionVoiceAssignment.TryAssignRotatingProfile(new PromotionLedger(), savedSparseVoice, voiceCatalog) &&
+    savedSparseVoice.VoiceSetId == "aaa_sparse" && voiceCatalog.Find(savedSparseVoice.VoiceSetId) != null,
+    "retired profiles still validate and play for existing characters without changing saved identity");
+foreach (int gender in new[] { 0, 1 })
+{
+    var curatedVoiceLedger = new PromotionLedger();
+    int poolSize = eligibleVoices.Count(profile => profile.Gender == (gender == 0 ? "male" : "female"));
+    for (int i = 0; i < poolSize * 2; i++)
+    {
+        var record = new PromotionRecord { Gender = gender };
+        Check(PromotionVoiceAssignment.TryAssignRotatingProfile(curatedVoiceLedger, record, fullVoiceCatalog) &&
+            fullVoiceCatalog.Find(record.VoiceSetId).EligibleForAssignment,
+            "real catalog rotation never selects a retired profile");
+        curatedVoiceLedger.Records.Add(record);
+    }
+    Check(curatedVoiceLedger.Records.GroupBy(record => record.VoiceSetId).Count() == poolSize &&
+        curatedVoiceLedger.Records.GroupBy(record => record.VoiceSetId).All(group => group.Count() == 2),
+        "curated rotation still uses every compatible profile before reuse");
 }
 PromotionRecord LegacyVoiceRecord(int index, int gender)
 {

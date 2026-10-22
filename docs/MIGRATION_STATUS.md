@@ -59,7 +59,11 @@ KDL counts below are **source files**, not patch-operation counts.
 | WeaponRangesRebalanced | 2.9.2 | Shared SuiteSystem host, ranges/linked skills/override JSON |
 | CinematicActionCamera | 1.2.2 | Windows test install and post-install startup log verified on MENACE 0.7.17+22362; manifests/DLLs verified, settings preserved, backup retained; no camera startup errors/warnings; positive user feedback but explicit allied Jetpack auto-follow acceptance still pending (#60) |
 
-Experimental package (not included in the default Suite): **SquaddieFieldPromotions 0.15.7**.
+Experimental package (not included in the default Suite): **SquaddieFieldPromotions 0.15.8**.
+The #73 first curation pass assigns only the 30 strongest imported voices (21 male/9 female):
+at least 42 routes, 12 distinct clips and all 12 required event routes. The other 25 profiles
+remain loadable for existing saved assignments, but cannot receive new assignments. Even the
+retained voices still leave 138 of 180 routes silent; no new recordings or coverage are claimed.
 The #73 voice candidate routes every XCOM event to the assigned speaker or explicit, captionless
 silence; generic John/Jane fallback is removed. Windows/gameplay verification is recorded separately.
 The user accepted the generic infantry perk tree in 0.12.0, but rejected source-emblem badges

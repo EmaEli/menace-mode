@@ -1,6 +1,11 @@
-# Squaddie Field Promotions 0.15.7
+# Squaddie Field Promotions 0.15.8
 
-> **Experimental 0.15.7 test candidate; in-game acceptance is pending.**
+> **Experimental 0.15.8 test candidate; in-game acceptance is pending.**
+> New voice assignments use a curated pool of 30 profiles (21 male/9 female), excluding 25 sparse
+> profiles. Minimum: 42 mapped routes, 12 distinct clips and all 12 core event routes. Existing
+> assigned voices remain loadable and unchanged. This is a first pruning pass, not full coverage:
+> even retained profiles have 138/180 silent routes and one recording per imported event category.
+> See [voice curation](VOICE_CURATION.md) for the retained/retired lists and limits.
 > XCOM leaders use only their assigned speaker: every unmapped event is silent, with no caption,
 > rather than borrowing John/Jane audio. This includes tactical reactions, hiring and promotion barks.
 > Each gender/skin category now has exactly four portrait sets: Brown `01`/`04`/`06`/`10`,
@@ -159,7 +164,11 @@ The kit also ships the module's raw `runtime_assets/` (portraits, prebuilt John/
 voice bundle with its build receipt, voice routes); the installer stages them next to
 the compiled package because `jiangyu compile --clean` does not preserve them.
 
-## Acceptance test (0.15.7 test candidate; in-game checks pending)
+## Acceptance test (0.15.8 test candidate; in-game checks pending)
+
+Version 0.15.8 curation: new promotions and legacy records without an assigned voice must use
+only eligible profiles; selection should have a mapped recording. Previously assigned retired
+profiles must retain their voice on load. No save rewrite or cross-speaker fallback is introduced.
 
 Version 0.15.7 voices: load existing promoted leaders and test selection, movement, attacks,
 combat reactions, hiring and perk purchases. Mapped lines must keep that leader's assigned XCOM
