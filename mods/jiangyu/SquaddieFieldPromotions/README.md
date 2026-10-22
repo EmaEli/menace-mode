@@ -1,10 +1,14 @@
-# Squaddie Field Promotions 0.15.8
+# Squaddie Field Promotions 0.15.9
 
-> **Experimental 0.15.8 test candidate; in-game acceptance is pending.**
-> New voice assignments use a curated pool of 30 profiles (21 male/9 female), excluding 25 sparse
+> **Experimental 0.15.9 test candidate; in-game acceptance is pending.**
+> Version 0.15.9 raises the active and inactive slot crops for `promoted_female_04` and
+> `promoted_male_05`; existing saved profile assignments remain unchanged.
+> Version 0.16.0 adds the private Trepang 2 BlackOps profile with 42 distinct recordings.
+> New voice assignments use a curated pool of 31 profiles (22 male/9 female), excluding 25 sparse
 > profiles. Minimum: 42 mapped routes, 12 distinct clips and all 12 core event routes. Existing
 > assigned voices remain loadable and unchanged. This is a first pruning pass, not full coverage:
-> even retained profiles have 138/180 silent routes and one recording per imported event category.
+> even retained profiles have 138/180 silent routes. The original 30 retain one recording per imported
+> event category; BlackOps uses 42 distinct clips, with only five user-checked for wording so far.
 > See [voice curation](VOICE_CURATION.md) for the retained/retired lists and limits.
 > XCOM leaders use only their assigned speaker: every unmapped event is silent, with no caption,
 > rather than borrowing John/Jane audio. This includes tactical reactions, hiring and promotion barks.
@@ -164,7 +168,11 @@ The kit also ships the module's raw `runtime_assets/` (portraits, prebuilt John/
 voice bundle with its build receipt, voice routes); the installer stages them next to
 the compiled package because `jiangyu compile --clean` does not preserve them.
 
-## Acceptance test (0.15.8 test candidate; in-game checks pending)
+## Acceptance test (0.16.0 test candidate; in-game checks pending)
+
+Version 0.15.9 portraits: confirm the `promoted_female_04` and `promoted_male_05` slot photos
+sit higher in both active and inactive states. Existing leaders should retain their assigned
+portraits after save, restart and load.
 
 Version 0.15.8 curation: new promotions and legacy records without an assigned voice must use
 only eligible profiles; selection should have a mapped recording. Previously assigned retired

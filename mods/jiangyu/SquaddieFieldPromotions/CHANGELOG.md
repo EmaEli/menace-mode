@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.16.0 — integrate the curated private BlackOps voice (#73)
+
+- Add 42 distinct BlackOps recordings across 42 native event slots; the eligible pool is now 31 profiles.
+- Replace mismatched visual-contact/recovery lines, remove eight weak or repetitive slots and add eight tactical events.
+- Preserve the five user-checked captions, existing saved assignments and silence for unmapped events.
+- Audio remains private. The remaining 37 clips and in-game playback still need listening acceptance.
+
+## 0.15.9 — center two promoted-leader slot portraits (#69)
+
+- Raise active and inactive slot crops for `promoted_female_04` and `promoted_male_05`.
+- Preserve other portrait files, saved profile assignments, dynamic badges and save data.
+- Windows/gameplay acceptance is pending.
+
+## 0.15.8 — curate new voice assignments (#73)
+
+- Restrict new voice assignments to the strongest 30 profiles; keep retired profiles loadable for existing saves.
+- Document remaining voice coverage limits; gameplay acceptance is pending.
+
 ## 0.15.7 — keep XCOM speakers consistent (#73)
 
 - Replace every missing XCOM event route with explicit silence and an empty caption, not John/Jane.

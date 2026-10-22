@@ -51,9 +51,7 @@ internal sealed class StandalonePortraitAssets
     }
 
     internal static bool ArePortraitProfilesPresent(string modFolder) =>
-        ArePortraitProfilePresent(modFolder, PromotionPortraitAssignment.MaleBrown01) &&
-        ArePortraitProfilePresent(modFolder, PromotionPortraitAssignment.Female01) &&
-        ArePortraitProfilePresent(modFolder, PromotionPortraitAssignment.MaleBlack02);
+        PromotionPortraitAssignment.AllProfiles.All(profile => ArePortraitProfilePresent(modFolder, profile));
 
     internal static StandalonePortraitAssets Load(string modFolder, string gender,
         List<UnityEngine.Object> pinned)

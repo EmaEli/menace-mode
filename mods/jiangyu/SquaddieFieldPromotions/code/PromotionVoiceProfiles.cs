@@ -140,10 +140,16 @@ internal static class PromotionVoiceQuality
 
     // First curation pass: retain the strongest imported profiles, not a claim of
     // complete coverage or listening verification. Reused route slots are not variety.
-    internal static bool MeetsMinimum(PromotionVoiceSet profile) =>
-        profile.Routes.Count >= 42 && RequiredRoutes.All(profile.Routes.ContainsKey) &&
-        profile.Routes.Values.SelectMany(route => route.Assets)
-            .Distinct(StringComparer.Ordinal).Count() >= 12;
+    internal static bool MeetsMinimum(PromotionVoiceSet profile)
+    {
+        if (profile.Routes.Count < 42 || !RequiredRoutes.All(profile.Routes.ContainsKey))
+            return false;
+        var assets = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var route in profile.Routes.Values)
+            foreach (var asset in route.Assets)
+                assets.Add(asset);
+        return assets.Count >= 12;
+    }
 }
 
 internal static class PromotionVoiceAssignment

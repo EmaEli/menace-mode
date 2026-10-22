@@ -119,8 +119,10 @@ var genericVoiceRoutes = JsonDocument.Parse(File.ReadAllText(Path.Combine(voiceM
     "runtime_assets/voice/voice_routes.json"))).RootElement.GetProperty("routes");
 var allVoiceRouteKeys = genericVoiceRoutes.EnumerateObject().Select(route => route.Name)
     .Where(key => key.StartsWith("john|")).Select(key => key.Substring(5)).ToArray();
-Check(fullVoiceCatalog.Profiles.Count == 55 && allVoiceRouteKeys.Length == 180,
+Check(fullVoiceCatalog.Profiles.Count == 56 && allVoiceRouteKeys.Length == 180,
     "full private voice catalog and all native SFP routes are included in coverage checks");
+Check(fullVoiceCatalog.Profiles.All(profile => profile.Routes.Keys.All(allVoiceRouteKeys.Contains)),
+    "every imported route corresponds to a native SFP event slot");
 foreach (var profile in fullVoiceCatalog.Profiles)
 foreach (var key in allVoiceRouteKeys)
 {
@@ -131,13 +133,24 @@ foreach (var key in allVoiceRouteKeys)
         "full catalog route uses its own speaker or silence: " + profile.Id + "/" + key);
 }
 var eligibleVoices = fullVoiceCatalog.Profiles.Where(profile => profile.EligibleForAssignment).ToArray();
-Check(eligibleVoices.Length == 30 && eligibleVoices.Count(profile => profile.Gender == "male") == 21 &&
+Check(eligibleVoices.Length == 31 && eligibleVoices.Count(profile => profile.Gender == "male") == 22 &&
     eligibleVoices.Count(profile => profile.Gender == "female") == 9,
-    "curated pool retains 30 strongest profiles (21 male, 9 female), not all 55");
+    "curated pool includes BlackOps: 31 eligible profiles (22 male, 9 female), not all 56");
 Check(fullVoiceCatalog.Profiles.Where(profile => !profile.EligibleForAssignment).Count() == 25 &&
     !fullVoiceCatalog.Find("bishopvp").EligibleForAssignment &&
     !fullVoiceCatalog.Find("fem_bishop_vp").EligibleForAssignment,
     "sparse profiles including missing selection audio stay compatibility-only");
+var blackOpsVoice = fullVoiceCatalog.Find("trepang2blackops");
+Check(blackOpsVoice != null && blackOpsVoice.EligibleForAssignment && blackOpsVoice.Routes.Count == 42 &&
+    blackOpsVoice.Routes.Values.SelectMany(route => route.Assets).Distinct().Count() == 42,
+    "BlackOps has 42 independently named recordings and remains eligible without padding");
+Check(new[] { "ally_dead|0", "danger_close|0", "enemy_blocked|0", "enemy_fleeing|0",
+    "enemy_hidden|0", "enemy_hidden|1", "suppress_fire|0", "suppressed|0" }
+    .All(blackOpsVoice.Routes.ContainsKey), "BlackOps includes the eight curated event additions");
+Check(new[] { "ready_ack_got_this|0", "taking_fire|2", "taking_fire|3", "success|1",
+    "success|2", "success|3", "success|4", "ready_quiet|2" }
+    .All(key => blackOpsVoice.ResolveRoute(key).IsSilent && blackOpsVoice.ResolveRoute(key).Subtitle == ""),
+    "removed BlackOps duplicates and mismatched actions resolve to captionless silence");
 var sparseCatalog = PromotionVoiceCatalog.Parse(voiceCatalogJson);
 Check(!PromotionVoiceAssignment.TryAssignRotatingProfile(new PromotionLedger(),
     new PromotionRecord { Gender = 0 }, sparseCatalog),
@@ -1017,10 +1030,10 @@ if (args.Length > 0)
     var privateVoiceCatalog = PromotionVoiceCatalog.Load(root);
     if (privateVoiceCatalog != null)
     {
-        Check(privateVoiceCatalog.Profiles.Count == 55 &&
-            privateVoiceCatalog.Profiles.Count(profile => profile.Gender == "male") == 37 &&
+        Check(privateVoiceCatalog.Profiles.Count == 56 &&
+            privateVoiceCatalog.Profiles.Count(profile => profile.Gender == "male") == 38 &&
             privateVoiceCatalog.Profiles.Count(profile => profile.Gender == "female") == 18,
-            "private XCOM catalog contains the 55 human profiles with gender-matched counts");
+            "private XCOM catalog contains the 56 human profiles with gender-matched counts");
         Check(privateVoiceCatalog.Profiles.All(profile => profile.Kind == "human" &&
             profile.RoleEvidence.Length > 0 && profile.Routes.Count > 0) &&
             privateVoiceCatalog.Profiles.Any(profile => profile.FuturePilotCandidate) &&
@@ -1050,6 +1063,18 @@ if (args.Length > 0)
     using var compiledManifest = System.Text.Json.JsonDocument.Parse(File.ReadAllText(Path.Combine(root, "compiled/jiangyu.json")));
     Check(receipt.RootElement.GetProperty("unityVersion").GetString() == compiledManifest.RootElement.GetProperty("compiledForUnity").GetString(),
         "voice bundle built for the pinned Unity version");
+    using var xcomReceipt = JsonDocument.Parse(File.ReadAllText(Path.Combine(voice, "sfp_xcom_voicepacks.build.json")));
+    var xcomAssets = xcomReceipt.RootElement.GetProperty("clips").EnumerateArray()
+        .Select(clip => clip.GetProperty("assetName").GetString()).ToHashSet(StringComparer.Ordinal);
+    Check(xcomAssets.Count == 649 && privateVoiceCatalog.Profiles.SelectMany(profile => profile.Routes.Values)
+        .SelectMany(route => route.Assets).All(xcomAssets.Contains),
+        "all private catalog routes including the new BlackOps assets are covered by the 649-clip receipt");
+    using (var xcomBundle = File.OpenRead(Path.Combine(voice, "sfp_xcom_voicepacks.sfpbundle")))
+        Check(Convert.ToHexString(sha.ComputeHash(xcomBundle)).Equals(
+            xcomReceipt.RootElement.GetProperty("bundleSha256").GetString(), StringComparison.OrdinalIgnoreCase),
+            "private XCOM bundle matches its rebuilt receipt");
+    Check(xcomReceipt.RootElement.GetProperty("unityVersion").GetString() == compiledManifest.RootElement.GetProperty("compiledForUnity").GetString(),
+        "private XCOM bundle uses the pinned Unity version");
     Check(File.Exists(Path.Combine(voice, "voice_routes.json")), "voice routes bundled");
 }
 SourceRemovalChecks.Run(Check);

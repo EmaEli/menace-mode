@@ -10,6 +10,11 @@
 **/*.pyc
 **/*.pdb
 
+# Private XCOM voicepack derivatives; keep source audio/transcription data out of git.
+**/runtime_assets/voice/xcom_voice_profiles.json
+**/runtime_assets/voice/sfp_xcom_voicepacks.sfpbundle
+**/runtime_assets/voice/sfp_xcom_voicepacks.build.json
+
 # Game binaries / generated dependencies
 *.dll
 *.exe
