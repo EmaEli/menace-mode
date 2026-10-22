@@ -4,6 +4,9 @@
 > Version 0.17.1 replaces the six male/female 07–09 portrait sets with the user's supplied archive:
 > **07 Brown, 08 Black, 09 White**. Older saved White 07 assignments remain loadable; their profile IDs
 > do not change, but leaders assigned to 07–09 now display the supplied artwork. Voices and badges are unchanged.
+> Canonical Windows BuildOnly/install passed on 22 October with zero warnings/errors and verified
+> manifest/assembly/file versions 0.17.1/0.17.1.0/0.17.1.0. All 36 supplied portraits match installed hashes;
+> the other 138 runtime assets and unrelated Mods/UserData are unchanged. Visual acceptance is pending.
 > Version 0.15.9 raises the active and inactive slot crops for `promoted_female_04` and
 > `promoted_male_05`; existing saved profile assignments remain unchanged.
 > Version 0.17.0 expands private Trepang 2 BlackOps to 211 selected recordings across 167/180 native slots,

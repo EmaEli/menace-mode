@@ -62,7 +62,11 @@ KDL counts below are **source files**, not patch-operation counts.
 Experimental package (not included in the default Suite): **SquaddieFieldPromotions 0.17.1 private PC test candidate**.
 Version 0.17.1 replaces male/female portrait sets 07–09 from the user's supplied archive and assigns
 new promotions to 07 Brown, 08 Black, 09 White. Older White 07 profile IDs remain loadable. Other art,
-voices, badges and saves are unchanged by installation. Windows/gameplay verification is pending.
+voices, badges and saves are unchanged by installation. Canonical Windows BuildOnly/install passed
+with SDK 10.0.113, zero warnings/errors and verified manifest/assembly/file 0.17.1/0.17.1.0/0.17.1.0.
+All 36 replacement hashes and 138 preserved runtime assets match source; 1,251 protected files are unchanged.
+Backup, hashes and checks: [07–09 deployment evidence](SFP_PORTRAITS_07_09_2026-10-22.md).
+In-game visual acceptance is pending.
 Version 0.17.0 expands private BlackOps curation to 211 selected recordings, 167/180 mapped slots
 and per-recording tactical captions/variants; 13 unsupported slots remain silent. All 1,525 contents
 and 2,460 aliases are accounted for privately. The other 55 profiles/607 recordings and saved

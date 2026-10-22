@@ -7,7 +7,8 @@
   five Brown, four Black and three White sets per gender, rotating least-used-first.
 - Keep saved profile IDs, including older White 07 assignments, loadable without reassignment.
   Leaders already using 07–09 display the updated art. Other portraits, badges and voices are unchanged.
-- In-game visual acceptance is pending.
+- Canonical Windows BuildOnly/install passed with zero warnings/errors; all 36 replacement hashes and
+  138 other runtime files verified. Unrelated Mods/UserData are unchanged. In-game visual acceptance is pending.
 
 ## 0.17.0 — full-inventory BlackOps curation and captioned tactical variants (#73)
 
