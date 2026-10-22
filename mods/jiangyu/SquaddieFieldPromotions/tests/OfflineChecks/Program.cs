@@ -142,16 +142,19 @@ Check(fullVoiceCatalog.Profiles.Where(profile => !profile.EligibleForAssignment)
     !fullVoiceCatalog.Find("fem_bishop_vp").EligibleForAssignment,
     "sparse profiles including missing selection audio stay compatibility-only");
 var blackOpsVoice = fullVoiceCatalog.Find("trepang2blackops");
-Check(blackOpsVoice != null && blackOpsVoice.EligibleForAssignment && blackOpsVoice.Routes.Count == 42 &&
-    blackOpsVoice.Routes.Values.SelectMany(route => route.Assets).Distinct().Count() == 42,
-    "BlackOps has 42 independently named recordings and remains eligible without padding");
+Check(blackOpsVoice != null && blackOpsVoice.EligibleForAssignment && blackOpsVoice.Routes.Count == 167 &&
+    blackOpsVoice.Routes.Values.SelectMany(route => route.Assets).Distinct().Count() == 211 &&
+    blackOpsVoice.Routes.Values.Count(route => route.HasCaptionedVariants) == 146,
+    "full-pack BlackOps has 211 distinct recordings across 167 slots and 146 captioned variant routes");
 Check(new[] { "ally_dead|0", "danger_close|0", "enemy_blocked|0", "enemy_fleeing|0",
     "enemy_hidden|0", "enemy_hidden|1", "suppress_fire|0", "suppressed|0" }
     .All(blackOpsVoice.Routes.ContainsKey), "BlackOps includes the eight curated event additions");
-Check(new[] { "ready_ack_got_this|0", "taking_fire|2", "taking_fire|3", "success|1",
-    "success|2", "success|3", "success|4", "ready_quiet|2" }
-    .All(key => blackOpsVoice.ResolveRoute(key).IsSilent && blackOpsVoice.ResolveRoute(key).Subtitle == ""),
-    "removed BlackOps duplicates and mismatched actions resolve to captionless silence");
+var unsupportedBlackOps = allVoiceRouteKeys.Where(key => !blackOpsVoice.Routes.ContainsKey(key)).ToArray();
+Check(unsupportedBlackOps.Length == 13 && unsupportedBlackOps.All(key =>
+    new[] { "building_destroyed|", "construct_damaged|", "enemy_damaged|", "enemy_vehicle_damaged|" }
+        .Any(family => key.StartsWith(family, StringComparison.Ordinal)) &&
+    blackOpsVoice.ResolveRoute(key).IsSilent && blackOpsVoice.ResolveRoute(key).Subtitle == ""),
+    "thirteen unestablished BlackOps damage/destruction events remain captionless silence");
 var sparseCatalog = PromotionVoiceCatalog.Parse(voiceCatalogJson);
 Check(!PromotionVoiceAssignment.TryAssignRotatingProfile(new PromotionLedger(),
     new PromotionRecord { Gender = 0 }, sparseCatalog),
