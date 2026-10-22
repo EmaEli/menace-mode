@@ -59,6 +59,7 @@ internal sealed class PromotionVoiceCatalog
                 profile.RoleEvidence == null || profile.Routes == null || profile.Routes.Count == 0)
                 throw new InvalidDataException("Invalid or non-human XCOM voice profile.");
 
+            var captionsByAsset = new Dictionary<string, string>(StringComparer.Ordinal);
             foreach (var route in profile.Routes)
             {
                 if (!SafeRouteKey(route.Key) || route.Value?.Assets == null || route.Value.Assets.Length == 0 ||
@@ -67,6 +68,20 @@ internal sealed class PromotionVoiceCatalog
                     route.Value.Assets.Any(asset => !SafeAssetName(asset) ||
                         !asset.StartsWith("xcom_" + profile.Id + "_", StringComparison.Ordinal)))
                     throw new InvalidDataException("Invalid XCOM voice route for " + profile.Id + ".");
+                var captions = route.Value.AssetSubtitles;
+                if (captions == null) continue; // Existing same-wording variation catalogs remain valid.
+                if (captions.Length != route.Value.Assets.Length || captions.Length == 0 ||
+                    captions.Any(text => string.IsNullOrWhiteSpace(text) || text.Length > 400 || text.Any(char.IsControl)) ||
+                    captions[0] != route.Value.Subtitle ||
+                    route.Value.Assets.Distinct(StringComparer.Ordinal).Count() != route.Value.Assets.Length)
+                    throw new InvalidDataException("Invalid per-recording voice captions for " + profile.Id + ".");
+                for (int i = 0; i < captions.Length; i++)
+                {
+                    var asset = route.Value.Assets[i];
+                    if (captionsByAsset.TryGetValue(asset, out var previous) && previous != captions[i])
+                        throw new InvalidDataException("Conflicting captions for a voice recording in " + profile.Id + ".");
+                    captionsByAsset[asset] = captions[i];
+                }
             }
         }
     }
@@ -126,7 +141,49 @@ internal sealed class PromotionVoiceRoute
 {
     public string[] Assets { get; set; } = Array.Empty<string>();
     public string Subtitle { get; set; } = "";
+    // Optional schema-1 extension. Missing means every legacy clip shares Subtitle.
+    // The first caption must equal Subtitle so direct/non-conversation barks and
+    // the safe fallback always play the first recording with its correct wording.
+    public string[] AssetSubtitles { get; set; }
     internal bool IsSilent { get; set; }
+    internal bool HasCaptionedVariants => !IsSilent && AssetSubtitles != null && Assets.Length > 1;
+}
+
+internal sealed class PromotionVoiceVariant
+{
+    internal PromotionVoiceVariant(string asset, string subtitle, int itemId)
+    { Asset = asset; Subtitle = subtitle; ItemId = itemId; }
+    internal string Asset { get; }
+    internal string Subtitle { get; }
+    internal int ItemId { get; }
+}
+
+// An immutable audio/text/ID choice, not independent random choices in Stem/UI.
+// Snapshot the catalog and keep repeat avoidance local to this native route.
+internal sealed class PromotionVoiceVariants
+{
+    private readonly PromotionVoiceVariant[] _choices;
+    private int _previous = -1;
+
+    internal PromotionVoiceVariants(PromotionVoiceRoute route, Func<string, int> itemId)
+    {
+        if (!route.HasCaptionedVariants || route.AssetSubtitles.Length != route.Assets.Length)
+            throw new ArgumentException("A captioned variant pool needs paired recordings and captions.");
+        _choices = route.Assets.Select((asset, i) =>
+            new PromotionVoiceVariant(asset, route.AssetSubtitles[i], itemId(asset))).ToArray();
+        if (_choices.Select(choice => choice.ItemId).Distinct().Count() != _choices.Length)
+            throw new InvalidDataException("Captioned voice variant itemId collision.");
+    }
+
+    internal IReadOnlyList<PromotionVoiceVariant> Choices => _choices;
+
+    internal PromotionVoiceVariant Next(Random random)
+    {
+        int next = random.Next(_previous < 0 ? _choices.Length : _choices.Length - 1);
+        if (_previous >= 0 && next >= _previous) next++;
+        _previous = next;
+        return _choices[next];
+    }
 }
 
 internal static class PromotionVoiceQuality

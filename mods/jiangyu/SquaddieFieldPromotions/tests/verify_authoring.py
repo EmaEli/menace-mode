@@ -14,7 +14,7 @@ PROGRESSION_KDL = (ROOT / 'templates' / 'generic-infantry-progression.kdl').read
 class AuthoringTests(unittest.TestCase):
     def test_jiangyu_not_old_modpack(self):
         self.assertEqual(MANIFEST['name'], 'SquaddieFieldPromotions')
-        self.assertEqual(MANIFEST['version'], '0.16.0')
+        self.assertEqual(MANIFEST['version'], '0.17.0')
         compiled_manifest = json.loads((ROOT / 'compiled/jiangyu.json').read_text(encoding='utf-8'))
         self.assertEqual(compiled_manifest['version'], MANIFEST['version'])
         self.assertTrue(any(dep.startswith('Jiangyu ') for dep in MANIFEST['depends']))
@@ -399,6 +399,23 @@ class AuthoringTests(unittest.TestCase):
         self.assertIn('RequireSet(record, "fixedVolume", 0.0f)', voice)
         self.assertIn('Cannot replace donor voice clip.', voice)
         self.assertNotIn('AudioClip.Create', voice)
+
+    def test_captioned_variants_keep_native_audio_and_text_together(self):
+        voice = (ROOT / 'code/FieldVoiceSystem.cs').read_text(encoding='utf-8')
+        models = (ROOT / 'code/PromotionVoiceProfiles.cs').read_text(encoding='utf-8')
+        prefix = voice.split('public static bool CaptionedSayPrefix(', 1)[1].split('public static void ConversationManagerPrefix(', 1)[0]
+        self.assertIn('pool.Next(system._voiceVariantRandom)', prefix)
+        self.assertIn('ownedSay = CopyDataRecord(original)', prefix)
+        self.assertIn('RequireSet(ownedSay, "Sound", new Il2CppStem.ID(bankId, choice.ItemId))', prefix)
+        self.assertIn('RequireSet(ownedSay, "Text", choice.Subtitle)', prefix)
+        self.assertIn('system._captionedSayExecute.Invoke(ownedSay, __args)', prefix)
+        self.assertNotIn('RequireSet(original,', prefix)
+        self.assertIn('variant-only Sound ID is not a pool key', prefix)
+        self.assertIn('captioned == null ? clips : new[] { clips[0] }', voice)
+        self.assertIn('CopyCollection(ownedVariations, CopyDataRecord)', voice)
+        self.assertIn('ids.SetEquals(expectedIds)', voice)
+        self.assertIn('public string[] AssetSubtitles', models)
+        self.assertIn('captions[0] != route.Value.Subtitle', models)
 
     def test_safety_warning_in_readme(self):
         readme = (ROOT / 'README.md').read_text(encoding='utf-8')

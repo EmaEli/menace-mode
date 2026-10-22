@@ -80,6 +80,7 @@ internal sealed class FieldVoiceSystem
         internal bool BankRegistered { get; set; }
         internal bool BankRuntimeRefreshed { get; set; }
         internal bool ClipsApplied { get; set; }
+        internal readonly Dictionary<int, PromotionVoiceVariants> CaptionedRoutes = new();
         internal readonly Dictionary<string, UnityEngine.Object> ConversationUnityObjects = new(StringComparer.Ordinal);
         internal readonly Dictionary<string, object> ConversationProxies = new(StringComparer.Ordinal);
     }
@@ -643,6 +644,10 @@ internal sealed class FieldVoiceSystem
     private readonly Dictionary<string, string> _voiceRouteSubtitles = new(StringComparer.Ordinal);
     private readonly HashSet<string> _silentVoiceRoutes = new(StringComparer.Ordinal);
     private readonly HashSet<string> _configuredXcomProfiles = new(StringComparer.Ordinal);
+    private readonly Dictionary<(int BankId, int ItemId), PromotionVoiceVariants> _captionedVoiceRoutes = new();
+    private readonly System.Random _voiceVariantRandom = new();
+    private Type _captionedSayType;
+    private MethodInfo _captionedSayExecute;
     private PromotionVoiceCatalog _xcomVoiceCatalog;
     private Type _soundBankType;
     private Type _soundManagerType;
@@ -909,6 +914,20 @@ internal sealed class FieldVoiceSystem
 
     private static int TotalVoiceSounds => VoiceBarks.Sum(b => b.SourceItemIds.Length);
 
+    private static HashSet<int> ExpectedSoundIds(VoiceProfile profile)
+    {
+        var ids = new HashSet<int>();
+        foreach (var bark in VoiceBarks)
+        for (int i = 0; i < bark.SourceItemIds.Length; i++)
+            if (!ids.Add(GetCustomItemId(profile, bark, i)))
+                throw new InvalidOperationException("Native voice route itemId collision.");
+        foreach (var pool in profile.CaptionedRoutes.Values)
+        foreach (var choice in pool.Choices)
+            if (!ids.Add(choice.ItemId))
+                throw new InvalidOperationException("Captioned voice Sound itemId collision.");
+        return ids;
+    }
+
     private static string GetClonePath(VoiceProfile profile, BarkSpec bark) =>
         $"{profile.ConversationPrefix}/{bark.CloneSuffix}";
 
@@ -993,9 +1012,72 @@ internal sealed class FieldVoiceSystem
         var args = new object[parms.Length];
         args[0] = target;
         args[1] = method;
-        patch.Invoke(harmony, args);
         _harmony = harmony;
+        patch.Invoke(harmony, args);
+        // Opt in from the catalog, not only currently loaded profiles: imported
+        // assignments can be prepared lazily. Legacy-only installations add no hook.
+        if (_xcomVoiceCatalog != null && _xcomVoiceCatalog.Profiles.Any(profile =>
+                profile.Routes.Values.Any(route => route.HasCaptionedVariants)))
+        {
+            _captionedSayType = FindLoadedType("SayConversationNode", "Menace.Conversations")
+                ?? throw new MissingMemberException("SayConversationNode proxy is unavailable.");
+            _captionedSayExecute = _captionedSayType.GetMethods(BindingFlags.Instance | BindingFlags.Public)
+                .FirstOrDefault(m => m.Name == "Execute" && m.GetParameters().Length == 2 &&
+                    m.GetParameters()[0].ParameterType.Name == "ConversationInstance" &&
+                    m.GetParameters()[1].ParameterType.Name == "ConversationPresenter")
+                ?? throw new MissingMethodException(_captionedSayType.FullName, "Execute");
+            var captionPrefix = typeof(FieldVoiceSystem).GetMethod(nameof(CaptionedSayPrefix), BindingFlags.Public | BindingFlags.Static);
+            args = new object[parms.Length];
+            args[0] = _captionedSayExecute;
+            args[1] = Activator.CreateInstance(harmonyMethodType, new object[] { captionPrefix });
+            patch.Invoke(harmony, args);
+        }
         _patchInstalled = true;
+    }
+
+    public static bool CaptionedSayPrefix(Il2CppObjectBase __instance, object[] __args)
+    {
+        var system = _instance;
+        if (system == null || !system.Ready || __instance == null || system._captionedVoiceRoutes.Count == 0)
+            return true;
+        object ownedSay;
+        try
+        {
+            // Wrap the concrete SAY type; Harmony's base parameter must not hide its fields.
+            var ctor = system._captionedSayType.GetConstructor(new[] { typeof(IntPtr) })
+                ?? throw new MissingMethodException("SayConversationNode(IntPtr)");
+            var original = ctor.Invoke(new object[] { __instance.Pointer });
+            var sound = GetMemberValue(original, "Sound");
+            if (sound == null) return true;
+            int bankId = Convert.ToInt32(GetMemberValue(sound, "BankId"));
+            int itemId = Convert.ToInt32(GetMemberValue(sound, "ItemId"));
+            if (!system._captionedVoiceRoutes.TryGetValue((bankId, itemId), out var pool)) return true;
+            var choice = pool.Next(system._voiceVariantRandom);
+            ownedSay = CopyDataRecord(original);
+            if (ownedSay is not Il2CppObjectBase nativeCopy || nativeCopy.Pointer == __instance.Pointer)
+                throw new InvalidOperationException("Captioned SAY copy shares its template's native pointer.");
+            RequireSet(ownedSay, "Sound", new Il2CppStem.ID(bankId, choice.ItemId));
+            RequireSet(ownedSay, "Text", choice.Subtitle);
+            var appliedSound = GetMemberValue(ownedSay, "Sound");
+            if (Convert.ToInt32(GetMemberValue(appliedSound, "BankId")) != bankId ||
+                Convert.ToInt32(GetMemberValue(appliedSound, "ItemId")) != choice.ItemId ||
+                GetMemberValue(ownedSay, "Text")?.ToString() != choice.Subtitle)
+                throw new InvalidOperationException("Captioned SAY audio/text read-back failed.");
+        }
+        catch (Exception ex)
+        {
+            // The original has never been mutated. Its base Sound contains only
+            // the first recording, whose caption was validated against Subtitle.
+            system.LogErrorOnce("voice.captioned.say", "[SFP Voice] Captioned variant preparation failed: " + ex.GetType().Name);
+            return true;
+        }
+        // Native SAY execution owns speaker resolution, timing and presentation.
+        // The copy preserves GUID/role/delay and survives in native callbacks. Its
+        // variant-only Sound ID is not a pool key, so this re-entry passes through.
+        // Never edit/restore a shared node or Sound: delayed/concurrent barks must
+        // retain their own immutable audio/text pair.
+        system._captionedSayExecute.Invoke(ownedSay, __args);
+        return false;
     }
 
     public static void ConversationManagerPrefix(Il2CppObjectBase __instance)
@@ -1728,6 +1810,12 @@ internal sealed class FieldVoiceSystem
             var route = definition.ResolveRoute(definitionKey);
             _voiceRouteAssets[key] = route.Assets;
             _voiceRouteSubtitles[key] = route.Subtitle;
+            if (route.HasCaptionedVariants)
+            {
+                var soundName = GetSoundName(profile, bark, sourceIndex);
+                profile.CaptionedRoutes.Add(GetCustomItemId(profile, bark, sourceIndex),
+                    new PromotionVoiceVariants(route, asset => StableId(soundName + "_recording_" + asset)));
+            }
             if (route.IsSilent) _silentVoiceRoutes.Add(key);
             foreach (var asset in route.Assets) required.Add(asset);
         }
@@ -1824,13 +1912,26 @@ internal sealed class FieldVoiceSystem
                     clips.Add(clip);
                 }
                 var itemId = GetCustomItemId(profile, bark, sourceIndex);
-                var replaced = ReplaceSoundVariationClips(profile.BankProxy, itemId, clips,
+                profile.CaptionedRoutes.TryGetValue(itemId, out var captioned);
+                // The base ID is also used by direct hiring/promotion barks and
+                // safe fallback. It must never randomize different-wording clips.
+                IReadOnlyList<AudioClip> baseClips = captioned == null ? clips : new[] { clips[0] };
+                var replaced = ReplaceSoundVariationClips(profile.BankProxy, itemId, baseClips,
                     _silentVoiceRoutes.Contains(routeKey));
                 if (replaced <= 0)
                     throw new InvalidOperationException($"No SoundVariation.clip fields replaced for {profile.Key}/{bark.Key}[{sourceIndex}] itemId={itemId}.");
-                if (replaced != clips.Count)
+                if (captioned == null && replaced != clips.Count)
                     DebugWarning($"[SFP Voice] VARIATION COUNT DRIFT: {profile.Key}/{bark.Key}[{sourceIndex + 1}] MENACE variations={replaced}, bundled semantic clips={clips.Count}; clips will cycle safely.");
                 total += replaced;
+                if (captioned != null)
+                foreach (var choice in captioned.Choices)
+                {
+                    var applied = ReplaceSoundVariationClips(profile.BankProxy, choice.ItemId,
+                        new[] { _voiceClips[choice.Asset] }, silent: false);
+                    if (applied <= 0)
+                        throw new InvalidOperationException("No isolated Sound for a captioned recording.");
+                    total += applied;
+                }
                 semanticAssets += clips.Count;
                 DebugLog($"[SFP Voice] BARK AUDIO OK: {profile.Key}/{bark.Key}[{sourceIndex + 1}/{bark.SourceItemIds.Length}] -> {clips.Count} semantic clip(s); {replaced} MENACE variation(s).");
             }
@@ -1844,6 +1945,9 @@ internal sealed class FieldVoiceSystem
 
         if (!profile.BankRegistered)
             profile.BankRegistered = RegisterSoundBank(profile.BankProxy, profile);
+        if (profile.BankRegistered)
+            foreach (var route in profile.CaptionedRoutes)
+                _captionedVoiceRoutes[(profile.BankId, route.Key)] = route.Value;
         return profile.BankRegistered;
     }
 
@@ -1882,8 +1986,9 @@ internal sealed class FieldVoiceSystem
             object owner = GetMemberValue(bankProxy, "m_Structure") ?? GetMemberValue(bankProxy, "Structure") ?? bankProxy;
             var sounds = GetMemberValue(owner, "sounds") ?? GetMemberValue(owner, "Sounds")
                 ?? throw new InvalidOperationException("SoundBank refresh lost sounds[].");
-            if (GetCollectionCount(sounds) != TotalVoiceSounds)
-                throw new InvalidOperationException($"SoundBank refresh expected {TotalVoiceSounds} Sounds but found {GetCollectionCount(sounds)}.");
+            var expectedIds = ExpectedSoundIds(profile);
+            if (GetCollectionCount(sounds) != expectedIds.Count)
+                throw new InvalidOperationException($"SoundBank refresh expected {expectedIds.Count} Sounds but found {GetCollectionCount(sounds)}.");
             var ids = new HashSet<int>();
             for (var i = 0; i < GetCollectionCount(sounds); i++)
             {
@@ -1892,9 +1997,9 @@ internal sealed class FieldVoiceSystem
                 if (soundId == null) throw new InvalidOperationException($"sounds[{i}] missing id");
                 ids.Add(Convert.ToInt32(soundId));
             }
-            if (ids.Count != TotalVoiceSounds || VoiceBarks.Any(b => b.SourceItemIds.Select((_, i) => GetCustomItemId(profile, b, i)).Any(id => !ids.Contains(id))))
+            if (!ids.SetEquals(expectedIds))
                 throw new InvalidOperationException($"SoundBank refresh lost one or more {profile.Key} itemIds.");
-            DebugLog($"[SFP Voice] SOUNDBANK RUNTIME REFRESH OK: profile={profile.Key}, bankId={bankId}, sounds={TotalVoiceSounds}.");
+            DebugLog($"[SFP Voice] SOUNDBANK RUNTIME REFRESH OK: profile={profile.Key}, bankId={bankId}, sounds={expectedIds.Count}.");
             return true;
         }
         catch (Exception ex)
@@ -1999,6 +2104,20 @@ internal sealed class FieldVoiceSystem
             selectedSounds.Add(selected);
             if (buses != null)
                 selectedBuses.Add(GetCollectionItem(buses, selectedIndex) ?? throw new InvalidOperationException($"busIndices[{selectedIndex}] is null."));
+            if (profile.CaptionedRoutes.TryGetValue(customId, out var pool))
+            foreach (var choice in pool.Choices)
+            {
+                var variantSound = CopyDataRecord(selected);
+                var ownedVariations = GetMemberValue(selected, "variations") ?? GetMemberValue(selected, "Variations")
+                    ?? throw new InvalidOperationException("Captioned source Sound has no variations.");
+                RequireSet(variantSound, "variations", CopyCollection(ownedVariations, CopyDataRecord));
+                RequireSet(variantSound, "id", choice.ItemId);
+                RequireSet(variantSound, "name", GetSoundName(profile, bark, sourceIndex) + "_" + choice.Asset);
+                selectedSounds.Add(variantSound);
+                if (buses != null)
+                    selectedBuses.Add(GetCollectionItem(buses, selectedIndex)
+                        ?? throw new InvalidOperationException("Captioned Sound lost its bus index."));
+            }
             DebugLog($"[SFP Voice] SOUND ROUTE: {profile.Key}/{bark.Key}[{sourceIndex + 1}/{bark.SourceItemIds.Length}] sourceIndex={selectedIndex} sourceItem={sourceItemId} -> itemId={customId}, volume=60%.");
         }
 
@@ -2016,17 +2135,18 @@ internal sealed class FieldVoiceSystem
 
         var verifySounds = GetMemberValue(owner, "sounds") ?? GetMemberValue(owner, "Sounds")
             ?? throw new InvalidOperationException("SoundBank sounds disappeared after rewrite.");
-        if (GetCollectionCount(verifySounds) != TotalVoiceSounds)
-            throw new InvalidOperationException($"SoundBank rewrite produced {GetCollectionCount(verifySounds)} sounds, expected {TotalVoiceSounds}.");
+        var expectedIds = ExpectedSoundIds(profile);
+        if (GetCollectionCount(verifySounds) != expectedIds.Count)
+            throw new InvalidOperationException($"SoundBank rewrite produced {GetCollectionCount(verifySounds)} sounds, expected {expectedIds.Count}.");
         var ids = new HashSet<int>();
         for (var i = 0; i < GetCollectionCount(verifySounds); i++)
         {
             var sound = GetCollectionItem(verifySounds, i) ?? throw new InvalidOperationException("tactical Sound is null");
             ids.Add(Convert.ToInt32(GetMemberValue(sound, "id") ?? GetMemberValue(sound, "Id")!));
         }
-        if (ids.Count != TotalVoiceSounds || VoiceBarks.Any(b => b.SourceItemIds.Select((_, i) => GetCustomItemId(profile, b, i)).Any(id => !ids.Contains(id))))
+        if (!ids.SetEquals(expectedIds))
             throw new InvalidOperationException($"{profile.Key} SoundBank itemId verification failed.");
-        DebugLog($"[SFP Voice] UNIQUE SOUNDS OK: profile={profile.Key}, bankId={profile.BankId}, sounds={TotalVoiceSounds}, buses={(buses == null ? 0 : selectedBuses.Count)}, volumeScale=0.60.");
+        DebugLog($"[SFP Voice] UNIQUE SOUNDS OK: profile={profile.Key}, bankId={profile.BankId}, sounds={expectedIds.Count}, buses={(buses == null ? 0 : selectedBuses.Count)}, volumeScale=0.60.");
     }
 
     private static object CreateCollectionLike(object source, IReadOnlyList<object> elements)

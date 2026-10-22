@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.17.0 — full-inventory BlackOps curation and captioned tactical variants (#73)
+
+- Expand the private BlackOps test from 42 to 211 selected recordings across 167 native slots; 13 unsupported slots remain silent.
+- Select audio, exact caption and isolated native Sound ID together for tactical variants, without modifying shared in-flight nodes.
+- Preserve legacy same-wording playback, all other 55 profiles/607 recordings, five user wording checks and saved assignments.
+- Account for all 1,525 contents/2,460 aliases privately; uncertain recordings and alternate deliveries remain outside the test pool.
+- Native timing/speaker presentation is retained. Direct hiring/promotion barks use each route's first clip. Listening/gameplay acceptance remains pending.
+
 ## 0.16.0 — integrate the curated private BlackOps voice (#73)
 
 - Add 42 distinct BlackOps recordings across 42 native event slots; the eligible pool is now 31 profiles.

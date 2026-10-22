@@ -1,14 +1,15 @@
 # Squaddie Field Promotions 0.15.9
 
-> **Experimental 0.15.9 test candidate; in-game acceptance is pending.**
+> **Experimental 0.17.0 test candidate; in-game acceptance is pending.**
 > Version 0.15.9 raises the active and inactive slot crops for `promoted_female_04` and
 > `promoted_male_05`; existing saved profile assignments remain unchanged.
-> Version 0.16.0 adds the private Trepang 2 BlackOps profile with 42 distinct recordings.
+> Version 0.17.0 expands private Trepang 2 BlackOps to 211 selected recordings across 167/180 native slots,
+> with per-recording captions and native tactical variants. Thirteen unsupported events remain silent.
 > New voice assignments use a curated pool of 31 profiles (22 male/9 female), excluding 25 sparse
 > profiles. Minimum: 42 mapped routes, 12 distinct clips and all 12 core event routes. Existing
-> assigned voices remain loadable and unchanged. This is a first pruning pass, not full coverage:
-> even retained profiles have 138/180 silent routes. The original 30 retain one recording per imported
-> event category; BlackOps uses 42 distinct clips, with only five user-checked for wording so far.
+> assigned voices remain loadable without rerolling. The other 55 profiles are unchanged; the original 30
+> eligible profiles still have 138/180 silent routes. BlackOps uses the complete ASR inventory for curation,
+> not the former 42-clip sample; only five clips have user wording checks. Listening remains pending.
 > See [voice curation](VOICE_CURATION.md) for the retained/retired lists and limits.
 > XCOM leaders use only their assigned speaker: every unmapped event is silent, with no caption,
 > rather than borrowing John/Jane audio. This includes tactical reactions, hiring and promotion barks.
@@ -168,7 +169,13 @@ The kit also ships the module's raw `runtime_assets/` (portraits, prebuilt John/
 voice bundle with its build receipt, voice routes); the installer stages them next to
 the compiled package because `jiangyu compile --clean` does not preserve them.
 
-## Acceptance test (0.16.0 test candidate; in-game checks pending)
+## Acceptance test (0.17.0 test candidate; in-game checks pending)
+
+Version 0.17.0 BlackOps: repeated tactical actions should produce meaningful variants with the caption
+belonging to the actual spoken recording. Check movement, sightings, attacks, casualties and retreat;
+enemy retreat must not play an order for our own squad to retreat. Unsupported damage/destruction events
+remain captionless silence. Quiet/shout/hurt delivery and the audio mix still need listening feedback.
+Other assigned speakers, portraits and settings must stay unchanged. No saves are changed by installation.
 
 Version 0.15.9 portraits: confirm the `promoted_female_04` and `promoted_male_05` slot photos
 sit higher in both active and inactive states. Existing leaders should retain their assigned

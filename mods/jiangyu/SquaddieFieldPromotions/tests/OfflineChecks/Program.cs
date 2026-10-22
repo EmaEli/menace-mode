@@ -100,6 +100,7 @@ string voiceCatalogJson = JsonSerializer.Serialize(new
     }
 });
 var voiceCatalog = PromotionVoiceCatalog.Parse(voiceCatalogJson);
+VoiceVariantChecks.Run(Check);
 var aaronVoice = voiceCatalog.Find("aaron");
 Check(ReferenceEquals(aaronVoice.ResolveRoute("ready|0"), aaronVoice.Routes["ready|0"]) &&
     !aaronVoice.ResolveRoute("ready|0").IsSilent,
@@ -1066,9 +1067,14 @@ if (args.Length > 0)
     using var xcomReceipt = JsonDocument.Parse(File.ReadAllText(Path.Combine(voice, "sfp_xcom_voicepacks.build.json")));
     var xcomAssets = xcomReceipt.RootElement.GetProperty("clips").EnumerateArray()
         .Select(clip => clip.GetProperty("assetName").GetString()).ToHashSet(StringComparer.Ordinal);
-    Check(xcomAssets.Count == 649 && privateVoiceCatalog.Profiles.SelectMany(profile => profile.Routes.Values)
-        .SelectMany(route => route.Assets).All(xcomAssets.Contains),
-        "all private catalog routes including the new BlackOps assets are covered by the 649-clip receipt");
+    Check(xcomAssets.Count == xcomReceipt.RootElement.GetProperty("clips").GetArrayLength() &&
+        xcomAssets.SetEquals(privateVoiceCatalog.Profiles.SelectMany(profile => profile.Routes.Values)
+            .SelectMany(route => route.Assets)),
+        "private receipt covers exactly the catalog's distinct recordings, with no duplicate or unused padding");
+    var blackOps = privateVoiceCatalog.Find("trepang2blackops");
+    Check(blackOps != null && blackOps.Routes.Count > 42 && blackOps.Routes.Values.Any(route => route.HasCaptionedVariants) &&
+        blackOps.Routes.Values.All(route => route.AssetSubtitles?.Length == route.Assets.Length),
+        "full-pack BlackOps candidate expands beyond the old minimum and captions every recording");
     using (var xcomBundle = File.OpenRead(Path.Combine(voice, "sfp_xcom_voicepacks.sfpbundle")))
         Check(Convert.ToHexString(sha.ComputeHash(xcomBundle)).Equals(
             xcomReceipt.RootElement.GetProperty("bundleSha256").GetString(), StringComparison.OrdinalIgnoreCase),

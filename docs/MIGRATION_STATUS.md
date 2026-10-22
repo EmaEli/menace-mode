@@ -59,10 +59,13 @@ KDL counts below are **source files**, not patch-operation counts.
 | WeaponRangesRebalanced | 2.9.2 | Shared SuiteSystem host, ranges/linked skills/override JSON |
 | CinematicActionCamera | 1.2.2 | Windows test install and post-install startup log verified on MENACE 0.7.17+22362; manifests/DLLs verified, settings preserved, backup retained; no camera startup errors/warnings; positive user feedback but explicit allied Jetpack auto-follow acceptance still pending (#60) |
 
-Experimental package (not included in the default Suite): **SquaddieFieldPromotions 0.16.0**.
-Version 0.16.0 integrates the curated private BlackOps profile: 42 distinct recordings,
-42/180 mapped slots, 31 eligible profiles (22 male/9 female). Five clips have user-checked
-wording; full listening and in-game acceptance remain pending. Saved assignments are preserved.
+Experimental package (not included in the default Suite): **SquaddieFieldPromotions 0.17.0 candidate**.
+Version 0.17.0 expands private BlackOps curation to 211 selected recordings, 167/180 mapped slots
+and per-recording tactical captions/variants; 13 unsupported slots remain silent. All 1,525 contents
+and 2,460 aliases are accounted for privately. The other 55 profiles/607 recordings and saved
+assignments are unchanged. The eligible pool remains 31 profiles (22 male/9 female). Only five
+clips have user wording checks; listening, native playback and deployment acceptance remain pending.
+Version 0.16.0 was the earlier 42-recording/42-slot private test, not a complete conversion.
 Version 0.15.9 raises the active and inactive slot crops for `promoted_female_04` and
 `promoted_male_05`; save assignments remain unchanged. Windows/gameplay acceptance is pending.
 The 0.15.8 #73 first curation pass assigns only the 30 strongest imported voices (21 male/9 female):
