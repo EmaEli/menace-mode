@@ -17,7 +17,14 @@ def read_archive(path):
         names = archive.namelist()
         if len(names) != len({n.casefold() for n in names}):
             raise ValueError("Duplicate/case-colliding ZIP paths")
-        if sum(i.file_size for i in archive.infolist()) > 100 * 1024 * 1024:
+        # Private SFP audio is legitimately larger than the ordinary source kit.
+        # Keep the old limit for everything else and separately bound the two bundles.
+        voice_root = "source/mods/jiangyu/SquaddieFieldPromotions/runtime_assets/voice/"
+        voice_names = {voice_root + name for name in
+                       ("sfp_john_jane_voice.sfpbundle", "sfp_xcom_voicepacks.sfpbundle")}
+        voice_bytes = sum(i.file_size for i in archive.infolist() if i.filename in voice_names)
+        other_bytes = sum(i.file_size for i in archive.infolist() if i.filename not in voice_names)
+        if voice_bytes > 128 * 1024 * 1024 or other_bytes > 100 * 1024 * 1024:
             raise ValueError("Unexpectedly large candidate payload")
         for entry in archive.infolist():
             if not safe_path(entry.filename) or stat.S_ISLNK(entry.external_attr >> 16):

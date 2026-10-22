@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Il2CppInterop.Runtime.InteropTypes.Arrays;
 using Il2CppMenace.Conversations;
 using Il2CppMenace.States;
@@ -25,8 +26,10 @@ internal sealed class LeaderForge
         new(StringComparer.Ordinal);
     private FieldVoiceSystem _voices;
     // Leaders created before John/Jane audio was ready keep the native donor voice until bound.
-    private readonly Dictionary<string, (UnitLeaderTemplate Leader, SpeakerTemplate Speaker, bool Female, int PitchPreset)> _pendingVoice =
+    private readonly Dictionary<string, (UnitLeaderTemplate Leader, SpeakerTemplate Speaker, bool Female, int PitchPreset, string VoiceSetId)> _pendingVoice =
         new(StringComparer.Ordinal);
+    private PromotionVoiceCatalog _voiceCatalog;
+    private bool _voiceCatalogLoaded;
 
     internal LeaderForge(string modFolder) => _modFolder = modFolder;
 
@@ -58,8 +61,16 @@ internal sealed class LeaderForge
             InitialAttributes = PromotionRules.Attributes(selection.UsesXp ? soldier.Xp : null),
         };
         PromotionIdentity.Populate(record, soldier, service, sourceLeaderTemplateId);
+        PerkGeneration.Generate(record, selection.UsesXp ? soldier.Xp : null, ReadMentor(state, soldier.Id, service));
         record.Validate();
         return record;
+    }
+
+    // The mentor is optional flavour: an unreadable roster falls back to the base pool.
+    private static MentorSnapshot ReadMentor(StrategyState state, int soldierId, SquaddieServiceRecord service)
+    {
+        try { return MentorPerks.Read(state, soldierId, service); }
+        catch { return null; }
     }
 
     private static string Clean(string value, string fallback)
@@ -105,6 +116,22 @@ internal sealed class LeaderForge
         return Materialize(record, forceGenericHead);
     }
 
+    internal bool TryAssignVoiceSet(PromotionLedger ledger, PromotionRecord record) =>
+        PromotionVoiceAssignment.TryAssignRotatingProfile(ledger, record, GetVoiceCatalog());
+
+    internal int AssignMissingVoiceSets(PromotionLedger ledger) =>
+        PromotionVoiceAssignment.AssignMissingProfiles(ledger, GetVoiceCatalog());
+
+    private PromotionVoiceCatalog GetVoiceCatalog()
+    {
+        if (!_voiceCatalogLoaded)
+        {
+            _voiceCatalog = PromotionVoiceCatalog.Load(_modFolder);
+            _voiceCatalogLoaded = true;
+        }
+        return _voiceCatalog;
+    }
+
     internal bool SetHeadMode(PromotionRecord record, bool forceGenericHead)
     {
         var leader = DataTemplateLoader.Get<UnitLeaderTemplate>(record.LeaderId, false);
@@ -133,24 +160,55 @@ internal sealed class LeaderForge
     internal bool TryPrepareVoices(out string status)
     {
         _voices ??= new FieldVoiceSystem(_modFolder);
-        if (!_voices.TryPrepare(out status)) return false;
+        if (!_voices.TryPrepare(_pendingVoice.Values.Select(pending => pending.VoiceSetId), out status)) return false;
         foreach (var pending in _pendingVoice.Values)
-            BindVoice(pending.Leader, pending.Speaker, pending.Female, pending.PitchPreset);
+            BindVoice(pending.Leader, pending.Speaker, pending.Female, pending.PitchPreset, pending.VoiceSetId);
         _pendingVoice.Clear();
         return true;
     }
 
-    private string BindVoice(UnitLeaderTemplate leader, SpeakerTemplate speaker, bool female, int pitchPreset)
+    private string BindVoice(UnitLeaderTemplate leader, SpeakerTemplate speaker, bool female, int pitchPreset,
+        string voiceSetId)
     {
-        string tactical = _voices.BindSpeaker(speaker, female, pitchPreset);
+        string tactical = _voices.BindSpeaker(speaker, female, pitchPreset, voiceSetId);
         string hiring;
-        try { hiring = _voices.BindHiringBarks(leader, female, pitchPreset); }
+        try
+        {
+            hiring = string.IsNullOrEmpty(voiceSetId)
+                ? _voices.BindHiringBarks(leader, female, pitchPreset)
+                : _voices.BindHiringBarks(leader, female, pitchPreset, voiceSetId);
+        }
         catch (Exception error) { hiring = "native (" + error.GetType().Name + ")"; }
-        return tactical + "/" + hiring;
+        string promotion;
+        try
+        {
+            promotion = string.IsNullOrEmpty(voiceSetId)
+                ? _voices.BindPromotionBarks(leader, female, pitchPreset)
+                : _voices.BindPromotionBarks(leader, female, pitchPreset, voiceSetId);
+        }
+        catch (Exception error) { promotion = "native donor promotion bark (" + error.GetType().Name + ")"; }
+        return tactical + "/" + hiring + "/" + promotion;
+    }
+
+    private static Il2CppReferenceArray<PromotionBarkSound> ClonePromotionBarkSounds(
+        Il2CppReferenceArray<PromotionBarkSound> source)
+    {
+        if (source == null || source.Length == 0)
+            throw new InvalidOperationException("Native gendered promotion bark sounds are missing.");
+        var clone = new Il2CppReferenceArray<PromotionBarkSound>(source.Length);
+        for (int i = 0; i < source.Length; i++)
+        {
+            var bark = source[i];
+            if (bark == null || bark.PerkTier < 1 || bark.PerkTier > 4)
+                throw new InvalidOperationException("Native promotion bark has an invalid perk tier.");
+            clone[i] = new PromotionBarkSound { PerkTier = bark.PerkTier, Sound = bark.Sound };
+        }
+        return clone;
     }
 
     private string Materialize(PromotionRecord record, bool forceGenericHead)
     {
+        PromotionVoiceAssignment.ValidateAssignment(record, GetVoiceCatalog());
         var existing = DataTemplateLoader.Get<UnitLeaderTemplate>(record.LeaderId, false);
         if (existing != null)
         {
@@ -161,7 +219,7 @@ internal sealed class LeaderForge
                 Convert.ToInt32(existing.SkinColor) != record.SkinColor)
                 throw new InvalidOperationException("Native leader template ID collision / identity mismatch.");
             ApplyIdentityText(record, existing);
-            ApplyGenericProgression(existing);
+            ApplyProgression(record, existing);
             SetHeadMode(record, forceGenericHead);
             return "reuse=registered, badge=" + DynamicBadgeFactory.LabelForIndex(record.BadgeIndex);
         }
@@ -203,13 +261,16 @@ internal sealed class LeaderForge
             speaker.Surname = NewLine(voiceDonor.SpeakerTemplate.Surname, record.SpeakerId, "Surname", string.Empty);
             speaker.Nickname = NewLine(voiceDonor.SpeakerTemplate.Nickname, record.SpeakerId, "Nickname", record.Nickname);
             leader.SpeakerTemplate = speaker;
+            // The cloned leader comes from Sachin, whose direct perk-promotion sounds
+            // bypass SpeakerTemplate tags. Start from the matching gender donor instead.
+            leader.PromotionBarkSounds = ClonePromotionBarkSounds(voiceDonor.PromotionBarkSounds);
             leader.HiringSelectBarkSound = voiceDonor.HiringSelectBarkSound;
             leader.HiredBarkSound = voiceDonor.HiredBarkSound;
             string voice;
-            if (VoicesReady) voice = BindVoice(leader, speaker, female, record.VoicePitchPreset);
+            if (VoicesReady) voice = BindVoice(leader, speaker, female, record.VoicePitchPreset, record.VoiceSetId);
             else
             {
-                _pendingVoice[record.LeaderId] = (leader, speaker, female, record.VoicePitchPreset);
+                _pendingVoice[record.LeaderId] = (leader, speaker, female, record.VoicePitchPreset, record.VoiceSetId);
                 voice = "native-" + gender + " (pending John/Jane)";
             }
             ApplyIdentityText(record, leader, source, voiceDonor);
@@ -232,7 +293,7 @@ internal sealed class LeaderForge
             }
             string badgeLabel = DynamicBadgeFactory.LabelForIndex(record.BadgeIndex);
             string badge = DynamicBadgeFactory.Apply(leader, art, badgeLabel, _pinned);
-            ApplyGenericProgression(leader);
+            ApplyProgression(record, leader);
             leader.QualityLevel = 1;
             leader.HiringCosts = 0;
             leader.InitialAttributes = new Il2CppStructArray<byte>(record.InitialAttributes);
@@ -290,6 +351,12 @@ internal sealed class LeaderForge
             return "native-gender-head";
         }
         return "native-gender-skin-head";
+    }
+
+    private void ApplyProgression(PromotionRecord record, UnitLeaderTemplate leader)
+    {
+        if (record.PerkSchemaVersion == 0) ApplyGenericProgression(leader);
+        else DynamicPerkTrees.VerifyOrApply(record, leader, _pinned);
     }
 
     private static void ApplyGenericProgression(UnitLeaderTemplate leader)

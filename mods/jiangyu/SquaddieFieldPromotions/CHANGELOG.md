@@ -1,5 +1,79 @@
 # Changelog
 
+## 0.15.7 — keep XCOM speakers consistent (#73)
+
+- Replace every missing XCOM event route with explicit silence and an empty caption, not John/Jane.
+- Keep valid native sound IDs for tactical, hiring and promotion events; mute both the Sound and
+  every variation with randomized volume disabled. Only the assigned profile's clips are referenced.
+- Preserve mapped recordings, voice assignments, portraits and save files. Reject incomplete clip
+  replacement rather than leaving audible donor variations behind.
+- Check all 55 profiles across all 180 event routes. Gameplay acceptance remains pending.
+
+## 0.15.6 — add portrait sets 10–12
+
+- Add male/female portrait set `10` to Brown, `11` to White, and `12` to Black.
+- Expand each gender/skin rotation pool to four sets; existing saved profile assignments remain unchanged.
+
+## 0.15.5 — balance portrait rotation to three sets per category
+
+- Place the red-haired `06` sets with Brown, making the pools Brown `01`/`04`/`06`,
+  Black `02`/`05`/`08`, and White `03`/`07`/`09` for both genders.
+- Keep existing 0.15.3/0.15.4 records that already assigned `06` to White valid and visually unchanged;
+  new promotions use the corrected category pools.
+
+## 0.15.4 — integrate portrait candidates 07–09 (#69)
+
+- Add six new approved portrait sets from the latest issue update: male/female `07` (black hair, light
+  skin) and `09` (red hair, light skin) join White; male/female `08` (black hair, dark skin) joins Black.
+- Expand the rotation to Brown `01`/`04`, Black `02`/`05`/`08`, and White `03`/`06`/`07`/`09` for
+  each gender. Existing portrait assignments remain untouched and count toward least-used rotation.
+- Validate all 108 deployed portrait PNGs against their candidate files and native dimensions.
+
+## 0.15.3 — six more promoted-leader portrait sets (#69)
+
+- Integrate the approved `promoted_male_04`–`06` and `promoted_female_04`–`06` candidates from `main`
+  into `runtime_assets`: two sets per native gender/skin category (Brown 01/04, Black 02/05,
+  White 03/06). The 04 sets were assigned to Brown based on their skin tone; 06 sets (red-haired) to White.
+- Portrait categories are now one table, so the rotation, compatibility checks and asset-presence
+  check all derive from it. Existing assignments are kept and count towards the least-used choice.
+
+## 0.15.2 — bind perk-promotion barks to John/Jane
+
+- Route the direct per-tier `PromotionBarkSounds` to the promoted leader's isolated John/Jane
+  SoundBank, using existing positive-response clips. Tactical and Hire voice paths were already
+  customized; the cloned source leader's direct perk-promotion sounds were not.
+- Copy the matching gender donor's bark entries before voice setup, so a pending audio bundle never
+  falls back to the unrelated source leader's voice. Existing save records need no migration.
+
+## 0.15.1 — rotate portrait sets for every promotion
+
+- Give every new promotion the portrait set of its native gender/skin category instead of only the
+  first one per save. Within a category the least-used set in the save is chosen, so additional
+  sets added later rotate automatically; today each category has one set, which repeats.
+- Allow the same portrait set on several leaders in one save. Existing assignments, including
+  0.14.0 male/White and 0.14.3 female_01 records, are kept; older leaders without a set stay default.
+
+## 0.15.0 — personal XP and mentor perk trees (#67, PR #71)
+
+- Give each new promotion a fresh, per-leader native perk tree of 16 options (5/5/4/2 across
+  Tiers 1–4) from a curated native infantry pool. Higher Veterancy XP bands add advanced options;
+  unknown XP uses only the base pool.
+- Offer up to one (two from Veteran) transferable perks actually learned by the mentor (current
+  commander, else most-served hired leader, else native last leader) at their native tier. Nothing
+  is granted automatically; unique, command and scripted perks are excluded.
+- Keep the accepted generic initial perk. Save the generated tree in the sidecar and rebuild it
+  exactly on load, before native roster deserialization; it is never rerolled.
+- Records from earlier versions keep the shared generic tree; purchased perks are never changed.
+- Ships together with the 0.14.4 six-portrait profile work. In-game acceptance is pending.
+
+## 0.14.4 — complete the six approved portrait profiles
+
+- Ship all six #69 portrait sets and assign the first future promotion per native gender/skin
+  combination: male and female White, Brown and Black.
+- Keep one profile per combination and save; later matching promotions retain default art and dynamic
+  badges continue to come from the default gendered assets.
+- Keep 0.14.0 male/White and 0.14.3 female_01 sidecars loadable without save migration.
+
 ## 0.14.3 — associate the approved portrait bank with matching leaders
 
 - Assign the first future male/Brown promotion per save to `promoted_male_01`, the first female

@@ -101,7 +101,18 @@ internal static class PromotionRules
             (selection.ExcludedCount > 0 ? $" ({selection.ExcludedCount} already promoted skipped).\n" : ".\n") +
             $"Missions: {soldier.Missions}; XP: {xp}; assigned: {(soldier.Assigned ? "yes" : "no")}.\n" +
             (selection.PartialXp ? "Incomplete XP coverage: native missions used for EVERY candidate.\n" : "") +
-            $"Leader AGI/WS/VAL/TOU/VIT/PRE/POS: {string.Join(" / ", record.InitialAttributes)}.\n\n" + footer;
+            $"Leader AGI/WS/VAL/TOU/VIT/PRE/POS: {string.Join(" / ", record.InitialAttributes)}.\n" +
+            PerkSummary(record) + "\n" + footer;
+    }
+
+    private static string PerkSummary(PromotionRecord record)
+    {
+        if (record.PerkSchemaVersion == 0 || record.GeneratedPerks == null) return "";
+        int advanced = record.GeneratedPerks.Count(p => p.Origin == PerkGeneration.OriginAdvanced);
+        int mentor = record.GeneratedPerks.Count(p => p.Origin == PerkGeneration.OriginMentor);
+        return $"Personal perk tree: {record.GeneratedPerks.Count} options, {advanced} advanced " +
+            $"(XP {(record.XpAtPromotion.HasValue ? "band " + PerkGeneration.Band(record.XpAtPromotion) : "unknown: base pool")}), " +
+            $"{mentor} learned from the mentor. Perks are still bought with Promotion Points.\n";
     }
 
     private static string Clean(string value, string fallback)

@@ -119,6 +119,11 @@ and the prebuilt John/Jane voice bundle) is inventoried by `build_kit.py` and st
 `compiled/` tree by the installer; `jiangyu compile --clean` does not preserve it, so it must
 never be authored under `compiled/`.
 
+The BuildKit verifier retains a 100 MiB expanded limit for source/non-audio payloads.
+The two exact SFP voice bundle paths have a separate combined 128 MiB allowance;
+all inventory, path-safety and SHA256 checks still apply. This permits the private
+XCOM test kit without removing archive size protection. Covered by `test_distribution.py`.
+
 Regression guards: pad three-part versions before asking `.NET Version.ToString(4)`;
 reject renamed/ambiguous duplicates rather than moving unrelated folders; preserve the
 legacy WRR override inside staging for its existing runtime migration; journal partial

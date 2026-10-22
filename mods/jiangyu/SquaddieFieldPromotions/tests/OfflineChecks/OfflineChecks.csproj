@@ -8,9 +8,11 @@
   <ItemGroup>
     <Compile Include="../../code/PromotionRules.cs" Link="PromotionRules.cs" />
     <Compile Include="../../code/PromotionRecord.cs" Link="PromotionRecord.cs" />
+    <Compile Include="../../code/PromotionVoiceProfiles.cs" Link="PromotionVoiceProfiles.cs" />
     <Compile Include="../../code/PromotionTemplateText.cs" Link="PromotionTemplateText.cs" />
     <Compile Include="../../code/PromotionIdentity.cs" Link="PromotionIdentity.cs" />
     <Compile Include="../../code/PromotionProgression.cs" Link="PromotionProgression.cs" />
+    <Compile Include="../../code/PerkGeneration.cs" Link="PerkGeneration.cs" />
     <Compile Include="../../code/DynamicBadgeFactory.cs" Link="DynamicBadgeFactory.cs" />
     <Compile Include="../../code/SquaddieServiceHistory.cs" Link="SquaddieServiceHistory.cs" />
     <Compile Include="../../code/PromotionSystem.cs" Link="PromotionSystem.cs" />

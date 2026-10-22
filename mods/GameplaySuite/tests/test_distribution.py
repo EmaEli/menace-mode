@@ -6,6 +6,7 @@ import tempfile
 import unittest
 import zipfile
 from pathlib import Path
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[3]
 TOOLS = ROOT / "mods/GameplaySuite/tools"
@@ -248,6 +249,26 @@ class DistributionTests(unittest.TestCase):
         self.assertIn("Uninventoried source files", source)
         self.assertIn("Duplicate source inventory entry", source)
         self.assertIn("Renamed duplicate package", source)
+
+    def test_verifier_bounds_private_voice_bundles_without_relaxing_source_limit(self):
+        voice = "source/mods/jiangyu/SquaddieFieldPromotions/runtime_assets/voice/sfp_xcom_voicepacks.sfpbundle"
+        data, _ = BUILDER.make_archive({voice: b"audio", "source/example.cs": b"source"}, {}, "test-base")
+        for voice_mib, source_mib, accepted in ((104, 90, True), (129, 1, False), (1, 101, False)):
+            with self.subTest(voice_mib=voice_mib, source_mib=source_mib):
+                with zipfile.ZipFile(io.BytesIO(data)) as archive:
+                    entries = archive.infolist()
+                for entry in entries:
+                    if entry.filename == voice:
+                        entry.file_size = voice_mib * 1024 * 1024
+                    elif entry.filename == "source/example.cs":
+                        entry.file_size = source_mib * 1024 * 1024
+                with patch.object(zipfile.ZipFile, "infolist", return_value=entries):
+                    if accepted:
+                        files, _ = VERIFIER.read_archive(io.BytesIO(data))
+                        self.assertEqual(files[voice], b"audio")
+                    else:
+                        with self.assertRaisesRegex(ValueError, "Unexpectedly large"):
+                            VERIFIER.read_archive(io.BytesIO(data))
 
     def test_verifier_detects_modified_payload(self):
         data, _ = BUILDER.make_archive({"source/example.cs": b"good"}, {}, "test-base")

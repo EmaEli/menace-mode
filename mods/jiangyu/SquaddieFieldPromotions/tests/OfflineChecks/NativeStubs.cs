@@ -384,6 +384,8 @@ namespace SquaddieFieldPromotions
         internal bool AssetsPresent = true;
         internal bool HasPendingVoices => Installed.Count + Rehydrated.Count > 0 && VoicePrepareCalls == 0;
         internal void Unload() => Unloaded = true;
+        internal bool TryAssignVoiceSet(PromotionLedger ledger, PromotionRecord record) => false;
+        internal int AssignMissingVoiceSets(PromotionLedger ledger) => 0;
         internal static PromotionRecord CreateRecord(Il2CppMenace.States.StrategyState state, Selection selection,
             int badgeIndex, SquaddieServiceRecord service = null, string sourceLeaderTemplateId = "")
         {
@@ -396,6 +398,7 @@ namespace SquaddieFieldPromotions
                 BadgeIndex = badgeIndex, VoicePitchPreset = VoicePitchProfiles.ForBadge(badgeIndex), InitialAttributes = PromotionRules.Attributes(selection.UsesXp ? selection.Soldier.Xp : null),
             };
             PromotionIdentity.Populate(record, selection.Soldier, service, sourceLeaderTemplateId);
+            PerkGeneration.Generate(record, selection.UsesXp ? selection.Soldier.Xp : null, null);
             record.Validate();
             return record;
         }

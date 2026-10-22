@@ -1,10 +1,39 @@
-# Squaddie Field Promotions 0.14.3
+# Squaddie Field Promotions 0.15.7
 
-> **Experimental 0.14.3 test build installed on 21 October; in-game acceptance is pending.**
-> It associates the approved #69 portrait sets with the first matching future promotion per save:
-> male/Brown → `promoted_male_01`, female → `promoted_female_01`, male/Black → `promoted_male_02`.
-> Subsequent promotions in a category use the default art; dynamic badges remain unchanged. New
-> male/White promotions keep the default, while 0.14.0 male/White records remain loadable.
+> **Experimental 0.15.7 test candidate; in-game acceptance is pending.**
+> XCOM leaders use only their assigned speaker: every unmapped event is silent, with no caption,
+> rather than borrowing John/Jane audio. This includes tactical reactions, hiring and promotion barks.
+> Each gender/skin category now has exactly four portrait sets: Brown `01`/`04`/`06`/`10`,
+> Black `02`/`05`/`08`/`12`, and White `03`/`07`/`09`/`11`. Each category rotates least-used-first.
+> Version 0.15.6 adds set `10` to Brown, `11` to White, and `12` to Black.
+>
+> Version 0.15.5 placed set `06` with Brown. Existing saves that received set `06` as White in 0.15.3/0.15.4
+> keep their assigned portrait and remain loadable.
+>
+> Version 0.15.5 balanced categories to three sets each: Brown `01`/`04`/`06`,
+> Black `02`/`05`/`08`, and White `03`/`07`/`09`.
+> Version 0.15.5 places set `06` with Brown. Existing saves that received set `06` as White in 0.15.3/0.15.4
+> keep their assigned portrait and remain loadable.
+>
+> Version 0.15.4 added `07` (black hair/light skin), `08` (black hair/dark skin), and `09` (red hair/light skin).
+> Sets `07` and `09` join White; `08` joins Black. Set `06` was temporarily grouped with White in that release.
+>
+> Version 0.15.3 added six approved #69 portrait sets, giving two per native gender/skin category:
+> male/Brown `01`+`04`, male/Black `02`+`05`, male/White `03`+`06`, and the same numbers for female.
+> Version 0.15.2 routes direct per-tier perk-promotion barks through each promoted leader's John/Jane
+> voice bank. This closes the source-leader audio path that speaker tags and tactical barks do not use.
+> Version 0.15.1 gives **every** new promotion a portrait set matching its native gender/skin,
+> rotating least-used first within that category. Additional sets automatically join the rotation.
+>
+> Since 0.15.0, each new promotion receives its own saved 16-option perk tree (5/5/4/2 across Tiers 1–4), with
+> more advanced options at higher Veterancy XP and up to two skills learned from the mentor offered
+> as choices (#67/#71). Leaders promoted before 0.15.0 keep the generic tree and purchased perks.
+>
+> Version 0.14.4 shipped all six approved #69 portrait sets:
+> male/Brown → `promoted_male_01`, male/Black → `promoted_male_02`, male/White → `promoted_male_03`;
+> female/Brown → `promoted_female_01`, female/Black → `promoted_female_02`, female/White → `promoted_female_03`.
+> Up to 0.15.0 only the first matching promotion per save received a set; dynamic badges remain unchanged.
+> Previously persisted 0.14.0 male/White and 0.14.3 female_01 assignments remain loadable.
 > Version 0.14.2's five separately captioned tactical normal-click responses remain included; each
 > uses existing John/Jane recordings and a matching subtitle, while the direct Hire-screen field stays
 > fixed to “Yes, sir.” Test all features only in a disposable campaign (#69/#70).
@@ -47,11 +76,12 @@ Vehicle crew promotions ([#66](https://github.com/EmaEli/menace-mode/issues/66))
   unique `UnitLeaderTemplate`/`SpeakerTemplate` cloned from the matching vanilla
   gendered leader, with the soldier's name, nickname, skin, balaclava portraits from
   `runtime_assets/<gender>/`, a black shield with a dynamic letter (A, B, C, ...), and the John/Jane voice
-  bank from `runtime_assets/voice/` when it loads; otherwise the native donor voice stays.
-- The first future male/Brown, female, and male/Black promotions in each save can use the six images
-  in `runtime_assets/promoted_male_01/`, `runtime_assets/promoted_female_01/`, and
-  `runtime_assets/promoted_male_02/`, respectively. Each profile changes portrait fields only,
-  leaving dynamic badges unchanged; later matching promotions use the default artwork.
+  bank from `runtime_assets/voice/` when it loads; otherwise the matching gender donor voice stays.
+- Every new promotion receives an approved six-image set for its native gender/skin combination from
+  `runtime_assets/promoted_<gender>_NN/`: Brown `01`/`04`/`06`/`10`, Black `02`/`05`/`08`/`12`, White `03`/`07`/`09`/`11`,
+  for both `male` and `female`. Within a category the least-used set in the save is chosen
+  (ties keep list order), so the sets alternate. Each profile changes portrait
+  fields only, leaving dynamic badges unchanged. Leaders promoted before 0.15.1 keep their current art.
 - The generated leader receives a persistent `UnitTitle` based on the squaddie's last unit
   (or a varied Imperius designation) and an individual section/badge. Its `UnitDescription`
   carries the prior unit/commander, native lifetime mission count, optional Veterancy rank,
@@ -64,9 +94,21 @@ Vehicle crew promotions ([#66](https://github.com/EmaEli/menace-mode/issues/66))
   promoted leaders use the game's generic appearance even if **Show Unique Leader Heads**
   is enabled. Turn it off to restore gender-matched custom heads.
 - Attributes: baseline **65/65/62/50/50/5/45** (AGI/WS/VAL/TOU/VIT/PRE/POS) plus a
-  Veterancy rank-aligned bonus. Promoted leaders use the Generic Low Level Squad Leaders
-  infantry perk tree (16 perks, Tiers 1–4) and its generic initial perk instead of the donor's
-  progression. Rebinding the template does not rewrite already acquired perks saved on a leader.
+  Veterancy rank-aligned bonus. All promoted leaders keep the accepted generic initial perk
+  instead of the donor's.
+- **Personal perk trees (0.15.0):** at redemption, each new leader gets a fresh native perk tree
+  of 16 options (5/5/4/2 across Tiers 1–4) drawn from a curated pool of native infantry perks,
+  never Singh's tree. The choice is stable per leader and saved in the sidecar; save/load, later XP,
+  mentor changes or mod updates never reroll it. Promotion Points and rank gates still decide
+  when an option can be bought.
+  - Veterancy XP at promotion adds advanced options per band (Green 0, Combat Tested 1,
+    Hardened 2, Regular 3, Veteran 6, Crack 7, Elite 8). Unknown XP uses only the base pool.
+  - Mentor: the soldier's current commander, else the hired leader with the most recorded
+    service, else the native last leader. Up to one (two from Veteran) of the mentor's
+    *learned* perks from a transferable allowlist are offered at their native tier; nothing
+    is granted automatically. Unique, command and scripted perks are never inherited.
+  - Leaders promoted before 0.15.0 keep the Generic Low Level Squad Leaders tree; already
+    purchased perks are never removed, refunded or replaced.
 - All promoted leaders, including older records, rebuild the black letter badge after loading.
   SFP-only overrides of native `GetBadge` / `GetBadgeWhite` bypass the shared infantry donor
   emblem used by the tactical overhead HUD. Vanilla leader/unit templates remain unchanged.
@@ -117,7 +159,30 @@ The kit also ships the module's raw `runtime_assets/` (portraits, prebuilt John/
 voice bundle with its build receipt, voice routes); the installer stages them next to
 the compiled package because `jiangyu compile --clean` does not preserve them.
 
-## Acceptance test (0.14.3 installed; in-game checks pending)
+## Acceptance test (0.15.7 test candidate; in-game checks pending)
+
+Version 0.15.7 voices: load existing promoted leaders and test selection, movement, attacks,
+combat reactions, hiring and perk purchases. Mapped lines must keep that leader's assigned XCOM
+speaker; unmapped events must be silent without subtitles. No John/Jane voice should interrupt
+an XCOM profile. Repeat after save/restart/load. Existing voice assignments and saves are unchanged.
+
+Version 0.15.6 portraits: promote several soldiers of the same gender/skin. Brown should rotate
+`01`, `04`, `06`, `10`; Black should rotate `02`, `05`, `08`, `12`; White should rotate `03`, `07`, `09`, `11`,
+then repeat. Check Hire, strategy and tactical views and save/restart/load.
+
+Version 0.15.2 perk-promotion bark: with male and female promoted leaders, buy a new perk at an
+available tier. The spoken response should use that leader's assigned John/Jane voice profile,
+not the source leader's voice. Repeat after save/restart/load to check the rebuilt template keeps
+the direct bark assignment.
+
+Version 0.15.1 portrait rotation: promote two soldiers of the same gender/skin. Both must show the
+matching portrait set (not the balaclava default) with their own letter badge, and keep it after
+save, restart and load. Leaders promoted earlier keep their existing portraits.
+
+Version 0.15.0 personal perk trees: promote two soldiers with different XP (one assigned to a
+leader with purchased perks). Each new leader must show 16 options by tier, different between
+the two, with the generic initial perk. Buy a perk with Promotion Points, then save, restart and
+load: the tree and purchase must be unchanged. Pre-0.15 promoted leaders must keep their tree.
 
 The user verified the generic perk progression in 0.12.0, but rejected the source-emblem
 overlay and reported Singh's icon still above tactical units. Version 0.12.1 restores black
@@ -128,9 +193,11 @@ assignments loadable without changing saves. Version 0.14.2 adds five separate t
 responses (“Right.”, “Stay sharp.”, “I've got this.”, “Alright, let's move!”, and “Let's move!”),
 each with a matching subtitle; repeatedly select a promoted leader and check that the spoken phrase
 and subtitle stay paired. Hire-screen selection still uses its single fixed “Yes, sir.” sound.
-Version 0.14.3 assigns one portrait set per matching category and save: male/Brown (`male_01`),
-female (`female_01`), and male/Black (`male_02`). Verify each in Hire and tactical views, confirm
-the dynamic badges remain present, and reload the save to verify the assignments persist.
+Version 0.14.4 assigns one portrait set per native gender/skin category and save: male/Brown (`male_01`),
+male/Black (`male_02`), male/White (`male_03`), female/Brown (`female_01`), female/Black (`female_02`),
+and female/White (`female_03`). Verify all six in Hire and tactical views, confirm the dynamic badges
+remain present, and reload the save to verify the assignments persist. Legacy 0.14.0 male/White and
+0.14.3 female_01 sidecars must continue to load without changing saves.
 Version 0.13.0 adds
 five persisted pitch profiles; test startup time/memory and compare the new leaders' Hire and
 tactical barks before treating this prototype as accepted. Version
@@ -170,11 +237,11 @@ unmistakable in settings; visual confirmation of that warning remains pending.
    The living soldier count must decrease by exactly one per new promotion, and its exact source
    ID must no longer be in the old squad/reserve or listed as killed. Hire and assign the new leader.
 6. Redeem a second dossier: a different soldier is promoted (badge B); the first is skipped.
-7. Inspect the leader's perks: it should have the generic initial perk and 16-entry infantry
-   tree from Tiers 1–4, not Singh's donor tree. Confirm black letter badges in strategy/drag views
+7. Inspect the leader's perks: it should have the generic initial perk and a personal 16-entry
+   infantry tree from Tiers 1–4, not Singh's donor tree. Confirm black letter badges in strategy/drag views
    and above the promoted squad in tactical, with no Singh emblem (also when selected/status changes).
 8. Buy a perk, **save, quit to desktop, relaunch, load**, and confirm the leader's identity,
-   badge and generic progression rebuild while the purchased perk remains present. Check start/load
+   badge and saved progression rebuild while the purchased perk remains present. Check start/load
    time and memory. For five new same-gender leaders with badges A–E, compare Hire and tactical barks:
    they should retain the same voice/profile per leader and cycle through 1.00, 0.90, 0.95, 1.05,
    1.10; existing leaders from older sidecars should remain neutral.

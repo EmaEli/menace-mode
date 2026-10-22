@@ -1,6 +1,6 @@
 {
   "name": "SquaddieFieldPromotions",
-  "version": "0.14.3",
+  "version": "0.15.7",
   "author": "Luca / OpenAI",
   "description": "Promotes the best living squaddie to a persistent squad leader with per-unit service history, individual designation and optional Veterancy integration. Generic heads by default.",
   "depends": ["Jiangyu >= 1.4.8", "MenaceModSettings >= 0.6.1"]

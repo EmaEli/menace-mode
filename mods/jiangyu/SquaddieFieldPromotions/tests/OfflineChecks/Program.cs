@@ -80,6 +80,102 @@ var oldVoiceJson = System.Text.Json.JsonSerializer.Serialize(R(selection))
     .Replace(",\"VoicePitchPreset\":0", "");
 Check(System.Text.Json.JsonSerializer.Deserialize<PromotionRecord>(oldVoiceJson).VoicePitchPreset == 0,
     "pre-feature save records without voice pitch stay neutral");
+Check(JsonSerializer.Deserialize<PromotionRecord>("{}").VoiceSetId == "",
+    "pre-feature save records have no assigned voice pack");
+string voiceCatalogJson = JsonSerializer.Serialize(new
+{
+    schemaVersion = 1,
+    bundleFile = PromotionVoiceCatalog.BundleFile,
+    receiptFile = PromotionVoiceCatalog.ReceiptFile,
+    profiles = new[]
+    {
+        new { id = "aaron", sourcePack = "Aaron", gender = "male", kind = "human", roleEvidence = Array.Empty<string>(),
+            routes = new Dictionary<string, object> { ["ready|0"] = new { assets = new[] { "xcom_aaron_001" }, subtitle = "Ready." } } },
+        new { id = "beau", sourcePack = "Beau", gender = "male", kind = "human", roleEvidence = Array.Empty<string>(),
+            routes = new Dictionary<string, object> { ["ready|0"] = new { assets = new[] { "xcom_beau_001" }, subtitle = "Go." } } },
+        new { id = "bella", sourcePack = "Bella", gender = "female", kind = "human", roleEvidence = Array.Empty<string>(),
+            routes = new Dictionary<string, object> { ["ready|0"] = new { assets = new[] { "xcom_bella_001" }, subtitle = "Ready." } } }
+    }
+});
+var voiceCatalog = PromotionVoiceCatalog.Parse(voiceCatalogJson);
+var aaronVoice = voiceCatalog.Find("aaron");
+Check(ReferenceEquals(aaronVoice.ResolveRoute("ready|0"), aaronVoice.Routes["ready|0"]) &&
+    !aaronVoice.ResolveRoute("ready|0").IsSilent,
+    "mapped route keeps the assigned speaker's original clips and caption");
+foreach (var profile in voiceCatalog.Profiles)
+foreach (var missingKey in new[] { "arrival|0", "ally_dead|0", "success|0", "unknown_future_event|99" })
+{
+    var silentRoute = profile.ResolveRoute(missingKey);
+    Check(silentRoute.IsSilent && silentRoute.Subtitle == "" && silentRoute.Assets.Length > 0 &&
+        silentRoute.Assets.All(asset => asset.StartsWith("xcom_" + profile.Id + "_")) &&
+        !profile.Routes.ContainsKey(missingKey),
+        "unmapped route is silent, captionless and never borrows another speaker: " + profile.Id + "/" + missingKey);
+}
+var voiceModRoot = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "../../../../../"));
+var fullVoiceCatalog = PromotionVoiceCatalog.Load(voiceModRoot);
+var genericVoiceRoutes = JsonDocument.Parse(File.ReadAllText(Path.Combine(voiceModRoot,
+    "runtime_assets/voice/voice_routes.json"))).RootElement.GetProperty("routes");
+var allVoiceRouteKeys = genericVoiceRoutes.EnumerateObject().Select(route => route.Name)
+    .Where(key => key.StartsWith("john|")).Select(key => key.Substring(5)).ToArray();
+Check(fullVoiceCatalog.Profiles.Count == 55 && allVoiceRouteKeys.Length == 180,
+    "full private voice catalog and all native SFP routes are included in coverage checks");
+foreach (var profile in fullVoiceCatalog.Profiles)
+foreach (var key in allVoiceRouteKeys)
+{
+    var route = profile.ResolveRoute(key);
+    var mapped = profile.Routes.ContainsKey(key);
+    Check(route.IsSilent == !mapped && (mapped || route.Subtitle == "") &&
+        route.Assets.All(asset => asset.StartsWith("xcom_" + profile.Id + "_")),
+        "full catalog route uses its own speaker or silence: " + profile.Id + "/" + key);
+}
+PromotionRecord LegacyVoiceRecord(int index, int gender)
+{
+    var record = R(selection, index);
+    var token = index.ToString("x32");
+    record.LeaderId = PromotionRecord.LeaderPrefix + token;
+    record.SpeakerId = PromotionRecord.SpeakerPrefix + token;
+    record.NumericGuid = 20000 + index;
+    record.SourceSquaddieId = 300 + index;
+    record.Gender = gender;
+    record.VoiceSetId = "";
+    return record;
+}
+var voiceLedger = new PromotionLedger();
+var voiceRecord = new PromotionRecord { Gender = 0 };
+Check(PromotionVoiceAssignment.TryAssignRotatingProfile(voiceLedger, voiceRecord, voiceCatalog) &&
+    voiceRecord.VoiceSetId == "aaron", "first promotion receives first compatible unused voice profile");
+voiceLedger.Records.Add(voiceRecord);
+var nextVoiceRecord = new PromotionRecord { Gender = 0 };
+Check(PromotionVoiceAssignment.TryAssignRotatingProfile(voiceLedger, nextVoiceRecord, voiceCatalog) &&
+    nextVoiceRecord.VoiceSetId == "beau", "voice rotation uses another unused profile before reuse");
+voiceLedger.Records.Add(nextVoiceRecord);
+var femaleVoiceRecord = new PromotionRecord { Gender = 1 };
+Check(PromotionVoiceAssignment.TryAssignRotatingProfile(voiceLedger, femaleVoiceRecord, voiceCatalog) &&
+    femaleVoiceRecord.VoiceSetId == "bella", "voice selection is constrained to the leader's gender");
+PromotionVoiceAssignment.ValidateAssignment(femaleVoiceRecord, voiceCatalog);
+try
+{
+    PromotionVoiceAssignment.ValidateAssignment(new PromotionRecord { Gender = 1, VoiceSetId = "aaron" }, voiceCatalog);
+    throw new Exception("FAILED: mismatched voice profile gender was accepted");
+}
+catch (InvalidDataException) { Check(true, "saved voice assignments reject gender mismatches"); }
+var legacyVoiceLedger = new PromotionLedger();
+var previouslyAssignedVoice = LegacyVoiceRecord(0, 0);
+previouslyAssignedVoice.VoiceSetId = "aaron";
+var legacyMaleVoice1 = LegacyVoiceRecord(1, 0);
+var legacyMaleVoice2 = LegacyVoiceRecord(2, 0);
+var legacyFemaleVoice = LegacyVoiceRecord(3, 1);
+legacyVoiceLedger.Records.AddRange(new[]
+    { previouslyAssignedVoice, legacyMaleVoice1, legacyMaleVoice2, legacyFemaleVoice });
+Check(PromotionVoiceAssignment.AssignMissingProfiles(legacyVoiceLedger, voiceCatalog) == 3 &&
+    legacyMaleVoice1.VoiceSetId == "beau" && legacyMaleVoice2.VoiceSetId == "aaron" &&
+    legacyFemaleVoice.VoiceSetId == "bella" && previouslyAssignedVoice.VoiceSetId == "aaron",
+    "legacy voice fallbacks receive stable gender-matched profiles without changing existing assignments");
+Check(PromotionVoiceAssignment.AssignMissingProfiles(legacyVoiceLedger, voiceCatalog) == 0 &&
+    legacyMaleVoice1.VoiceSetId == "beau" && legacyMaleVoice2.VoiceSetId == "aaron",
+    "legacy runtime voice assignment does not reroll on repeated rehydration");
+Reject(() => PromotionVoiceCatalog.Parse(voiceCatalogJson.Replace("\"kind\":\"human\"", "\"kind\":\"robot\"")),
+    "catalog rejects non-human voice profiles");
 Check(PromotionRules.Describe(selection, R(selection)).Contains("Incomplete XP coverage"), "partial-coverage reason visible");
 var excluded = PromotionRules.Choose(new[] { C(1, 2, 999), C(2, 3), C(3, xp: 5) }, new HashSet<int> { 2 });
 Check(excluded.Soldier.Id == 1 && excluded.UsesXp && excluded.LivingCount == 2 && excluded.ExcludedCount == 1,
@@ -105,6 +201,79 @@ Check(JsonSerializer.Deserialize<PromotionRecord>("{}").SourceLeaderTemplateId =
     "older save sidecars without provenance default to unavailable");
 Check(JsonSerializer.Deserialize<PromotionRecord>("{}").PortraitProfile == "",
     "older save sidecars without portrait assignments keep default artwork");
+var legacyPerkJson = JsonSerializer.Deserialize<PromotionRecord>(
+    JsonSerializer.Serialize(R(selection)).Replace("\"PerkSchemaVersion\":1", "\"PerkSchemaVersion\":0"));
+Check(JsonSerializer.Deserialize<PromotionRecord>("{}").PerkSchemaVersion == 0, "pre-0.15 sidecars default to the shared generic tree");
+legacyPerkJson.GeneratedPerks = null; legacyPerkJson.InitialPerkId = null;
+legacyPerkJson.Validate();
+Check(true, "legacy records without a perk snapshot remain loadable");
+PromotionRecord PerkRecord(int? xp, MentorSnapshot mentor = null, string leaderId = null)
+{
+    var record = R(new Selection(C(950, xp: xp), 1, xp.HasValue, false));
+    if (leaderId != null) record.LeaderId = leaderId;
+    PerkGeneration.Generate(record, xp, mentor);
+    return record;
+}
+foreach (int? xp in new int?[] { null, 0, 249, 250, 499, 500, 999, 1000, 1999, 2000, 3999, 4000, 7999, 8000, int.MaxValue })
+{
+    var perks = PerkRecord(xp);
+    var tiers = perks.GeneratedPerks.Select(p => p.Tier).ToArray();
+    Check(perks.PerkSchemaVersion == PerkGeneration.Schema && perks.GeneratedPerks.Count == 16 &&
+        tiers.Count(t => t == 1) == 5 && tiers.Count(t => t == 2) == 5 && tiers.Count(t => t == 3) == 4 &&
+        tiers.Count(t => t == 4) == 2 && tiers.SequenceEqual(tiers.OrderBy(t => t)) &&
+        perks.GeneratedPerks.Select(p => p.Id).Distinct().Count() == 16 &&
+        perks.InitialPerkId == PromotionProgression.InitialPerkId &&
+        perks.GeneratedPerks.All(p => p.Id != perks.InitialPerkId) && perks.XpAtPromotion == xp,
+        "generated tree 5/5/4/2 without duplicates, accepted generic initial perk, XP " + (xp?.ToString() ?? "unknown"));
+}
+int AdvancedCount(int? xp) => PerkRecord(xp).GeneratedPerks.Count(p => p.Origin == PerkGeneration.OriginAdvanced);
+Check(AdvancedCount(null) == 0 && AdvancedCount(249) == 0, "unknown XP and Green use only the base pool");
+Check(AdvancedCount(250) == 1 && AdvancedCount(500) == 2 && AdvancedCount(1000) == 3 &&
+    AdvancedCount(2000) == 6 && AdvancedCount(4000) == 7 && AdvancedCount(8000) == 8,
+    "advanced options grow with each Veterancy XP band");
+var stableId = PromotionRecord.LeaderPrefix + new string('a', 32);
+var firstTree = PerkRecord(2000, null, stableId).GeneratedPerks.Select(p => p.Id + ":" + p.Tier);
+var secondTree = PerkRecord(2000, null, stableId).GeneratedPerks.Select(p => p.Id + ":" + p.Tier);
+Check(firstTree.SequenceEqual(secondTree), "same leader identity always produces the same tree");
+Check(!firstTree.SequenceEqual(PerkRecord(2000, null, PromotionRecord.LeaderPrefix + new string('b', 32))
+    .GeneratedPerks.Select(p => p.Id + ":" + p.Tier)), "different promotions get different trees");
+var mentor = new MentorSnapshot("squad_leader.lim",
+    new[] { "perk.stubborn", "perk.determined", "perk.fortify", "perk.power_in_numbers", "perk.command_rally", "perk.firing_line" });
+int MentorCount(int? xp, MentorSnapshot m) => PerkRecord(xp, m).GeneratedPerks.Count(p => p.Origin == PerkGeneration.OriginMentor);
+Check(MentorCount(0, mentor) == 0 && MentorCount(null, mentor) == 0, "Green or unknown XP inherits no mentor perks");
+Check(MentorCount(250, mentor) == 1 && MentorCount(2000, mentor) == 2 && MentorCount(8000, mentor) == 2,
+    "mentor inheritance is capped at one option, two from Veteran");
+var mentored = PerkRecord(8000, mentor);
+Check(mentored.MentorLeaderTemplateId == "squad_leader.lim" &&
+    mentored.GeneratedPerks.Where(p => p.Origin == PerkGeneration.OriginMentor)
+        .All(p => PerkGeneration.MentorTiers.TryGetValue(p.Id, out int tier) && tier == p.Tier) &&
+    !mentored.GeneratedPerks.Any(p => p.Id == "perk.power_in_numbers" || p.Id == "perk.command_rally"),
+    "mentor perks keep their tier and unique/command perks are never inherited");
+Check(PerkRecord(500, new MentorSnapshot("squad_leader.lim", new[] { "perk.fortify" }))
+    .GeneratedPerks.All(p => p.Origin != PerkGeneration.OriginMentor), "tier-3 mentor perks need Veteran XP");
+var roundTrip = JsonSerializer.Deserialize<PromotionRecord>(JsonSerializer.Serialize(mentored));
+roundTrip.Validate();
+Check(roundTrip.GeneratedPerks.Select(p => p.Id + p.Tier + p.Origin)
+    .SequenceEqual(mentored.GeneratedPerks.Select(p => p.Id + p.Tier + p.Origin)) &&
+    roundTrip.XpAtPromotion == 8000, "perk snapshot survives the save sidecar unchanged");
+void RejectPerks(Action<PromotionRecord> corrupt, string name)
+{
+    var bad = JsonSerializer.Deserialize<PromotionRecord>(JsonSerializer.Serialize(mentored));
+    corrupt(bad);
+    Reject(() => bad.Validate(), name);
+}
+RejectPerks(r => r.PerkSchemaVersion = 2, "unknown perk schema rejected");
+RejectPerks(r => r.GeneratedPerks.RemoveAt(0), "missing perk entry rejected");
+RejectPerks(r => r.GeneratedPerks[1].Id = r.GeneratedPerks[0].Id, "duplicate perk rejected");
+RejectPerks(r => r.GeneratedPerks[0].Id = r.InitialPerkId, "initial perk duplicated in tree rejected");
+RejectPerks(r => r.GeneratedPerks[0].Tier = 4, "out-of-order tier rejected");
+RejectPerks(r => r.GeneratedPerks[0].Origin = "Gift", "unknown origin rejected");
+RejectPerks(r => r.GeneratedPerks[0].Id = "skill.x", "non-perk ID rejected");
+RejectPerks(r => r.InitialPerkId = "", "missing initial perk rejected");
+RejectPerks(r => r.XpAtPromotion = -1, "negative XP snapshot rejected");
+RejectPerks(r => r.GeneratedPerks = null, "missing snapshot list rejected");
+Check(PromotionRules.Describe(selection, mentored).Contains("Personal perk tree: 16 options"), "promotion report shows the personal tree");
+
 PromotionRecord PortraitCandidate(int id, int gender, int skinColor) =>
     R(new Selection(C(id, gender: gender, skinColor: skinColor), 1, false, false));
 var portraitLedger = new PromotionLedger();
@@ -112,47 +281,190 @@ var femaleBrownPortrait = PortraitCandidate(910, 1, 1);
 var firstBrownMalePortrait = PortraitCandidate(912, 0, 1);
 var whiteMalePortrait = PortraitCandidate(911, 0, 0);
 var blackMalePortrait = PortraitCandidate(917, 0, 2);
+var blackFemalePortrait = PortraitCandidate(921, 1, 2);
+var whiteFemalePortrait = PortraitCandidate(922, 1, 0);
 femaleBrownPortrait.BadgeIndex = 0;
 firstBrownMalePortrait.BadgeIndex = 1;
 blackMalePortrait.BadgeIndex = 2;
-Check(PromotionPortraitAssignment.TryAssignFirstMatchingProfile(portraitLedger, femaleBrownPortrait) &&
-    femaleBrownPortrait.PortraitProfile == PromotionPortraitAssignment.Female01,
-    "first future female promotion receives the female portrait profile");
-portraitLedger.Records.Add(femaleBrownPortrait);
-Check(!PromotionPortraitAssignment.TryAssignFirstMatchingProfile(portraitLedger, PortraitCandidate(918, 1, 0)),
-    "later female promotions keep the default portrait after female_01 is claimed");
-Check(!PromotionPortraitAssignment.TryAssignFirstMatchingProfile(portraitLedger, whiteMalePortrait) &&
-    whiteMalePortrait.PortraitProfile == "", "male White/redhead promotion keeps the default portrait");
-Check(PromotionPortraitAssignment.TryAssignFirstMatchingProfile(portraitLedger, firstBrownMalePortrait) &&
-    firstBrownMalePortrait.PortraitProfile == PromotionPortraitAssignment.MaleBrown01,
-    "first future male Brown promotion receives promoted_male_01");
-portraitLedger.Records.Add(firstBrownMalePortrait);
-var laterBrownMalePortrait = PortraitCandidate(913, 0, 1);
-Check(!PromotionPortraitAssignment.TryAssignFirstMatchingProfile(portraitLedger, laterBrownMalePortrait) &&
-    laterBrownMalePortrait.PortraitProfile == "", "later male Brown promotions keep the default portrait");
-Check(PromotionPortraitAssignment.TryAssignFirstMatchingProfile(portraitLedger, blackMalePortrait) &&
-    blackMalePortrait.PortraitProfile == PromotionPortraitAssignment.MaleBlack02,
-    "first future male Black promotion receives promoted_male_02");
-portraitLedger.Records.Add(blackMalePortrait);
-Check(!PromotionPortraitAssignment.TryAssignFirstMatchingProfile(portraitLedger, PortraitCandidate(919, 0, 2)),
-    "later male Black promotions keep the default portrait after male_02 is claimed");
+blackFemalePortrait.BadgeIndex = 3;
+whiteMalePortrait.BadgeIndex = 4;
+whiteFemalePortrait.BadgeIndex = 5;
+void AssignsPortrait(PromotionRecord record, string expected, string name)
+{
+    Check(PromotionPortraitAssignment.TryAssignRotatingProfile(portraitLedger, record) &&
+        record.PortraitProfile == expected, name);
+    portraitLedger.Records.Add(record);
+}
+AssignsPortrait(femaleBrownPortrait, PromotionPortraitAssignment.Female01, "female/Brown promotion receives promoted_female_01");
+AssignsPortrait(firstBrownMalePortrait, PromotionPortraitAssignment.MaleBrown01, "male/Brown promotion receives promoted_male_01");
+AssignsPortrait(blackMalePortrait, PromotionPortraitAssignment.MaleBlack02, "male/Black promotion receives promoted_male_02");
+AssignsPortrait(blackFemalePortrait, PromotionPortraitAssignment.FemaleBlack02, "female/Black promotion receives promoted_female_02");
+AssignsPortrait(whiteMalePortrait, PromotionPortraitAssignment.MaleWhite03, "male/White promotion receives promoted_male_03");
+AssignsPortrait(whiteFemalePortrait, PromotionPortraitAssignment.FemaleWhite03, "female/White promotion receives promoted_female_03");
+var secondPortraits = new[]
+{
+    (PortraitCandidate(918, 1, 1), PromotionPortraitAssignment.FemaleBrown04),
+    (PortraitCandidate(913, 0, 1), PromotionPortraitAssignment.MaleBrown04),
+    (PortraitCandidate(919, 0, 2), PromotionPortraitAssignment.MaleBlack05),
+    (PortraitCandidate(927, 1, 2), PromotionPortraitAssignment.FemaleBlack05),
+    (PortraitCandidate(928, 0, 0), PromotionPortraitAssignment.MaleWhite07),
+    (PortraitCandidate(925, 1, 0), PromotionPortraitAssignment.FemaleWhite07),
+};
+var thirdPortraits = new[]
+{
+    (PortraitCandidate(932, 1, 1), PromotionPortraitAssignment.FemaleBrown06),
+    (PortraitCandidate(933, 0, 1), PromotionPortraitAssignment.MaleBrown06),
+    (PortraitCandidate(934, 0, 2), PromotionPortraitAssignment.MaleBlack08),
+    (PortraitCandidate(935, 1, 2), PromotionPortraitAssignment.FemaleBlack08),
+    (PortraitCandidate(936, 0, 0), PromotionPortraitAssignment.MaleWhite09),
+    (PortraitCandidate(937, 1, 0), PromotionPortraitAssignment.FemaleWhite09),
+};
+var fourthPortraits = new[]
+{
+    (PortraitCandidate(938, 1, 1), PromotionPortraitAssignment.FemaleBrown10),
+    (PortraitCandidate(939, 0, 1), PromotionPortraitAssignment.MaleBrown10),
+    (PortraitCandidate(940, 0, 2), PromotionPortraitAssignment.MaleBlack12),
+    (PortraitCandidate(941, 1, 2), PromotionPortraitAssignment.FemaleBlack12),
+    (PortraitCandidate(942, 0, 0), PromotionPortraitAssignment.MaleWhite11),
+    (PortraitCandidate(943, 1, 0), PromotionPortraitAssignment.FemaleWhite11),
+};
+var fifthPortraits = new[]
+{
+    (PortraitCandidate(944, 1, 1), PromotionPortraitAssignment.Female01),
+    (PortraitCandidate(945, 0, 1), PromotionPortraitAssignment.MaleBrown01),
+    (PortraitCandidate(946, 0, 2), PromotionPortraitAssignment.MaleBlack02),
+    (PortraitCandidate(947, 1, 2), PromotionPortraitAssignment.FemaleBlack02),
+    (PortraitCandidate(948, 0, 0), PromotionPortraitAssignment.MaleWhite03),
+    (PortraitCandidate(949, 1, 0), PromotionPortraitAssignment.FemaleWhite03),
+};
+var sixthPortraits = new[]
+{
+    (PortraitCandidate(956, 1, 1), PromotionPortraitAssignment.FemaleBrown04),
+    (PortraitCandidate(957, 0, 1), PromotionPortraitAssignment.MaleBrown04),
+    (PortraitCandidate(958, 0, 2), PromotionPortraitAssignment.MaleBlack05),
+    (PortraitCandidate(959, 1, 2), PromotionPortraitAssignment.FemaleBlack05),
+    (PortraitCandidate(960, 0, 0), PromotionPortraitAssignment.MaleWhite07),
+    (PortraitCandidate(961, 1, 0), PromotionPortraitAssignment.FemaleWhite07),
+};
+for (int i = 0; i < secondPortraits.Length; i++)
+{
+    secondPortraits[i].Item1.BadgeIndex = 40 + i;
+    AssignsPortrait(secondPortraits[i].Item1, secondPortraits[i].Item2,
+        "second promotion in a category gets its second set: " + secondPortraits[i].Item2);
+}
+for (int i = 0; i < thirdPortraits.Length; i++)
+{
+    thirdPortraits[i].Item1.BadgeIndex = 50 + i;
+    AssignsPortrait(thirdPortraits[i].Item1, thirdPortraits[i].Item2,
+        "third promotion gets its category's third set: " + thirdPortraits[i].Item2);
+}
+for (int i = 0; i < fourthPortraits.Length; i++)
+{
+    fourthPortraits[i].Item1.BadgeIndex = 60 + i;
+    AssignsPortrait(fourthPortraits[i].Item1, fourthPortraits[i].Item2,
+        "fourth promotion gets its category's fourth set: " + fourthPortraits[i].Item2);
+}
+for (int i = 0; i < fifthPortraits.Length; i++)
+{
+    fifthPortraits[i].Item1.BadgeIndex = 70 + i;
+    AssignsPortrait(fifthPortraits[i].Item1, fifthPortraits[i].Item2,
+        "fifth promotion cycles to the least-used set: " + fifthPortraits[i].Item2);
+}
+for (int i = 0; i < sixthPortraits.Length; i++)
+{
+    sixthPortraits[i].Item1.BadgeIndex = 80 + i;
+    AssignsPortrait(sixthPortraits[i].Item1, sixthPortraits[i].Item2,
+        "sixth promotion gets its category's second set: " + sixthPortraits[i].Item2);
+}
+Check(portraitLedger.Validated().Count == 36, "a save may contain repeated portrait sets across many leaders");
+Check(PromotionPortraitAssignment.AllProfiles.Count() == 24 &&
+    PromotionPortraitAssignment.AllProfiles.Distinct().Count() == 24 &&
+    new[] { (0, 0, 4), (0, 1, 4), (0, 2, 4), (1, 0, 4), (1, 1, 4), (1, 2, 4) }
+        .All(c => PromotionPortraitAssignment.ProfilesFor(c.Item1, c.Item2).Length == c.Item3),
+    "twenty-four portrait sets: four per native gender/skin category");
+foreach (string profile in PromotionPortraitAssignment.AllProfiles)
+{
+    int owners = new[] { (0, 0), (0, 1), (0, 2), (1, 0), (1, 1), (1, 2) }
+        .Count(c => PromotionPortraitAssignment.ProfilesFor(c.Item1, c.Item2).Contains(profile));
+    Check(owners == 1, "portrait set belongs to exactly one category: " + profile);
+}
+var rotationPool = new[] { "set_a", "set_b", "set_c" };
+var rotationLedger = new List<PromotionRecord>();
+var rotationPicks = new List<string>();
+for (int i = 0; i < 7; i++)
+{
+    string pick = PromotionPortraitAssignment.LeastUsed(rotationPool, rotationLedger);
+    rotationPicks.Add(pick);
+    rotationLedger.Add(new PromotionRecord { PortraitProfile = pick });
+}
+Check(rotationPicks.SequenceEqual(new[] { "set_a", "set_b", "set_c", "set_a", "set_b", "set_c", "set_a" }),
+    "multiple sets in a category rotate least-used first");
+Check(PromotionPortraitAssignment.LeastUsed(rotationPool,
+        new[] { new PromotionRecord { PortraitProfile = "set_a" }, new PromotionRecord { PortraitProfile = "set_c" } }) == "set_b",
+    "rotation fills the least-used set after loading an uneven save");
+Check(PromotionPortraitAssignment.LeastUsed(Array.Empty<string>(), rotationLedger) == null,
+    "an empty category keeps the default artwork");
 Check(JsonSerializer.Deserialize<PromotionRecord>(JsonSerializer.Serialize(firstBrownMalePortrait)).PortraitProfile ==
     PromotionPortraitAssignment.MaleBrown01, "portrait assignment persists in the save record");
+Check(JsonSerializer.Deserialize<PromotionRecord>(JsonSerializer.Serialize(whiteFemalePortrait)).PortraitProfile ==
+    PromotionPortraitAssignment.FemaleWhite03, "female_03 persists in save records");
 var duplicatePortrait = PortraitCandidate(914, 0, 1);
-duplicatePortrait.BadgeIndex = 3;
+duplicatePortrait.BadgeIndex = 6;
 duplicatePortrait.PortraitProfile = PromotionPortraitAssignment.MaleBrown01;
-Reject(() => new PromotionLedger { Records = new() { firstBrownMalePortrait, duplicatePortrait } }.Validated(),
-    "a portrait profile cannot be assigned twice in one save");
+Check(new PromotionLedger { Records = new() { firstBrownMalePortrait, duplicatePortrait } }.Validated().Count == 2,
+    "0.14.x sidecars and rotated saves with a repeated portrait set both load");
 var legacyWhitePortrait = PortraitCandidate(915, 0, 0);
 legacyWhitePortrait.PortraitProfile = PromotionPortraitAssignment.MaleBrown01;
 Check(new PromotionLedger { Records = new() { legacyWhitePortrait } }.Validated().Single() == legacyWhitePortrait,
     "0.14.0 male White portrait assignment remains loadable");
+var afterLegacyWhite = PortraitCandidate(929, 0, 1);
+Check(PromotionPortraitAssignment.TryAssignRotatingProfile(
+        new PromotionLedger { Records = new() { legacyWhitePortrait } }, afterLegacyWhite) &&
+    afterLegacyWhite.PortraitProfile == PromotionPortraitAssignment.MaleBrown04 &&
+    legacyWhitePortrait.PortraitProfile == PromotionPortraitAssignment.MaleBrown01,
+    "legacy male_01 assignment is kept and counts as a use, so the next male/Brown leader gets male_04");
+var legacyFemaleWhitePortrait = PortraitCandidate(923, 1, 0);
+legacyFemaleWhitePortrait.PortraitProfile = PromotionPortraitAssignment.Female01;
+Check(new PromotionLedger { Records = new() { legacyFemaleWhitePortrait } }.Validated().Single() == legacyFemaleWhitePortrait,
+    "0.14.3 female White portrait assignment remains loadable");
+var afterLegacyFemale = PortraitCandidate(930, 1, 0);
+Check(PromotionPortraitAssignment.TryAssignRotatingProfile(
+        new PromotionLedger { Records = new() { legacyFemaleWhitePortrait } }, afterLegacyFemale) &&
+    afterLegacyFemale.PortraitProfile == PromotionPortraitAssignment.FemaleWhite03 &&
+    legacyFemaleWhitePortrait.PortraitProfile == PromotionPortraitAssignment.Female01,
+    "legacy female_01 assignment is kept; new female/White leaders get female_03");
+var previousMaleWhite06 = PortraitCandidate(950, 0, 0);
+previousMaleWhite06.BadgeIndex = 80;
+previousMaleWhite06.PortraitProfile = PromotionPortraitAssignment.MaleBrown06;
+var previousFemaleWhite06 = PortraitCandidate(951, 1, 0);
+previousFemaleWhite06.BadgeIndex = 81;
+previousFemaleWhite06.PortraitProfile = PromotionPortraitAssignment.FemaleBrown06;
+Check(new PromotionLedger { Records = new() { previousMaleWhite06, previousFemaleWhite06 } }.Validated().Count == 2,
+    "0.15.3/0.15.4 White assignments of set 06 remain loadable after its category changes");
+var maleWhiteAfterLegacy06 = PortraitCandidate(952, 0, 0);
+Check(PromotionPortraitAssignment.TryAssignRotatingProfile(
+        new PromotionLedger { Records = new() { previousMaleWhite06 } }, maleWhiteAfterLegacy06) &&
+    maleWhiteAfterLegacy06.PortraitProfile == PromotionPortraitAssignment.MaleWhite03 &&
+    previousMaleWhite06.PortraitProfile == PromotionPortraitAssignment.MaleBrown06,
+    "old White 06 portrait remains saved while new White leaders use the corrected pool");
+var alreadyAssigned = PortraitCandidate(931, 0, 2);
+alreadyAssigned.PortraitProfile = PromotionPortraitAssignment.MaleBlack02;
+Check(!PromotionPortraitAssignment.TryAssignRotatingProfile(new PromotionLedger(), alreadyAssigned) &&
+    alreadyAssigned.PortraitProfile == PromotionPortraitAssignment.MaleBlack02,
+    "an existing portrait assignment is never replaced");
+var legacyFemaleBlackPortrait = PortraitCandidate(924, 1, 2);
+legacyFemaleBlackPortrait.PortraitProfile = PromotionPortraitAssignment.Female01;
+Check(new PromotionLedger { Records = new() { legacyFemaleBlackPortrait } }.Validated().Single() == legacyFemaleBlackPortrait,
+    "0.14.3 female Black portrait assignment remains loadable");
 var ineligiblePortrait = PortraitCandidate(916, 1, 1);
 ineligiblePortrait.PortraitProfile = PromotionPortraitAssignment.MaleBrown01;
 Reject(() => ineligiblePortrait.Validate(), "male_01 cannot be stored on another gender");
 var wrongSkinPortrait = PortraitCandidate(920, 0, 1);
 wrongSkinPortrait.PortraitProfile = PromotionPortraitAssignment.MaleBlack02;
 Reject(() => wrongSkinPortrait.Validate(), "male_02 requires the native Black skin color");
+var wrongFemaleSkinPortrait = PortraitCandidate(926, 1, 2);
+wrongFemaleSkinPortrait.PortraitProfile = PromotionPortraitAssignment.FemaleWhite03;
+Reject(() => wrongFemaleSkinPortrait.Validate(), "female_03 requires the native White skin color");
 var provenanceCandidate = C(703, sourceLeaderTemplateId: "squad_leader.weiwu");
 var provenanceRecord = LeaderForge.CreateRecord(null, new Selection(provenanceCandidate, 1, false, false),
     2, null, PromotionProgression.RootSourceTemplateId(provenanceCandidate.SourceLeaderTemplateId, new PromotionLedger()));
@@ -563,7 +875,8 @@ Check(liveLedger.Records.Count == 1 && StrategyState.Current.Roster.Hirable.Coun
     StrategyState.Current.Squaddies.m_AliveSquaddies.Contains(secondSource), "failed removal readback rolls back Hire and source");
 StrategyState.Current.Squaddies.FailReadback = false;
 Check(Redeem(preview).Skip && liveLedger.Records.Count == 2 && liveLedger.Records[1].BadgeIndex == 1 &&
-    liveLedger.Records[1].PortraitProfile == "", "next promotion gets the next badge and keeps the default portrait");
+    liveLedger.Records[1].PortraitProfile == PromotionPortraitAssignment.MaleBrown04,
+    "next promotion gets the next badge and the category's next portrait set");
 Check(!StrategyState.Current.Squaddies.IsAlive(secondSource.Id), "unassigned promoted source also removed");
 Check(UIManager.Current.Last.Text.Contains("1 already promoted skipped") || liveLedger.Records[1].SourceSquaddieId == excluded.Soldier.Id, "second leader from a different soldier");
 Log.Warnings.Clear();
@@ -648,6 +961,19 @@ if (args.Length > 0)
     string root = Path.Combine(args[0], "mods/jiangyu/SquaddieFieldPromotions");
     using var manifest = System.Text.Json.JsonDocument.Parse(File.ReadAllText(Path.Combine(root, "jiangyu.json")));
     string version = manifest.RootElement.GetProperty("version").GetString();
+    var privateVoiceCatalog = PromotionVoiceCatalog.Load(root);
+    if (privateVoiceCatalog != null)
+    {
+        Check(privateVoiceCatalog.Profiles.Count == 55 &&
+            privateVoiceCatalog.Profiles.Count(profile => profile.Gender == "male") == 37 &&
+            privateVoiceCatalog.Profiles.Count(profile => profile.Gender == "female") == 18,
+            "private XCOM catalog contains the 55 human profiles with gender-matched counts");
+        Check(privateVoiceCatalog.Profiles.All(profile => profile.Kind == "human" &&
+            profile.RoleEvidence.Length > 0 && profile.Routes.Count > 0) &&
+            privateVoiceCatalog.Profiles.Any(profile => profile.FuturePilotCandidate) &&
+            privateVoiceCatalog.Profiles.Any(profile => profile.AviationRadioCandidate),
+            "private XCOM catalog validates human routes and future pilot/radio candidate evidence");
+    }
     var xml = System.Xml.Linq.XDocument.Load(Path.Combine(root, "code/SquaddieFieldPromotions.csproj"));
     Check(xml.Descendants("Version").Single().Value == version, "source manifest/project version");
     string dll = Path.Combine(root, "compiled/code/SquaddieFieldPromotions.dll");

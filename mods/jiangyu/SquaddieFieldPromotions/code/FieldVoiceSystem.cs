@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Text.Json;
 using Il2CppInterop.Runtime;
 using Il2CppInterop.Runtime.InteropTypes;
+using Il2CppInterop.Runtime.InteropTypes.Arrays;
 using Il2CppMenace.Strategy;
 using UnityEngine;
 
@@ -49,7 +50,7 @@ internal sealed class FieldVoiceSystem
     private sealed class VoiceProfile
     {
         internal VoiceProfile(string key, string sourceKey, int pitchPreset, string speakerId, string bankName,
-            string conversationPrefix, string assetPrefix, string audioFolder)
+            string conversationPrefix, string assetPrefix, string audioFolder, string voiceSetId = "")
         {
             Key = key;
             SourceKey = sourceKey;
@@ -60,6 +61,7 @@ internal sealed class FieldVoiceSystem
             ConversationPrefix = conversationPrefix;
             AssetPrefix = assetPrefix;
             AudioFolder = audioFolder;
+            VoiceSetId = voiceSetId;
         }
 
         internal string Key { get; }
@@ -72,6 +74,7 @@ internal sealed class FieldVoiceSystem
         internal string ConversationPrefix { get; }
         internal string AssetPrefix { get; }
         internal string AudioFolder { get; }
+        internal string VoiceSetId { get; }
         internal UnityEngine.Object BankUnityObject { get; set; }
         internal object BankProxy { get; set; }
         internal bool BankRegistered { get; set; }
@@ -634,8 +637,13 @@ internal sealed class FieldVoiceSystem
     private bool _patchInstalled;
     private object _harmony;
     private RuntimeVoiceBundle _voiceBundleAudio;
-    private IReadOnlyDictionary<string, AudioClip> _voiceClips;
+    private RuntimeVoiceBundle _xcomVoiceBundleAudio;
+    private Dictionary<string, AudioClip> _voiceClips;
     private readonly Dictionary<string, string[]> _voiceRouteAssets = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, string> _voiceRouteSubtitles = new(StringComparer.Ordinal);
+    private readonly HashSet<string> _silentVoiceRoutes = new(StringComparer.Ordinal);
+    private readonly HashSet<string> _configuredXcomProfiles = new(StringComparer.Ordinal);
+    private PromotionVoiceCatalog _xcomVoiceCatalog;
     private Type _soundBankType;
     private Type _soundManagerType;
     private Type _conversationTemplateType;
@@ -677,8 +685,18 @@ internal sealed class FieldVoiceSystem
     }
 
     internal bool TryPrepare(out string status)
+        => TryPrepare(Array.Empty<string>(), out status);
+
+    internal bool TryPrepare(IEnumerable<string> voiceSetIds, out string status)
     {
-        if (Ready) { status = "john+jane:ready"; return true; }
+        var requested = (voiceSetIds ?? Array.Empty<string>()).Where(id => !string.IsNullOrEmpty(id))
+            .Distinct(StringComparer.Ordinal).ToArray();
+        if (Ready)
+        {
+            foreach (var id in requested) EnsureXcomProfileReady(id);
+            status = "voice profiles ready";
+            return true;
+        }
         if (_prepareAttempted) { status = _failure; return false; }
         if (!IsBundlePresent())
         {
@@ -689,7 +707,7 @@ internal sealed class FieldVoiceSystem
         _prepareAttempted = true;
         try
         {
-            if (!TrySetupVoices())
+            if (!TrySetupVoices(requested))
             {
                 status = _failure;
                 return false;
@@ -697,7 +715,7 @@ internal sealed class FieldVoiceSystem
             _voiceStage = "install tactical conversation patch";
             InstallConversationManagerPatch();
             _voicesReady = true;
-            status = "john+jane:ready";
+            status = "voice profiles ready";
             _failure = status;
             return true;
         }
@@ -709,8 +727,20 @@ internal sealed class FieldVoiceSystem
         }
     }
 
-    private VoiceProfile GetProfile(bool female, int pitchPreset)
+    private VoiceProfile GetProfile(bool female, int pitchPreset) => GetProfile(female, pitchPreset, "");
+
+    private VoiceProfile GetProfile(bool female, int pitchPreset, string voiceSetId)
     {
+        if (!string.IsNullOrEmpty(voiceSetId))
+        {
+            _xcomVoiceCatalog ??= PromotionVoiceCatalog.Load(_modpackRoot);
+            var definition = _xcomVoiceCatalog?.Find(voiceSetId)
+                ?? throw new InvalidDataException("Assigned XCOM voice profile is unavailable: " + voiceSetId);
+            if (definition.Gender != (female ? "female" : "male"))
+                throw new InvalidDataException("Assigned voice set does not match the promoted leader's gender.");
+            var profile = EnsureXcomProfileReady(voiceSetId);
+            return profile;
+        }
         if (!VoicePitchProfiles.IsValid(pitchPreset))
             throw new ArgumentOutOfRangeException(nameof(pitchPreset));
         var sourceKey = female ? "jane" : "john";
@@ -718,9 +748,12 @@ internal sealed class FieldVoiceSystem
     }
 
     internal string BindSpeaker(object speaker, bool female, int pitchPreset)
+        => BindSpeaker(speaker, female, pitchPreset, "");
+
+    internal string BindSpeaker(object speaker, bool female, int pitchPreset, string voiceSetId)
     {
         if (!Ready || speaker == null) return "native-fallback";
-        var profile = GetProfile(female, pitchPreset);
+        var profile = GetProfile(female, pitchPreset, voiceSetId);
         var tag = profile.SpeakerId;
         // Never mutate the donors! Each SFP leader has a unique, owned SpeakerTemplate.
         if (!SetMemberValue(speaker, "Tags", tag + " marine " + (female ? "female" : "male") + " infantry"))
@@ -745,10 +778,13 @@ internal sealed class FieldVoiceSystem
     /// John/Jane tactical barks. Reuse the already registered private banks.
     /// </summary>
     internal string BindHiringBarks(UnitLeaderTemplate leader, bool female, int pitchPreset)
+        => BindHiringBarks(leader, female, pitchPreset, "");
+
+    internal string BindHiringBarks(UnitLeaderTemplate leader, bool female, int pitchPreset, string voiceSetId)
     {
         if (leader == null) throw new ArgumentNullException(nameof(leader));
         if (!Ready) throw new InvalidOperationException("John/Jane voices are not prepared.");
-        VoiceProfile profile = GetProfile(female, pitchPreset);
+        VoiceProfile profile = GetProfile(female, pitchPreset, voiceSetId);
         if (!profile.BankRegistered || !profile.ClipsApplied || !profile.BankRuntimeRefreshed)
             throw new InvalidOperationException("The requested John/Jane SoundBank is not fully ready.");
         BarkSpec selectedBark = VoiceBarks.First(b => b.Key == "ready");
@@ -767,6 +803,57 @@ internal sealed class FieldVoiceSystem
         return female ? "Jane (ready/arrival)" : "John (ready/arrival)";
     }
 
+    /// <summary>
+    /// Perk-tier promotion barks are direct Sound IDs on UnitLeaderTemplate, not
+    /// TacticalBarksManager conversations. Route them to the same isolated voice bank.
+    /// </summary>
+    internal string BindPromotionBarks(UnitLeaderTemplate leader, bool female, int pitchPreset)
+        => BindPromotionBarks(leader, female, pitchPreset, "");
+
+    internal string BindPromotionBarks(UnitLeaderTemplate leader, bool female, int pitchPreset, string voiceSetId)
+    {
+        if (leader == null) throw new ArgumentNullException(nameof(leader));
+        if (!Ready) throw new InvalidOperationException("John/Jane voices are not prepared.");
+        VoiceProfile profile = GetProfile(female, pitchPreset, voiceSetId);
+        if (!profile.BankRegistered || !profile.ClipsApplied || !profile.BankRuntimeRefreshed)
+            throw new InvalidOperationException("The requested John/Jane SoundBank is not fully ready.");
+
+        BarkSpec successBark = VoiceBarks.First(b => b.Key == "success");
+        var sourceBarks = leader.PromotionBarkSounds;
+        if (sourceBarks == null || sourceBarks.Length == 0)
+            throw new InvalidOperationException("The leader has no native perk-promotion bark tiers.");
+
+        var routedBarks = new Il2CppReferenceArray<PromotionBarkSound>(sourceBarks.Length);
+        for (int i = 0; i < sourceBarks.Length; i++)
+        {
+            var sourceBark = sourceBarks[i];
+            if (sourceBark == null || sourceBark.PerkTier < 1 || sourceBark.PerkTier > 4)
+                throw new InvalidOperationException("The leader has an invalid perk-promotion bark tier.");
+            int sourceIndex = (sourceBark.PerkTier - 1) % successBark.SourceItemIds.Length;
+            int customId = GetCustomItemId(profile, successBark, sourceIndex);
+            routedBarks[i] = new PromotionBarkSound
+            {
+                PerkTier = sourceBark.PerkTier,
+                Sound = new Il2CppStem.ID(profile.BankId, customId)
+            };
+        }
+
+        leader.PromotionBarkSounds = routedBarks;
+        var appliedBarks = leader.PromotionBarkSounds;
+        if (appliedBarks == null || appliedBarks.Length != routedBarks.Length)
+            throw new InvalidOperationException("John/Jane perk-promotion bark array readback mismatch.");
+        for (int i = 0; i < appliedBarks.Length; i++)
+        {
+            int sourceIndex = (routedBarks[i].PerkTier - 1) % successBark.SourceItemIds.Length;
+            int expectedId = GetCustomItemId(profile, successBark, sourceIndex);
+            var bark = appliedBarks[i];
+            if (bark == null || bark.PerkTier != routedBarks[i].PerkTier ||
+                bark.Sound.BankId != profile.BankId || bark.Sound.ItemId != expectedId)
+                throw new InvalidOperationException("John/Jane perk-promotion bark Sound ID readback mismatch.");
+        }
+        return female ? "Jane (perk-promotion barks)" : "John (perk-promotion barks)";
+    }
+
     // No automatic repeated diagnostics. The outer Jiangyu system logs only
     // a single summary when the user explicitly requests F9 or F10.
     private void DebugLog(string message) { }
@@ -779,8 +866,8 @@ internal sealed class FieldVoiceSystem
 
     private static List<VoiceProfile> CreateVoiceProfiles()
     {
-        // Original two neutral bank IDs/paths/tags stay unchanged. Additional
-        // profiles have isolated banks and conversations but reuse WAV AudioClips.
+        // Original neutral bank IDs/tags stay unchanged. XCOM profiles are
+        // created lazily and only when an assigned leader needs one.
         var profiles = new List<VoiceProfile>();
         foreach (var gender in new[] { "john", "jane" })
         for (int index = 0; index < VoicePitchProfiles.Count; index++)
@@ -815,7 +902,7 @@ internal sealed class FieldVoiceSystem
         $"sfp_{profile.Key}_{bark.Key}_{sourceIndex + 1}";
 
     private static string GetRouteKey(VoiceProfile profile, BarkSpec bark, int sourceIndex) =>
-        $"{profile.SourceKey}|{bark.Key}|{sourceIndex}";
+        $"{(string.IsNullOrEmpty(profile.VoiceSetId) ? profile.SourceKey : profile.VoiceSetId)}|{bark.Key}|{sourceIndex}";
 
     private static string GetVariationAssetName(VoiceProfile profile, string wavPath) =>
         $"{profile.AssetPrefix}_{Path.GetFileNameWithoutExtension(wavPath)}";
@@ -825,25 +912,14 @@ internal sealed class FieldVoiceSystem
     private static string GetClonePath(VoiceProfile profile, BarkSpec bark) =>
         $"{profile.ConversationPrefix}/{bark.CloneSuffix}";
 
-    private bool TrySetupVoices()
+    private bool TrySetupVoices(IEnumerable<string> voiceSetIds)
     {
         try
         {
-            _voiceStage = "mount John/Jane bundle";
-            if (!EnsureVoiceClipsLoaded()) return false;
-            foreach (var profile in _voiceProfiles)
-            {
-                _voiceStage = $"clone {profile.Key} conversations";
-                if (!EnsureConversationClones(profile)) return false;
-                _voiceStage = $"register {profile.Key} native SoundBank";
-                if (!EnsureSoundBank(profile)) return false;
-                _voiceStage = $"restore {profile.Key} conversation deserialization";
-                foreach (var conversation in profile.ConversationProxies.Values)
-                    RefreshConversationSerializedState(conversation);
-                if (!profile.BankRegistered || !profile.ClipsApplied ||
-                    profile.ConversationProxies.Count != VoiceBarks.Length)
-                    throw new InvalidOperationException($"{profile.Key} profile not fully prepared.");
-            }
+            _voiceStage = "load John/Jane and assigned XCOM clips";
+            if (!EnsureVoiceClipsLoaded(voiceSetIds)) return false;
+            foreach (var profile in _voiceProfiles.ToArray())
+                if (!PrepareVoiceProfile(profile)) return false;
             return true;
         }
         catch (Exception ex)
@@ -852,6 +928,39 @@ internal sealed class FieldVoiceSystem
             _failure = $"{_voiceStage}: {cause.GetType().Name}: {cause.Message}";
             return false;
         }
+    }
+
+    private bool PrepareVoiceProfile(VoiceProfile profile)
+    {
+        _voiceStage = $"clone {profile.Key} conversations";
+        if (!EnsureConversationClones(profile)) return false;
+        _voiceStage = $"register {profile.Key} native SoundBank";
+        if (!EnsureSoundBank(profile)) return false;
+        _voiceStage = $"restore {profile.Key} conversation deserialization";
+        foreach (var conversation in profile.ConversationProxies.Values)
+            RefreshConversationSerializedState(conversation);
+        if (!profile.BankRegistered || !profile.ClipsApplied ||
+            profile.ConversationProxies.Count != VoiceBarks.Length)
+            throw new InvalidOperationException($"{profile.Key} profile not fully prepared.");
+        return true;
+    }
+
+    private VoiceProfile EnsureXcomProfileReady(string voiceSetId)
+    {
+        _xcomVoiceCatalog ??= PromotionVoiceCatalog.Load(_modpackRoot);
+        var definition = _xcomVoiceCatalog?.Find(voiceSetId)
+            ?? throw new InvalidDataException("Assigned XCOM voice profile is unavailable: " + voiceSetId);
+        var profile = _voiceProfiles.FirstOrDefault(candidate => candidate.VoiceSetId == voiceSetId);
+        if (!EnsureVoiceClipsLoaded(new[] { voiceSetId }))
+            throw new InvalidOperationException("Cannot load assigned XCOM voice profile: " + _failure);
+        profile ??= _voiceProfiles.First(candidate => candidate.VoiceSetId == voiceSetId);
+        if (!profile.BankRegistered)
+        {
+            if (!PrepareVoiceProfile(profile))
+                throw new InvalidOperationException("Cannot prepare assigned XCOM voice profile: " + _failure);
+            _voiceInjectedManagers.Clear();
+        }
+        return profile;
     }
 
     // Jiangyu is hosted by MelonLoader. Resolve Harmony at runtime rather than
@@ -1154,8 +1263,8 @@ internal sealed class FieldVoiceSystem
                 var sourceId = bark.SourceItemIds[sourceIndex];
                 var customId = GetCustomItemId(profile, bark, sourceIndex);
                 patched = patched.Replace(sourceId.ToString(), customId.ToString());
-                var subtitleKey = $"{profile.SourceKey}|{bark.Key}|{sourceIndex}";
-                if (!RouteSubtitles.TryGetValue(subtitleKey, out var exactSubtitle))
+                var subtitleKey = GetRouteKey(profile, bark, sourceIndex);
+                if (!_voiceRouteSubtitles.TryGetValue(subtitleKey, out var exactSubtitle))
                     throw new InvalidOperationException($"Missing exact subtitle for voice route {subtitleKey}.");
                 patched = ReplaceSerializedTextForSoundItem(patched, customId, exactSubtitle);
             }
@@ -1538,39 +1647,91 @@ internal sealed class FieldVoiceSystem
         return false;
     }
 
-    private bool EnsureVoiceClipsLoaded()
+    private bool EnsureVoiceClipsLoaded(IEnumerable<string> voiceSetIds)
     {
-        if (_voiceClips != null) return true;
-        var routesPath = Path.Combine(_modpackRoot, "runtime_assets", "voice", "voice_routes.json");
-        if (!File.Exists(routesPath))
+        if (_voiceBundleAudio == null)
         {
-            _failure = "voice_routes.json missing from deployed SFP mod";
-            return false;
+            var routesPath = Path.Combine(_modpackRoot, "runtime_assets", "voice", "voice_routes.json");
+            if (!File.Exists(routesPath))
+            {
+                _failure = "voice_routes.json missing from deployed SFP mod";
+                return false;
+            }
+            var spec = JsonSerializer.Deserialize<VoiceRoutesFile>(File.ReadAllText(routesPath));
+            if (spec == null || spec.schemaVersion != 1 || spec.routes == null)
+                throw new InvalidDataException("Invalid voice route manifest.");
+            _voiceRouteAssets.Clear();
+            _voiceRouteSubtitles.Clear();
+            var required = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var profile in _voiceProfiles.Where(candidate => string.IsNullOrEmpty(candidate.VoiceSetId)))
+            foreach (var bark in VoiceBarks)
+            for (var sourceIndex = 0; sourceIndex < bark.SourceItemIds.Length; sourceIndex++)
+            {
+                var key = GetRouteKey(profile, bark, sourceIndex);
+                if (!spec.routes.TryGetValue(key, out var assets) || assets == null || assets.Length == 0)
+                    throw new InvalidDataException("Missing semantic voice route " + key);
+                foreach (var asset in assets)
+                {
+                    if (!asset.StartsWith("cl2_" + profile.SourceKey + "_", StringComparison.Ordinal))
+                        throw new InvalidDataException("Wrong gender in voice route " + key);
+                    required.Add(asset);
+                }
+                if (!RouteSubtitles.TryGetValue(key, out var subtitle))
+                    throw new InvalidDataException("Exact subtitle missing for voice route " + key);
+                _voiceRouteAssets[key] = assets;
+                _voiceRouteSubtitles[key] = subtitle;
+            }
+            _voiceStage = "validate and load John/Jane Unity voice bundle";
+            _voiceBundleAudio = RuntimeVoiceBundle.Load(_modpackRoot, required);
+            _voiceClips = new Dictionary<string, AudioClip>(StringComparer.Ordinal);
+            foreach (var clip in _voiceBundleAudio.Clips) _voiceClips.Add(clip.Key, clip.Value);
         }
-        var spec = JsonSerializer.Deserialize<VoiceRoutesFile>(File.ReadAllText(routesPath));
-        if (spec == null || spec.schemaVersion != 1 || spec.routes == null)
-            throw new InvalidDataException("Invalid voice route manifest.");
-        _voiceRouteAssets.Clear();
-        var required = new HashSet<string>(StringComparer.Ordinal);
-        foreach (var profile in _voiceProfiles)
+
+        _xcomVoiceCatalog ??= PromotionVoiceCatalog.Load(_modpackRoot);
+        var requestedIds = (voiceSetIds ?? Array.Empty<string>()).Where(id => !string.IsNullOrEmpty(id))
+            .Distinct(StringComparer.Ordinal).ToArray();
+        if (requestedIds.Length > 0 && _xcomVoiceCatalog == null)
+            throw new FileNotFoundException("Assigned XCOM voice profiles need xcom_voice_profiles.json.");
+
+        var requiredXcom = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var id in requestedIds)
+        {
+            var definition = _xcomVoiceCatalog.Find(id)
+                ?? throw new InvalidDataException("Unknown assigned XCOM voice profile: " + id);
+            ConfigureXcomProfile(definition, requiredXcom);
+        }
+        if (requiredXcom.Count > 0)
+        {
+            if (_xcomVoiceBundleAudio == null)
+                _xcomVoiceBundleAudio = RuntimeVoiceBundle.Load(_modpackRoot,
+                    PromotionVoiceCatalog.BundleFile, PromotionVoiceCatalog.ReceiptFile, requiredXcom);
+            else
+                _xcomVoiceBundleAudio.LoadAdditional(requiredXcom);
+            foreach (var clip in _xcomVoiceBundleAudio.Clips) _voiceClips[clip.Key] = clip.Value;
+        }
+        return true;
+    }
+
+    private void ConfigureXcomProfile(PromotionVoiceSet definition, HashSet<string> required)
+    {
+        if (_configuredXcomProfiles.Contains(definition.Id)) return;
+        string sourceKey = definition.Gender == "female" ? "jane" : "john";
+        var profile = new VoiceProfile(definition.Id, sourceKey, 0, "sfp_" + definition.Id,
+            "sfp_tactical_barks_" + definition.Id, "SFPX" + definition.Id,
+            "xcom_" + definition.Id, definition.Gender, definition.Id);
+        _voiceProfiles.Add(profile);
         foreach (var bark in VoiceBarks)
         for (var sourceIndex = 0; sourceIndex < bark.SourceItemIds.Length; sourceIndex++)
         {
             var key = GetRouteKey(profile, bark, sourceIndex);
-            if (!spec.routes.TryGetValue(key, out var assets) || assets == null || assets.Length == 0)
-                throw new InvalidDataException("Missing semantic voice route " + key);
-            foreach (var asset in assets)
-            {
-                if (!asset.StartsWith("cl2_" + profile.SourceKey + "_", StringComparison.Ordinal))
-                    throw new InvalidDataException("Wrong gender in voice route " + key);
-                required.Add(asset);
-            }
-            _voiceRouteAssets[key] = assets;
+            var definitionKey = bark.Key + "|" + sourceIndex;
+            var route = definition.ResolveRoute(definitionKey);
+            _voiceRouteAssets[key] = route.Assets;
+            _voiceRouteSubtitles[key] = route.Subtitle;
+            if (route.IsSilent) _silentVoiceRoutes.Add(key);
+            foreach (var asset in route.Assets) required.Add(asset);
         }
-        _voiceStage = "validate and load Unity voice bundle";
-        _voiceBundleAudio = RuntimeVoiceBundle.Load(_modpackRoot, required);
-        _voiceClips = _voiceBundleAudio.Clips;
-        return true;
+        _configuredXcomProfiles.Add(definition.Id);
     }
 
     private sealed class VoiceRoutesFile
@@ -1663,7 +1824,8 @@ internal sealed class FieldVoiceSystem
                     clips.Add(clip);
                 }
                 var itemId = GetCustomItemId(profile, bark, sourceIndex);
-                var replaced = ReplaceSoundVariationClips(profile.BankProxy, itemId, clips);
+                var replaced = ReplaceSoundVariationClips(profile.BankProxy, itemId, clips,
+                    _silentVoiceRoutes.Contains(routeKey));
                 if (replaced <= 0)
                     throw new InvalidOperationException($"No SoundVariation.clip fields replaced for {profile.Key}/{bark.Key}[{sourceIndex}] itemId={itemId}.");
                 if (replaced != clips.Count)
@@ -1895,7 +2057,8 @@ internal sealed class FieldVoiceSystem
         return result;
     }
 
-    private static int ReplaceSoundVariationClips(object bankProxy, int itemId, IReadOnlyList<AudioClip> clips)
+    private static int ReplaceSoundVariationClips(object bankProxy, int itemId, IReadOnlyList<AudioClip> clips,
+        bool silent)
     {
         if (clips == null || clips.Count == 0) return 0;
         object sounds = GetMemberValue(bankProxy, "sounds");
@@ -1915,22 +2078,38 @@ internal sealed class FieldVoiceSystem
             if (rawId == null || Convert.ToInt32(rawId) != itemId) continue;
             var variations = GetMemberValue(sound, "variations") ?? GetMemberValue(sound, "Variations");
             if (variations == null) return 0;
+            if (silent) MuteVoiceRecord(sound);
             var replaced = 0;
             for (var j = 0; j < GetCollectionCount(variations); j++)
             {
-                var variation = GetCollectionItem(variations, j);
-                if (variation == null) continue;
+                var variation = GetCollectionItem(variations, j)
+                    ?? throw new InvalidOperationException("Voice Sound has a null variation.");
+                if (silent) MuteVoiceRecord(variation);
                 var clip = clips[j % clips.Count];
-                if (!SetMemberValue(variation, "clip", clip) && !SetMemberValue(variation, "Clip", clip)) continue;
-                SetCollectionItem(variations, j, variation);
+                if (!SetMemberValue(variation, "clip", clip) && !SetMemberValue(variation, "Clip", clip))
+                    throw new InvalidOperationException("Cannot replace donor voice clip.");
+                if (!SetCollectionItem(variations, j, variation))
+                    throw new InvalidOperationException("Cannot persist voice variation.");
                 replaced++;
             }
-            SetCollectionItem(sounds, i, sound);
+            if (!SetCollectionItem(sounds, i, sound))
+                throw new InvalidOperationException("Cannot persist voice Sound.");
             if (structure != null && structure.GetType().IsValueType)
-                SetMemberValue(bankProxy, "m_Structure", structure);
+                RequireSet(bankProxy, "m_Structure", structure);
             return replaced;
         }
         return 0;
+    }
+
+    private static void MuteVoiceRecord(object record)
+    {
+        // Disable random volume on BOTH Sound and every SoundVariation. Merely
+        // zeroing fixedVolume leaves randomized native playback audible.
+        RequireSet(record, "randomizeVolume", false);
+        RequireSet(record, "fixedVolume", 0.0f);
+        if (Convert.ToBoolean(GetMemberValue(record, "randomizeVolume")) ||
+            Convert.ToSingle(GetMemberValue(record, "fixedVolume")) != 0.0f)
+            throw new InvalidOperationException("Silent voice route volume read-back failed.");
     }
 
     private static bool TryReadBankId(object bankProxy, out int bankId)

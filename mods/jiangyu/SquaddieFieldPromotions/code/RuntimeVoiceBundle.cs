@@ -18,25 +18,35 @@ internal sealed class RuntimeVoiceBundle
     internal const string BundleFile = "sfp_john_jane_voice.sfpbundle";
     internal const string ReceiptFile = "sfp_john_jane_voice.build.json";
     private readonly object _bundle;
-    internal IReadOnlyDictionary<string, AudioClip> Clips { get; }
+    private readonly LegacyBundleBridge _bridge;
+    private readonly AssetBundle _nativeBundle;
+    private readonly Dictionary<string, ClipReceipt> _receipt;
+    private readonly Dictionary<string, AudioClip> _clips = new(StringComparer.Ordinal);
+    internal IReadOnlyDictionary<string, AudioClip> Clips => _clips;
 
-    private RuntimeVoiceBundle(object bundle, IReadOnlyDictionary<string, AudioClip> clips)
+    private RuntimeVoiceBundle(object bundle, LegacyBundleBridge bridge, AssetBundle nativeBundle,
+        Dictionary<string, ClipReceipt> receipt)
     {
         _bundle = bundle;
-        Clips = clips;
+        _bridge = bridge;
+        _nativeBundle = nativeBundle;
+        _receipt = receipt;
     }
 
     internal static RuntimeVoiceBundle Load(string modFolder, ICollection<string> requested)
+        => Load(modFolder, BundleFile, ReceiptFile, requested);
+
+    internal static RuntimeVoiceBundle Load(string modFolder, string bundleFile, string receiptFile,
+        ICollection<string> requested)
     {
         var folder = Path.Combine(modFolder, "runtime_assets", "voice");
-        var bundlePath = Path.Combine(folder, BundleFile);
-        var receiptPath = Path.Combine(folder, ReceiptFile);
+        var bundlePath = Path.Combine(folder, bundleFile);
+        var receiptPath = Path.Combine(folder, receiptFile);
         if (!File.Exists(bundlePath) || !File.Exists(receiptPath))
             throw new FileNotFoundException("SFP Unity voice bundle is missing. Run Build-Voice-Bundle.cmd before deploy.", bundlePath);
         var receipt = JsonSerializer.Deserialize<BuildReceipt>(File.ReadAllText(receiptPath));
         if (receipt == null || receipt.schemaVersion != 2 ||
-            receipt.bundleFile != BundleFile || receipt.buildTarget != "StandaloneWindows64" ||
-            receipt.clips == null || receipt.clips.Count < requested.Count)
+            receipt.bundleFile != bundleFile || receipt.buildTarget != "StandaloneWindows64" || receipt.clips == null)
             throw new InvalidDataException("Incompatible or incomplete SFP voice receipt.");
         if (!string.Equals(receipt.unityVersion, Application.unityVersion, StringComparison.Ordinal))
             throw new InvalidDataException("Voice bundle Unity " + receipt.unityVersion +
@@ -49,13 +59,6 @@ internal sealed class RuntimeVoiceBundle
             if (clip?.assetName == null || !index.TryAdd(clip.assetName, clip))
                 throw new InvalidDataException("Voice bundle receipt has a missing or duplicate asset name.");
         }
-        foreach (var name in requested)
-        {
-            if (!index.TryGetValue(name, out var meta) || meta.frames <= 0 ||
-                meta.channels <= 0 || meta.sampleRate <= 0 || meta.editorVerifiedPeak <= 0)
-                throw new InvalidDataException("Voice bundle receipt missing or corrupt asset: " + name);
-        }
-
         // Legacy Generic Leaders uses UnityEngine.Il2CppAssetBundleManager, NOT
         // the older assumed MelonLoader namespace. It is an optional MelonLoader
         // utility assembly, not a dependency we impose on SFP players.
@@ -90,52 +93,67 @@ internal sealed class RuntimeVoiceBundle
                     "MENACE Unity AssetBundle.LoadFromFile returned null (CRC or Unity format mismatch)." +
                     (bridgeFailure == null ? "" : " Optional bridge: " + bridgeFailure));
         }
+        var loaded = new RuntimeVoiceBundle((object)bridge ?? nativeBundle, bridge, nativeBundle, index);
         try
         {
-            var clipType = Il2CppType.Of<AudioClip>();
-            var clipTypePtr = IL2CPP.Il2CppObjectBaseToPtr(clipType);
-            var clips = new Dictionary<string, AudioClip>(StringComparer.Ordinal);
-            foreach (var name in requested)
-            {
-                IntPtr pointer;
-                if (bridge != null)
-                {
-                    pointer = bridge.LoadAudioClip(name, clipTypePtr);
-                }
-                else
-                {
-                    var nativeAsset = nativeBundle.LoadAsset(name, clipType);
-                    pointer = nativeAsset == null ? IntPtr.Zero : IL2CPP.Il2CppObjectBaseToPtr(nativeAsset);
-                }
-                if (pointer == IntPtr.Zero)
-                    throw new InvalidDataException("Native SFP voice bundle has no AudioClip " + name);
-                var clip = new AudioClip(pointer);
-                var expected = index[name];
-                if (clip.samples != expected.frames || clip.channels != expected.channels ||
-                    clip.frequency != expected.sampleRate)
-                    throw new InvalidDataException("Voice AudioClip dimensions differ: " + name);
-                if (clip.loadState != AudioDataLoadState.Loaded)
-                    clip.LoadAudioData();
-                if (clip.loadState != AudioDataLoadState.Loaded)
-                    throw new InvalidOperationException("Unity failed to load audio: " + name);
-                clip.name = name;
-                clip.hideFlags = HideFlags.DontUnloadUnusedAsset;
-                clips.Add(name, clip);
-            }
-            GC.KeepAlive(clipType);
-            return new RuntimeVoiceBundle((object)bridge ?? nativeBundle, clips);
+            loaded.LoadAdditional(requested);
+            return loaded;
         }
         catch
         {
-            // No voice bank has been installed yet; free only a failed load.
-            try
-            {
-                if (bridge != null) bridge.Unload();
-                else nativeBundle?.Unload(true);
-            }
-            catch { }
+            loaded.Unload();
             throw;
         }
+    }
+
+    internal void LoadAdditional(ICollection<string> requested)
+    {
+        var missing = requested.Where(name => !_clips.ContainsKey(name)).ToArray();
+        foreach (var name in missing)
+            if (!_receipt.TryGetValue(name, out var meta) || meta.frames <= 0 || meta.channels <= 0 ||
+                meta.sampleRate <= 0 || meta.editorVerifiedPeak <= 0)
+                throw new InvalidDataException("Voice bundle receipt missing or corrupt asset: " + name);
+
+        var clipType = Il2CppType.Of<AudioClip>();
+        var clipTypePtr = IL2CPP.Il2CppObjectBaseToPtr(clipType);
+        foreach (var name in missing)
+        {
+            IntPtr pointer;
+            if (_bridge != null)
+            {
+                pointer = _bridge.LoadAudioClip(name, clipTypePtr);
+            }
+            else
+            {
+                var nativeAsset = _nativeBundle.LoadAsset(name, clipType);
+                pointer = nativeAsset == null ? IntPtr.Zero : IL2CPP.Il2CppObjectBaseToPtr(nativeAsset);
+            }
+            if (pointer == IntPtr.Zero)
+                throw new InvalidDataException("Native SFP voice bundle has no AudioClip " + name);
+            var clip = new AudioClip(pointer);
+            var expected = _receipt[name];
+            if (clip.samples != expected.frames || clip.channels != expected.channels ||
+                clip.frequency != expected.sampleRate)
+                throw new InvalidDataException("Voice AudioClip dimensions differ: " + name);
+            if (clip.loadState != AudioDataLoadState.Loaded)
+                clip.LoadAudioData();
+            if (clip.loadState != AudioDataLoadState.Loaded)
+                throw new InvalidOperationException("Unity failed to load audio: " + name);
+            clip.name = name;
+            clip.hideFlags = HideFlags.DontUnloadUnusedAsset;
+            _clips.Add(name, clip);
+        }
+        GC.KeepAlive(clipType);
+    }
+
+    private void Unload()
+    {
+        try
+        {
+            if (_bridge != null) _bridge.Unload();
+            else _nativeBundle?.Unload(true);
+        }
+        catch { }
     }
 
     private sealed class LegacyBundleBridge

@@ -14,7 +14,9 @@ PROGRESSION_KDL = (ROOT / 'templates' / 'generic-infantry-progression.kdl').read
 class AuthoringTests(unittest.TestCase):
     def test_jiangyu_not_old_modpack(self):
         self.assertEqual(MANIFEST['name'], 'SquaddieFieldPromotions')
-        self.assertEqual(MANIFEST['version'], '0.14.3')
+        self.assertEqual(MANIFEST['version'], '0.15.7')
+        compiled_manifest = json.loads((ROOT / 'compiled/jiangyu.json').read_text(encoding='utf-8'))
+        self.assertEqual(compiled_manifest['version'], MANIFEST['version'])
         self.assertTrue(any(dep.startswith('Jiangyu ') for dep in MANIFEST['depends']))
         self.assertIn('JiangyuSystem', CS)
         self.assertNotIn('IModpackPlugin', CS)
@@ -24,7 +26,7 @@ class AuthoringTests(unittest.TestCase):
         self.assertEqual(MANIFEST['depends'], ['Jiangyu >= 1.4.8', 'MenaceModSettings >= 0.6.1'])
         project = (ROOT / 'code/SquaddieFieldPromotions.csproj').read_text()
         self.assertIn('<Private>false</Private>', project)
-        self.assertIn('<Version>0.14.3</Version>', project)
+        self.assertIn(f"<Version>{MANIFEST['version']}</Version>", project)
         self.assertIn('$(MenaceModSettingsPath)', project)
 
     def test_no_hotkeys_polling_random_removal_or_fake_death(self):
@@ -106,7 +108,8 @@ class AuthoringTests(unittest.TestCase):
         forge = (ROOT / 'code/LeaderForge.cs').read_text(encoding='utf-8')
         assets = (ROOT / 'code/StandalonePortraitAssets.cs').read_text(encoding='utf-8')
         self.assertIn('public string PortraitProfile { get; set; } = "";', record)
-        self.assertIn('TryAssignFirstMatchingProfile(ledger, record)', system)
+        self.assertIn('TryAssignRotatingProfile(ledger, record)', system)
+        self.assertNotIn('duplicate portrait profile', record)
         self.assertIn('internal const int BrownSkinColor = 1;', record)
         self.assertIn('internal const int BlackSkinColor = 2;', record)
         self.assertIn('internal const int FemaleGender = 1;', record)
@@ -114,14 +117,25 @@ class AuthoringTests(unittest.TestCase):
         self.assertIn('ArePortraitProfilesPresent(_modFolder)', forge)
         self.assertIn('portrait.ApplyTo(leader, speaker)', forge)
         self.assertIn('DynamicBadgeFactory.Apply(leader, art', forge)
-        self.assertIn('PromotionPortraitAssignment.Female01', assets)
-        self.assertIn('PromotionPortraitAssignment.MaleBlack02', assets)
+        self.assertIn('PromotionPortraitAssignment.AllProfiles.All(', assets)
+        pools = {
+            ('MaleGender', 'BrownSkinColor'): ('MaleBrown01', 'MaleBrown04', 'MaleBrown06', 'MaleBrown10'),
+            ('MaleGender', 'BlackSkinColor'): ('MaleBlack02', 'MaleBlack05', 'MaleBlack08', 'MaleBlack12'),
+            ('MaleGender', 'WhiteSkinColor'): ('MaleWhite03', 'MaleWhite07', 'MaleWhite09', 'MaleWhite11'),
+            ('FemaleGender', 'BrownSkinColor'): ('Female01', 'FemaleBrown04', 'FemaleBrown06', 'FemaleBrown10'),
+            ('FemaleGender', 'BlackSkinColor'): ('FemaleBlack02', 'FemaleBlack05', 'FemaleBlack08', 'FemaleBlack12'),
+            ('FemaleGender', 'WhiteSkinColor'): ('FemaleWhite03', 'FemaleWhite07', 'FemaleWhite09', 'FemaleWhite11'),
+        }
+        for (gender, skin), profiles in pools.items():
+            for profile in profiles:
+                self.assertIn(f'internal const string {profile} =', record)
+                self.assertIn(f'({profile}, {gender}, {skin})', record)
         files = {
             'slot.png': (162, 162), 'slot_inactive.png': (162, 162), 'bark.png': (460, 480),
             'stand_left.png': (1024, 1714), 'stand_right.png': (1024, 1714),
             'stand_right_inactive.png': (1024, 1714),
         }
-        for profile in ('promoted_male_01', 'promoted_female_01', 'promoted_male_02'):
+        for profile in [f'promoted_{gender}_{index:02d}' for gender in ('male', 'female') for index in range(1, 13)]:
             portrait_dir = ROOT / 'runtime_assets' / profile
             candidate_dir = ROOT / 'portrait_candidates' / profile
             for name, expected_size in files.items():
@@ -183,11 +197,31 @@ class AuthoringTests(unittest.TestCase):
         self.assertEqual(entries, expected)
         self.assertIn('set "InitialPerk" ref="PerkTemplate" "perk.unique_sy_economics"', PROGRESSION_KDL)
         forge = (ROOT / 'code/LeaderForge.cs').read_text()
-        self.assertIn('ApplyGenericProgression(leader)', forge)
+        self.assertIn('if (record.PerkSchemaVersion == 0) ApplyGenericProgression(leader);', forge)
+        self.assertIn('else DynamicPerkTrees.VerifyOrApply(record, leader, _pinned);', forge)
+        self.assertIn('ApplyProgression(record, existing)', forge)
+        self.assertIn('ApplyProgression(record, leader)', forge)
         progression = forge.split('private static void ApplyGenericProgression', 1)[1].split(
             'internal bool RefreshIdentity', 1)[0]
         self.assertNotIn('BaseUnitLeader', progression)
         self.assertNotIn('m_Perks', progression)
+
+    def test_dynamic_perk_trees_are_per_leader_saved_snapshots(self):
+        forge = (ROOT / 'code/LeaderForge.cs').read_text()
+        trees = (ROOT / 'code/DynamicPerkTrees.cs').read_text()
+        generation = (ROOT / 'code/PerkGeneration.cs').read_text()
+        mentors = (ROOT / 'code/MentorPerks.cs').read_text()
+        self.assertIn('PerkGeneration.Generate(record, selection.UsesXp ? soldier.Xp : null', forge)
+        self.assertIn('ScriptableObject.CreateInstance<PerkTreeTemplate>()', trees)
+        self.assertIn('pinned.Add(tree)', trees)
+        self.assertIn('HideFlags.DontUnloadUnusedAsset', trees)
+        self.assertIn('string initial = PromotionProgression.InitialPerkId;', generation)
+        self.assertNotIn('System.Random', generation)
+        for forbidden in ('AddPerk(', 'TryRemoveLastPerk(', 'ResetAllPromotions(', 'm_Perks'):
+            self.assertNotIn(forbidden, trees + generation + mentors)
+        self.assertIn('leader.GetPerks()', mentors)
+        for excluded in ('perk.command_rally', 'perk.power_in_numbers', 'perk.reinforcements', 'perk.first_aid'):
+            self.assertNotIn(f'["{excluded}"]', generation)
 
     def test_provenance_remains_save_compatible_but_badges_use_only_bundled_black_art(self):
         record = (ROOT / 'code/PromotionRecord.cs').read_text()
@@ -263,12 +297,28 @@ class AuthoringTests(unittest.TestCase):
         self.assertIn('VoicePitchPreset = VoicePitchProfiles.ForBadge(badgeIndex)', forge)
         self.assertIn('record.VoicePitchPreset', forge)
         self.assertIn('pending.PitchPreset', forge)
-        self.assertIn('GetProfile(female, pitchPreset)', voice)
+        self.assertIn('GetProfile(bool female, int pitchPreset) => GetProfile(female, pitchPreset, "")', voice)
         self.assertIn('profile.SourceKey', voice)
         self.assertIn('RequireSet(selected, "fixedPitch", profile.Pitch)', voice)
         self.assertIn('RequireSet(variation, "fixedPitch", 1.00f)', voice)
         self.assertIn('for (int index = 0; index < VoicePitchProfiles.Count; index++)', voice)
         self.assertNotIn('UnityEngine.AudioSource', voice)
+
+    def test_perk_promotion_barks_use_the_gendered_voice_bank(self):
+        forge = (ROOT / 'code/LeaderForge.cs').read_text(encoding='utf-8')
+        voice = (ROOT / 'code/FieldVoiceSystem.cs').read_text(encoding='utf-8')
+        self.assertIn('leader.PromotionBarkSounds = ClonePromotionBarkSounds(voiceDonor.PromotionBarkSounds);', forge)
+        self.assertIn('new PromotionBarkSound { PerkTier = bark.PerkTier, Sound = bark.Sound }', forge)
+        self.assertIn('_voices.BindPromotionBarks(leader, female, pitchPreset)', forge)
+        self.assertIn('new("success", "Lim/success_any", "success"', voice)
+        self.assertIn('BarkSpec successBark = VoiceBarks.First(b => b.Key == "success");', voice)
+        self.assertIn('(sourceBark.PerkTier - 1) % successBark.SourceItemIds.Length', voice)
+        self.assertIn('GetCustomItemId(profile, successBark, sourceIndex)', voice)
+        self.assertIn('Sound = new Il2CppStem.ID(profile.BankId, customId)', voice)
+        self.assertIn('leader.PromotionBarkSounds = routedBarks;', voice)
+        self.assertIn('bark.Sound.BankId != profile.BankId', voice)
+        for gender in ('john', 'jane'):
+            self.assertIn(f'["{gender}|success|0"] = "That\'s more like it."', voice)
 
     def test_ready_barks_match_contextual_recordings_and_subtitles(self):
         voice = (ROOT / 'code' / 'FieldVoiceSystem.cs').read_text(encoding='utf-8')
@@ -331,9 +381,24 @@ class AuthoringTests(unittest.TestCase):
         self.assertLess(len(requested), len(bundled_names))
         loader = (ROOT / 'code/RuntimeVoiceBundle.cs').read_text(encoding='utf-8')
         voice = (ROOT / 'code/FieldVoiceSystem.cs').read_text(encoding='utf-8')
-        self.assertIn('receipt.clips.Count < requested.Count', loader)
-        self.assertNotIn('receipt.clips.Count != requested.Count', loader)
+        self.assertIn('requested.Where(name => !_clips.ContainsKey(name))', loader)
+        self.assertIn('_receipt.TryGetValue(name, out var meta)', loader)
         self.assertNotIn('required.Count != 429', voice)
+
+    def test_xcom_missing_routes_are_muted_without_generic_voice_or_captions(self):
+        voice = (ROOT / 'code/FieldVoiceSystem.cs').read_text(encoding='utf-8')
+        configure = voice.split('private void ConfigureXcomProfile(', 1)[1].split('private sealed class VoiceRoutesFile', 1)[0]
+        self.assertIn('definition.ResolveRoute(definitionKey)', configure)
+        self.assertIn('if (route.IsSilent) _silentVoiceRoutes.Add(key)', configure)
+        self.assertNotIn('fallback', configure.lower())
+        self.assertIn('_voiceRouteSubtitles[key] = route.Subtitle', configure)
+        self.assertIn('_silentVoiceRoutes.Contains(routeKey)', voice)
+        self.assertIn('if (silent) MuteVoiceRecord(sound)', voice)
+        self.assertIn('if (silent) MuteVoiceRecord(variation)', voice)
+        self.assertIn('RequireSet(record, "randomizeVolume", false)', voice)
+        self.assertIn('RequireSet(record, "fixedVolume", 0.0f)', voice)
+        self.assertIn('Cannot replace donor voice clip.', voice)
+        self.assertNotIn('AudioClip.Create', voice)
 
     def test_safety_warning_in_readme(self):
         readme = (ROOT / 'README.md').read_text(encoding='utf-8')

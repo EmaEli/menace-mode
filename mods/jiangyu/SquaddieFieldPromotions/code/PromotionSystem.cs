@@ -247,7 +247,8 @@ public sealed class PromotionSystem : JiangyuSystem
                     var record = LeaderForge.CreateRecord(state, selection, ledger.NextBadgeIndex(),
                         ledger.FindServiceRecord(selection.Soldier.Id),
                         PromotionProgression.RootSourceTemplateId(selection.Soldier.SourceLeaderTemplateId, ledger));
-                    PromotionPortraitAssignment.TryAssignFirstMatchingProfile(ledger, record);
+                    PromotionPortraitAssignment.TryAssignRotatingProfile(ledger, record);
+                    _forge.TryAssignVoiceSet(ledger, record);
                     var source = new SourceSquaddieRemoval(state, record);
                     if (!source.Present) throw new InvalidOperationException("Selected source soldier no longer exists.");
                     string detail;
@@ -354,6 +355,9 @@ public sealed class PromotionSystem : JiangyuSystem
             if (!File.Exists(sidecar)) return;
             var ledger = ReadLedger(File.ReadAllText(sidecar));
             if (ledger == null) return;
+            int runtimeVoiceAssignments = _forge.AssignMissingVoiceSets(ledger);
+            if (runtimeVoiceAssignments > 0)
+                Debug($"Assigned {runtimeVoiceAssignments} legacy voice profile(s) in memory; save sidecar was not changed.");
             var recordsToRefresh = new List<PromotionRecord>();
             int restored = 0, failed = 0;
             foreach (var record in ledger.Validated())
