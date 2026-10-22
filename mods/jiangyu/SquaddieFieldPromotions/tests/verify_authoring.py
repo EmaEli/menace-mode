@@ -14,7 +14,7 @@ PROGRESSION_KDL = (ROOT / 'templates' / 'generic-infantry-progression.kdl').read
 class AuthoringTests(unittest.TestCase):
     def test_jiangyu_not_old_modpack(self):
         self.assertEqual(MANIFEST['name'], 'SquaddieFieldPromotions')
-        self.assertEqual(MANIFEST['version'], '0.17.0')
+        self.assertEqual(MANIFEST['version'], '0.17.1')
         compiled_manifest = json.loads((ROOT / 'compiled/jiangyu.json').read_text(encoding='utf-8'))
         self.assertEqual(compiled_manifest['version'], MANIFEST['version'])
         self.assertTrue(any(dep.startswith('Jiangyu ') for dep in MANIFEST['depends']))
@@ -119,12 +119,12 @@ class AuthoringTests(unittest.TestCase):
         self.assertIn('DynamicBadgeFactory.Apply(leader, art', forge)
         self.assertIn('PromotionPortraitAssignment.AllProfiles.All(', assets)
         pools = {
-            ('MaleGender', 'BrownSkinColor'): ('MaleBrown01', 'MaleBrown04', 'MaleBrown06', 'MaleBrown10'),
+            ('MaleGender', 'BrownSkinColor'): ('MaleBrown01', 'MaleBrown04', 'MaleBrown06', 'MaleBrown07', 'MaleBrown10'),
             ('MaleGender', 'BlackSkinColor'): ('MaleBlack02', 'MaleBlack05', 'MaleBlack08', 'MaleBlack12'),
-            ('MaleGender', 'WhiteSkinColor'): ('MaleWhite03', 'MaleWhite07', 'MaleWhite09', 'MaleWhite11'),
-            ('FemaleGender', 'BrownSkinColor'): ('Female01', 'FemaleBrown04', 'FemaleBrown06', 'FemaleBrown10'),
+            ('MaleGender', 'WhiteSkinColor'): ('MaleWhite03', 'MaleWhite09', 'MaleWhite11'),
+            ('FemaleGender', 'BrownSkinColor'): ('Female01', 'FemaleBrown04', 'FemaleBrown06', 'FemaleBrown07', 'FemaleBrown10'),
             ('FemaleGender', 'BlackSkinColor'): ('FemaleBlack02', 'FemaleBlack05', 'FemaleBlack08', 'FemaleBlack12'),
-            ('FemaleGender', 'WhiteSkinColor'): ('FemaleWhite03', 'FemaleWhite07', 'FemaleWhite09', 'FemaleWhite11'),
+            ('FemaleGender', 'WhiteSkinColor'): ('FemaleWhite03', 'FemaleWhite09', 'FemaleWhite11'),
         }
         for (gender, skin), profiles in pools.items():
             for profile in profiles:

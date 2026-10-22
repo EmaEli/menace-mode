@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.17.1 — replace portrait sets 07–09 with the supplied artwork (#69)
+
+- Replace all 36 male/female 07–09 images with the user's Downloads archive, byte-for-byte.
+- Assign new promotions to 07 Brown, 08 Black and 09 White for both genders. The pools now contain
+  five Brown, four Black and three White sets per gender, rotating least-used-first.
+- Keep saved profile IDs, including older White 07 assignments, loadable without reassignment.
+  Leaders already using 07–09 display the updated art. Other portraits, badges and voices are unchanged.
+- In-game visual acceptance is pending.
+
 ## 0.17.0 — full-inventory BlackOps curation and captioned tactical variants (#73)
 
 - Expand the private BlackOps test from 42 to 211 selected recordings across 167 native slots; 13 unsupported slots remain silent.

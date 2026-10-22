@@ -1,6 +1,9 @@
-# Squaddie Field Promotions 0.17.0
+# Squaddie Field Promotions 0.17.1
 
-> **Experimental 0.17.0 test candidate; in-game acceptance is pending.**
+> **Experimental 0.17.1 test candidate; in-game acceptance is pending.**
+> Version 0.17.1 replaces the six male/female 07–09 portrait sets with the user's supplied archive:
+> **07 Brown, 08 Black, 09 White**. Older saved White 07 assignments remain loadable; their profile IDs
+> do not change, but leaders assigned to 07–09 now display the supplied artwork. Voices and badges are unchanged.
 > Version 0.15.9 raises the active and inactive slot crops for `promoted_female_04` and
 > `promoted_male_05`; existing saved profile assignments remain unchanged.
 > Version 0.17.0 expands private Trepang 2 BlackOps to 211 selected recordings across 167/180 native slots,
@@ -10,14 +13,14 @@
 > assigned voices remain loadable without rerolling. The other 55 profiles are unchanged; the original 30
 > eligible profiles still have 138/180 silent routes. BlackOps uses the complete ASR inventory for curation,
 > not the former 42-clip sample; only five clips have user wording checks. Listening remains pending.
-> Canonical Windows BuildOnly/install passed on 22 October (SDK 10.0.113, zero build warnings/errors).
-> Installed manifest/DLL versions are 0.17.0/0.17.0.0; all 607 legacy recordings passed decoded-audio
+> Version 0.17.0 canonical Windows BuildOnly/install passed on 22 October (SDK 10.0.113, zero build warnings/errors).
+> That installation verified manifest/DLL 0.17.0/0.17.0.0; all 607 legacy recordings passed decoded-audio
 > comparison. Unrelated mods and UserData were unchanged. Native playback/gameplay is not yet verified.
 > See [voice curation](VOICE_CURATION.md) for the retained/retired lists and limits.
 > XCOM leaders use only their assigned speaker: every unmapped event is silent, with no caption,
 > rather than borrowing John/Jane audio. This includes tactical reactions, hiring and promotion barks.
-> Each gender/skin category now has exactly four portrait sets: Brown `01`/`04`/`06`/`10`,
-> Black `02`/`05`/`08`/`12`, and White `03`/`07`/`09`/`11`. Each category rotates least-used-first.
+> Current portrait pools for each gender: Brown `01`/`04`/`06`/`07`/`10`,
+> Black `02`/`05`/`08`/`12`, and White `03`/`09`/`11`. Each category rotates least-used-first.
 > Version 0.15.6 adds set `10` to Brown, `11` to White, and `12` to Black.
 >
 > Version 0.15.5 placed set `06` with Brown. Existing saves that received set `06` as White in 0.15.3/0.15.4
@@ -91,7 +94,7 @@ Vehicle crew promotions ([#66](https://github.com/EmaEli/menace-mode/issues/66))
   `runtime_assets/<gender>/`, a black shield with a dynamic letter (A, B, C, ...), and the John/Jane voice
   bank from `runtime_assets/voice/` when it loads; otherwise the matching gender donor voice stays.
 - Every new promotion receives an approved six-image set for its native gender/skin combination from
-  `runtime_assets/promoted_<gender>_NN/`: Brown `01`/`04`/`06`/`10`, Black `02`/`05`/`08`/`12`, White `03`/`07`/`09`/`11`,
+  `runtime_assets/promoted_<gender>_NN/`: Brown `01`/`04`/`06`/`07`/`10`, Black `02`/`05`/`08`/`12`, White `03`/`09`/`11`,
   for both `male` and `female`. Within a category the least-used set in the save is chosen
   (ties keep list order), so the sets alternate. Each profile changes portrait
   fields only, leaving dynamic badges unchanged. Leaders promoted before 0.15.1 keep their current art.
@@ -172,7 +175,12 @@ The kit also ships the module's raw `runtime_assets/` (portraits, prebuilt John/
 voice bundle with its build receipt, voice routes); the installer stages them next to
 the compiled package because `jiangyu compile --clean` does not preserve them.
 
-## Acceptance test (0.17.0 test candidate; in-game checks pending)
+## Acceptance test (0.17.1 test candidate; in-game checks pending)
+
+Version 0.17.1 portraits: check male/female 07 (Brown), 08 (Black), and 09 (White) in Hire,
+roster slots, dialogue and tactical barks, including inactive images. Existing assigned 07–09 leaders
+should show the replacement art after loading, keeping names, profile IDs, voices and letter badges.
+New promotions use the corrected pools; older White 07 records must still load.
 
 Version 0.17.0 BlackOps: repeated tactical actions should produce meaningful variants with the caption
 belonging to the actual spoken recording. Check movement, sightings, attacks, casualties and retreat;

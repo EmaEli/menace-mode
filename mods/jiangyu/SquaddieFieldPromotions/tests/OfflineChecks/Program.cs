@@ -377,8 +377,8 @@ var secondPortraits = new[]
     (PortraitCandidate(913, 0, 1), PromotionPortraitAssignment.MaleBrown04),
     (PortraitCandidate(919, 0, 2), PromotionPortraitAssignment.MaleBlack05),
     (PortraitCandidate(927, 1, 2), PromotionPortraitAssignment.FemaleBlack05),
-    (PortraitCandidate(928, 0, 0), PromotionPortraitAssignment.MaleWhite07),
-    (PortraitCandidate(925, 1, 0), PromotionPortraitAssignment.FemaleWhite07),
+    (PortraitCandidate(928, 0, 0), PromotionPortraitAssignment.MaleWhite09),
+    (PortraitCandidate(925, 1, 0), PromotionPortraitAssignment.FemaleWhite09),
 };
 var thirdPortraits = new[]
 {
@@ -386,35 +386,35 @@ var thirdPortraits = new[]
     (PortraitCandidate(933, 0, 1), PromotionPortraitAssignment.MaleBrown06),
     (PortraitCandidate(934, 0, 2), PromotionPortraitAssignment.MaleBlack08),
     (PortraitCandidate(935, 1, 2), PromotionPortraitAssignment.FemaleBlack08),
-    (PortraitCandidate(936, 0, 0), PromotionPortraitAssignment.MaleWhite09),
-    (PortraitCandidate(937, 1, 0), PromotionPortraitAssignment.FemaleWhite09),
+    (PortraitCandidate(936, 0, 0), PromotionPortraitAssignment.MaleWhite11),
+    (PortraitCandidate(937, 1, 0), PromotionPortraitAssignment.FemaleWhite11),
 };
 var fourthPortraits = new[]
 {
-    (PortraitCandidate(938, 1, 1), PromotionPortraitAssignment.FemaleBrown10),
-    (PortraitCandidate(939, 0, 1), PromotionPortraitAssignment.MaleBrown10),
+    (PortraitCandidate(938, 1, 1), PromotionPortraitAssignment.FemaleBrown07),
+    (PortraitCandidate(939, 0, 1), PromotionPortraitAssignment.MaleBrown07),
     (PortraitCandidate(940, 0, 2), PromotionPortraitAssignment.MaleBlack12),
     (PortraitCandidate(941, 1, 2), PromotionPortraitAssignment.FemaleBlack12),
-    (PortraitCandidate(942, 0, 0), PromotionPortraitAssignment.MaleWhite11),
-    (PortraitCandidate(943, 1, 0), PromotionPortraitAssignment.FemaleWhite11),
+    (PortraitCandidate(942, 0, 0), PromotionPortraitAssignment.MaleWhite03),
+    (PortraitCandidate(943, 1, 0), PromotionPortraitAssignment.FemaleWhite03),
 };
 var fifthPortraits = new[]
 {
-    (PortraitCandidate(944, 1, 1), PromotionPortraitAssignment.Female01),
-    (PortraitCandidate(945, 0, 1), PromotionPortraitAssignment.MaleBrown01),
+    (PortraitCandidate(944, 1, 1), PromotionPortraitAssignment.FemaleBrown10),
+    (PortraitCandidate(945, 0, 1), PromotionPortraitAssignment.MaleBrown10),
     (PortraitCandidate(946, 0, 2), PromotionPortraitAssignment.MaleBlack02),
     (PortraitCandidate(947, 1, 2), PromotionPortraitAssignment.FemaleBlack02),
-    (PortraitCandidate(948, 0, 0), PromotionPortraitAssignment.MaleWhite03),
-    (PortraitCandidate(949, 1, 0), PromotionPortraitAssignment.FemaleWhite03),
+    (PortraitCandidate(948, 0, 0), PromotionPortraitAssignment.MaleWhite09),
+    (PortraitCandidate(949, 1, 0), PromotionPortraitAssignment.FemaleWhite09),
 };
 var sixthPortraits = new[]
 {
-    (PortraitCandidate(956, 1, 1), PromotionPortraitAssignment.FemaleBrown04),
-    (PortraitCandidate(957, 0, 1), PromotionPortraitAssignment.MaleBrown04),
+    (PortraitCandidate(956, 1, 1), PromotionPortraitAssignment.Female01),
+    (PortraitCandidate(957, 0, 1), PromotionPortraitAssignment.MaleBrown01),
     (PortraitCandidate(958, 0, 2), PromotionPortraitAssignment.MaleBlack05),
     (PortraitCandidate(959, 1, 2), PromotionPortraitAssignment.FemaleBlack05),
-    (PortraitCandidate(960, 0, 0), PromotionPortraitAssignment.MaleWhite07),
-    (PortraitCandidate(961, 1, 0), PromotionPortraitAssignment.FemaleWhite07),
+    (PortraitCandidate(960, 0, 0), PromotionPortraitAssignment.MaleWhite11),
+    (PortraitCandidate(961, 1, 0), PromotionPortraitAssignment.FemaleWhite11),
 };
 for (int i = 0; i < secondPortraits.Length; i++)
 {
@@ -432,7 +432,7 @@ for (int i = 0; i < fourthPortraits.Length; i++)
 {
     fourthPortraits[i].Item1.BadgeIndex = 60 + i;
     AssignsPortrait(fourthPortraits[i].Item1, fourthPortraits[i].Item2,
-        "fourth promotion gets its category's fourth set: " + fourthPortraits[i].Item2);
+        "fourth promotion gets the least-used compatible set: " + fourthPortraits[i].Item2);
 }
 for (int i = 0; i < fifthPortraits.Length; i++)
 {
@@ -444,14 +444,14 @@ for (int i = 0; i < sixthPortraits.Length; i++)
 {
     sixthPortraits[i].Item1.BadgeIndex = 80 + i;
     AssignsPortrait(sixthPortraits[i].Item1, sixthPortraits[i].Item2,
-        "sixth promotion gets its category's second set: " + sixthPortraits[i].Item2);
+        "sixth promotion gets the least-used compatible set: " + sixthPortraits[i].Item2);
 }
 Check(portraitLedger.Validated().Count == 36, "a save may contain repeated portrait sets across many leaders");
 Check(PromotionPortraitAssignment.AllProfiles.Count() == 24 &&
     PromotionPortraitAssignment.AllProfiles.Distinct().Count() == 24 &&
-    new[] { (0, 0, 4), (0, 1, 4), (0, 2, 4), (1, 0, 4), (1, 1, 4), (1, 2, 4) }
+    new[] { (0, 0, 3), (0, 1, 5), (0, 2, 4), (1, 0, 3), (1, 1, 5), (1, 2, 4) }
         .All(c => PromotionPortraitAssignment.ProfilesFor(c.Item1, c.Item2).Length == c.Item3),
-    "twenty-four portrait sets: four per native gender/skin category");
+    "twenty-four portrait sets: five Brown, four Black and three White per gender");
 foreach (string profile in PromotionPortraitAssignment.AllProfiles)
 {
     int owners = new[] { (0, 0), (0, 1), (0, 2), (1, 0), (1, 1), (1, 2) }
@@ -517,6 +517,27 @@ Check(PromotionPortraitAssignment.TryAssignRotatingProfile(
     maleWhiteAfterLegacy06.PortraitProfile == PromotionPortraitAssignment.MaleWhite03 &&
     previousMaleWhite06.PortraitProfile == PromotionPortraitAssignment.MaleBrown06,
     "old White 06 portrait remains saved while new White leaders use the corrected pool");
+foreach (int gender in new[] { 0, 1 })
+{
+    string profile07 = gender == 0 ? PromotionPortraitAssignment.MaleBrown07 : PromotionPortraitAssignment.FemaleBrown07;
+    var previousWhite07 = PortraitCandidate(970 + gender, gender, 0);
+    previousWhite07.PortraitProfile = profile07;
+    var previousLedger = new PromotionLedger { Records = new() { previousWhite07 } };
+    Check(previousLedger.Validated().Count == 1 &&
+        !PromotionPortraitAssignment.TryAssignRotatingProfile(previousLedger, previousWhite07) &&
+        previousWhite07.PortraitProfile == profile07,
+        "saved White 07 remains loadable and keeps its profile ID for gender " + gender);
+    Check(PromotionPortraitAssignment.ProfilesFor(gender, 1).Contains(profile07) &&
+        !PromotionPortraitAssignment.ProfilesFor(gender, 0).Contains(profile07) &&
+        !PromotionPortraitAssignment.IsCompatible(profile07, gender, 2),
+        "07 joins only the new Brown rotation, never White or Black, for gender " + gender);
+    var nextBrown = PortraitCandidate(972 + gender, gender, 1);
+    string[] brownPool = PromotionPortraitAssignment.ProfilesFor(gender, 1);
+    Check(PromotionPortraitAssignment.LeastUsed(new[] { profile07, brownPool.Last() }, previousLedger.Validated()) == brownPool.Last(),
+        "legacy White 07 counts as an existing use in the corrected Brown pool");
+    Check(PromotionPortraitAssignment.TryAssignRotatingProfile(previousLedger, nextBrown) &&
+        nextBrown.PortraitProfile == brownPool.First(), "new Brown record uses its corrected pool");
+}
 var alreadyAssigned = PortraitCandidate(931, 0, 2);
 alreadyAssigned.PortraitProfile = PromotionPortraitAssignment.MaleBlack02;
 Check(!PromotionPortraitAssignment.TryAssignRotatingProfile(new PromotionLedger(), alreadyAssigned) &&

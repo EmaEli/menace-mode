@@ -203,8 +203,8 @@ internal static class PromotionPortraitAssignment
     internal const string FemaleBlack05 = "promoted_female_05";
     internal const string MaleBrown06 = "promoted_male_06";
     internal const string FemaleBrown06 = "promoted_female_06";
-    internal const string MaleWhite07 = "promoted_male_07";
-    internal const string FemaleWhite07 = "promoted_female_07";
+    internal const string MaleBrown07 = "promoted_male_07";
+    internal const string FemaleBrown07 = "promoted_female_07";
     internal const string MaleBlack08 = "promoted_male_08";
     internal const string FemaleBlack08 = "promoted_female_08";
     internal const string MaleWhite09 = "promoted_male_09";
@@ -228,18 +228,18 @@ internal static class PromotionPortraitAssignment
     private static readonly (string Profile, int Gender, int SkinColor)[] Profiles =
     {
         (MaleBrown01, MaleGender, BrownSkinColor), (MaleBrown04, MaleGender, BrownSkinColor),
-        (MaleBrown06, MaleGender, BrownSkinColor), (MaleBrown10, MaleGender, BrownSkinColor),
+        (MaleBrown06, MaleGender, BrownSkinColor), (MaleBrown07, MaleGender, BrownSkinColor),
+        (MaleBrown10, MaleGender, BrownSkinColor),
         (MaleBlack02, MaleGender, BlackSkinColor), (MaleBlack05, MaleGender, BlackSkinColor),
         (MaleBlack08, MaleGender, BlackSkinColor), (MaleBlack12, MaleGender, BlackSkinColor),
-        (MaleWhite03, MaleGender, WhiteSkinColor),
-        (MaleWhite07, MaleGender, WhiteSkinColor), (MaleWhite09, MaleGender, WhiteSkinColor),
+        (MaleWhite03, MaleGender, WhiteSkinColor), (MaleWhite09, MaleGender, WhiteSkinColor),
         (MaleWhite11, MaleGender, WhiteSkinColor),
         (Female01, FemaleGender, BrownSkinColor), (FemaleBrown04, FemaleGender, BrownSkinColor),
-        (FemaleBrown06, FemaleGender, BrownSkinColor), (FemaleBrown10, FemaleGender, BrownSkinColor),
+        (FemaleBrown06, FemaleGender, BrownSkinColor), (FemaleBrown07, FemaleGender, BrownSkinColor),
+        (FemaleBrown10, FemaleGender, BrownSkinColor),
         (FemaleBlack02, FemaleGender, BlackSkinColor), (FemaleBlack05, FemaleGender, BlackSkinColor),
         (FemaleBlack08, FemaleGender, BlackSkinColor), (FemaleBlack12, FemaleGender, BlackSkinColor),
-        (FemaleWhite03, FemaleGender, WhiteSkinColor),
-        (FemaleWhite07, FemaleGender, WhiteSkinColor), (FemaleWhite09, FemaleGender, WhiteSkinColor),
+        (FemaleWhite03, FemaleGender, WhiteSkinColor), (FemaleWhite09, FemaleGender, WhiteSkinColor),
         (FemaleWhite11, FemaleGender, WhiteSkinColor),
     };
 
@@ -253,6 +253,9 @@ internal static class PromotionPortraitAssignment
         if (profile == MaleBrown01 && gender == MaleGender && skinColor == LegacyWhiteSkinColor) return true;
         // 0.15.3/0.15.4 assigned portrait set 06 to White; preserve those saved appearances.
         if ((profile == MaleBrown06 && gender == MaleGender || profile == FemaleBrown06 && gender == FemaleGender) &&
+            skinColor == WhiteSkinColor) return true;
+        // Through 0.17.0, set 07 was assigned to White; retain those saved profile IDs.
+        if ((profile == MaleBrown07 && gender == MaleGender || profile == FemaleBrown07 && gender == FemaleGender) &&
             skinColor == WhiteSkinColor) return true;
         // 0.14.3 applied female_01 to the first female of any native skin color.
         if (profile == Female01) return gender == FemaleGender;
