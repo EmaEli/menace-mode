@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.17.2 — fill BlackOps damage and building-collapse slots (#73)
+
+- Map 10 of the 13 silent BlackOps slots, reusing recordings already in the bundle (no audio rebuilt):
+  five `enemy_damaged` and two `construct_damaged` slots use generic combat taunts, and the three
+  `building_destroyed` slots use hazard warnings. These are general reactions, not literal hit or destruction reports.
+- BlackOps now maps 177/180 native slots with the same 211 recordings. The three `enemy_vehicle_damaged` slots remain silent.
+- No other profile, recording or saved assignment changes. Listening/gameplay acceptance remains pending.
+
 ## 0.17.1 — replace portrait sets 07–09 with the supplied artwork (#69)
 
 - Replace all 36 male/female 07–09 images with the user's Downloads archive, byte-for-byte.

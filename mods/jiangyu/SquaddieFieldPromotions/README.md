@@ -1,6 +1,9 @@
-# Squaddie Field Promotions 0.17.1
+# Squaddie Field Promotions 0.17.2
 
-> **Experimental 0.17.1 test candidate; in-game acceptance is pending.**
+> **Experimental 0.17.2 test candidate; in-game acceptance is pending.**
+> Version 0.17.2 maps 10 more BlackOps slots (177/180) by reusing existing recordings: generic combat
+> taunts for enemy and construct damage, and hazard warnings for destroyed buildings. They are general
+> reactions, not literal hit reports. Three vehicle-damage slots stay silent; no other voice changes.
 > Version 0.17.1 replaces the six male/female 07–09 portrait sets with the user's supplied archive:
 > **07 Brown, 08 Black, 09 White**. Older saved White 07 assignments remain loadable; their profile IDs
 > do not change, but leaders assigned to 07–09 now display the supplied artwork. Voices and badges are unchanged.
@@ -178,7 +181,12 @@ The kit also ships the module's raw `runtime_assets/` (portraits, prebuilt John/
 voice bundle with its build receipt, voice routes); the installer stages them next to
 the compiled package because `jiangyu compile --clean` does not preserve them.
 
-## Acceptance test (0.17.1 test candidate; in-game checks pending)
+## Acceptance test (0.17.2 test candidate; in-game checks pending)
+
+Version 0.17.2 BlackOps: with a BlackOps-voiced leader, damage an enemy soldier without killing it, damage a
+construct and destroy a building. Expect a short taunt for the first two and a hazard warning for the
+building, each with its matching caption. Damaging an enemy vehicle must stay silent. These are generic
+reactions; report any line that sounds wrong for its event.
 
 Version 0.17.1 portraits: check male/female 07 (Brown), 08 (Black), and 09 (White) in Hire,
 roster slots, dialogue and tactical barks, including inactive images. Existing assigned 07–09 leaders
