@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.17.3 — BlackOps vehicle-damage taunts (#73)
+
+- Map the three `enemy_vehicle_damaged` slots to the same two generic combat taunts already used for
+  enemy and construct damage. BlackOps now maps all 180/180 native slots with the same 211 recordings.
+- No audio rebuilt; no other profile or saved assignment changes. Listening/gameplay acceptance remains pending.
+
 ## 0.17.2 — fill BlackOps damage and building-collapse slots (#73)
 
 - Map 10 of the 13 silent BlackOps slots, reusing recordings already in the bundle (no audio rebuilt):

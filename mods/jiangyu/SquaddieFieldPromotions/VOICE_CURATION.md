@@ -14,9 +14,8 @@ gender-matched and least-used-first. Existing assignments are never rerolled.
 
 This leaves **31 eligible profiles: 22 male and 9 female**. The original 30 profiles
 still have 42/180 mapped slots and 12 distinct recordings each, with 138 silent slots.
-Trepang 2 BlackOps now has 177/180 mapped slots and 211 selected recordings (0.17.2 reuses
-existing recordings as generic damage taunts and building-collapse warnings); the three
-vehicle-damage slots remain silent. The minimum is an assignment gate, NOT a cap or delivery target.
+Trepang 2 BlackOps now has 180/180 mapped slots and 211 selected recordings (0.17.2/0.17.3 reuse
+existing recordings as generic damage taunts and building-collapse warnings). The minimum is an assignment gate, NOT a cap or delivery target.
 These are curated test candidates, not human listening acceptance. All other 55
 profiles and their 607 recordings are preserved unchanged.
 

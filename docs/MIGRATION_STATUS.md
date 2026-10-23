@@ -59,11 +59,11 @@ KDL counts below are **source files**, not patch-operation counts.
 | WeaponRangesRebalanced | 2.9.2 | Shared SuiteSystem host, ranges/linked skills/override JSON |
 | CinematicActionCamera | 1.2.2 | Windows test install and post-install startup log verified on MENACE 0.7.17+22362; manifests/DLLs verified, settings preserved, backup retained; no camera startup errors/warnings; positive user feedback but explicit allied Jetpack auto-follow acceptance still pending (#60) |
 
-Experimental package (not included in the default Suite): **SquaddieFieldPromotions 0.17.2 private PC test candidate**.
-Version 0.17.2 maps 10 more BlackOps slots (177/180) by reusing recordings already in the bundle: generic
-combat taunts for enemy/construct damage and hazard warnings for destroyed buildings; vehicle damage stays
-silent. No audio is rebuilt and no other profile changes. Offline/authoring/installer checks pass; Windows
-BuildOnly/install and listening/gameplay acceptance are pending (#73).
+Experimental package (not included in the default Suite): **SquaddieFieldPromotions 0.17.3 private PC test candidate**.
+Versions 0.17.2/0.17.3 map the last 13 BlackOps slots (180/180) by reusing recordings already in the bundle:
+generic combat taunts for enemy, vehicle and construct damage and hazard warnings for destroyed buildings.
+No audio is rebuilt and no other profile changes. Offline/authoring/installer checks pass; listening and
+gameplay acceptance are pending (#73).
 Version 0.17.1 replaces male/female portrait sets 07–09 from the user's supplied archive and assigns
 new promotions to 07 Brown, 08 Black, 09 White. Older White 07 profile IDs remain loadable. Other art,
 voices, badges and saves are unchanged by installation. Canonical Windows BuildOnly/install passed
