@@ -31,6 +31,10 @@ From the repository root:
   native stand-ins. Covers campaign guards, K-PAC GL, rewards/crafting, exclusions,
   ten reserve copies, existing equipment, repeated clicks and partial failures.
   Does not execute native item creation, vehicle registration, UI clicks or saving.
+- Grenade runtime (#75): `test_grenade_runtime.py` runs production runtime patches against
+  managed native-field stand-ins. Covers stale caches versus templates, player/AI skills,
+  both range-check overloads, native recalculation, settings/restoration and scene cleanup.
+  It does not install real Harmony/IL2CPP detours or prove in-game behavior.
 
 The runner targets .NET 10 (also used by the local Jiangyu CLI), has no external packages
 and does not load game assemblies. Name tests use managed stand-ins for native localized

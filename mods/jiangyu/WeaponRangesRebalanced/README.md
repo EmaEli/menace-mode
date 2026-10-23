@@ -1,4 +1,4 @@
-# Weapon Ranges Rebalanced 2.10.1
+# Weapon Ranges Rebalanced 2.10.2
 
 Weapon Ranges Rebalanced (WRR) now has a deliberately narrow scope: **weapon ranges plus the verified long-range indirect-fire AI turn-performance fix**.
 
@@ -10,6 +10,7 @@ Weapon Ranges Rebalanced (WRR) now has a deliberately narrow scope: **weapon ran
 - scales explicit range-overriding secondary attack skills proportionally with their parent weapon;
 - auto-classifies recognizable future/mod-added ranged weapons while leaving unknown weapons unchanged;
 - limits thrown-grenade skill range, including pirate scrap bombs and flashbangs, to a configurable maximum (default **2 squares**); grenade launchers are not affected;
+- enforces that cap on the live skill range used by native targeting, including already-loaded actors and native range recalculations; disabling it restores the uncapped runtime value without changing grenade templates;
 - supports per-family strength sliders and exact `weapon-overrides.json` range overrides;
 - restores captured pre-WRR ranges when disabled;
 - keeps the verified long-range indirect-fire large-map AI fix.

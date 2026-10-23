@@ -1,3 +1,9 @@
+## 2.10.2
+
+- Replaced the template-only grenade cap with runtime cache enforcement. MENACE's GetMaxRange and native target checks read Skill.m_MaxRange, not SkillTemplate.MaxRange; a successful template write did not prove the actual range was capped.
+- Synchronizes loaded player/AI skills, native SetRanges/container updates and range checks; restores owned runtime values when disabled. Grenade templates and unrelated skills remain untouched.
+- Automated checks are separate from in-game acceptance; the user reported that 2.10.1 still allowed range 3.
+
 ## 2.10.1
 
 - Fixed pirate scrap bombs bypassing the thrown-grenade range cap: their skill ID lacks the word `grenade`, so the initial filter missed them. Flashbangs are now covered as well.

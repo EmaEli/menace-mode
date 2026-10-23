@@ -56,7 +56,7 @@ KDL counts below are **source files**, not patch-operation counts.
 | StrongerCover | 3.0.1 | Jiangyu system, SDK prefix + runtime inside-cover settings |
 | VisibilityOverhaul | 3.2.0 | Jiangyu host, native visibility and opt-in pirate diagnostics |
 | WeaponMechanicsRebalanced | 0.4.14 | Shared SuiteSystem host, skill/ammo/mortar hooks; #59 enemy-only skill coverage plus muted impact-gated ranging feedback (#61); Windows installed 2026-10-19, gameplay check pending |
-| WeaponRangesRebalanced | 2.10.1 | Shared SuiteSystem host, ranges/linked skills/override JSON, configurable 2-square default thrown-grenade cap including pirate scrap bombs and flashbangs (#75) |
+| WeaponRangesRebalanced | 2.10.2 | Shared SuiteSystem host, ranges/linked skills/override JSON; runtime cached-range enforcement for the configurable thrown-grenade cap (#75); gameplay acceptance pending after 2.10.1 failed |
 | CinematicActionCamera | 1.2.2 | Windows test install and post-install startup log verified on MENACE 0.7.17+22362; manifests/DLLs verified, settings preserved, backup retained; no camera startup errors/warnings; positive user feedback but explicit allied Jetpack auto-follow acceptance still pending (#60) |
 
 Experimental package (not included in the default Suite): **SquaddieFieldPromotions 0.17.3 private PC test candidate**.

@@ -1,6 +1,6 @@
 {
   "name": "WeaponRangesRebalanced",
-  "version": "2.10.1",
+  "version": "2.10.2",
   "author": "Luca",
   "description": "Realistic configurable weapon ranges, a configurable thrown-grenade range cap (default 2 squares), proportional secondary-range synchronization, exact overrides via UserData/WeaponRangesRebalanced/weapon-overrides.json, and the long-range indirect-fire AI positioning fix. Jiangyu port of the GameplaySuite WRR module; options live in the MenaceModSettings window (F9).",
   "depends": [

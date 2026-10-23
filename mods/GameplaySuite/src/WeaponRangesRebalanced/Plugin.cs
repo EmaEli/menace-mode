@@ -4,9 +4,9 @@ using Menace.SDK;
 using MenaceModSuite.Shared;
 using UnityEngine;
 
-[assembly: AssemblyVersion("2.10.1.0")]
-[assembly: AssemblyFileVersion("2.10.1.0")]
-[assembly: AssemblyInformationalVersion("2.10.1")]
+[assembly: AssemblyVersion("2.10.2.0")]
+[assembly: AssemblyFileVersion("2.10.2.0")]
+[assembly: AssemblyInformationalVersion("2.10.2")]
 
 namespace MenaceWeaponRangesRebalanced;
 
@@ -14,7 +14,7 @@ namespace MenaceWeaponRangesRebalanced;
 public sealed partial class Plugin : IHostedPlugin
 {
     private const string SettingsGroup = "Weapon Ranges Rebalanced";
-    private const string Version = "2.10.1";
+    private const string Version = "2.10.2";
     private const string OverrideFileName = "weapon-overrides.json";
 
     private enum WeaponFamily
@@ -358,6 +358,7 @@ public sealed partial class Plugin : IHostedPlugin
         EnsureOverrideFileExists();
         ReloadSettings();
         LoadCustomOverrides(force: true);
+        InstallThrownGrenadeRuntimePatches(harmony);
         ModSettings.OnSettingChanged += OnSettingChanged;
         DevConsole.RegisterPanel(SettingsGroup, DrawDebug);
 
@@ -377,6 +378,8 @@ public sealed partial class Plugin : IHostedPlugin
         for (int i = 0; i < 10; i++)
             yield return null;
 
+        RefreshRuntimeThrownGrenadeRanges(restoreOnly: true);
+        lock (RuntimeGrenadeRanges) RuntimeGrenadeRanges.Clear();
         ApplyAll("scene loaded: " + sceneName);
     }
 
@@ -735,7 +738,7 @@ public sealed partial class Plugin : IHostedPlugin
                 RestoreType("ModularVehicleWeaponTemplate");
 
             ProcessLinkedSkillRanges();
-            ProcessThrownGrenadeRanges();
+            RefreshRuntimeThrownGrenadeRanges();
             ApplyIndirectFireAiPositioningPolicy();
 
             _templatesSeen = (_regularCount + _vehicleCount) > 0;
@@ -1245,103 +1248,6 @@ public sealed partial class Plugin : IHostedPlugin
         }
     }
 
-    private static void ProcessThrownGrenadeRanges()
-    {
-        var templates = Templates.FindAll("SkillTemplate");
-        if (templates == null || templates.Length == 0)
-        {
-            RestoreThrownGrenadeSkills();
-            return;
-        }
-
-        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        int matched = 0;
-        int capped = 0;
-        int restored = 0;
-
-        foreach (var template in templates)
-        {
-            if (template.IsNull) continue;
-            string skillName = template.GetName() ?? string.Empty;
-            if (!ThrownGrenadeRangeRules.IsThrownGrenadeSkill(skillName)) continue;
-
-            seen.Add(skillName);
-            matched++;
-            string key = "SkillTemplate|" + skillName;
-            int current = ReadIntField(template, "MaxRange");
-            if (current < 0) continue;
-
-            if (!OriginalSkillRanges.TryGetValue(key, out int original))
-            {
-                original = current;
-                OriginalSkillRanges[key] = original;
-            }
-
-            bool wasTouched = TouchedSkillKeys.Contains(key);
-            var decision = ThrownGrenadeRangeRules.Evaluate(
-                original,
-                current,
-                _enabled && _limitThrownGrenadeRange,
-                wasTouched,
-                _thrownGrenadeMaxRange);
-            bool shouldRestore = !decision.ShouldOwn && wasTouched;
-            bool written = true;
-
-            if (decision.ShouldOwn)
-            {
-                if (current != decision.DesiredRange)
-                    written = Templates.WriteField(template, "MaxRange", decision.DesiredRange);
-                if (written)
-                {
-                    TouchedSkillKeys.Add(key);
-                    capped++;
-                }
-            }
-            else if (shouldRestore)
-            {
-                if (current != decision.DesiredRange)
-                    written = Templates.WriteField(template, "MaxRange", decision.DesiredRange);
-                if (written)
-                {
-                    TouchedSkillKeys.Remove(key);
-                    restored++;
-                }
-            }
-
-            int readBack = ReadIntField(template, "MaxRange");
-            if (!written || (readBack >= 0 && readBack != decision.DesiredRange))
-                _skillWriteFailures++;
-
-            LastSkillResults.Add(new SkillResult
-            {
-                Name = skillName,
-                ParentWeapon = "thrown grenade range cap",
-                Vanilla = original,
-                Target = decision.DesiredRange,
-                Applied = readBack >= 0 ? readBack : decision.DesiredRange,
-                Written = written && (readBack < 0 || readBack == decision.DesiredRange)
-            });
-        }
-
-        RestoreThrownGrenadeSkills(seen);
-
-        if (_debugLogging)
-            DebugLog($"[THROWN_GRENADE_RANGE] matched={matched} capped={capped} restored={restored} max={_thrownGrenadeMaxRange} enabled={_enabled && _limitThrownGrenadeRange}.");
-    }
-
-    private static void RestoreThrownGrenadeSkills(HashSet<string>? seen = null)
-    {
-        const string keyPrefix = "SkillTemplate|";
-        foreach (string key in TouchedSkillKeys.ToArray())
-        {
-            if (!key.StartsWith(keyPrefix, StringComparison.OrdinalIgnoreCase)) continue;
-            string skillName = key.Substring(keyPrefix.Length);
-            if (!ThrownGrenadeRangeRules.IsThrownGrenadeSkill(skillName)) continue;
-            if (seen != null && seen.Contains(skillName)) continue;
-            RestoreSkillRange(skillName);
-        }
-    }
-
     private static HashSet<string> GetTemplateNames(string typeName)
     {
         var names = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -1677,6 +1583,9 @@ public sealed partial class Plugin : IHostedPlugin
     {
         ModSettings.OnSettingChanged -= OnSettingChanged;
         DevConsole.RemovePanel(SettingsGroup);
+        _enabled = false;
+        RefreshRuntimeThrownGrenadeRanges();
+        lock (RuntimeGrenadeRanges) RuntimeGrenadeRanges.Clear();
 
         try
         {
@@ -1684,7 +1593,6 @@ public sealed partial class Plugin : IHostedPlugin
             RestoreType("WeaponTemplate", modularVehicleNames);
             RestoreType("ModularVehicleWeaponTemplate");
             RestoreLinkedSkills();
-            RestoreThrownGrenadeSkills();
         }
         catch
         {

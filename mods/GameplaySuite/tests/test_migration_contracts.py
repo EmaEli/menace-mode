@@ -84,12 +84,15 @@ class MigrationContractTests(unittest.TestCase):
         source = (SRC / "WeaponRangesRebalanced/Plugin.cs").read_text()
         self.assertIn('s.AddToggle("LimitThrownGrenadeRange"', source)
         self.assertIn('s.AddNumber("ThrownGrenadeMaxRange"', source)
-        self.assertIn("ProcessThrownGrenadeRanges();", source)
-        process = source.split("private static void ProcessThrownGrenadeRanges()", 1)[1].split("private static void RestoreThrownGrenadeSkills", 1)[0]
-        self.assertIn("ThrownGrenadeRangeRules.IsThrownGrenadeSkill(skillName)", process)
-        self.assertIn("OriginalSkillRanges.TryGetValue(key", process)
-        self.assertIn("TouchedSkillKeys.Contains(key)", process)
-        self.assertIn("RestoreThrownGrenadeSkills();", source)
+        self.assertIn("InstallThrownGrenadeRuntimePatches(harmony);", source)
+        self.assertIn("RefreshRuntimeThrownGrenadeRanges();", source)
+        runtime = (SRC / "WeaponRangesRebalanced/ThrownGrenadeRuntime.cs").read_text()
+        self.assertIn("ThrownGrenadeRangeRules.IsThrownGrenadeSkill(id)", runtime)
+        self.assertIn("skill.m_MaxRange = decision.DesiredRange", runtime)
+        self.assertIn("nameof(Skill.SetRanges)", runtime)
+        self.assertIn("nameof(SkillContainer.Update)", runtime)
+        self.assertEqual(runtime.count("nameof(Skill.IsInRange)"), 2)
+        self.assertNotIn("Templates.WriteField", runtime)
 
     def test_sharing_disable_and_unload_clear_pending_work(self):
         source = (SRC / "FieldLogistics/Plugin.cs").read_text()
