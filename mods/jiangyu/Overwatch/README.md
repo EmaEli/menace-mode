@@ -1,4 +1,9 @@
-# Overwatch 0.32.3.9
+# Overwatch 0.32.4.0
+
+## 0.32.4.0 — temporary AI reaction diagnostic
+
+- Added a Diagnostics setting, **DEBUG: give hostile AI one extra Overwatch reaction**, default OFF. When enabled, eligible hostile AI receive one extra reaction after activation regardless of leftover AP; normal AP is not changed.
+- The diagnostic still requires a supported, ready direct-fire weapon with ammo and satisfied setup requirements, and keeps the normal range, line-of-sight, visibility, hit-chance and vehicle firing-sector checks. It is for isolating reaction execution, not a gameplay fix or proof that normal AI AP reservation works. Disable after testing.
 
 ## 0.32.3.9 — #24 derived infantry weapon discovery (partially game-verified)
 

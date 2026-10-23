@@ -337,6 +337,16 @@ internal static class Native
     // usability for this end-of-activation reservation.
     public static bool CanReserveAI(Actor actor, Skill skill, int availableAp, out string reason)
     {
+        if (!CanReserveAIDebugBonus(actor, skill, out reason)) return false;
+        int cost = skill.GetActionPointCost();
+        if (availableAp < cost) { reason = $"only {availableAp} AP remain; attack costs {cost}"; return false; }
+        return true;
+    }
+
+    // Diagnostic-only eligibility: check the same combat, weapon, setup and ammo gates as
+    // normal AI reservation, but omit only the leftover-AP requirement. This never changes AP.
+    public static bool CanReserveAIDebugBonus(Actor actor, Skill skill, out string reason)
+    {
         reason = "Ready.";
         if (!IsCombatReady(actor)) { reason = "unit is not combat-ready"; return false; }
         if (IsIndirectFire(skill)) { reason = "indirect-fire weapons cannot use Overwatch"; return false; }
@@ -348,7 +358,6 @@ internal static class Native
         if (skill.HasLimitedUses() && (skill.IsOutOfUses() || skill.GetUses() <= 0)) { reason = "no ammunition/uses remaining"; return false; }
         int cost = skill.GetActionPointCost();
         if (cost <= 0) { reason = "zero-cost attacks are not used for Overwatch"; return false; }
-        if (availableAp < cost) { reason = $"only {availableAp} AP remain; attack costs {cost}"; return false; }
         return true;
     }
 

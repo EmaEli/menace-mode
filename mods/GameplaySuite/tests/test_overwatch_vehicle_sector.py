@@ -44,6 +44,25 @@ class OverwatchVehicleSectorTests(unittest.TestCase):
             self.assertIn(f'{attribute}("{version}")', source)
         self.assertIn(f"<Version>{version}</Version>", (package / "code/Overwatch.csproj").read_text())
         self.assertIn('s.AddToggle("DebugLogging", "Debug logging", false)', source)
+        self.assertIn('s.AddToggle("DebugBonusAIOverwatch", "DEBUG: give hostile AI one extra Overwatch reaction", false)', source)
+        compiled = json.loads((package / "compiled/jiangyu.json").read_text())
+        self.assertEqual(compiled["version"], version)
+
+    def test_bonus_diagnostic_bypasses_only_leftover_ap_and_is_ammo_capped(self):
+        native_bonus = NATIVE.split("public static bool CanReserveAIDebugBonus", 1)[1].split("public static int AmmoBound", 1)[0]
+        for gate in ("IsCombatReady(actor)", "IsIndirectFire(skill)", "SupportedForActor(actor, skill)",
+                     "RequirementsSatisfied(skill, actor)", "skill.IsEnabled()", "skill.GetUses() <= 0",
+                     "cost <= 0"):
+            self.assertIn(gate, native_bonus)
+        self.assertNotIn("availableAp", native_bonus)
+
+        reserve = RUNTIME.split("private void TryArmAI", 1)[1].split("private bool RemoveWatch", 1)[0]
+        self.assertIn("bool diagnosticBonus = _debugBonusAIOverwatch", reserve)
+        self.assertIn("Native.CanReserveAIDebugBonus(actor, s, out _)", reserve)
+        self.assertIn("ap / Math.Max(1, cost) + (diagnosticBonus ? 1 : 0)", reserve)
+        self.assertIn("Native.AmmoBound(skill)", reserve)
+        self.assertIn("aiBonusReservation: diagnosticBonus", reserve)
+        self.assertIn("DebugBonusAIOverwatch", (ROOT / "src/Overwatch/Plugin.cs").read_text())
 
 
 if __name__ == "__main__":

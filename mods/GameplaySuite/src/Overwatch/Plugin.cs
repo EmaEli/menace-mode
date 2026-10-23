@@ -5,9 +5,9 @@ using MenaceModSuite.Shared;
 using UnityEngine;
 using Path = global::System.IO.Path;
 
-[assembly: AssemblyVersion("0.32.3.9")]
-[assembly: AssemblyFileVersion("0.32.3.9")]
-[assembly: AssemblyInformationalVersion("0.32.3.9")]
+[assembly: AssemblyVersion("0.32.4.0")]
+[assembly: AssemblyFileVersion("0.32.4.0")]
+[assembly: AssemblyInformationalVersion("0.32.4.0")]
 
 namespace MenaceOverwatch;
 
@@ -15,7 +15,7 @@ namespace MenaceOverwatch;
 public sealed partial class Plugin : IHostedPlugin
 {
     private const string SettingsGroup = "Overwatch";
-    private const string Version = "0.32.3.9";
+    private const string Version = "0.32.4.0";
     private Runtime? _runtime;
     private global::HarmonyLib.Harmony? _harmony;
     private ModLog? _logger;
@@ -54,6 +54,7 @@ public sealed partial class Plugin : IHostedPlugin
             s.AddToggle("HighContrastIndicators", "High contrast Overwatch indicators", true);
             s.AddHeader("Diagnostics");
             s.AddToggle("DebugLogging", "Debug logging", false);
+            s.AddToggle("DebugBonusAIOverwatch", "DEBUG: give hostile AI one extra Overwatch reaction", false);
         });
         DevConsole.RegisterPanel("Overwatch", DrawDebug);
         HudInputGuard.Register(this, GetHudRect);
@@ -80,7 +81,7 @@ public sealed partial class Plugin : IHostedPlugin
             try
             {
                 if (_harmony == null) throw new InvalidOperationException("Harmony unavailable.");
-                _runtime = new Runtime(_harmony, DebugLog, WarningLog, ErrorLog, Setting("DebugLogging", false), Setting("EnableAIOverwatch", true),
+                _runtime = new Runtime(_harmony, DebugLog, WarningLog, ErrorLog, Setting("DebugLogging", false), Setting("DebugBonusAIOverwatch", false), Setting("EnableAIOverwatch", true),
                     Setting("TriggerOnEnemyActions", true), Setting("EnableVehicleOverwatch", true), Setting("EnableAIVehicleOverwatch", false),
                     Setting("ShowWorldMarkers", true), Setting("HighContrastIndicators", true),
                     Threshold("PlayerHitChance", 60), Threshold("AIHitChance", 55),
@@ -90,7 +91,8 @@ public sealed partial class Plugin : IHostedPlugin
         }
         _runtime?.Configure(Setting("EnableAIOverwatch", true), Setting("TriggerOnEnemyActions", true), Setting("EnableVehicleOverwatch", true),
             Setting("EnableAIVehicleOverwatch", false), Setting("ShowWorldMarkers", true), Setting("HighContrastIndicators", true),
-            Threshold("PlayerHitChance", 60), Threshold("AIHitChance", 55), Penalty(), cf, alphaStrike, Setting("DebugLogging", false));
+            Threshold("PlayerHitChance", 60), Threshold("AIHitChance", 55), Penalty(), cf, alphaStrike,
+            Setting("DebugLogging", false), Setting("DebugBonusAIOverwatch", false));
         try { _runtime?.Update(); }
         catch (Exception e)
         {
@@ -266,6 +268,7 @@ public sealed partial class Plugin : IHostedPlugin
         Line("Overwatch indicators: " + (Setting("ShowWorldMarkers", true) ? "on" : "off"));
         Line("High contrast Overwatch indicators: " + (Setting("HighContrastIndicators", true) ? "on" : "off"));
         Line("Debug logging: " + (Setting("DebugLogging", false) ? "on" : "off"));
+        Line("Debug bonus AI Overwatch: " + (Setting("DebugBonusAIOverwatch", false) ? "on" : "off"));
         Line("Player threshold: " + Threshold("PlayerHitChance", 60) + "%");
         Line("Aim penalty: -" + Penalty() + " points");
         Line("AI threshold: " + Threshold("AIHitChance", 55) + "%");

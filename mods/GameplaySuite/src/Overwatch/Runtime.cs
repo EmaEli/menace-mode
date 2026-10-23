@@ -110,6 +110,7 @@ internal sealed class Runtime : IDisposable
     private bool _showWorldMarkers;
     private bool _highContrastIndicators;
     private bool _debugLogging;
+    private bool _debugBonusAIOverwatch;
     private int _playerThreshold;
     private int _aiThreshold;
     private int _aimPenalty;
@@ -139,7 +140,7 @@ internal sealed class Runtime : IDisposable
     private bool _reactionActionSawBusy;
     private float _reactionActionActivatedAt;
 
-    internal Runtime(global::HarmonyLib.Harmony harmony, Action<string> debugLog, Action<string> warningLog, Action<string> errorLog, bool debugLogging, bool aiEnabled,
+    internal Runtime(global::HarmonyLib.Harmony harmony, Action<string> debugLog, Action<string> warningLog, Action<string> errorLog, bool debugLogging, bool debugBonusAIOverwatch, bool aiEnabled,
         bool actionTriggersEnabled, bool vehicleEnabled, bool aiVehicleEnabled, bool showWorldMarkers, bool highContrastIndicators,
         int playerThreshold, int aiThreshold,
         int aimPenalty, bool coordinatedFireInstalled, bool alphaStrikeInstalled)
@@ -149,6 +150,7 @@ internal sealed class Runtime : IDisposable
         _warningLog = warningLog;
         _errorLog = errorLog;
         _debugLogging = debugLogging;
+        _debugBonusAIOverwatch = debugBonusAIOverwatch;
         _aiEnabled = aiEnabled;
         _actionTriggersEnabled = actionTriggersEnabled;
         _vehicleEnabled = vehicleEnabled;
@@ -251,9 +253,10 @@ internal sealed class Runtime : IDisposable
     }
 
     public void Configure(bool aiEnabled, bool actionTriggersEnabled, bool vehicleEnabled, bool aiVehicleEnabled,
-        bool showWorldMarkers, bool highContrastIndicators, int playerThreshold, int aiThreshold, int aimPenalty, bool coordinatedFireInstalled, bool alphaStrikeInstalled, bool debugLogging)
+        bool showWorldMarkers, bool highContrastIndicators, int playerThreshold, int aiThreshold, int aimPenalty, bool coordinatedFireInstalled, bool alphaStrikeInstalled, bool debugLogging, bool debugBonusAIOverwatch)
     {
         _debugLogging = debugLogging;
+        _debugBonusAIOverwatch = debugBonusAIOverwatch;
         _aiEnabled = aiEnabled;
         _actionTriggersEnabled = actionTriggersEnabled;
         if (!_actionTriggersEnabled) _pendingActionTriggers.Clear();
@@ -952,18 +955,20 @@ internal sealed class Runtime : IDisposable
     }
 
     private bool Arm(Actor actor, Skill primary, Skill? secondary, OverwatchMode mode, int threshold,
-        int aimPenalty, bool playerSide, int cost, int reactions, bool aiReservation = false)
+        int aimPenalty, bool playerSide, int cost, int reactions, bool aiReservation = false, bool aiBonusReservation = false)
     {
         int validationAp = Math.Max(0, actor.GetActionPoints());
         string why;
-        bool primaryOk = aiReservation
-            ? Native.CanReserveAI(actor, primary, validationAp, out why)
+        bool primaryOk = aiBonusReservation
+            ? Native.CanReserveAIDebugBonus(actor, primary, out why)
+            : aiReservation ? Native.CanReserveAI(actor, primary, validationAp, out why)
             : Native.CanArm(actor, primary, out why);
         if (!primaryOk) { _reason = why; return false; }
         if (Native.Valid(secondary))
         {
-            bool secondaryOk = aiReservation
-                ? Native.CanReserveAI(actor, secondary!, validationAp, out why)
+            bool secondaryOk = aiBonusReservation
+                ? Native.CanReserveAIDebugBonus(actor, secondary!, out why)
+                : aiReservation ? Native.CanReserveAI(actor, secondary!, validationAp, out why)
                 : Native.CanArm(actor, secondary!, out why);
             if (!secondaryOk) { _reason = why; return false; }
         }
@@ -1090,23 +1095,35 @@ internal sealed class Runtime : IDisposable
                 .Concat(Native.Attacks(actor, WeaponRole.Leader))
                 .ToList();
 
+        bool diagnosticBonus = _debugBonusAIOverwatch;
         var attacks = pool
-            .Where(s => Native.CanReserveAI(actor, s, ap, out _))
+            .Where(s => diagnosticBonus
+                ? Native.CanReserveAIDebugBonus(actor, s, out _)
+                : Native.CanReserveAI(actor, s, ap, out _))
             .OrderByDescending(s => s.GetMaxRange())
             .ThenBy(s => s.GetActionPointCost())
             .ToList();
 
         if (attacks.Count == 0)
         {
-            string why = pool.Count == 0 ? "no supported ranged attacks" : "no attack can be reserved with the remaining AP/ammo";
-            if (pool.Count > 0 && !Native.CanReserveAI(actor, pool[0], ap, out string detail)) why += $" ({detail})";
+            string why = pool.Count == 0 ? "no supported ranged attacks" : diagnosticBonus
+                ? "no attack passed the diagnostic bonus eligibility/ammo checks"
+                : "no attack can be reserved with the remaining AP/ammo";
+            if (pool.Count > 0)
+            {
+                string detail;
+                bool valid = diagnosticBonus
+                    ? Native.CanReserveAIDebugBonus(actor, pool[0], out detail)
+                    : Native.CanReserveAI(actor, pool[0], ap, out detail);
+                if (!valid) why += $" ({detail})";
+            }
             if (_debugLogging) _debugLog($"AI Overwatch skipped: actor={key} trigger={trigger} actorType={(vehicle ? "vehicle" : "infantry")} AP={ap} candidates={pool.Count} reason={why}.");
             return;
         }
 
         var skill = attacks[0];
         int cost = skill.GetActionPointCost();
-        int reactions = Math.Min(ap / Math.Max(1, cost), Native.AmmoBound(skill));
+        int reactions = Math.Min(ap / Math.Max(1, cost) + (diagnosticBonus ? 1 : 0), Native.AmmoBound(skill));
         if (reactions <= 0)
         {
             if (_debugLogging) _debugLog($"AI Overwatch skipped: actor={key} trigger={trigger} AP={ap} skill={skill.GetID()} cost={cost} reason=no reaction budget.");
@@ -1117,8 +1134,8 @@ internal sealed class Runtime : IDisposable
             ? (Native.IsAlphaStrikeSkill(skill) ? OverwatchMode.AlphaStrike : OverwatchMode.Vehicle)
             : (Native.Role(skill) == WeaponRole.Leader ? OverwatchMode.Leader : OverwatchMode.Squad);
 
-        if (Arm(actor, skill, null, mode, _aiThreshold, _aimPenalty, false, cost, reactions, aiReservation: true))
-            if (_debugLogging) _debugLog($"AI Overwatch armed: actor={key} trigger={trigger} actorType={(vehicle ? "vehicle" : "infantry")} skill={skill.GetID()} alphaStrike={Native.IsAlphaStrikeSkill(skill)} cost={cost} reactions={reactions} threshold={_aiThreshold}%.");
+        if (Arm(actor, skill, null, mode, _aiThreshold, _aimPenalty, false, cost, reactions, aiReservation: true, aiBonusReservation: diagnosticBonus))
+            if (_debugLogging) _debugLog($"AI Overwatch armed: actor={key} trigger={trigger} actorType={(vehicle ? "vehicle" : "infantry")} skill={skill.GetID()} alphaStrike={Native.IsAlphaStrikeSkill(skill)} cost={cost} reactions={reactions} diagnosticBonus={(diagnosticBonus ? 1 : 0)} threshold={_aiThreshold}%.");
         else
             if (_debugLogging) _debugLog($"AI Overwatch failed to arm: actor={key} trigger={trigger} AP={ap} skill={skill.GetID()} reason={_reason}.");
     }
