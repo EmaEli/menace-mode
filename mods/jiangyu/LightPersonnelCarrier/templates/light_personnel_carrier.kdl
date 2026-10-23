@@ -1,0 +1,28 @@
+// Light Personnel Carrier 0.1: experimental authoring source, NOT compiled/tested.
+// New independent templates: no patches to vanilla vehicles or map props.
+// Verified against ExtractedData (2026-09-16) from MENACE v0.7.x.
+
+// Preserve native one-squad transport support but exclude weapon hardpoints.
+// Caution: zero modular weapon slots must be validated in game.
+clone "ModularVehicleTemplate" from="modular_vehicle_carrier" id="modular_vehicle.light_personnel_carrier" {
+    clear "Slots"
+}
+
+// Clone player light carrier, retaining movement, AP, crew, sound, cargo, damage.
+// carrier_light_static is a map scenery mesh: animation/rig compatibility unknown.
+clone "EntityTemplate" from="player_vehicle.modular_light_troop_carrier" id="player_vehicle.light_personnel_carrier" {
+    set "Title" { set "m_DefaultTranslation" "Light Personnel Carrier" }
+    set "Description" { set "m_DefaultTranslation" "An unarmed, low-cost tracked troop transport carrying one infantry squad." }
+    set "ModularVehicle" "modular_vehicle.light_personnel_carrier"
+    clear "Prefabs"
+    append "Prefabs" asset="carrier_light_static"
+}
+
+// New independent chassis; original carrier still costs 220 supplies.
+clone "VehicleItemTemplate" from="vehicle.chassis_carrier" id="vehicle.chassis_light_personnel_carrier" {
+    set "EntityTemplate" "player_vehicle.light_personnel_carrier"
+    set "DeployCosts" { set "m_Supplies" 150 }
+    set "TradeValue" 45
+    set "ShortName" { set "m_DefaultTranslation" "Light Personnel Carrier" }
+    set "Description" { set "m_DefaultTranslation" "Basic unarmed single-squad carrier. Deploy cost: 150 supplies." }
+}
