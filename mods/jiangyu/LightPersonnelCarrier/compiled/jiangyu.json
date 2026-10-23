@@ -1,0 +1,12 @@
+{
+  "name": "LightPersonnelCarrier",
+  "version": "0.1.2",
+  "author": "Luca",
+  "description": "Experimental stripped-down Light Infantry Carrier utility variant with reduced armor, no accessory slots and one light weapon slot.",
+  "depends": [
+    "Jiangyu >= 1.4.8"
+  ],
+  "compiledForUnity": "6000.0.82f1",
+  "compiledForJiangyu": "1.4.8",
+  "textureReplacements": []
+}

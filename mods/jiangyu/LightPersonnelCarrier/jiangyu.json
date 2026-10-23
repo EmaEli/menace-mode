@@ -1,0 +1,9 @@
+{
+  "name": "LightPersonnelCarrier",
+  "version": "0.1.2",
+  "author": "Luca",
+  "description": "Experimental stripped-down Light Infantry Carrier utility variant with reduced armor, no accessory slots and one light weapon slot.",
+  "depends": [
+    "Jiangyu >= 1.4.8"
+  ]
+}

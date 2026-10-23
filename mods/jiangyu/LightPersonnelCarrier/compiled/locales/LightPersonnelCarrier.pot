@@ -1,0 +1,24 @@
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#. Entities · EntityTemplate player_vehicle.light_personnel_carrier · Title
+msgctxt "LightPersonnelCarrier::EntityTemplate/player_vehicle.light_personnel_carrier/Title"
+msgid "Light Infantry Carrier (Utility)"
+msgstr ""
+
+#. Entities · EntityTemplate player_vehicle.light_personnel_carrier · Description
+msgctxt "LightPersonnelCarrier::EntityTemplate/player_vehicle.light_personnel_carrier/Description"
+msgid "A stripped-down utility variant of the Light Infantry Carrier, with reduced armor, no accessory slots and one light weapon slot."
+msgstr ""
+
+#. VehicleItemTemplate · VehicleItemTemplate vehicle.chassis_light_personnel_carrier · ShortName
+msgctxt "LightPersonnelCarrier::VehicleItemTemplate/vehicle.chassis_light_personnel_carrier/ShortName"
+msgid "Light Infantry Carrier (Utility)"
+msgstr ""
+
+#. VehicleItemTemplate · VehicleItemTemplate vehicle.chassis_light_personnel_carrier · Description
+msgctxt "LightPersonnelCarrier::VehicleItemTemplate/vehicle.chassis_light_personnel_carrier/Description"
+msgid "A one-squad Light Infantry Carrier with reduced armor, no accessory slots and one light weapon slot. Vehicle deployment costs 0 supplies; pilot costs are unchanged."
+msgstr ""

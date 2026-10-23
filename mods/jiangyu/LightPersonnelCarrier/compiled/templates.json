@@ -1,0 +1,268 @@
+{
+  "templatePatches": [
+    {
+      "templateType": "ModularVehicleTemplate",
+      "templateId": "modular_vehicle.light_personnel_carrier",
+      "set": [
+        {
+          "op": "Clear",
+          "fieldPath": "Slots"
+        },
+        {
+          "op": "Append",
+          "fieldPath": "Slots",
+          "value": {
+            "kind": "Composite",
+            "composite": {
+              "typeName": "Il2CppMenace.Strategy.ModularVehicleSlot",
+              "operations": [
+                {
+                  "op": "Set",
+                  "fieldPath": "SlotType",
+                  "value": {
+                    "kind": "Enum",
+                    "enumType": "ModularVehicleSlotType",
+                    "enumValue": "Light"
+                  }
+                },
+                {
+                  "op": "Set",
+                  "fieldPath": "TransformName",
+                  "value": {
+                    "kind": "String",
+                    "string": "chassis_mount_02"
+                  }
+                },
+                {
+                  "op": "Set",
+                  "fieldPath": "AllowsLightWeaponToBeIntegrated",
+                  "value": {
+                    "kind": "Boolean",
+                    "boolean": false
+                  }
+                },
+                {
+                  "op": "Set",
+                  "fieldPath": "UseRelativeAimAnchor",
+                  "value": {
+                    "kind": "Boolean",
+                    "boolean": false
+                  }
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "templateType": "EntityTemplate",
+      "templateId": "player_vehicle.light_personnel_carrier",
+      "set": [
+        {
+          "op": "Set",
+          "fieldPath": "m_DefaultTranslation",
+          "descent": [
+            {
+              "field": "Title"
+            }
+          ],
+          "value": {
+            "kind": "String",
+            "string": "Light Infantry Carrier (Utility)"
+          }
+        },
+        {
+          "op": "Set",
+          "fieldPath": "m_DefaultTranslation",
+          "descent": [
+            {
+              "field": "Description"
+            }
+          ],
+          "value": {
+            "kind": "String",
+            "string": "A stripped-down utility variant of the Light Infantry Carrier, with reduced armor, no accessory slots and one light weapon slot."
+          }
+        },
+        {
+          "op": "Set",
+          "fieldPath": "ModularVehicle",
+          "value": {
+            "kind": "TemplateReference",
+            "reference": {
+              "templateType": "ModularVehicleTemplate",
+              "templateId": "modular_vehicle.light_personnel_carrier"
+            }
+          }
+        },
+        {
+          "op": "Set",
+          "fieldPath": "Armor",
+          "descent": [
+            {
+              "field": "Properties"
+            }
+          ],
+          "value": {
+            "kind": "Int32",
+            "int32": 113
+          }
+        },
+        {
+          "op": "Set",
+          "fieldPath": "ArmorSide",
+          "descent": [
+            {
+              "field": "Properties"
+            }
+          ],
+          "value": {
+            "kind": "Int32",
+            "int32": 99
+          }
+        },
+        {
+          "op": "Set",
+          "fieldPath": "ArmorBack",
+          "descent": [
+            {
+              "field": "Properties"
+            }
+          ],
+          "value": {
+            "kind": "Int32",
+            "int32": 81
+          }
+        },
+        {
+          "op": "Clear",
+          "fieldPath": "Prefabs"
+        },
+        {
+          "op": "Append",
+          "fieldPath": "Prefabs",
+          "value": {
+            "kind": "AssetReference",
+            "asset": {
+              "name": "carrier_light_static"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "templateType": "VehicleItemTemplate",
+      "templateId": "vehicle.chassis_light_personnel_carrier",
+      "set": [
+        {
+          "op": "Set",
+          "fieldPath": "EntityTemplate",
+          "value": {
+            "kind": "TemplateReference",
+            "reference": {
+              "templateType": "EntityTemplate",
+              "templateId": "player_vehicle.light_personnel_carrier"
+            }
+          }
+        },
+        {
+          "op": "Set",
+          "fieldPath": "m_Supplies",
+          "descent": [
+            {
+              "field": "DeployCosts"
+            }
+          ],
+          "value": {
+            "kind": "Int32",
+            "int32": 0
+          }
+        },
+        {
+          "op": "Set",
+          "fieldPath": "AccessorySlots",
+          "value": {
+            "kind": "Int32",
+            "int32": 0
+          }
+        },
+        {
+          "op": "Set",
+          "fieldPath": "Rarity",
+          "value": {
+            "kind": "Int32",
+            "int32": 0
+          }
+        },
+        {
+          "op": "Set",
+          "fieldPath": "MinCampaignProgress",
+          "value": {
+            "kind": "Int32",
+            "int32": 0
+          }
+        },
+        {
+          "op": "Set",
+          "fieldPath": "BlackMarketMaxQuantity",
+          "value": {
+            "kind": "Int32",
+            "int32": 10
+          }
+        },
+        {
+          "op": "Set",
+          "fieldPath": "TradeValue",
+          "value": {
+            "kind": "Int32",
+            "int32": 45
+          }
+        },
+        {
+          "op": "Set",
+          "fieldPath": "m_DefaultTranslation",
+          "descent": [
+            {
+              "field": "ShortName"
+            }
+          ],
+          "value": {
+            "kind": "String",
+            "string": "Light Infantry Carrier (Utility)"
+          }
+        },
+        {
+          "op": "Set",
+          "fieldPath": "m_DefaultTranslation",
+          "descent": [
+            {
+              "field": "Description"
+            }
+          ],
+          "value": {
+            "kind": "String",
+            "string": "A one-squad Light Infantry Carrier with reduced armor, no accessory slots and one light weapon slot. Vehicle deployment costs 0 supplies; pilot costs are unchanged."
+          }
+        }
+      ]
+    }
+  ],
+  "templateClones": [
+    {
+      "templateType": "ModularVehicleTemplate",
+      "sourceId": "modular_vehicle_carrier",
+      "cloneId": "modular_vehicle.light_personnel_carrier"
+    },
+    {
+      "templateType": "EntityTemplate",
+      "sourceId": "player_vehicle.modular_light_troop_carrier",
+      "cloneId": "player_vehicle.light_personnel_carrier"
+    },
+    {
+      "templateType": "VehicleItemTemplate",
+      "sourceId": "vehicle.chassis_carrier",
+      "cloneId": "vehicle.chassis_light_personnel_carrier"
+    }
+  ]
+}

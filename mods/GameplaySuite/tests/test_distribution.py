@@ -99,6 +99,65 @@ class DistributionTests(unittest.TestCase):
         self.assertEqual(catalog["modules"][0], "MenaceModSettings")
         self.assertIn("CinematicActionCamera", actual)
         self.assertNotIn("SquaddieFieldPromotions", catalog["modules"])
+        self.assertNotIn("LightPersonnelCarrier", catalog["modules"])
+        self.assertIn("LightPersonnelCarrier", catalog["experimentalModules"])
+
+    def test_light_personnel_carrier_utility_is_compiled_opt_in_data_package(self):
+        payload, versions = BUILDER.collect(ROOT, "LightPersonnelCarrier")
+        self.assertEqual(set(versions), {"MenaceModSettings", "LightPersonnelCarrier"})
+        self.assertEqual(versions["LightPersonnelCarrier"], "0.1.2")
+        compiled_path = "source/mods/jiangyu/LightPersonnelCarrier/compiled/"
+        self.assertIn(compiled_path + "templates.json", payload)
+        self.assertIn("source/mods/jiangyu/LightPersonnelCarrier/templates/light_personnel_carrier.kdl", payload)
+
+        manifest = json.loads(payload[compiled_path + "jiangyu.json"])
+        self.assertEqual(manifest["compiledForJiangyu"], "1.4.8")
+        self.assertEqual(manifest["compiledForUnity"], "6000.0.82f1")
+        templates = json.loads(payload[compiled_path + "templates.json"])
+        patches = {patch["templateId"]: patch for patch in templates["templatePatches"]}
+        self.assertEqual(set(patches), {
+            "modular_vehicle.light_personnel_carrier",
+            "player_vehicle.light_personnel_carrier",
+            "vehicle.chassis_light_personnel_carrier",
+        })
+        slot_ops = [operation for operation in patches["modular_vehicle.light_personnel_carrier"]["set"]
+                    if operation["fieldPath"] == "Slots"]
+        self.assertEqual([operation["op"] for operation in slot_ops], ["Clear", "Append"])
+        kdl = payload["source/mods/jiangyu/LightPersonnelCarrier/templates/light_personnel_carrier.kdl"].decode()
+        display_name = "Light Infantry Carrier (Utility)"
+        self.assertEqual(kdl.count('"' + display_name + '"'), 2)
+        self.assertIn("stripped-down utility variant of the Light Infantry Carrier", kdl)
+        self.assertEqual(json.dumps(templates).count(display_name), 2)
+        self.assertIn('append "Slots" {', kdl)
+        self.assertIn('set "SlotType" enum="ModularVehicleSlotType" "Light"', kdl)
+        self.assertIn('set "TransformName" "chassis_mount_02"', kdl)
+        light_slot = slot_ops[1]["value"]["composite"]
+        self.assertEqual(light_slot["typeName"], "Il2CppMenace.Strategy.ModularVehicleSlot")
+        slot_values = {operation["fieldPath"]: operation["value"]
+                       for operation in light_slot["operations"]}
+        self.assertEqual(slot_values["SlotType"]["enumValue"], "Light")
+        self.assertEqual(slot_values["TransformName"]["string"], "chassis_mount_02")
+        self.assertFalse(slot_values["AllowsLightWeaponToBeIntegrated"]["boolean"])
+        self.assertFalse(slot_values["UseRelativeAimAnchor"]["boolean"])
+        prefabs = next(operation for operation in patches["player_vehicle.light_personnel_carrier"]["set"]
+                       if operation["fieldPath"] == "Prefabs" and operation["op"] == "Append")
+        self.assertEqual(prefabs["value"]["asset"]["name"], "carrier_light_static")
+        cost = next(operation for operation in patches["vehicle.chassis_light_personnel_carrier"]["set"]
+                    if operation["fieldPath"] == "m_Supplies")
+        self.assertEqual(cost["value"]["int32"], 0)
+
+        def assert_int(template_id, field, expected, descent=None):
+            operation = next(op for op in patches[template_id]["set"]
+                             if op["fieldPath"] == field and op.get("descent") == descent)
+            self.assertEqual(operation["op"], "Set")
+            self.assertEqual(operation["value"]["int32"], expected)
+
+        properties = [{"field": "Properties"}]
+        for field, value in (("Armor", 113), ("ArmorSide", 99), ("ArmorBack", 81)):
+            assert_int("player_vehicle.light_personnel_carrier", field, value, properties)
+        for field, value in (("AccessorySlots", 0), ("Rarity", 0),
+                             ("MinCampaignProgress", 0), ("BlackMarketMaxQuantity", 10)):
+            assert_int("vehicle.chassis_light_personnel_carrier", field, value)
 
     def test_preview_uses_canonical_standalone_launcher_without_replacing_settings(self):
         with tempfile.TemporaryDirectory() as folder:
