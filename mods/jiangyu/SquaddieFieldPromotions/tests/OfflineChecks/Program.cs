@@ -16,6 +16,12 @@ void Check(bool value, string name)
     if (!value) throw new Exception("FAILED: " + name);
     checks++;
 }
+if (args.Length == 2 && args[0] == "--voice-proposal")
+{
+    VoiceProposalChecks.Run(Check, args[1], Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "../../../../../")));
+    Console.WriteLine("PASS: " + checks + " private voice-proposal contract checks; no audio playback or installation.");
+    return;
+}
 Candidate C(int id, int missions = 0, int? xp = null, bool assigned = false,
     string lastUnitTitle = "", string lastCommander = "", string rank = "", string sourceLeaderTemplateId = "",
     int gender = 0, int skinColor = 1) =>
