@@ -1,3 +1,14 @@
+## 2.10.1
+
+- Fixed pirate scrap bombs bypassing the thrown-grenade range cap: their skill ID lacks the word `grenade`, so the initial filter missed them. Flashbangs are now covered as well.
+- Kept grenade-launcher and unrelated throwing attacks excluded; cap settings and original-range restoration are unchanged.
+
+## 2.10.0
+
+- Added a default 2-square maximum range for thrown grenade abilities, configurable in Mod Settings with an enable toggle and maximum-range control.
+- Covers frag, smoke, anti-tank, EMP, incendiary, thermite, corrosive, nova, and plasma grenade skills; grenade launchers remain unchanged.
+- Original skill ranges are restored when the cap or Weapon Ranges Rebalanced is disabled.
+
 ## 2.9.2
 
 - Fixed weapon ranges staying vanilla under Jiangyu: the range pass found zero `WeaponTemplate` / `ModularVehicleWeaponTemplate` objects on every scene load (`Weapon templates are not loaded yet` in the debug log) and never wrote a `MaxRange`. The Jiangyu host resolved template types only in `Il2Cpp*` proxy assemblies, but the game's own proxy keeps its original name (`Assembly-CSharp.dll`), so no game template type could be resolved. The host now also searches `Assembly-CSharp` and reads templates through `DataTemplateLoader.GetAll<T>()` / `TryGet<T>()`, the per-type cache the game itself uses. No balance changes.

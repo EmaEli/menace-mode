@@ -53,6 +53,7 @@ CoordinatedFireChecks.Run(Check);
 SmokeAiChecks.Run(Check);
 AssaultDefenseChecks.Run(Check);
 MortarScatterChecks.Run(Check);
+GrenadeRangeChecks.Run(Check);
 OverwatchSourceSkillChecks.Run(Check);
 LargerMaps.Plugin.RunPlanningChecks(Check);
 if (args.Length > 0 && args[0] == "--mortar-proxies")

@@ -80,6 +80,17 @@ class MigrationContractTests(unittest.TestCase):
         self.assertIn('_debugLogging = Setting("DebugLogging", false)', source)
         self.assertIn('_logWeaponTable = Setting("DebugWeaponTable", false)', source)
 
+    def test_wrr_thrown_grenade_range_cap_is_configurable_and_restored(self):
+        source = (SRC / "WeaponRangesRebalanced/Plugin.cs").read_text()
+        self.assertIn('s.AddToggle("LimitThrownGrenadeRange"', source)
+        self.assertIn('s.AddNumber("ThrownGrenadeMaxRange"', source)
+        self.assertIn("ProcessThrownGrenadeRanges();", source)
+        process = source.split("private static void ProcessThrownGrenadeRanges()", 1)[1].split("private static void RestoreThrownGrenadeSkills", 1)[0]
+        self.assertIn("ThrownGrenadeRangeRules.IsThrownGrenadeSkill(skillName)", process)
+        self.assertIn("OriginalSkillRanges.TryGetValue(key", process)
+        self.assertIn("TouchedSkillKeys.Contains(key)", process)
+        self.assertIn("RestoreThrownGrenadeSkills();", source)
+
     def test_sharing_disable_and_unload_clear_pending_work(self):
         source = (SRC / "FieldLogistics/Plugin.cs").read_text()
         disabled = source.split('key, "EnableAmmoSharing"', 1)[1].split("GameState.RunDelayed", 1)[0]

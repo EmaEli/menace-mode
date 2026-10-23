@@ -1,4 +1,4 @@
-# Weapon Ranges Rebalanced 2.9.2
+# Weapon Ranges Rebalanced 2.10.1
 
 Weapon Ranges Rebalanced (WRR) now has a deliberately narrow scope: **weapon ranges plus the verified long-range indirect-fire AI turn-performance fix**.
 
@@ -9,6 +9,7 @@ Weapon Ranges Rebalanced (WRR) now has a deliberately narrow scope: **weapon ran
 - keeps `MinRange` and `IdealRange` native;
 - scales explicit range-overriding secondary attack skills proportionally with their parent weapon;
 - auto-classifies recognizable future/mod-added ranged weapons while leaving unknown weapons unchanged;
+- limits thrown-grenade skill range, including pirate scrap bombs and flashbangs, to a configurable maximum (default **2 squares**); grenade launchers are not affected;
 - supports per-family strength sliders and exact `weapon-overrides.json` range overrides;
 - restores captured pre-WRR ranges when disabled;
 - keeps the verified long-range indirect-fire large-map AI fix.
@@ -53,6 +54,7 @@ Open MENACE Mod Settings and select **Weapon Ranges Rebalanced**.
 - **Auto-balance new / unlisted weapons**
 - **Apply infantry / special / turret weapons**
 - **Apply modular vehicle weapons**
+- **Limit thrown-grenade range** toggle and **Maximum thrown-grenade range (squares)** (default 2);
 - family-specific range strength sliders;
 - **Enable weapon-overrides.json**;
 - diagnostics/debug options.

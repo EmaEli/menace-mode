@@ -464,7 +464,7 @@ Root cause based on IL2CPP inspection, not yet proven by a controlled A/B runtim
 
 1. Confirm `SmokeOverhaul.dll` loads once and Smoke Overhaul appears in Mod Settings with Debug OFF.
 2. Start a tactical mission and confirm normal player infantry and human AI infantry receive one smoke-grenade ability with 3 uses and one Tier 2 fragmentation-grenade ability with 3 uses; aliens/constructs/decoys must not receive either grant.
-3. Confirm the frag ability is `active.throw_frag_grenade_tier2` and retains vanilla 40 AP cost and range 1-3.
+3. Confirm the frag ability is `active.throw_frag_grenade_tier2` and retains vanilla 40 AP cost; with Weapon Ranges Rebalanced's default thrown-grenade cap enabled, its range is 1-2 (disable the cap to confirm vanilla 1-3).
 4. Confirm infantry whose template or default equipment already grants Tier 2 frag does not show a duplicate frag button.
 5. Verify vanilla smoke no longer blocks LOS completely and one/two/three intervening smoke tiles apply -20/-40/-60 percentage-point hit-chance penalties.
 6. Verify attacker/defender tiles are excluded from the extra line penalty and vanilla inside-smoke effects still apply.
