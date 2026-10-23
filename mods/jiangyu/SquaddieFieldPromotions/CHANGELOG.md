@@ -4,7 +4,10 @@
 
 - Give new promotions a dedicated B Team initial perk: 10% lower tactical deployment costs and Discipline, with morale losses doubled for squaddie casualties and destroyed allied units.
 - Leave the selectable 16-perk tree, existing promotion records, and purchased perks unchanged; old schema-0 leaders keep their original initial perk.
-- Offline checks cover casualty-only negative morale scaling. Windows build/install and in-game acceptance are pending.
+- Canonical Windows BuildOnly/install passed on MENACE 0.7.17+22362 with zero build warnings/errors,
+  11,559 offline behavior checks and six installed-settings helper checks. The prior 0.18.0 package was
+  backed up; the existing settings and loader were reused.
+- In-game gameplay acceptance remains pending.
 
 ## 0.18.0 — expand curated XCOM voice coverage (#73)
 
