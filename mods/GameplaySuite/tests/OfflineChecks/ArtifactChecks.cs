@@ -14,25 +14,29 @@ internal static class ArtifactChecks
         using var catalog = JsonDocument.Parse(File.ReadAllText(Path.Combine(repository,
             "mods", "GameplaySuite", "tools", "distribution.json")));
         string[] modules = catalog.RootElement.GetProperty("modules").EnumerateArray().Select(x => x.GetString()!).ToArray();
-        var selected = selectedModules?.ToHashSet(StringComparer.Ordinal);
+        string[] experimentalModules = catalog.RootElement.TryGetProperty("experimentalModules", out var experimental)
+            ? experimental.EnumerateArray().Select(x => x.GetString()!).ToArray()
+            : Array.Empty<string>();
+        string[] allModules = modules.Concat(experimentalModules).ToArray();
+        string[]? requestedModules = selectedModules?.Distinct(StringComparer.Ordinal).ToArray();
+        string[] modulesToCheck = requestedModules ?? modules;
+        var selected = requestedModules?.ToHashSet(StringComparer.Ordinal);
         if (selected is not null)
         {
             check(selected.Count > 0, "artifact filter must select at least one module");
-            check(selected.IsSubsetOf(modules), "artifact filter contains unknown module");
+            check(selected.IsSubsetOf(allModules), "artifact filter contains unknown module");
         }
         var available = new Dictionary<string, Version>(StringComparer.Ordinal)
         {
             ["Jiangyu"] = Version.Parse(catalog.RootElement.GetProperty("jiangyuVersion").GetString()!)
         };
-        foreach (string name in modules)
+        foreach (string name in modulesToCheck)
         {
-            if (selected is not null && !selected.Contains(name)) continue;
             using var info = JsonDocument.Parse(File.ReadAllText(Path.Combine(packages, name, "jiangyu.json")));
             available[name] = Version.Parse(info.RootElement.GetProperty("version").GetString()!);
         }
-        foreach (string module in modules)
+        foreach (string module in modulesToCheck)
         {
-            if (selected is not null && !selected.Contains(module)) continue;
             string root = Path.Combine(packages, module);
             using var manifest = JsonDocument.Parse(File.ReadAllText(Path.Combine(root, "jiangyu.json")));
             string version = manifest.RootElement.GetProperty("version").GetString()!;

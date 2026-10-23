@@ -226,8 +226,10 @@ class DistributionTests(unittest.TestCase):
         self.assertIn('args.module is not None and args.module != "SquaddieFieldPromotions"', builder)
         self.assertIn('args[1] != "--modules"', program)
         self.assertIn("ArtifactChecks.Run(Check, args[0], selectedModules)", program)
-        self.assertIn("selectedModules?.ToHashSet(StringComparer.Ordinal)", checks)
-        self.assertIn("selected is not null && !selected.Contains(module)", checks)
+        self.assertIn("selectedModules?.Distinct(StringComparer.Ordinal).ToArray()", checks)
+        self.assertIn("modules.Concat(experimentalModules)", checks)
+        self.assertIn("selected.IsSubsetOf(allModules)", checks)
+        self.assertIn("foreach (string module in modulesToCheck)", checks)
         self.assertIn('!selected.Contains("CinematicActionCamera")', checks)
 
     def test_clean_build_checks_only_packages_present_in_standalone(self):
