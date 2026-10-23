@@ -362,7 +362,7 @@ internal sealed class LeaderForge
     private static void ApplyGenericProgression(UnitLeaderTemplate leader)
     {
         var source = DataTemplateLoader.Get<UnitLeaderTemplate>(PromotionProgression.TemplateId, false);
-        var initialPerk = DataTemplateLoader.Get<PerkTemplate>(PromotionProgression.InitialPerkId, false);
+        var initialPerk = DataTemplateLoader.Get<PerkTemplate>(PromotionProgression.LegacyInitialPerkId, false);
         if (source?.PerkTrees == null || source.PerkTrees.Length != 1 || source.PerkTrees[0] == null ||
             initialPerk == null)
             throw new InvalidOperationException("Generic infantry promotion templates are missing.");
@@ -381,7 +381,7 @@ internal sealed class LeaderForge
         trees[0] = tree;
         leader.InitialPerk = initialPerk;
         leader.PerkTrees = trees;
-        if (leader.InitialPerk == null || leader.InitialPerk.GetID() != PromotionProgression.InitialPerkId ||
+        if (leader.InitialPerk == null || leader.InitialPerk.GetID() != PromotionProgression.LegacyInitialPerkId ||
             leader.PerkTrees == null || leader.PerkTrees.Length != 1 || leader.PerkTrees[0] != tree)
             throw new InvalidOperationException("Generic infantry progression assignment failed.");
     }

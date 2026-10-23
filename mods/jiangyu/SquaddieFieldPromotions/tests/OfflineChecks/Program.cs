@@ -5,6 +5,7 @@ using Il2CppMenace.Conversations;
 using Il2CppMenace.Items;
 using Il2CppMenace.States;
 using Il2CppMenace.Strategy;
+using Il2CppMenace.Tactical;
 using Il2CppMenace.Tools;
 using Il2CppMenace.UI;
 using Il2CppMenace.UI.Strategy;
@@ -140,10 +141,10 @@ foreach (var key in allVoiceRouteKeys)
         "full catalog route uses its own speaker or silence: " + profile.Id + "/" + key);
 }
 var eligibleVoices = fullVoiceCatalog.Profiles.Where(profile => profile.EligibleForAssignment).ToArray();
-Check(eligibleVoices.Length == 31 && eligibleVoices.Count(profile => profile.Gender == "male") == 22 &&
-    eligibleVoices.Count(profile => profile.Gender == "female") == 9,
-    "curated pool includes BlackOps: 31 eligible profiles (22 male, 9 female), not all 56");
-Check(fullVoiceCatalog.Profiles.Where(profile => !profile.EligibleForAssignment).Count() == 25 &&
+Check(eligibleVoices.Length == 36 && eligibleVoices.Count(profile => profile.Gender == "male") == 26 &&
+    eligibleVoices.Count(profile => profile.Gender == "female") == 10,
+    "expanded curated pool includes 36 eligible profiles (26 male, 10 female), not all 56");
+Check(fullVoiceCatalog.Profiles.Where(profile => !profile.EligibleForAssignment).Count() == 20 &&
     !fullVoiceCatalog.Find("bishopvp").EligibleForAssignment &&
     !fullVoiceCatalog.Find("fem_bishop_vp").EligibleForAssignment,
     "sparse profiles including missing selection audio stay compatibility-only");
@@ -272,6 +273,16 @@ Check(PromotionProgression.GenericInfantryPerks.Length == 16 &&
     PromotionProgression.GenericInfantryPerks.Count(perk => perk.Tier == 3) == 4 &&
     PromotionProgression.GenericInfantryPerks.Count(perk => perk.Tier == 4) == 2,
     "generic promotion tree has all 16 perks in the chosen tier distribution");
+Check(PromotionProgression.InitialPerkId == "mod.squaddiefieldpromotions.b_team" &&
+    PromotionProgression.LegacyInitialPerkId == "perk.unique_sy_economics",
+    "new promotions use B Team while legacy generic leaders retain their original initial perk");
+Check(BTeamPerkRules.ScaleMoraleLoss(BTeamPerkRules.AllyDestroyedEvent, -10f) == -20f &&
+    BTeamPerkRules.ScaleMoraleLoss(BTeamPerkRules.ElementLostEvent, -10f) == -20f,
+    "B Team doubles morale loss for allied-unit destruction and squaddie casualties");
+Check(BTeamPerkRules.ScaleMoraleLoss(BTeamPerkRules.AllyRoutingEvent, -10f) == -10f &&
+    BTeamPerkRules.ScaleMoraleLoss(BTeamPerkRules.AllyDestroyedEvent, 10f) == 10f &&
+    BTeamPerkRules.ScaleMoraleLoss(0, -10f) == -10f,
+    "B Team leaves routing, morale gains, and unrelated morale changes unchanged");
 Check(JsonSerializer.Deserialize<PromotionRecord>("{}").SourceLeaderTemplateId == "",
     "older save sidecars without provenance default to unavailable");
 Check(JsonSerializer.Deserialize<PromotionRecord>("{}").PortraitProfile == "",
@@ -299,7 +310,7 @@ foreach (int? xp in new int?[] { null, 0, 249, 250, 499, 500, 999, 1000, 1999, 2
         perks.GeneratedPerks.Select(p => p.Id).Distinct().Count() == 16 &&
         perks.InitialPerkId == PromotionProgression.InitialPerkId &&
         perks.GeneratedPerks.All(p => p.Id != perks.InitialPerkId) && perks.XpAtPromotion == xp,
-        "generated tree 5/5/4/2 without duplicates, accepted generic initial perk, XP " + (xp?.ToString() ?? "unknown"));
+        "generated tree 5/5/4/2 without duplicates and with B Team initial perk, XP " + (xp?.ToString() ?? "unknown"));
 }
 int AdvancedCount(int? xp) => PerkRecord(xp).GeneratedPerks.Count(p => p.Origin == PerkGeneration.OriginAdvanced);
 Check(AdvancedCount(null) == 0 && AdvancedCount(249) == 0, "unknown XP and Green use only the base pool");
@@ -345,6 +356,7 @@ RejectPerks(r => r.GeneratedPerks[0].Tier = 4, "out-of-order tier rejected");
 RejectPerks(r => r.GeneratedPerks[0].Origin = "Gift", "unknown origin rejected");
 RejectPerks(r => r.GeneratedPerks[0].Id = "skill.x", "non-perk ID rejected");
 RejectPerks(r => r.InitialPerkId = "", "missing initial perk rejected");
+RejectPerks(r => r.InitialPerkId = "mod.squaddiefieldpromotions.unknown", "unknown custom initial perk rejected");
 RejectPerks(r => r.XpAtPromotion = -1, "negative XP snapshot rejected");
 RejectPerks(r => r.GeneratedPerks = null, "missing snapshot list rejected");
 Check(PromotionRules.Describe(selection, mentored).Contains("Personal perk tree: 16 options"), "promotion report shows the personal tree");
@@ -740,6 +752,39 @@ var system = new PromotionSystem();
 StrategyState.Current = new();
 DataTemplateLoader.Template = preview;
 system.OnInit();
+float ApplyMoraleHook(UnitActor unit, MoraleEvent moraleEvent, float moraleChange)
+{
+    var args = new object[] { moraleEvent, moraleChange };
+    FakePatches.Current.Prefixes["ApplyMorale"](new PatchInfo { Instance = unit, Args = args });
+    return (float)args[1];
+}
+var bTeamUnit = new UnitActor
+{
+    Leader = new BaseUnitLeader
+    {
+        LeaderTemplate = new UnitLeaderTemplate
+        {
+            InitialPerk = new PerkTemplate { Id = PromotionProgression.InitialPerkId },
+        },
+    },
+};
+var legacyUnit = new UnitActor
+{
+    Leader = new BaseUnitLeader
+    {
+        LeaderTemplate = new UnitLeaderTemplate
+        {
+            InitialPerk = new PerkTemplate { Id = PromotionProgression.LegacyInitialPerkId },
+        },
+    },
+};
+Check(ApplyMoraleHook(bTeamUnit, MoraleEvent.ElementLost, -10f) == -20f &&
+    ApplyMoraleHook(bTeamUnit, MoraleEvent.AllyDestroyed, -10f) == -20f,
+    "native ApplyMorale hook doubles B Team casualty losses");
+Check(ApplyMoraleHook(bTeamUnit, MoraleEvent.AllyRouting, -10f) == -10f &&
+    ApplyMoraleHook(bTeamUnit, MoraleEvent.ElementLost, 10f) == 10f &&
+    ApplyMoraleHook(legacyUnit, MoraleEvent.ElementLost, -10f) == -10f,
+    "native morale hook leaves routing, morale gains and legacy leaders unchanged");
 var badgeArt = new StandalonePortraitAssets();
 var badgeTexture = new UnityEngine.Texture2D(40, 40, UnityEngine.TextureFormat.RGBA32, false);
 var badgePixels = new UnityEngine.Color32[40 * 40];

@@ -1,7 +1,7 @@
 {
   "name": "SquaddieFieldPromotions",
-  "version": "0.17.3",
+  "version": "0.19.0",
   "author": "Luca / OpenAI",
-  "description": "Promotes the best living squaddie to a persistent squad leader with per-unit service history, individual designation and optional Veterancy integration. Generic heads by default.",
+  "description": "Promotes the best living squaddie to a persistent squad leader with per-unit service history, individual designation, optional Veterancy integration, and a B Team starting perk. Generic heads by default.",
   "depends": ["Jiangyu >= 1.4.8", "MenaceModSettings >= 0.6.1"]
 }

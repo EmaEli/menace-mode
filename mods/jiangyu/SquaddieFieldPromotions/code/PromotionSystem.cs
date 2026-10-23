@@ -7,6 +7,7 @@ using System.Text.Json;
 using Il2CppMenace.Items;
 using Il2CppMenace.States;
 using Il2CppMenace.Strategy;
+using Il2CppMenace.Tactical;
 using Il2CppMenace.Tools;
 using Il2CppMenace.UI;
 using Il2CppMenace.UI.Strategy;
@@ -78,6 +79,7 @@ public sealed class PromotionSystem : JiangyuSystem
         Require(typeof(UnitLeaderTemplate), "GetUnitDescription", Type.EmptyTypes, typeof(LocalizedMultiLine));
         Require(typeof(UnitLeaderTemplate), "GetBadge", Type.EmptyTypes, typeof(UnityEngine.Sprite));
         Require(typeof(UnitLeaderTemplate), "GetBadgeWhite", Type.EmptyTypes, typeof(UnityEngine.Sprite));
+        Require(typeof(Actor), "ApplyMorale", new[] { typeof(MoraleEvent), typeof(float) }, typeof(void));
         Require(typeof(SaveState), "GetFilePath", Type.EmptyTypes, typeof(string));
         Require(typeof(SaveState), "IsLoading", Type.EmptyTypes, typeof(bool));
         Require(typeof(SaveState), "Close", Type.EmptyTypes, typeof(void));
@@ -104,6 +106,7 @@ public sealed class PromotionSystem : JiangyuSystem
         // UnitHUD -> UnitActor -> these getters otherwise return the shared Singh sprites.
         Context.Patches.Postfix("Il2CppMenace.Strategy.UnitLeaderTemplate", "GetBadge", 0, LeaderBadge);
         Context.Patches.Postfix("Il2CppMenace.Strategy.UnitLeaderTemplate", "GetBadgeWhite", 0, LeaderBadgeWhite);
+        Context.Patches.Prefix("Il2CppMenace.Tactical.Actor", "ApplyMorale", 2, ScaleBTeamCasualtyMorale);
         Context.Patches.Postfix("Il2CppMenace.Strategy.BlackMarket", "Restock", 2, _ =>
         {
             Stock();
@@ -122,6 +125,31 @@ public sealed class PromotionSystem : JiangyuSystem
         try { PrepareTemplate(); }
         catch (Exception error) { WarnOnce("text", "Cannot initialize dossier text: " + error.Message); }
         ScheduleVoices();
+    }
+
+    private void ScaleBTeamCasualtyMorale(PatchInfo info)
+    {
+        if (_unloaded || info?.Instance is not UnitActor actor || info.Args == null || info.Args.Count < 2)
+            return;
+        try
+        {
+            if (actor.GetLeader()?.LeaderTemplate?.InitialPerk?.GetID() != PromotionProgression.InitialPerkId)
+                return;
+            var eventValue = Convert.ToInt32(info.Args[0]);
+            var moraleChange = Convert.ToSingle(info.Args[1]);
+            var adjustedChange = BTeamPerkRules.ScaleMoraleLoss(eventValue, moraleChange);
+            if (adjustedChange.Equals(moraleChange)) return;
+            if (info.Args is IList<object> args)
+            {
+                args[1] = adjustedChange;
+                return;
+            }
+            WarnOnce("morale-args", "Cannot scale B Team casualty morale: native patch arguments are not writable.");
+        }
+        catch (Exception error)
+        {
+            WarnOnce("morale-hook", "Cannot inspect B Team casualty morale: " + error.Message);
+        }
     }
 
     public override void OnSceneLoaded(int buildIndex, string sceneName)

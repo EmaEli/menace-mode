@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.19.0 — B Team starting perk (#67)
+
+- Give new promotions a dedicated B Team initial perk: 10% lower tactical deployment costs and Discipline, with morale losses doubled for squaddie casualties and destroyed allied units.
+- Leave the selectable 16-perk tree, existing promotion records, and purchased perks unchanged; old schema-0 leaders keep their original initial perk.
+- Offline checks cover casualty-only negative morale scaling. Windows build/install and in-game acceptance are pending.
+
+## 0.18.0 — expand curated XCOM voice coverage (#73)
+
+- Add 1,619 distinct recordings and 1,155 additional route mappings across the other 55 human profiles.
+- Preserve the 818 legacy recordings and all 180 BlackOps routes/211 recordings; decoded PCM verification passed.
+- The existing assignment gate now admits 36 profiles (26 male, 10 female), up from 31 (22/9); its route, variety and required-response criteria are unchanged.
+- Text/context selection and automated tests are not human listening acceptance. Private gameplay and audio feedback remain pending.
+
 ## 0.17.3 — BlackOps vehicle-damage taunts (#73)
 
 - Map the three `enemy_vehicle_damaged` slots to the same two generic combat taunts already used for

@@ -12,6 +12,7 @@
     <Compile Include="../../code/PromotionTemplateText.cs" Link="PromotionTemplateText.cs" />
     <Compile Include="../../code/PromotionIdentity.cs" Link="PromotionIdentity.cs" />
     <Compile Include="../../code/PromotionProgression.cs" Link="PromotionProgression.cs" />
+    <Compile Include="../../code/BTeamPerkRules.cs" Link="BTeamPerkRules.cs" />
     <Compile Include="../../code/PerkGeneration.cs" Link="PerkGeneration.cs" />
     <Compile Include="../../code/DynamicBadgeFactory.cs" Link="DynamicBadgeFactory.cs" />
     <Compile Include="../../code/SquaddieServiceHistory.cs" Link="SquaddieServiceHistory.cs" />

@@ -163,7 +163,7 @@ internal static class PerkGeneration
             throw new InvalidDataException("Unsupported generated perk schema.");
         if (record.XpAtPromotion < 0 || record.MentorLeaderTemplateId.Length > 256 ||
             record.MentorLeaderTemplateId.Any(char.IsControl) ||
-            !ValidPerkId(record.InitialPerkId) ||
+            !ValidInitialPerkId(record.InitialPerkId) ||
             record.GeneratedPerks == null || record.GeneratedPerks.Count != Slots.Sum())
             throw new InvalidDataException("Invalid saved dynamic perk snapshot.");
         var seen = new HashSet<string>(StringComparer.Ordinal) { record.InitialPerkId };
@@ -184,6 +184,9 @@ internal static class PerkGeneration
     private static bool ValidPerkId(string id) =>
         !string.IsNullOrWhiteSpace(id) && id.StartsWith("perk.", StringComparison.Ordinal) &&
         id.Length <= 128 && !id.Any(char.IsControl);
+
+    private static bool ValidInitialPerkId(string id) =>
+        ValidPerkId(id) || id == PromotionProgression.InitialPerkId;
 
     // FNV-1a + xorshift32; stable between CLR versions, OSes and process restarts.
     private sealed class StableRandom

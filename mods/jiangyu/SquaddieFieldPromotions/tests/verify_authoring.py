@@ -14,7 +14,7 @@ PROGRESSION_KDL = (ROOT / 'templates' / 'generic-infantry-progression.kdl').read
 class AuthoringTests(unittest.TestCase):
     def test_jiangyu_not_old_modpack(self):
         self.assertEqual(MANIFEST['name'], 'SquaddieFieldPromotions')
-        self.assertEqual(MANIFEST['version'], '0.17.3')
+        self.assertEqual(MANIFEST['version'], '0.19.0')
         compiled_manifest = json.loads((ROOT / 'compiled/jiangyu.json').read_text(encoding='utf-8'))
         self.assertEqual(compiled_manifest['version'], MANIFEST['version'])
         self.assertTrue(any(dep.startswith('Jiangyu ') for dep in MANIFEST['depends']))
@@ -222,6 +222,23 @@ class AuthoringTests(unittest.TestCase):
         self.assertIn('leader.GetPerks()', mentors)
         for excluded in ('perk.command_rally', 'perk.power_in_numbers', 'perk.reinforcements', 'perk.first_aid'):
             self.assertNotIn(f'["{excluded}"]', generation)
+
+    def test_b_team_initial_perk_and_loss_only_morale_penalty(self):
+        perk = 'mod.squaddiefieldpromotions.b_team'
+        self.assertIn(f'clone "PerkTemplate" from="perk.power_in_numbers" id="{perk}"', PROGRESSION_KDL)
+        for expected in ('"DeployCostMult"', '"DisciplineMult"', '"ValueProvider" #null', '"AmountMult" 0.9'):
+            self.assertIn(expected, PROGRESSION_KDL)
+        progression = (ROOT / 'code/PromotionProgression.cs').read_text(encoding='utf-8')
+        forge = (ROOT / 'code/LeaderForge.cs').read_text(encoding='utf-8')
+        system = (ROOT / 'code/PromotionSystem.cs').read_text(encoding='utf-8')
+        rules = (ROOT / 'code/BTeamPerkRules.cs').read_text(encoding='utf-8')
+        self.assertIn(f'InitialPerkId = "{perk}"', progression)
+        self.assertIn('LegacyInitialPerkId = "perk.unique_sy_economics"', progression)
+        self.assertIn('PromotionProgression.LegacyInitialPerkId', forge)
+        self.assertIn('"Il2CppMenace.Tactical.Actor", "ApplyMorale", 2, ScaleBTeamCasualtyMorale', system)
+        self.assertIn('InitialPerk?.GetID() != PromotionProgression.InitialPerkId', system)
+        self.assertIn('IList<object> args', system)
+        self.assertIn('AllyDestroyedEvent | ElementLostEvent', rules)
 
     def test_provenance_remains_save_compatible_but_badges_use_only_bundled_black_art(self):
         record = (ROOT / 'code/PromotionRecord.cs').read_text()

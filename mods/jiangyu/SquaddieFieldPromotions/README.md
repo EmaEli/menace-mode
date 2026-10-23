@@ -1,6 +1,12 @@
-# Squaddie Field Promotions 0.17.3
+# Squaddie Field Promotions 0.19.0
 
-> **Experimental 0.17.3 test candidate; in-game acceptance is pending.**
+> **Experimental 0.19.0 test candidate; in-game acceptance is pending.** New promotions start with the B Team perk: 10% lower Discipline and tactical deployment costs, but double morale loss from squaddie casualties and allied-unit destruction. Existing promotion records and purchased perks are unchanged.
+> Version 0.18.0 adds 1,619 distinct recordings and
+> 1,155 route mappings across the other 55 human profiles. The existing quality gate now admits 36 profiles
+> (26 male/10 female); its route and distinct-clip minimums are unchanged. The 818 legacy recordings and
+> 180-route BlackOps profile were preserved, with decoded PCM verified. No existing saved assignment is rerolled.
+> Audio was selected by source/context evidence, not human listening; the files remain private test assets.
+> Canonical Windows BuildOnly/install passed on 23 October; in-game audio acceptance remains pending.
 > Version 0.17.3 also maps the three BlackOps vehicle-damage slots to the same generic combat taunts,
 > so BlackOps now covers all 180 native slots (211 recordings, no audio rebuilt).
 > Version 0.17.2 maps 10 more BlackOps slots (177/180) by reusing existing recordings: generic combat
@@ -183,7 +189,14 @@ The kit also ships the module's raw `runtime_assets/` (portraits, prebuilt John/
 voice bundle with its build receipt, voice routes); the installer stages them next to
 the compiled package because `jiangyu compile --clean` does not preserve them.
 
-## Acceptance test (0.17.3 test candidate; in-game checks pending)
+## Acceptance test (0.19.0 test candidate; in-game checks pending)
+
+Version 0.19.0 B Team: create a new promotion and verify its starting perk shows 10% lower Discipline and tactical deployment costs. Compare casualty morale loss with a non-B-Team squad for a lost squaddie and a destroyed allied unit; verify morale gains and routing are not doubled. Existing promoted leaders should retain their saved initial perk and purchased perks after reload.
+
+Version 0.18.0 voices: test only in a disposable campaign. New assignments can now draw from 36
+profiles (26 male/10 female); existing leaders must keep their saved voice IDs. Listen for lines
+that do not fit the event or speaker, and check captions against the actual recording. Text/context
+selection is not human listening approval; report questionable lines before treating the bank as accepted.
 
 Version 0.17.3 BlackOps: with a BlackOps-voiced leader, damage an enemy soldier without killing it, damage a
 construct, damage an enemy vehicle and destroy a building. Expect a short taunt for the first three and a

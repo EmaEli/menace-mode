@@ -74,6 +74,11 @@ namespace Il2CppMenace.Strategy
         public void GetInstances(Il2CppSystem.Collections.Generic.List<Il2CppMenace.Items.BaseItem> result, bool special)
         { if (!special) result.AddRange(Items); }
     }
+    public class PerkTemplate
+    {
+        public string Id;
+        public string GetID() => Id;
+    }
     public class UnitLeaderTemplate
     {
         public Il2CppMenace.Conversations.SpeakerTemplate SpeakerTemplate;
@@ -82,6 +87,7 @@ namespace Il2CppMenace.Strategy
         public bool IsInfantry = true;
         public UnitLeaderTemplate InfantryUnitTemplate;
         public UnityEngine.Sprite Badge, BadgeWhite, BadgeMini, BadgeDragged, BadgeUnitWindow, SlotBadge, BigBadge;
+        public PerkTemplate InitialPerk;
         public string Id;
         public string GetID() => Id;
         // Native v0.7.17 getters select the entity's text for infantry (ActorType == 0).
@@ -179,6 +185,28 @@ namespace Il2CppMenace.Strategy
         }
     }
     public enum SaveStateType { None, Manual, Quick, Auto, Ironman }
+}
+namespace Il2CppMenace.Tactical
+{
+    public enum MoraleEvent
+    {
+        General = 0,
+        TakingDamage = 1,
+        AllyRouting = 2,
+        AllyDestroyed = 4,
+        ElementLost = 8,
+        ElementDestroyed = 16,
+        EnemyDestroyed = 32,
+    }
+    public class Actor
+    {
+        public void ApplyMorale(MoraleEvent moraleEvent, float value) { }
+    }
+    public class UnitActor : Actor
+    {
+        public Il2CppMenace.Strategy.BaseUnitLeader Leader;
+        public Il2CppMenace.Strategy.BaseUnitLeader GetLeader() => Leader;
+    }
 }
 namespace Il2CppMenace.States
 {

@@ -1,3 +1,26 @@
+clone "PerkTemplate" from="perk.power_in_numbers" id="mod.squaddiefieldpromotions.b_team" {
+  set "Title" { set "m_DefaultTranslation" "B Team" }
+  set "ShortDescription" { set "m_DefaultTranslation" "Lower deployment costs; lower Discipline; double morale loss from casualties." }
+  set "Description" { set "m_DefaultTranslation" "The B team is often overlooked, but it knows how to make do with less. The team has 10% lower Discipline and 10% lower tactical deployment costs, but loses twice as much morale when a squaddie is lost or an allied unit is destroyed." }
+  set "StatusDescription" { set "m_DefaultTranslation" "10% lower Discipline and tactical deployment costs; double morale loss from casualties." }
+  set "EventHandlers" index=0 {
+    set "PropertyType" enum="EntityPropertyType" "DeployCostMult"
+    set "Amount" 0
+    set "AmountMult" 0.9
+    set "ValueProvider" #null
+    set "TooltipPlaceholderIndex" -1
+    set "IncludePlusSign" #false
+  }
+  set "EventHandlers" index=1 {
+    set "PropertyType" enum="EntityPropertyType" "DisciplineMult"
+    set "Amount" 0
+    set "AmountMult" 0.9
+    set "ValueProvider" #null
+    set "TooltipPlaceholderIndex" -1
+    set "IncludePlusSign" #false
+  }
+}
+
 clone "PerkTreeTemplate" from="perk_tree.lim" id="mod.squaddiefieldpromotions.generic_infantry_tree" {
   clear "Perks"
   append "Perks" {
