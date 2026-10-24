@@ -20,6 +20,9 @@ internal enum OverwatchMode
 
 internal sealed class Runtime : IDisposable
 {
+    private const float MovementVisibilityProbeDelaySeconds = 0.15f;
+    private const float MovementVisibilityProbeMaxAgeSeconds = 0.5f;
+
     private sealed class Watch
     {
         public Actor Shooter = null!;
@@ -65,6 +68,24 @@ internal sealed class Runtime : IDisposable
         public bool CompletionSeen;
     }
 
+    private sealed class MovementVisibilityProbe
+    {
+        public Actor Shooter = null!;
+        public Actor Target = null!;
+        public Skill Skill = null!;
+        public Tile SourceTile = null!;
+        public Tile TargetTile = null!;
+        public long ShooterKey;
+        public long TargetKey;
+        public long SourceTileKey;
+        public long TargetTileKey;
+        public string SkillId = "-";
+        public int AimPenalty;
+        public int Threshold;
+        public float RequestedAt;
+        public float SampleAt;
+    }
+
     private sealed class PlayerSelection
     {
         public OverwatchMode Mode;
@@ -89,6 +110,7 @@ internal sealed class Runtime : IDisposable
     private readonly Dictionary<long, Watch> _watches = new();
     private readonly Queue<Reaction> _reactions = new();
     private readonly Dictionary<long, PendingActionTrigger> _pendingActionTriggers = new();
+    private readonly List<MovementVisibilityProbe> _movementVisibilityProbes = new();
     private readonly Dictionary<long, PlayerSelection> _playerSelections = new();
     private readonly Dictionary<long, NativeHudMarker> _nativeHudMarkers = new();
     private readonly Dictionary<string, Sprite> _markerSprites = new();
@@ -111,6 +133,7 @@ internal sealed class Runtime : IDisposable
     private bool _highContrastIndicators;
     private bool _debugLogging;
     private bool _debugBonusAIOverwatch;
+    private bool _debugMovementVisibility;
     private int _playerThreshold;
     private int _aiThreshold;
     private int _aimPenalty;
@@ -140,7 +163,7 @@ internal sealed class Runtime : IDisposable
     private bool _reactionActionSawBusy;
     private float _reactionActionActivatedAt;
 
-    internal Runtime(global::HarmonyLib.Harmony harmony, Action<string> debugLog, Action<string> warningLog, Action<string> errorLog, bool debugLogging, bool debugBonusAIOverwatch, bool aiEnabled,
+    internal Runtime(global::HarmonyLib.Harmony harmony, Action<string> debugLog, Action<string> warningLog, Action<string> errorLog, bool debugLogging, bool debugBonusAIOverwatch, bool debugMovementVisibility, bool aiEnabled,
         bool actionTriggersEnabled, bool vehicleEnabled, bool aiVehicleEnabled, bool showWorldMarkers, bool highContrastIndicators,
         int playerThreshold, int aiThreshold,
         int aimPenalty, bool coordinatedFireInstalled, bool alphaStrikeInstalled)
@@ -151,6 +174,7 @@ internal sealed class Runtime : IDisposable
         _errorLog = errorLog;
         _debugLogging = debugLogging;
         _debugBonusAIOverwatch = debugBonusAIOverwatch;
+        _debugMovementVisibility = debugMovementVisibility;
         _aiEnabled = aiEnabled;
         _actionTriggersEnabled = actionTriggersEnabled;
         _vehicleEnabled = vehicleEnabled;
@@ -253,10 +277,12 @@ internal sealed class Runtime : IDisposable
     }
 
     public void Configure(bool aiEnabled, bool actionTriggersEnabled, bool vehicleEnabled, bool aiVehicleEnabled,
-        bool showWorldMarkers, bool highContrastIndicators, int playerThreshold, int aiThreshold, int aimPenalty, bool coordinatedFireInstalled, bool alphaStrikeInstalled, bool debugLogging, bool debugBonusAIOverwatch)
+        bool showWorldMarkers, bool highContrastIndicators, int playerThreshold, int aiThreshold, int aimPenalty, bool coordinatedFireInstalled, bool alphaStrikeInstalled, bool debugLogging, bool debugBonusAIOverwatch, bool debugMovementVisibility)
     {
+        if (_debugMovementVisibility && !debugMovementVisibility) _movementVisibilityProbes.Clear();
         _debugLogging = debugLogging;
         _debugBonusAIOverwatch = debugBonusAIOverwatch;
+        _debugMovementVisibility = debugMovementVisibility;
         _aiEnabled = aiEnabled;
         _actionTriggersEnabled = actionTriggersEnabled;
         if (!_actionTriggersEnabled) _pendingActionTriggers.Clear();
@@ -287,6 +313,7 @@ internal sealed class Runtime : IDisposable
         var manager = TacticalManager.Get();
         if (!Native.Valid(manager) || manager.IsPaused() || manager.IsFinished()) return;
 
+        ProcessMovementVisibilityProbes();
         bool skillBusy = TacticalManager.IsSkillBusy();
 
         // Keep the accuracy modifier alive across asynchronous native resolution. Some attacks
@@ -1350,6 +1377,14 @@ internal sealed class Runtime : IDisposable
             bool secondaryEligible = Native.Valid(w.Secondary)
                 && EvaluateSkill(w, w.Secondary!, target, tile, out secondaryChance, out secondaryReason);
 
+            if (isMovement && _debugMovementVisibility)
+            {
+                if (primaryReason == Native.TargetNotVisibleReason)
+                    ScheduleMovementVisibilityProbe(w, w.Primary, target, tile);
+                if (Native.Valid(w.Secondary) && secondaryReason == Native.TargetNotVisibleReason)
+                    ScheduleMovementVisibilityProbe(w, w.Secondary!, target, tile);
+            }
+
             bool anyEligible = w.Mode == OverwatchMode.Both
                 ? primaryEligible || secondaryEligible
                 : primaryEligible;
@@ -1391,6 +1426,125 @@ internal sealed class Runtime : IDisposable
             });
             if (_debugLogging) _debugLog($"Overwatch queued on {trigger}: shooter={Native.Key(w.Shooter)} target={targetKey} mode={w.Mode} tile={tileKey} primaryChance={primaryChance}% secondaryChance={secondaryChance}% remaining={w.RemainingReactions} moving={target.IsMoving()}.");
         }
+    }
+
+    private void ScheduleMovementVisibilityProbe(Watch watch, Skill skill, Actor target, Tile targetTile)
+    {
+        try
+        {
+            Tile sourceTile = watch.Shooter.GetTile();
+            if (!Native.Valid(sourceTile)) return;
+
+            long shooterKey = Native.Key(watch.Shooter);
+            long targetKey = Native.Key(target);
+            long sourceTileKey = Native.Key(sourceTile);
+            long targetTileKey = Native.Key(targetTile);
+            string skillId = skill.GetID();
+            if (_movementVisibilityProbes.Any(probe => probe.ShooterKey == shooterKey
+                && probe.TargetKey == targetKey && probe.SourceTileKey == sourceTileKey
+                && probe.TargetTileKey == targetTileKey && probe.SkillId == skillId)) return;
+
+            float now = Time.realtimeSinceStartup;
+            _movementVisibilityProbes.Add(new MovementVisibilityProbe
+            {
+                Shooter = watch.Shooter,
+                Target = target,
+                Skill = skill,
+                SourceTile = sourceTile,
+                TargetTile = targetTile,
+                ShooterKey = shooterKey,
+                TargetKey = targetKey,
+                SourceTileKey = sourceTileKey,
+                TargetTileKey = targetTileKey,
+                SkillId = skillId,
+                AimPenalty = watch.AimPenalty,
+                Threshold = watch.Threshold,
+                RequestedAt = now,
+                SampleAt = now + MovementVisibilityProbeDelaySeconds
+            });
+            _debugLog($"Movement visibility probe scheduled: shooter={shooterKey} target={targetKey} skill={skillId} sourceTile={sourceTileKey} destinationTile={targetTileKey} initialDetection=false sampleAfterMs={(int)(MovementVisibilityProbeDelaySeconds * 1000)}.");
+        }
+        catch
+        {
+            // Optional diagnostics must never interrupt the actual reaction-evaluation path.
+        }
+    }
+
+    private void ProcessMovementVisibilityProbes()
+    {
+        if (!_debugMovementVisibility)
+        {
+            _movementVisibilityProbes.Clear();
+            return;
+        }
+
+        float now = Time.realtimeSinceStartup;
+        for (int i = _movementVisibilityProbes.Count - 1; i >= 0; i--)
+        {
+            var probe = _movementVisibilityProbes[i];
+            if (now < probe.SampleAt) continue;
+            _movementVisibilityProbes.RemoveAt(i);
+            float elapsedMs = (now - probe.RequestedAt) * 1000f;
+            if (now - probe.RequestedAt > MovementVisibilityProbeMaxAgeSeconds)
+            {
+                LogMovementVisibilityProbe(probe, "skipped", "sample window expired", elapsedMs);
+                continue;
+            }
+
+            try
+            {
+                if (!Native.Valid(probe.Shooter) || !Native.Valid(probe.Target))
+                {
+                    LogMovementVisibilityProbe(probe, "skipped", "actor became invalid", elapsedMs);
+                    continue;
+                }
+                if (!Native.Same(probe.Shooter.GetTile(), probe.SourceTile))
+                {
+                    LogMovementVisibilityProbe(probe, "skipped", "watcher left its captured source tile", elapsedMs);
+                    continue;
+                }
+                if (!Native.Same(probe.Target.GetTile(), probe.TargetTile))
+                {
+                    LogMovementVisibilityProbe(probe, "skipped", "mover left its captured destination tile", elapsedMs);
+                    continue;
+                }
+
+                bool detectable = Native.HasActorLineOfSight(
+                    probe.Shooter, probe.Target, probe.SourceTile, probe.TargetTile, out string detail);
+                string resultDetail = detail;
+                if (detectable)
+                {
+                    if (!Native.Valid(probe.Skill))
+                    {
+                        resultDetail += "; hit chance unavailable because the skill became invalid";
+                    }
+                    else if (!Native.CanReact(probe.Shooter, probe.Skill, probe.Target, probe.TargetTile, out string eligibilityReason))
+                    {
+                        resultDetail += "; delayed eligibility failed: " + eligibilityReason;
+                    }
+                    else if (!Native.TryHitChance(probe.Shooter, probe.Skill, probe.Target, probe.TargetTile,
+                        probe.AimPenalty, out int nativeChance, out int effectiveChance, out string hitChanceDetail))
+                    {
+                        resultDetail += "; delayed hit chance failed: " + hitChanceDetail;
+                    }
+                    else
+                    {
+                        resultDetail += $"; delayed eligibility passed; nativeHitChance={nativeChance}% effectiveHitChance={effectiveChance}% threshold={probe.Threshold}% wouldMeetThreshold={effectiveChance >= probe.Threshold}; {hitChanceDetail}";
+                    }
+                }
+                LogMovementVisibilityProbe(probe, detectable ? "visible" : "not-visible", resultDetail, elapsedMs);
+            }
+            catch (Exception e)
+            {
+                LogMovementVisibilityProbe(probe, "error", e.GetType().Name, elapsedMs);
+            }
+        }
+    }
+
+    private void LogMovementVisibilityProbe(MovementVisibilityProbe probe, string result, string detail, float elapsedMs)
+    {
+        if (!_debugMovementVisibility) return;
+        _debugLog($"Movement visibility probe result: shooter={probe.ShooterKey} target={probe.TargetKey} skill={probe.SkillId} sourceTile={probe.SourceTileKey} destinationTile={probe.TargetTileKey} result={result} detail={detail} elapsedMs={(int)elapsedMs}.");
     }
 
     private bool EvaluateSkill(Watch w, Skill skill, Actor target, Tile tile, out int effectiveChance, out string reason)
@@ -1572,6 +1726,7 @@ internal sealed class Runtime : IDisposable
         _watches.Clear();
         _reactions.Clear();
         _pendingActionTriggers.Clear();
+        _movementVisibilityProbes.Clear();
         _playerSelections.Clear();
         _selected = null;
         _squad = _leader = _vehicle = _alphaStrike = null;

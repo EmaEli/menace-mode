@@ -1,4 +1,9 @@
-# Overwatch 0.33.0.0
+# Overwatch 0.33.1.0
+
+## 0.33.1.0 — opt-in movement visibility timing diagnostic
+
+- Added **DEBUG: trace movement visibility timing**, default OFF. For movement candidates rejected because the shooter cannot detect the mover, it records the rejection and rechecks native actor visibility after 150 ms.
+- If visible, it also records whether the existing non-firing eligibility and hit-chance checks would qualify. Samples are limited to the same shooter, mover and source/destination tiles, expire after 500 ms, and never retry or change a reaction.
 
 ## 0.33.0.0 — fractional AI Overwatch AP reservation
 

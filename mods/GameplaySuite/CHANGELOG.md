@@ -1,3 +1,8 @@
+## Overwatch 0.33.1.0 — #78 movement visibility timing diagnostic
+
+- Add a default-off diagnostic that records movement candidates rejected by native actor detection, then samples detection again after 150 ms only when watcher and mover remain on their original tiles. If visible, record whether existing eligibility and hit-chance checks would qualify.
+- The follow-up is read-only and never retries, queues or changes an Overwatch reaction. The existing default-off debug bonus and 0.33.0.0 fractional AI AP budget remain unchanged.
+
 ## Squaddie Veterancy 1.10.3 — #21 Field Repair Kit author report (not game-verified)
 
 - Resolve an element's owner Entity through the native `Element.GetEntity()` wrapper first. The raw

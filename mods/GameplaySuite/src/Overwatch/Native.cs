@@ -17,6 +17,8 @@ internal enum WeaponRole
 
 internal static class Native
 {
+    public const string TargetNotVisibleReason = "target is not visible/detectable to the shooter";
+
     // MENACE 0.7.15 replaced Entity.IsPlayerControlled(bool) with two explicit methods:
     // IsPlayer() and IsPlayerOrPlayerAI(). Resolve by name so this source can still be
     // compiled against an older generated interop assembly while using the current API
@@ -80,16 +82,25 @@ internal static class Native
         "HasLineOfSightTo", BindingFlags.Public | BindingFlags.Instance, null,
         new[] { typeof(Entity), typeof(bool), typeof(Tile), typeof(Tile) }, null);
 
-    private static bool HasActorLineOfSight(Actor shooter, Entity target, Tile fromTile, Tile atTile)
+    public static bool HasActorLineOfSight(Actor shooter, Entity target, Tile fromTile, Tile atTile, out string detail)
     {
+        detail = "native actor line-of-sight method is unavailable";
         try
         {
             if (ActorLineOfSightMethod != null)
-                return Convert.ToBoolean(ActorLineOfSightMethod.Invoke(shooter, new object[] { target, fromTile, atTile }) ?? false);
+            {
+                bool visible = Convert.ToBoolean(ActorLineOfSightMethod.Invoke(shooter, new object[] { target, fromTile, atTile }) ?? false);
+                detail = "current native actor line-of-sight method";
+                return visible;
+            }
             if (LegacyActorLineOfSightMethod != null)
-                return Convert.ToBoolean(LegacyActorLineOfSightMethod.Invoke(shooter, new object[] { target, false, fromTile, atTile }) ?? false);
+            {
+                bool visible = Convert.ToBoolean(LegacyActorLineOfSightMethod.Invoke(shooter, new object[] { target, false, fromTile, atTile }) ?? false);
+                detail = "legacy native actor line-of-sight method";
+                return visible;
+            }
         }
-        catch { }
+        catch (Exception e) { detail = "native actor line-of-sight check failed: " + e.GetType().Name; }
         return false;
     }
 
@@ -401,9 +412,9 @@ internal static class Native
         if (!source.HasLineOfSightTo(tile, LineOfSightFlags.Default))
         { reason = "no tile line of sight"; return false; }
 
-        bool actorLos = HasActorLineOfSight(shooter, target, source, tile);
+        bool actorLos = HasActorLineOfSight(shooter, target, source, tile, out _);
         if (!actorLos)
-        { reason = "target is not visible/detectable to the shooter"; return false; }
+        { reason = TargetNotVisibleReason; return false; }
 
         if (!skill.IsApplicableTo(tile, target))
         { reason = "skill is not applicable to the target entity/tile"; return false; }

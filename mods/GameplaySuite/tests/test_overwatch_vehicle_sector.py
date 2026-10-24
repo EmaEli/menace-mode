@@ -45,6 +45,7 @@ class OverwatchVehicleSectorTests(unittest.TestCase):
         self.assertIn(f"<Version>{version}</Version>", (package / "code/Overwatch.csproj").read_text())
         self.assertIn('s.AddToggle("DebugLogging", "Debug logging", false)', source)
         self.assertIn('s.AddToggle("DebugBonusAIOverwatch", "DEBUG: give hostile AI one extra Overwatch reaction", false)', source)
+        self.assertIn('s.AddToggle("DebugMovementVisibility", "DEBUG: trace movement visibility timing", false)', source)
         compiled = json.loads((package / "compiled/jiangyu.json").read_text())
         self.assertEqual(compiled["version"], version)
 
