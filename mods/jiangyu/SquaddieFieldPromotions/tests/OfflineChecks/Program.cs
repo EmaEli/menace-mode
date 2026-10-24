@@ -75,6 +75,52 @@ selection = PromotionRules.Choose(new[] { C(1, 2), C(3, 9), C(2, 9) });
 Check(!selection.UsesXp && !selection.PartialXp && selection.Soldier.Id == 2, "no Veterancy: native missions with ID tie");
 selection = PromotionRules.Choose(new[] { C(1, 2, 999), C(2, 3, skinColor: 1) });
 Check(!selection.UsesXp && selection.PartialXp && selection.Soldier.Id == 2, "partial XP does not mix metrics");
+VehicleCrewCandidate VC(string pilot, string person, int xp, bool active = false,
+    string status = "Healthy", bool deployed = false) => new()
+{
+    PilotTemplateId = pilot, PilotName = "Pilot " + pilot, VehicleGuid = "vehicle-guid",
+    VehicleName = "Test vehicle", PersonId = person, Role = "Gunner", Status = status,
+    VeterancyRank = "Veteran", Xp = xp, IsActive = active, IsPilotDeployed = deployed,
+};
+var vehicleCandidates = new[]
+{
+    VC("pilot.bog", "00000000000000000000000000000001", 5000),
+    VC("pilot.rewa", "00000000000000000000000000000002", 5000, active: true),
+    VC("pilot.bog", "00000000000000000000000000000003", 9000, status: "Wounded"),
+    VC("pilot.rewa", "00000000000000000000000000000004", 10000, deployed: true),
+};
+var vehicleSelection = VehiclePromotionRules.Choose(vehicleCandidates, null);
+Check(vehicleSelection.Candidate.PersonId == "00000000000000000000000000000002" &&
+    vehicleSelection.EligibleCount == 2, "vehicle crew ranking excludes wounded/deployed and favors active on equal XP");
+Check(VehiclePromotionRules.Choose(vehicleCandidates,
+        new HashSet<string> { VehiclePromotionRules.SourceKey("pilot.rewa", "00000000000000000000000000000002") })
+        .Candidate.PersonId == "00000000000000000000000000000001",
+    "vehicle promotion excludes the exact saved pilot/person identity, not a role or slot");
+DataTemplateLoader.AdditionalTemplates["pilot.bog"] = new UnitLeaderTemplate
+{ Id = "pilot.bog", UnitActorType = 1, Gender = 0, SkinColor = 0 };
+DataTemplateLoader.AdditionalTemplates["pilot.rewa"] = new UnitLeaderTemplate
+{ Id = "pilot.rewa", UnitActorType = 1, Gender = 1, SkinColor = 0 };
+var vehicleRecord = LeaderForge.CreateVehicleRecord(null, vehicleSelection, 19, new PromotionLedger());
+Check(vehicleRecord.IsVehicleCrewPromotion && vehicleRecord.SourceSquaddieId == 0 &&
+    vehicleRecord.SourceCrewWasActive && vehicleRecord.SourceCrewXp == 5000 &&
+    vehicleRecord.SourceCrewVehicleGuid == "vehicle-guid" && vehicleRecord.Gender == 1 && vehicleRecord.SkinColor == 0 &&
+    vehicleRecord.InitialPerkId == VehiclePerkGeneration.InitialPerkId,
+    "vehicle promotion record preserves source pilot gender/skin, vehicle, active slot, crew identity and XP");
+Check(vehicleRecord.GeneratedPerks.Count == 15 &&
+    new[] { 1, 2, 3, 4 }.Select(tier => vehicleRecord.GeneratedPerks.Count(perk => perk.Tier == tier))
+        .SequenceEqual(new[] { 4, 5, 4, 2 }) &&
+    vehicleRecord.GeneratedPerks.All(perk => perk.Id != "perk.expert_pilot_vehicle"),
+    "vehicle leader receives a saved XP-banded tree without a duplicate or named-pilot signature perk");
+var vehicleRecordRoundTrip = JsonSerializer.Deserialize<PromotionRecord>(JsonSerializer.Serialize(vehicleRecord));
+vehicleRecordRoundTrip.Validate();
+Check(vehicleRecordRoundTrip.SourceCrewPersonId == vehicleRecord.SourceCrewPersonId &&
+    vehicleRecordRoundTrip.ReplacementCrewPersonId == vehicleRecord.ReplacementCrewPersonId &&
+    vehicleRecordRoundTrip.GeneratedPerks.Select(perk => perk.Id + perk.Tier)
+        .SequenceEqual(vehicleRecord.GeneratedPerks.Select(perk => perk.Id + perk.Tier)),
+    "vehicle crew transaction identity and perk snapshot survive sidecar serialization");
+var invalidVehiclePerks = JsonSerializer.Deserialize<PromotionRecord>(JsonSerializer.Serialize(vehicleRecord));
+invalidVehiclePerks.PerkSchemaVersion = PerkGeneration.Schema;
+Reject(() => invalidVehiclePerks.Validate(), "vehicle record cannot load an infantry perk schema");
 PromotionRecord R(Selection s, int badge = 0, SquaddieServiceRecord service = null) =>
     LeaderForge.CreateRecord(null, s, badge, service);
 Check(VoicePitchProfiles.Count == 5 && VoicePitchProfiles.Pitch(0) == 1.00f &&
@@ -738,6 +784,8 @@ Check(PromotionSystem.ReadLedger("{\"Other.Type\":{}}") == null, "sidecar withou
 Check(PromotionSystem.SidecarSuffix == ".jiangyu.SquaddieFieldPromotions.json", "sidecar suffix follows Jiangyu convention");
 
 var preview = new DossierItemTemplate { Id = PromotionSystem.DossierId };
+var vehiclePreview = new DossierItemTemplate { Id = PromotionSystem.VehicleDossierId };
+DataTemplateLoader.AdditionalTemplates[PromotionSystem.VehicleDossierId] = vehiclePreview;
 var vanilla = new DossierItemTemplate { Id = "dossier.squad_leader", Price = 25 };
 var donorText = new LocalizedLine(LocaCategory.Items, "Title", false);
 donorText.SetId(vanilla.Id);
@@ -785,7 +833,9 @@ Check(ApplyMoraleHook(bTeamUnit, MoraleEvent.AllyRouting, -10f) == -10f &&
     ApplyMoraleHook(bTeamUnit, MoraleEvent.ElementLost, 10f) == 10f &&
     ApplyMoraleHook(legacyUnit, MoraleEvent.ElementLost, -10f) == -10f,
     "native morale hook leaves routing, morale gains and legacy leaders unchanged");
-var badgeArt = new StandalonePortraitAssets();
+PortraitChecks.Run(Check);
+var badgeSprites = new Dictionary<string, UnityEngine.Sprite>();
+var badgeArt = PortraitChecks.Assets(badgeSprites);
 var badgeTexture = new UnityEngine.Texture2D(40, 40, UnityEngine.TextureFormat.RGBA32, false);
 var badgePixels = new UnityEngine.Color32[40 * 40];
 for (int y = 4; y < 36; y++)
@@ -795,7 +845,7 @@ for (int y = 12; y < 26; y++)
 badgeTexture.SetPixels32(new Il2CppInterop.Runtime.InteropTypes.Arrays.Il2CppStructArray<UnityEngine.Color32>(badgePixels));
 var badgeSource = UnityEngine.Sprite.Create(badgeTexture, new(0, 0, 40, 40), new(.3f, .7f), 73);
 foreach (string name in new[] { "badge.png", "badge_mini.png", "badge_dragged.png", "badge_unit.png", "slot_badge.png", "big_badge.png" })
-    badgeArt.Sprites[name] = badgeSource;
+    badgeSprites[name] = badgeSource;
 var badgePinned = new List<UnityEngine.Object>();
 Check(DynamicBadgeFactory.Apply(textClone, badgeArt, "B", badgePinned) == "6/6" && badgePinned.Count == 12,
     "production badge factory replaces all six bundled variants and pins their private copies");
@@ -1090,6 +1140,80 @@ preview.Price = 4;
 Open();
 Check(!StrategyState.Current.BlackMarket.ContainsItem(preview), "unexpected preview price fails closed");
 preview.Price = PromotionSystem.DefaultPrice;
+VehicleCrewCompatibility.IsAvailable = true;
+VehicleCrewCompatibility.Candidates = new List<VehicleCrewCandidate>
+{
+    VC("pilot.bog", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", 6200, active: true),
+    VC("pilot.rewa", "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", 5400),
+    VC("pilot.bog", "cccccccccccccccccccccccccccccccc", 9000, status: "Wounded"),
+    VC("pilot.rewa", "dddddddddddddddddddddddddddddddd", 11000, deployed: true),
+};
+VehicleCrewCompatibility.FailPromote = VehicleCrewCompatibility.FailRestore = false;
+int vehicleSavesBefore = system.Context.State.Saves;
+bool pendingWasSavedBeforeCrewMutation = false;
+VehicleCrewCompatibility.BeforePromote = () =>
+{
+    var pending = system.Context.State.Get<PromotionLedger>().Records.LastOrDefault(record => record.IsVehicleCrewPromotion);
+    pendingWasSavedBeforeCrewMutation = pending?.CrewTransactionState == "Pending" && !pending.SourceRemoved &&
+        system.Context.State.Saves > vehicleSavesBefore;
+};
+Open();
+Check(StrategyState.Current.BlackMarket.ContainsItem(vehiclePreview) &&
+    vehiclePreview.Title.GetRawDefaultTranslation() == "Vehicle Crew Promotion Dossier",
+    "compatible Veterancy exposes a separate localized vehicle crew dossier");
+Check(Redeem(vehiclePreview).Skip && vehiclePreview.VanillaRedeems == 0,
+    "vehicle dossier blocks vanilla redemption and executes the custom transaction");
+VehicleCrewCompatibility.BeforePromote = null;
+var promotedVehicleRecord = system.Context.State.Get<PromotionLedger>().Records.Single(record => record.IsVehicleCrewPromotion);
+var replacedVehicleCrew = VehicleCrewCompatibility.Candidates.Single(candidate =>
+    candidate.PersonId == promotedVehicleRecord.ReplacementCrewPersonId);
+Check(pendingWasSavedBeforeCrewMutation && promotedVehicleRecord.CrewTransactionState == "Committed" &&
+    promotedVehicleRecord.SourceRemoved && replacedVehicleCrew.Xp == 0 && replacedVehicleCrew.Status == "Replacement" &&
+    replacedVehicleCrew.IsActive && promotedVehicleRecord.Gender == 0 && promotedVehicleRecord.SkinColor == 0 &&
+    replacedVehicleCrew.PilotTemplateId == "pilot.bog" &&
+    replacedVehicleCrew.VehicleGuid == "vehicle-guid" && replacedVehicleCrew.Role == "Gunner",
+    "transaction persists first, then replaces only the selected crew ID while preserving owner, vehicle, role and active slot");
+var installedVehicleLeader = StrategyState.Current.Roster.Hirable.Single(leader =>
+    leader.GetID() == promotedVehicleRecord.LeaderId);
+Check(installedVehicleLeader.UnitActorType == 1 && installedVehicleLeader.InitialVehicleItem == null &&
+    UIManager.Current.Last.Text.Contains("no vehicle included"),
+    "promotion hires a vehicle commander without attaching or granting a vehicle");
+int stableVehicleSaves = system.Context.State.Saves;
+Open();
+Check(system.Context.State.Saves == stableVehicleSaves &&
+    system.Context.State.Get<PromotionLedger>().Records.Contains(promotedVehicleRecord),
+    "opening the market idempotently reconciles an already committed vehicle promotion");
+StrategyState.Current.Roster.Hirable.Remove(installedVehicleLeader);
+Open();
+var restoredCrew = VehicleCrewCompatibility.Candidates.Single(candidate =>
+    candidate.PersonId == promotedVehicleRecord.SourceCrewPersonId);
+Check(!system.Context.State.Get<PromotionLedger>().Records.Contains(promotedVehicleRecord) &&
+    restoredCrew.Xp == promotedVehicleRecord.SourceCrewXp && restoredCrew.Status == "Healthy" && restoredCrew.IsActive,
+    "missing promoted leader restores the exact source crew identity and saved XP");
+
+VehicleCrewCompatibility.Candidates = new List<VehicleCrewCandidate>
+{
+    VC("pilot.rewa", "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee", 3100),
+};
+LeaderForge.FailInstall = true;
+Check(Redeem(vehiclePreview).Skip && VehicleCrewCompatibility.Candidates.Single().PersonId ==
+    "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee" && VehicleCrewCompatibility.Candidates.Single().Xp == 3100 &&
+    VehicleCrewCompatibility.Candidates.Single().Status == "Healthy" &&
+    !system.Context.State.Get<PromotionLedger>().Records.Any(record => record.IsVehicleCrewPromotion),
+    "forge failure rolls back the crew mutation and removes its pending ledger transaction");
+LeaderForge.FailInstall = false;
+VehicleCrewCompatibility.Candidates[0].Status = "Wounded";
+Open();
+Check(!StrategyState.Current.BlackMarket.ContainsItem(vehiclePreview),
+    "vehicle dossier is withdrawn when no healthy reserve crew candidate remains");
+Check(Redeem(vehiclePreview).Skip && UIManager.Current.Last.Text.Contains("No eligible healthy vehicle crew") &&
+    VehicleCrewCompatibility.Candidates.Single().PersonId == "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+    "redeeming a stale vehicle dossier safely leaves ineligible crew unchanged");
+VehicleCrewCompatibility.Candidates.Clear();
+VehicleCrewCompatibility.IsAvailable = false;
+foreach (var item in StrategyState.Current.BlackMarket.Items.Where(item =>
+             item.Template.GetID() == PromotionSystem.DossierId || item.Template.GetID() == PromotionSystem.VehicleDossierId).ToList())
+    StrategyState.Current.BlackMarket.RemoveItem(item);
 system.OnUnload();
 Check(textClone.GetBadge() == textSource.Badge && textClone.GetBadgeWhite() == textSource.BadgeWhite,
     "unloaded badge callbacks leave native tactical results untouched");

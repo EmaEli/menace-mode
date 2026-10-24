@@ -156,6 +156,11 @@ internal static class PerkGeneration
 
     internal static void Validate(PromotionRecord record)
     {
+        if (record.IsVehicleCrewPromotion)
+        {
+            VehiclePerkGeneration.Validate(record);
+            return;
+        }
         record.InitialPerkId ??= "";
         record.MentorLeaderTemplateId ??= "";
         if (record.PerkSchemaVersion == 0) return; // Pre-0.15 record: keeps the shared generic tree.
@@ -189,7 +194,7 @@ internal static class PerkGeneration
         ValidPerkId(id) || id == PromotionProgression.InitialPerkId;
 
     // FNV-1a + xorshift32; stable between CLR versions, OSes and process restarts.
-    private sealed class StableRandom
+    internal sealed class StableRandom
     {
         private uint _state;
         internal StableRandom(string key)

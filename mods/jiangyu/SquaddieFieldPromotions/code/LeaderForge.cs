@@ -18,6 +18,8 @@ namespace SquaddieFieldPromotions;
 internal sealed class LeaderForge
 {
     private const string SourceLeaderId = "squad_leader.sachin";
+    private const string MaleVehicleSourceLeaderId = "pilot.bog";
+    private const string FemaleVehicleSourceLeaderId = "pilot.rewa";
     private readonly string _modFolder;
     private readonly List<UnityEngine.Object> _pinned = new();
     private StandalonePortraitAssets _maleArt;
@@ -65,6 +67,10 @@ internal sealed class LeaderForge
         record.Validate();
         return record;
     }
+
+    internal static PromotionRecord CreateVehicleRecord(StrategyState state, VehicleCrewSelection selection,
+        int badgeIndex, PromotionLedger ledger) =>
+        VehiclePromotionIdentity.CreateRecord(state, selection, badgeIndex, ledger);
 
     // The mentor is optional flavour: an unreadable roster falls back to the base pool.
     private static MentorSnapshot ReadMentor(StrategyState state, int soldierId, SquaddieServiceRecord service)
@@ -136,7 +142,7 @@ internal sealed class LeaderForge
     {
         var leader = DataTemplateLoader.Get<UnitLeaderTemplate>(record.LeaderId, false);
         if (leader == null) return false;
-        if (forceGenericHead)
+        if (record.IsVehicleCrewPromotion || forceGenericHead)
         {
             leader.CustomHead = null;
             return true;
@@ -220,6 +226,10 @@ internal sealed class LeaderForge
                 throw new InvalidOperationException("Native leader template ID collision / identity mismatch.");
             ApplyIdentityText(record, existing);
             ApplyProgression(record, existing);
+            // Repair 0.20.0's mixed pilot-slot / infantry-speaker artwork on same-session reloads too.
+            if (record.IsVehicleCrewPromotion)
+                GenderArt(record.Gender == PromotionPortraitAssignment.FemaleGender)
+                    .ApplyTo(existing, existing.SpeakerTemplate);
             SetHeadMode(record, forceGenericHead);
             return "reuse=registered, badge=" + DynamicBadgeFactory.LabelForIndex(record.BadgeIndex);
         }
@@ -232,33 +242,32 @@ internal sealed class LeaderForge
         SpeakerTemplate speaker = null;
         try
         {
-            var source = DataTemplateLoader.Get<UnitLeaderTemplate>(SourceLeaderId, false);
+            string sourceId = SourceLeaderIdFor(record);
+            var source = DataTemplateLoader.Get<UnitLeaderTemplate>(sourceId, false);
             var lim = DataTemplateLoader.Get<UnitLeaderTemplate>("squad_leader.lim", false);
             var sy = DataTemplateLoader.Get<UnitLeaderTemplate>("squad_leader.sy", false);
             if (source == null || source.SpeakerTemplate == null || lim == null || lim.SpeakerTemplate == null ||
                 sy == null || sy.SpeakerTemplate == null || lim.Gender == sy.Gender)
                 throw new InvalidOperationException("Native donor templates are missing.");
+            if (record.IsVehicleCrewPromotion) ValidateVehicleSource(source, record.Gender);
             if (record.Gender != Convert.ToInt32(lim.Gender) && record.Gender != Convert.ToInt32(sy.Gender))
                 throw new InvalidOperationException("Snapshot gender is not a supported native value.");
             bool female = record.Gender == Convert.ToInt32(sy.Gender);
             var voiceDonor = female ? sy : lim;
             string gender = female ? "female" : "male";
-            var art = female ? _femaleArt : _maleArt;
-            if (art != null && !art.IsAlive) art = null;
-            if (art == null)
-            {
-                art = StandalonePortraitAssets.Load(_modFolder, gender, _pinned);
-                if (female) _femaleArt = art; else _maleArt = art;
-            }
+            var art = GenderArt(female);
             DataTemplateLoader.GetAll<UnitLeaderTemplate>();
             DataTemplateLoader.GetAll<SpeakerTemplate>();
             var bridge = new JiangyuCloneBridge();
             speaker = bridge.Clone<SpeakerTemplate>(voiceDonor.SpeakerTemplate, record.SpeakerId);
             leader = bridge.Clone<UnitLeaderTemplate>(source, record.LeaderId);
+            if (record.IsVehicleCrewPromotion) ValidateVehicleSource(leader, record.Gender);
             _pinned.Add(speaker);
             _pinned.Add(leader);
-            speaker.Forename = NewLine(voiceDonor.SpeakerTemplate.Forename, record.SpeakerId, "Forename", record.Name);
-            speaker.Surname = NewLine(voiceDonor.SpeakerTemplate.Surname, record.SpeakerId, "Surname", string.Empty);
+            speaker.Forename = NewLine(voiceDonor.SpeakerTemplate.Forename, record.SpeakerId, "Forename",
+                record.IsVehicleCrewPromotion ? record.Forename : record.Name);
+            speaker.Surname = NewLine(voiceDonor.SpeakerTemplate.Surname, record.SpeakerId, "Surname",
+                record.IsVehicleCrewPromotion ? record.Surname : string.Empty);
             speaker.Nickname = NewLine(voiceDonor.SpeakerTemplate.Nickname, record.SpeakerId, "Nickname", record.Nickname);
             leader.SpeakerTemplate = speaker;
             // The cloned leader comes from Sachin, whose direct perk-promotion sounds
@@ -276,7 +285,8 @@ internal sealed class LeaderForge
             ApplyIdentityText(record, leader, source, voiceDonor);
             leader.Gender = (Il2CppMenace.Tactical.Gender)record.Gender;
             leader.SkinColor = (Il2CppMenace.Tactical.SkinColor)record.SkinColor;
-            string head = ApplyStandaloneVisuals(leader, speaker, voiceDonor, art, female, forceGenericHead);
+            string head = ApplyStandaloneVisuals(leader, speaker, voiceDonor, art, female,
+                record.IsVehicleCrewPromotion || forceGenericHead);
             string visual = "embedded-" + gender;
             if (record.PortraitProfile.Length != 0)
             {
@@ -328,9 +338,30 @@ internal sealed class LeaderForge
         }
     }
 
+    private static void ValidateVehicleSource(UnitLeaderTemplate source, int gender)
+    {
+        if (Convert.ToInt32(source.Gender) != gender ||
+            !PrivateMember.TryGet(source, "UnitActorType", out object actorType) ||
+            Convert.ToInt32(actorType) != 1 ||
+            !PrivateMember.TryGet(source, "InitialVehicleItem", out object sourceVehicle) || sourceVehicle != null)
+            throw new InvalidOperationException("Generic vehicle-pilot art donor is invalid or carries a vehicle.");
+    }
+
+    private StandalonePortraitAssets GenderArt(bool female)
+    {
+        var art = female ? _femaleArt : _maleArt;
+        if (art == null || !art.IsAlive)
+        {
+            art = StandalonePortraitAssets.Load(_modFolder, female ? "female" : "male", _pinned);
+            if (female) _femaleArt = art; else _maleArt = art;
+        }
+        return art;
+    }
+
     private static string ApplyStandaloneVisuals(UnitLeaderTemplate leader, SpeakerTemplate speaker,
         UnitLeaderTemplate nativeDonor, StandalonePortraitAssets art, bool female, bool forceGenericHead)
     {
+        // Voice and actor donors are not portrait donors: replace both templates as one family.
         art.ApplyTo(leader, speaker);
         if (forceGenericHead)
         {
@@ -398,12 +429,17 @@ internal sealed class LeaderForge
 
     private static void ApplyIdentityText(PromotionRecord record, UnitLeaderTemplate leader)
     {
-        var source = DataTemplateLoader.Get<UnitLeaderTemplate>(SourceLeaderId, false);
+        var source = DataTemplateLoader.Get<UnitLeaderTemplate>(SourceLeaderIdFor(record), false);
         string voiceDonorId = record.Gender == Convert.ToInt32(Il2CppMenace.Tactical.Gender.Female)
             ? "squad_leader.sy" : "squad_leader.lim";
         var voiceDonor = DataTemplateLoader.Get<UnitLeaderTemplate>(voiceDonorId, false);
         ApplyIdentityText(record, leader, source, voiceDonor);
     }
+
+    private static string SourceLeaderIdFor(PromotionRecord record) => !record.IsVehicleCrewPromotion
+        ? SourceLeaderId
+        : record.Gender == PromotionPortraitAssignment.FemaleGender
+            ? FemaleVehicleSourceLeaderId : MaleVehicleSourceLeaderId;
 
     private static void ApplyIdentityText(PromotionRecord record, UnitLeaderTemplate leader,
         UnitLeaderTemplate source, UnitLeaderTemplate voiceDonor)
@@ -420,6 +456,18 @@ internal sealed class LeaderForge
         foreach (object candidate in PrivateMember.Enumerate(state.Roster.GetHiredLeaders()))
             if (candidate is BaseUnitLeader item && item.LeaderTemplate != null &&
                 item.LeaderTemplate.GetID() == leaderId) return true;
+        return false;
+    }
+
+    internal static bool RosterContainsAnyLeader(StrategyState state, string leaderId)
+    {
+        if (state?.Roster == null) return false;
+        if (RosterContainsLeader(state, leaderId)) return true;
+        foreach (object list in new object[]
+                 { state.Roster.m_DismissedLeaders, state.Roster.m_UnburiedLeaders, state.Roster.m_BuriedLeaders })
+            foreach (object candidate in PrivateMember.Enumerate(list))
+                if (candidate is BaseUnitLeader item && item.LeaderTemplate != null &&
+                    item.LeaderTemplate.GetID() == leaderId) return true;
         return false;
     }
 
@@ -441,7 +489,7 @@ internal sealed class LeaderForge
         return false;
     }
 
-    private static int FindUnusedLeaderGuid(StrategyState state)
+    internal static int FindUnusedLeaderGuid(StrategyState state)
     {
         var used = new HashSet<int>();
         try

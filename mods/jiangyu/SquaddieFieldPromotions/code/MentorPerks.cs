@@ -39,9 +39,20 @@ internal static class MentorPerks
         return new MentorSnapshot(leader.LeaderTemplate.GetID(), skills);
     }
 
+    internal static MentorSnapshot ReadHiredLeader(StrategyState state, string templateId)
+    {
+        var leader = FindHired(state, templateId);
+        if (leader?.LeaderTemplate == null) return null;
+        var skills = new List<string>();
+        foreach (object value in PrivateMember.Enumerate(leader.GetPerks()))
+            if (value is PerkTemplate perk && !string.IsNullOrWhiteSpace(perk.GetID()))
+                skills.Add(perk.GetID());
+        return new MentorSnapshot(leader.LeaderTemplate.GetID(), skills);
+    }
+
     private static BaseUnitLeader FindHired(StrategyState state, string templateId)
     {
-        if (string.IsNullOrWhiteSpace(templateId)) return null;
+        if (state?.Roster == null || string.IsNullOrWhiteSpace(templateId)) return null;
         foreach (object candidate in PrivateMember.Enumerate(state.Roster.GetHiredLeaders()))
             if (candidate is BaseUnitLeader leader && leader.LeaderTemplate?.GetID() == templateId)
                 return leader;

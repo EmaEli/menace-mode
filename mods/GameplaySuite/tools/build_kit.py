@@ -36,8 +36,8 @@ def collect(root, module=None, use_installed_settings=False):
         raise ValueError("Distribution catalog does not cover the current modules exactly")
     if module is not None and module not in available:
         raise ValueError("Unknown requested module")
-    if use_installed_settings and module != "SquaddieFieldPromotions":
-        raise ValueError("Installed-settings mode is supported only by SquaddieFieldPromotions")
+    if use_installed_settings and module not in {"SquaddieFieldPromotions", "SquaddieVeterancy"}:
+        raise ValueError("Installed-settings mode is supported only by SquaddieFieldPromotions and SquaddieVeterancy")
     if module == "SquaddieFieldPromotions" and not use_installed_settings:
         raise ValueError("Experimental preview requires --use-installed-settings; do not replace an existing companion")
     modules = catalog["modules"] if module is None else list(dict.fromkeys(
@@ -155,7 +155,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--module", help="Build one explicitly selected module instead of the default Suite")
-    parser.add_argument("--use-installed-settings", action="store_true", help="SFP preview: validate/reuse the installed companion and loader")
+    parser.add_argument("--use-installed-settings", action="store_true", help="Validate/reuse installed settings and loader for supported standalone candidates")
     args = parser.parse_args()
     if args.output.exists():
         parser.error("Output already exists; refusing to overwrite")
@@ -166,7 +166,10 @@ def main():
         runner = ROOT / "mods/jiangyu/SquaddieFieldPromotions/tests/OfflineChecks/OfflineChecks.csproj"
     offline_args = [dotnet, "run", "--project", str(runner), "-c", "Release", "--", str(ROOT)]
     if args.module is not None and args.module != "SquaddieFieldPromotions":
-        offline_args.extend(["--modules", ",".join(versions)])
+        selected_modules = list(versions)
+        if args.use_installed_settings:
+            selected_modules.insert(0, "MenaceModSettings")
+        offline_args.extend(["--modules", ",".join(selected_modules)])
     subprocess.run(offline_args, cwd=ROOT, check=True)
     revision = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
     sdk = json.loads((ROOT / TOOLS / "distribution.json").read_text())["dotnetSdk"]

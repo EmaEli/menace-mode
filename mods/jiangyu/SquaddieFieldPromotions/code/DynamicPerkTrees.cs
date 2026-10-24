@@ -15,7 +15,7 @@ internal static class DynamicPerkTrees
 {
     internal static void Apply(PromotionRecord record, UnitLeaderTemplate leader, List<UnityEngine.Object> pinned)
     {
-        PerkGeneration.Validate(record);
+        ValidateSnapshot(record);
         if (record.PerkSchemaVersion == 0)
             throw new InvalidOperationException("Legacy promotion records use the shared generic tree.");
         var initial = Lookup(record.InitialPerkId);
@@ -43,9 +43,15 @@ internal static class DynamicPerkTrees
     /// <summary>Keeps an already bound identical tree; otherwise binds the saved snapshot.</summary>
     internal static void VerifyOrApply(PromotionRecord record, UnitLeaderTemplate leader, List<UnityEngine.Object> pinned)
     {
-        PerkGeneration.Validate(record);
+        ValidateSnapshot(record);
         if (Matches(record, leader)) return;
         Apply(record, leader, pinned);
+    }
+
+    private static void ValidateSnapshot(PromotionRecord record)
+    {
+        if (record.IsVehicleCrewPromotion) VehiclePerkGeneration.Validate(record);
+        else PerkGeneration.Validate(record);
     }
 
     internal static bool Matches(PromotionRecord record, UnitLeaderTemplate leader)

@@ -42,6 +42,8 @@ namespace Il2CppMenace.Conversations
 {
     public class SpeakerTemplate
     {
+        public UnityEngine.Texture2D StandLookRightImage, StandLookLeftImage, StandLookRightInactiveImage, OperationSelectImage;
+        public UnityEngine.Sprite BarkImage;
         public Il2CppMenace.Tools.LocalizedLine Nickname;
         public Il2CppMenace.Tools.LocalizedMultiLine Description;
         public string FullName;
@@ -81,10 +83,14 @@ namespace Il2CppMenace.Strategy
     }
     public class UnitLeaderTemplate
     {
+        public UnityEngine.Sprite Slot, SlotInactive;
         public Il2CppMenace.Conversations.SpeakerTemplate SpeakerTemplate;
         public Il2CppMenace.Tools.LocalizedLine UnitTitle;
         public Il2CppMenace.Tools.LocalizedMultiLine UnitDescription;
         public bool IsInfantry = true;
+        public int UnitActorType;
+        public int Gender, SkinColor;
+        public object InitialVehicleItem;
         public UnitLeaderTemplate InfantryUnitTemplate;
         public UnityEngine.Sprite Badge, BadgeWhite, BadgeMini, BadgeDragged, BadgeUnitWindow, SlotBadge, BigBadge;
         public PerkTemplate InitialPerk;
@@ -294,7 +300,13 @@ namespace Il2CppMenace.Tools
     public static class DataTemplateLoader
     {
         public static object Template;
-        public static T Get<T>(string id, bool warn) where T : class => Template as T;
+        public static readonly Dictionary<string, object> AdditionalTemplates = new();
+        public static T Get<T>(string id, bool warn) where T : class
+        {
+            if (Template is T selected && selected is Il2CppMenace.Items.BaseItemTemplate item && item.GetID() == id)
+                return selected;
+            return AdditionalTemplates.TryGetValue(id, out var additional) ? additional as T : null;
+        }
     }
 }
 namespace Jiangyu.Sdk
@@ -378,6 +390,17 @@ namespace SquaddieFieldPromotions
 {
     internal static class PrivateMember
     {
+        internal static bool TryGet(object target, string name, out object value)
+        {
+            value = null;
+            if (target == null) return false;
+            var type = target.GetType();
+            var property = type.GetProperty(name);
+            var field = type.GetField(name);
+            if (property == null && field == null) return false;
+            value = property != null ? property.GetValue(target) : field.GetValue(target);
+            return true;
+        }
         internal static IEnumerable<object> Enumerate(object collection)
         {
             if (collection is System.Collections.IEnumerable values)
@@ -395,6 +418,68 @@ namespace SquaddieFieldPromotions
             if (Fail) throw new IOException("simulated read error");
             return Value != null && excluded.Contains(Value.Soldier.Id) ? null : Value;
         }
+    }
+    internal static class MentorPerks
+    {
+        internal static MentorSnapshot ReadHiredLeader(Il2CppMenace.States.StrategyState state, string id) => null;
+    }
+    internal sealed class VehicleCrewCandidate
+    {
+        internal string PilotTemplateId = "", PilotName = "", VehicleGuid = "", VehicleName = "";
+        internal string PersonId = "", Role = "", Status = "", VeterancyRank = "";
+        internal int Xp;
+        internal bool IsActive, IsPilotDeployed;
+    }
+    internal sealed class VehicleCrewMutationReply
+    {
+        internal bool Success, Changed;
+        internal string Error = "";
+    }
+    internal static class VehicleCrewCompatibility
+    {
+        internal static bool IsAvailable;
+        internal static bool FailPromote, FailRestore;
+        internal static Action BeforePromote;
+        internal static List<VehicleCrewCandidate> Candidates = new();
+        internal static IReadOnlyList<VehicleCrewCandidate> ReadCandidates() => Candidates.ToArray();
+        internal static VehicleCrewMutationReply Promote(PromotionRecord record)
+        {
+            BeforePromote?.Invoke();
+            if (FailPromote) return new() { Error = "simulated Veterancy failure" };
+            int index = Candidates.FindIndex(candidate => candidate.PilotTemplateId == record.SourceCrewPilotTemplateId &&
+                candidate.PersonId == record.SourceCrewPersonId);
+            if (index < 0) return Candidates.Any(candidate => candidate.PilotTemplateId == record.SourceCrewPilotTemplateId &&
+                candidate.PersonId == record.ReplacementCrewPersonId)
+                    ? new() { Success = true }
+                    : new() { Error = "source missing" };
+            var source = Candidates[index];
+            if (source.Xp != record.SourceCrewXp || source.Status != "Healthy")
+                return new() { Error = "source changed" };
+            Candidates[index] = Copy(source, record.ReplacementCrewPersonId, 0, "Replacement");
+            return new() { Success = true, Changed = true };
+        }
+        internal static VehicleCrewMutationReply Restore(PromotionRecord record)
+        {
+            if (FailRestore) return new() { Error = "simulated Veterancy rollback failure" };
+            int sourceIndex = Candidates.FindIndex(candidate => candidate.PilotTemplateId == record.SourceCrewPilotTemplateId &&
+                candidate.PersonId == record.SourceCrewPersonId);
+            if (sourceIndex >= 0) return new() { Success = true };
+            int replacementIndex = Candidates.FindIndex(candidate => candidate.PilotTemplateId == record.SourceCrewPilotTemplateId &&
+                candidate.PersonId == record.ReplacementCrewPersonId && candidate.Status == "Replacement" && candidate.Xp == 0);
+            if (replacementIndex < 0) return new() { Error = "replacement missing" };
+            Candidates[replacementIndex] = Copy(Candidates[replacementIndex], record.SourceCrewPersonId,
+                record.SourceCrewXp, "Healthy", record.VeterancyRank);
+            return new() { Success = true, Changed = true };
+        }
+        internal static VehicleCrewMutationReply Reconcile(PromotionRecord record) => Promote(record);
+        private static VehicleCrewCandidate Copy(VehicleCrewCandidate source, string personId, int xp,
+            string status, string rank = "Green") => new()
+        {
+            PilotTemplateId = source.PilotTemplateId, PilotName = source.PilotName,
+            VehicleGuid = source.VehicleGuid, VehicleName = source.VehicleName,
+            PersonId = personId, Role = source.Role, Status = status, VeterancyRank = rank,
+            Xp = xp, IsActive = source.IsActive, IsPilotDeployed = source.IsPilotDeployed,
+        };
     }
     // Simulates the native template forge: records every install/rehydrate, never touches the engine.
     internal sealed class LeaderForge
@@ -430,12 +515,20 @@ namespace SquaddieFieldPromotions
             record.Validate();
             return record;
         }
+        internal static int FindUnusedLeaderGuid(Il2CppMenace.States.StrategyState state) => NextGuid++;
+        internal static PromotionRecord CreateVehicleRecord(Il2CppMenace.States.StrategyState state,
+            VehicleCrewSelection selection, int badgeIndex, PromotionLedger ledger) =>
+            VehiclePromotionIdentity.CreateRecord(state, selection, badgeIndex, ledger);
         internal string Install(Il2CppMenace.States.StrategyState state, PromotionRecord record, bool forceGenericHead)
         {
             record.Validate();
             if (FailInstall) throw new InvalidOperationException("simulated native clone failure");
             HeadModes.Add(forceGenericHead);
-            state.Roster.AddHirableLeader(new Il2CppMenace.Strategy.UnitLeaderTemplate { Id = record.LeaderId });
+            state.Roster.AddHirableLeader(new Il2CppMenace.Strategy.UnitLeaderTemplate
+            {
+                Id = record.LeaderId, IsInfantry = !record.IsVehicleCrewPromotion,
+                UnitActorType = record.IsVehicleCrewPromotion ? 1 : 0, InitialVehicleItem = null,
+            });
             Installed.Add(record.LeaderId);
             return "fake-install";
         }
@@ -446,6 +539,10 @@ namespace SquaddieFieldPromotions
         }
         internal static bool RosterContainsLeader(Il2CppMenace.States.StrategyState state, string id) =>
             state.Roster.Hirable.Any(t => t.Id == id);
+        internal static bool RosterContainsAnyLeader(Il2CppMenace.States.StrategyState state, string id) =>
+            RosterContainsLeader(state, id) || new[] { state.Roster.m_HiredLeaders, state.Roster.m_DismissedLeaders,
+                state.Roster.m_UnburiedLeaders, state.Roster.m_BuriedLeaders }.SelectMany(list => list)
+                .Any(leader => leader.LeaderTemplate?.GetID() == id);
         internal string Rehydrate(PromotionRecord record, bool forceGenericHead)
         {
             record.Validate();

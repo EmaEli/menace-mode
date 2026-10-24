@@ -1,0 +1,10 @@
+// Separate opt-in dossier for the Veterancy-backed vehicle crew promotion path.
+// The crew replacement and commander installation are performed transactionally at redemption.
+// Localized text uses fresh native LocalizedLine/LocalizedMultiLine objects in PromotionSystem.
+clone "DossierItemTemplate" from="dossier.squad_leader" id="mod.squaddiefieldpromotions.vehicle_crew_dossier" {
+    set "TradeValue" 100
+    set "BlackMarketMaxQuantity" 0
+    clear "m_TradeValues"
+    append "m_TradeValues" 100
+    clear "m_UnlockedLeaders"
+}

@@ -9,6 +9,7 @@
     <Compile Include="../../src/Shared/ThirdPersonCameraBridge.cs" Link="ThirdPersonCameraBridge.cs" />
     <Compile Include="../../../jiangyu/MenaceModSettings/code/HudPointerCapture.cs" Link="HudPointerCapture.cs" />
     <Compile Include="../../src/SquaddieVeterancy/LeaderDisplayName.cs" Link="LeaderDisplayName.cs" />
+    <Compile Include="../../src/SquaddieVeterancy/CrewPersonIdentity.cs" Link="CrewPersonIdentity.cs" />
     <Compile Include="../../../jiangyu/MenaceModSettings/code/ModSettings.cs" Link="ModSettings.cs" />
     <Compile Include="../../../jiangyu/MenaceModSettings/code/SettingDefinition.cs" Link="SettingDefinition.cs" />
     <Compile Include="../../../jiangyu/MenaceModSettings/code/LegacySettings.cs" Link="LegacySettings.cs" />

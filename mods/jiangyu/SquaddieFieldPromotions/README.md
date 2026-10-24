@@ -1,6 +1,7 @@
-# Squaddie Field Promotions 0.19.0
+# Squaddie Field Promotions 0.20.1
 
-> **Experimental 0.19.0 test candidate; in-game acceptance is pending.** New promotions start with the B Team perk: 10% lower Discipline and tactical deployment costs, but double morale loss from squaddie casualties and allied-unit destruction. Existing promotion records and purchased perks are unchanged.
+> **Experimental 0.20.1 test candidate; in-game acceptance is pending.** Fixes vehicle promotions mixing native pilot Hire slots with infantry voice-donor portraits: all views now use the bundled male/female balaclava family, including reconstructed vehicle commanders. Vehicle promotions consume only the selected crew identity, install a separate vehicle commander with an XP-banded vehicle perk tree, and grant no vehicle. The transaction is saved before mutation and rolls back or reconciles on failure/load. New infantry leaders still start with the B Team perk; existing records and purchased perks are unchanged.
+> The 24 October mission-start crash recorded VERSION.dll / 0xc0000602 / offset 0x7ddf6d, matching the MelonLoader failure tracked in #72 and previously reproduced with zero mods. This portrait fix does not fix that crash; vehicle gameplay acceptance remains blocked.
 > Version 0.18.0 adds 1,619 distinct recordings and
 > 1,155 route mappings across the other 55 human profiles. The existing quality gate now admits 36 profiles
 > (26 male/10 female); its route and distinct-clip minimums are unchanged. The 818 legacy recordings and
@@ -82,15 +83,15 @@
 Tracked in [#27](https://github.com/EmaEli/menace-mode/issues/27) and
 [#53](https://github.com/EmaEli/menace-mode/issues/53).
 
-Vehicle crew promotions ([#66](https://github.com/EmaEli/menace-mode/issues/66)) are
-**not implemented**; see the
-[identity and promotion proposal](../../../docs/SFP_VEHICLE_PROMOTIONS_DESIGN.md).
+Vehicle crew promotions are opt-in through a separate dossier and require the versioned
+Squaddie Veterancy crew API. Infantry promotion remains available without Squaddie Veterancy.
 
 ## Requirements
 
 - MENACE **0.7.17+22362**, MelonLoader and Jiangyu **1.4.8**.
 - **Menace Mod Settings >= 0.6.1** is the only additional required mod.
-- Squaddie Veterancy is **optional**. No Custom Leaders loader or legacy Modpack Loader.
+- Squaddie Veterancy is optional for infantry and **required for vehicle crew promotions**.
+  No Custom Leaders loader or legacy Modpack Loader.
 
 ## What the mod does
 
@@ -102,6 +103,18 @@ Vehicle crew promotions ([#66](https://github.com/EmaEli/menace-mode/issues/66))
   - Complete Veterancy XP coverage: highest XP, ties use lowest native soldier ID.
   - No/incomplete XP coverage: most native missions, same deterministic tie-break.
   - Soldiers already promoted are skipped; unknown XP is never fabricated as zero.
+- The separate **Vehicle Crew Promotion Dossier** appears only when a compatible Squaddie
+  Veterancy API is loaded and a healthy, non-deployed crew member is eligible. It selects the
+  highest-XP eligible crew member (active slot wins equal-XP ties), then creates a new vehicle
+  commander from the matching native generic pilot template. Bundled gender-matched balaclava images
+  replace both leader and speaker portraits; the vehicle-leader actor type is retained. A saved XP-banded vehicle perk tree replaces the named
+  pilot's signature progression. Only the commander enters Hire (0 credits); **no vehicle is
+  attached or granted**.
+- Vehicle crew transactions save the exact pilot/person/vehicle/role/active-slot identity and XP
+  before changing Veterancy. The source person is replaced in that same crew slot by a fresh
+  zero-XP recruit. A failed install restores the source; a saved promotion is reconciled on market
+  open, restoring the source if its promoted leader is missing. Wounded, deployed and already
+  promoted crew are never selected.
 - The chosen squaddie becomes a **new squad leader in the Hire list (0 credits)**: a
   unique `UnitLeaderTemplate`/`SpeakerTemplate` cloned from the matching vanilla
   gendered leader, with the soldier's name, nickname, skin, balaclava portraits from
@@ -189,9 +202,18 @@ The kit also ships the module's raw `runtime_assets/` (portraits, prebuilt John/
 voice bundle with its build receipt, voice routes); the installer stages them next to
 the compiled package because `jiangyu compile --clean` does not preserve them.
 
-## Acceptance test (0.19.0 test candidate; in-game checks pending)
+## Acceptance test (0.20.1 test candidate; in-game checks pending)
 
-Version 0.19.0 B Team: create a new promotion and verify its starting perk shows 10% lower Discipline and tactical deployment costs. Compare casualty morale loss with a non-B-Team squad for a lost squaddie and a destroyed allied unit; verify morale gains and routing are not doubled. Existing promoted leaders should retain their saved initial perk and purchased perks after reload.
+Vehicle crew promotion: use a disposable non-Ironman save with Squaddie Veterancy loaded and
+at least one healthy, non-deployed crew member. Confirm the separate dossier appears, selects the
+highest-XP eligible crew member, and creates a new commander with the matching balaclava pilot
+portrait and vehicle perk tree. Verify the original pilot/vehicle/role and active-or-reserve slot
+remain intact, the replacement crew member has 0 XP, the commander costs 0 credits, and no vehicle
+appears in Hire. Save/restart/load; then dismiss the test commander and reopen the market to verify
+the exact source crew identity and XP are restored. Also check no dossier appears with no eligible
+crew or without the compatible Veterancy API. Do not use a valuable save.
+
+Version 0.19.0 B Team: create a new infantry promotion and verify its starting perk shows 10% lower Discipline and tactical deployment costs. Compare casualty morale loss with a non-B-Team squad for a lost squaddie and a destroyed allied unit; verify morale gains and routing are not doubled. Existing promoted leaders should retain their saved initial perk and purchased perks after reload.
 
 Version 0.18.0 voices: test only in a disposable campaign. New assignments can now draw from 36
 profiles (26 male/10 female); existing leaders must keep their saved voice IDs. Listen for lines
@@ -331,7 +353,8 @@ readability remain in-game acceptance gates.
 
 ## Remaining gates
 
-1. In-game acceptance of 0.10.0 source removal (assigned/unassigned), old preview-save cleanup,
+1. In-game acceptance of 0.20.1 consistent vehicle portraits, crew selection, identity/slot preservation, no-vehicle hire,
+   save/load recovery and dismissal rollback; plus 0.10.0 infantry source removal (assigned/unassigned), old preview-save cleanup,
    price changes, and save → restart → load with no returning source soldier.
 2. Without optional Veterancy, plus dismissal/death, divergent saves and mission transitions.
 3. Failure-path dossier/resource preservation and attribute balance remain acceptance gates;

@@ -14,7 +14,7 @@ PROGRESSION_KDL = (ROOT / 'templates' / 'generic-infantry-progression.kdl').read
 class AuthoringTests(unittest.TestCase):
     def test_jiangyu_not_old_modpack(self):
         self.assertEqual(MANIFEST['name'], 'SquaddieFieldPromotions')
-        self.assertEqual(MANIFEST['version'], '0.19.0')
+        self.assertEqual(MANIFEST['version'], '0.20.1')
         compiled_manifest = json.loads((ROOT / 'compiled/jiangyu.json').read_text(encoding='utf-8'))
         self.assertEqual(compiled_manifest['version'], MANIFEST['version'])
         self.assertTrue(any(dep.startswith('Jiangyu ') for dep in MANIFEST['depends']))
@@ -293,11 +293,11 @@ class AuthoringTests(unittest.TestCase):
         for field in ('Title', 'ShortName', 'Description'):
             self.assertNotIn(f'set "{field}"', KDL)
         for field in ('Title', 'ShortName'):
-            self.assertIn(f'template.{field} = PreviewText("{field}",', CS)
+            self.assertIn(f'template.{field} = PreviewText(dossierId, "{field}",', CS)
         self.assertIn('template.Description = PreviewDescription(', CS)
         self.assertIn('new LocalizedLine(LocaCategory.Items, field, false)', CS)
         self.assertIn('new LocalizedMultiLine(LocaCategory.Items, "Description", false)', CS)
-        self.assertIn('line.SetId(DossierId)', CS)
+        self.assertIn('line.SetId(dossierId)', CS)
         self.assertIn('public override void OnTemplatesApplied()', CS)
         payload = ROOT / 'compiled/templates.json'
         if payload.exists():
@@ -433,6 +433,47 @@ class AuthoringTests(unittest.TestCase):
         self.assertIn('ids.SetEquals(expectedIds)', voice)
         self.assertIn('public string[] AssetSubtitles', models)
         self.assertIn('captions[0] != route.Value.Subtitle', models)
+
+    def test_vehicle_crew_promotions_use_a_separate_saved_transaction(self):
+        vehicle_kdl = (ROOT / 'templates/vehicle-crew-promotion-dossier.kdl').read_text()
+        compatibility = (ROOT / 'code/VehicleCrewCompatibility.cs').read_text()
+        rules = (ROOT / 'code/VehiclePromotionRules.cs').read_text()
+        perks = (ROOT / 'code/VehiclePerkGeneration.cs').read_text()
+        record = (ROOT / 'code/PromotionRecord.cs').read_text()
+        identity = (ROOT / 'code/VehiclePromotionIdentity.cs').read_text()
+        forge = (ROOT / 'code/LeaderForge.cs').read_text()
+        transaction = CS.split('private string PromoteVehicleCrew', 1)[1].split(
+            'private void ReconcileVehiclePromotions', 1)[0]
+        self.assertIn('vehicle_crew_dossier', vehicle_kdl)
+        self.assertIn('VehicleDossierId', CS)
+        self.assertIn('RequiredApiVersion = 2', compatibility)
+        self.assertIn('VehicleCrewCompatibility.ReadCandidates()', CS)
+        self.assertIn('string.Equals(candidate.Status, "Healthy", StringComparison.OrdinalIgnoreCase)', rules)
+        self.assertIn('candidate.IsPilotDeployed', rules)
+        self.assertIn('ledger.PromotedVehicleCrewKeys()', CS)
+        self.assertLess(transaction.index('Context.State.Save()'),
+                        transaction.index('VehicleCrewCompatibility.Promote(record)'))
+        self.assertIn('VehicleCrewCompatibility.Restore(record)', transaction)
+        self.assertIn('record.SourceCrewVehicleGuid', identity)
+        self.assertIn('SourceCrewPilotName = sourceCommander', identity)
+        self.assertIn('if (IsVehicleCrewPromotion) VehiclePerkGeneration.Validate(this)', record)
+        self.assertIn('VehiclePerkGeneration.Generate(record, mentor)', identity)
+        self.assertIn('InitialPerkId = "perk.expert_pilot_vehicle"', perks)
+        self.assertIn('int xp = record.SourceCrewXp;', perks)
+        self.assertNotIn('preserveNativeArtwork', forge)
+        self.assertNotIn('native-pilot-portrait', forge)
+        visuals = forge.split('private static string ApplyStandaloneVisuals', 1)[1].split(
+            'private void ApplyProgression', 1)[0]
+        self.assertLess(visuals.index('art.ApplyTo(leader, speaker)'), visuals.index('if (forceGenericHead)'))
+        reuse = forge.split('if (existing != null)', 1)[1].split('UnitLeaderTemplate leader = null', 1)[0]
+        self.assertIn('if (record.IsVehicleCrewPromotion)', reuse)
+        self.assertIn('.ApplyTo(existing, existing.SpeakerTemplate)', reuse)
+        self.assertIn('sourceVehicle != null', forge)
+        self.assertIn('Only the commander is added to Hire; no vehicle is included.', CS)
+
+        compiled = json.loads((ROOT / 'compiled/templates.json').read_text(encoding='utf-8'))
+        self.assertTrue(any(patch['templateId'] == 'mod.squaddiefieldpromotions.vehicle_crew_dossier'
+                            for patch in compiled['templatePatches']))
 
     def test_safety_warning_in_readme(self):
         readme = (ROOT / 'README.md').read_text(encoding='utf-8')

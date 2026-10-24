@@ -120,7 +120,7 @@ and the prebuilt John/Jane voice bundle) is inventoried by `build_kit.py` and st
 never be authored under `compiled/`.
 
 The BuildKit verifier retains a 100 MiB expanded limit for source/non-audio payloads.
-The two exact SFP voice bundle paths have a separate combined 128 MiB allowance;
+The two exact SFP voice bundle paths have a separate combined 320 MiB allowance;
 all inventory, path-safety and SHA256 checks still apply. This permits the private
 XCOM test kit without removing archive size protection. Covered by `test_distribution.py`.
 
@@ -141,9 +141,10 @@ failure recovery, Windows builds and gameplay remain explicit acceptance gates.
 Experimental modules are listed separately in `distribution.json.experimentalModules`;
 they must not silently enter the default Suite. Build their kit using the canonical
 `build_kit.py --module <name>` path, which derives its single launcher from `INSTALL-SUITE.cmd`.
-For SFP's opt-in preview, `--use-installed-settings` / `-UseInstalledSettings` explicitly
+For SFP's opt-in preview and a standalone SquaddieVeterancy compatibility update,
+`--use-installed-settings` / `-UseInstalledSettings` explicitly
 requires and validates the installed companion's manifest, DLL versions and the pinned
-Jiangyu loader. Only SFP is built/staged/replaced. Neither installed dependency is
+Jiangyu loader. Only the selected module is built/staged/replaced. Neither installed dependency is
 overwritten; its DLL hash is rechecked before deployment. This avoids accidentally
 rebuilding a different companion source snapshot while testing an unrelated feature.
 

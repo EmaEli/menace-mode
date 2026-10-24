@@ -35,6 +35,32 @@ internal static class PrivateMember
         return false;
     }
 
+    internal static bool TryGet(object obj, string name, out object value)
+    {
+        value = null;
+        if (obj == null || string.IsNullOrWhiteSpace(name)) return false;
+        for (Type t = obj.GetType(); t != null; t = t.BaseType)
+        {
+            try
+            {
+                FieldInfo field = t.GetField(name, Flags);
+                if (field != null)
+                {
+                    value = field.GetValue(obj);
+                    return true;
+                }
+                PropertyInfo property = t.GetProperty(name, Flags);
+                if (property != null && property.CanRead)
+                {
+                    value = property.GetValue(obj);
+                    return true;
+                }
+            }
+            catch { }
+        }
+        return false;
+    }
+
     // Proven 0.7.15 compatibility pattern from the Squaddie Veterancy
     // identity cache. IReadOnlyList<T> proxies do not surface inherited Count
     // in .NET reflection: rewrap the same IL2CPP object pointer as an

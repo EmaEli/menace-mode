@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.20.1 — consistent vehicle portraits (#66)
+
+- Replace mixed native pilot Hire slots and infantry voice-donor large/bark images with the bundled
+  gender-matched balaclava family. Repair existing vehicle templates on reconstruction too.
+- Leave vehicle actor type, identity, voices, perks, equipment and promotion transactions unchanged.
+- Add offline coverage of the production portrait assignment across all image fields and repeated application.
+- Not a crash fix: the 24 October mission-start failure has the VERSION.dll / 0xc0000602 / 0x7ddf6d
+  signature tracked in #72, previously reproduced with MelonLoader and zero mods. Gameplay remains unverified.
+
+## 0.20.0 — Veterancy-backed vehicle crew promotions (#66)
+
+- Add a separate Black Market dossier for the highest-XP eligible healthy vehicle crew member.
+- Persist pilot/person/vehicle/role/slot identity and XP before the Veterancy mutation; replace only
+  that crew member with a fresh zero-XP recruit and add a vehicle commander (no vehicle) to Hire.
+- Use the matching generic male/female pilot's native balaclava artwork and a saved XP-banded
+  vehicle perk tree; exclude named pilot signature progression. Reconcile or restore incomplete
+  transactions when opening the market.
+- Keep Squaddie Veterancy optional for infantry promotions; require its versioned crew API only
+  for vehicle promotions. Save/load and rollback behavior require in-game acceptance.
+
 ## 0.19.0 — B Team starting perk (#67)
 
 - Give new promotions a dedicated B Team initial perk: 10% lower tactical deployment costs and Discipline, with morale losses doubled for squaddie casualties and destroyed allied units.

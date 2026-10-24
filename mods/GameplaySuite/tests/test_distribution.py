@@ -5,6 +5,7 @@ import json
 import tempfile
 import unittest
 import zipfile
+from contextlib import redirect_stdout
 from pathlib import Path
 from unittest.mock import patch
 
@@ -186,9 +187,51 @@ class DistributionTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "only by"):
                 BUILDER.collect(root, "Example", True)
 
+    def test_veterancy_candidate_reuses_installed_settings_without_bundling_them(self):
+        payload, versions = BUILDER.collect(ROOT, "SquaddieVeterancy", True)
+        self.assertEqual(versions, {"SquaddieVeterancy": "1.10.3"})
+        self.assertIn("source/mods/jiangyu/SquaddieVeterancy/compiled/code/SquaddieProbe.dll", payload)
+        project = (ROOT / "mods/jiangyu/SquaddieVeterancy/code/SquaddieVeterancy.csproj").read_text()
+        self.assertIn("<MenaceModSettingsPath Condition=", project)
+        self.assertIn("<HintPath>$(MenaceModSettingsPath)</HintPath>", project)
+        self.assertNotIn("source/mods/jiangyu/MenaceModSettings/jiangyu.json", payload)
+        self.assertFalse(any("/MenaceModSettings/" in path for path in payload))
+        launcher = payload["INSTALL-SquaddieVeterancy.cmd"].decode()
+        self.assertIn("-Product Standalone -Modules SquaddieVeterancy -UseInstalledSettings", launcher)
+
+    def test_clean_verifier_uses_an_external_settings_reference_for_veterancy(self):
+        payload, _ = BUILDER.collect(ROOT, "SquaddieVeterancy", True)
+        settings_dll = ROOT / "mods/jiangyu/MenaceModSettings/compiled/code/MenaceModSettings.dll"
+        with tempfile.TemporaryDirectory() as directory:
+            folder = Path(directory)
+            game = folder / "game"
+            sdk = folder / "sdk"
+            game.mkdir()
+            sdk.mkdir()
+            commands = []
+
+            def fake_run(arguments, **kwargs):
+                commands.append(arguments)
+                if len(arguments) > 2 and arguments[1] == "build":
+                    project = Path(arguments[2])
+                    output = project.parent / "bin/Release/SquaddieProbe.dll"
+                    output.parent.mkdir(parents=True, exist_ok=True)
+                    output.write_bytes(b"mock built DLL")
+
+            with patch.object(VERIFIER.subprocess, "run", side_effect=fake_run), redirect_stdout(io.StringIO()):
+                VERIFIER.compile_clean(payload, game, sdk, "dotnet")
+
+        build = next(arguments for arguments in commands if arguments[1] == "build")
+        self.assertIn(f"-p:MenaceModSettingsPath={settings_dll}", build)
+        offline = next(arguments for arguments in commands if arguments[1] == "run")
+        self.assertEqual(offline[-1], "MenaceModSettings,SquaddieVeterancy")
+
     def test_installed_settings_are_validated_without_being_staged(self):
         source = (TOOLS / "Install-IntegratedSuite.ps1").read_text()
         helper = (TOOLS / "Install.Common.ps1").read_text()
+        self.assertIn("'SquaddieFieldPromotions', 'SquaddieVeterancy'", source)
+        self.assertIn("$selected = @($Modules[0])", source)
+        self.assertIn("Get-Content -LiteralPath (Join-Path $BundleRoot ('source\\mods\\jiangyu\\' + $Modules[0]", source)
         self.assertIn("Get-InstalledSettingsReference $GamePath $minimum", source)
         self.assertIn("if (-not $UseInstalledSettings)", source)
         self.assertIn("if ($UseInstalledSettings) { Assert-Hash $settingsDll $settingsHash }", source)
@@ -222,7 +265,9 @@ class DistributionTests(unittest.TestCase):
         builder = (TOOLS / "build_kit.py").read_text()
         program = (ROOT / "mods/GameplaySuite/tests/OfflineChecks/Program.cs").read_text()
         checks = (ROOT / "mods/GameplaySuite/tests/OfflineChecks/ArtifactChecks.cs").read_text()
-        self.assertIn('offline_args.extend(["--modules", ",".join(versions)])', builder)
+        self.assertIn("selected_modules = list(versions)", builder)
+        self.assertIn('selected_modules.insert(0, "MenaceModSettings")', builder)
+        self.assertIn('offline_args.extend(["--modules", ",".join(selected_modules)])', builder)
         self.assertIn('args.module is not None and args.module != "SquaddieFieldPromotions"', builder)
         self.assertIn('args[1] != "--modules"', program)
         self.assertIn("ArtifactChecks.Run(Check, args[0], selectedModules)", program)
@@ -312,21 +357,30 @@ class DistributionTests(unittest.TestCase):
         self.assertIn("Renamed duplicate package", source)
 
     def test_verifier_bounds_private_voice_bundles_without_relaxing_source_limit(self):
-        voice = "source/mods/jiangyu/SquaddieFieldPromotions/runtime_assets/voice/sfp_xcom_voicepacks.sfpbundle"
-        data, _ = BUILDER.make_archive({voice: b"audio", "source/example.cs": b"source"}, {}, "test-base")
-        for voice_mib, source_mib, accepted in ((104, 90, True), (129, 1, False), (1, 101, False)):
-            with self.subTest(voice_mib=voice_mib, source_mib=source_mib):
+        voice_root = "source/mods/jiangyu/SquaddieFieldPromotions/runtime_assets/voice/"
+        xcom = voice_root + "sfp_xcom_voicepacks.sfpbundle"
+        john_jane = voice_root + "sfp_john_jane_voice.sfpbundle"
+        data, _ = BUILDER.make_archive(
+            {xcom: b"xcom", john_jane: b"john-jane", "source/example.cs": b"source"},
+            {}, "test-base")
+        for xcom_mib, john_jane_mib, source_mib, accepted in (
+            (200, 120, 90, True), (200, 121, 1, False), (1, 1, 101, False)
+        ):
+            with self.subTest(xcom_mib=xcom_mib, john_jane_mib=john_jane_mib,
+                              source_mib=source_mib):
                 with zipfile.ZipFile(io.BytesIO(data)) as archive:
                     entries = archive.infolist()
                 for entry in entries:
-                    if entry.filename == voice:
-                        entry.file_size = voice_mib * 1024 * 1024
+                    if entry.filename == xcom:
+                        entry.file_size = xcom_mib * 1024 * 1024
+                    elif entry.filename == john_jane:
+                        entry.file_size = john_jane_mib * 1024 * 1024
                     elif entry.filename == "source/example.cs":
                         entry.file_size = source_mib * 1024 * 1024
                 with patch.object(zipfile.ZipFile, "infolist", return_value=entries):
                     if accepted:
                         files, _ = VERIFIER.read_archive(io.BytesIO(data))
-                        self.assertEqual(files[voice], b"audio")
+                        self.assertEqual(files[xcom], b"xcom")
                     else:
                         with self.assertRaisesRegex(ValueError, "Unexpectedly large"):
                             VERIFIER.read_archive(io.BytesIO(data))

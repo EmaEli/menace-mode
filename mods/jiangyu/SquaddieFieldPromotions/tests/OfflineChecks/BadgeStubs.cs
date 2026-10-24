@@ -12,6 +12,7 @@ namespace UnityEngine
 {
     public enum HideFlags { DontUnloadUnusedAsset }
     public enum TextureFormat { RGBA32 }
+    public enum FilterMode { Bilinear }
     public class Object { public HideFlags hideFlags; }
     public struct Color32
     {
@@ -32,6 +33,8 @@ namespace UnityEngine
     public static class Mathf { public static int RoundToInt(float value) => (int)Math.Round(value); }
     public class Texture2D : Object
     {
+        public string name;
+        public FilterMode filterMode;
         public int width, height;
         public bool isReadable = true;
         private Color32[] _pixels;
@@ -53,14 +56,5 @@ namespace UnityEngine
             texture = texture, rect = rect,
             pivot = new Vector2(pivot.x * rect.width, pivot.y * rect.height), pixelsPerUnit = pixelsPerUnit,
         };
-    }
-}
-
-namespace SquaddieFieldPromotions
-{
-    internal sealed class StandalonePortraitAssets
-    {
-        internal readonly Dictionary<string, UnityEngine.Sprite> Sprites = new();
-        internal UnityEngine.Sprite Get(string name) => Sprites[name];
     }
 }

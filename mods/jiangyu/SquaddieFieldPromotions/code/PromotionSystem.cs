@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Text.Json;
 using Il2CppMenace.Items;
@@ -27,6 +28,7 @@ namespace SquaddieFieldPromotions;
 public sealed class PromotionSystem : JiangyuSystem
 {
     internal const string DossierId = "mod.squaddiefieldpromotions.field_promotion_dossier";
+    internal const string VehicleDossierId = "mod.squaddiefieldpromotions.vehicle_crew_dossier";
     internal const int PreviewStockTimeout = 3;
     // BlackMarketUIScreen.FilterItems drops merchant items whose GetTradeValue() < 1.
     internal const int DefaultPrice = 100;
@@ -67,7 +69,7 @@ public sealed class PromotionSystem : JiangyuSystem
             settings.AddHeader("!!! DANGER: BACK UP test.save BEFORE ENABLING !!!");
             settings.AddHeader("REMOVES ALL SFP LEADERS FROM EVERY ROSTER STATE AND DEPLOYMENT, THEN SAVES test.save.");
             settings.AddToggle(CleanupTestSaveKey, "I HAVE A BACKUP - REMOVE ALL SFP LEADERS FROM test.save (ONE-SHOT)", false);
-            settings.AddHeader("Uses Veterancy XP when complete; otherwise native missions. No extra mod required.");
+            settings.AddHeader("Infantry promotions use Veterancy XP when complete; vehicle crew promotions require Squaddie Veterancy.");
             settings.AddToggle("DebugLogging", "Diagnostic logging (OFF by default)", false);
         });
         // Assert exact game signatures before registering any hook. Never stock if
@@ -126,6 +128,8 @@ public sealed class PromotionSystem : JiangyuSystem
         if (_unloaded) return;
         try { PrepareTemplate(); }
         catch (Exception error) { WarnOnce("text", "Cannot initialize dossier text: " + error.Message); }
+        try { PrepareVehicleTemplate(); }
+        catch (Exception error) { WarnOnce("vehicle-text", "Cannot initialize vehicle dossier text: " + error.Message); }
         ScheduleVoices();
     }
 
@@ -161,37 +165,47 @@ public sealed class PromotionSystem : JiangyuSystem
         if (_strategySceneLoaded) ScheduleTestSaveCleanup();
     }
 
-    private static LocalizedLine PreviewText(string field, string text)
+    private static LocalizedLine PreviewText(string dossierId, string field, string text)
     {
         // Never edit a localized object inherited from the vanilla donor. Give the
         // new object its own localization key, so donor translations cannot win.
         var line = new LocalizedLine(LocaCategory.Items, field, false);
-        line.SetId(DossierId);
+        line.SetId(dossierId);
         line.SetDefaultTranslation(text);
         return line;
     }
 
-    private static LocalizedMultiLine PreviewDescription(string text)
+    private static LocalizedMultiLine PreviewDescription(string dossierId, string text)
     {
         var line = new LocalizedMultiLine(LocaCategory.Items, "Description", false);
-        line.SetId(DossierId);
+        line.SetId(dossierId);
         line.SetDefaultTranslation(text);
         return line;
     }
 
     private static DossierItemTemplate PrepareTemplate()
-    {
-        var template = DataTemplateLoader.Get<DossierItemTemplate>(DossierId, false);
-        if (template == null) return null;
-        if (template.GetID() != DossierId)
-            throw new InvalidOperationException("Preview lookup returned a different dossier.");
-        template.Title = PreviewText("Title", "Field Promotion Dossier");
-        template.ShortName = PreviewText("ShortName", "Field promotion");
-        template.Description = PreviewDescription(
+        => PrepareDossierTemplate(DossierId, "Field Promotion Dossier", "Field promotion",
             "Promotes your best living squaddie to a hirable squad leader (0 credits in Hire). " +
             "Uses complete Veterancy XP if available, otherwise native missions. The source soldier " +
             "is removed from their squad and the reserve after a successful promotion. " +
             "Promoted leaders are restored on load; test on a disposable non-Ironman campaign.");
+
+    private static DossierItemTemplate PrepareVehicleTemplate()
+        => PrepareDossierTemplate(VehicleDossierId, "Vehicle Crew Promotion Dossier", "Crew promotion",
+            "Promotes the highest-XP eligible healthy vehicle crew member to a hirable vehicle commander (0 credits in Hire). " +
+            "The source crew identity is replaced by a fresh recruit in that pilot's crew record. " +
+            "Only the commander is added to Hire; no vehicle is included. Requires Squaddie Veterancy.");
+
+    private static DossierItemTemplate PrepareDossierTemplate(string dossierId, string title,
+        string shortName, string description)
+    {
+        var template = DataTemplateLoader.Get<DossierItemTemplate>(dossierId, false);
+        if (template == null) return null;
+        if (template.GetID() != dossierId)
+            throw new InvalidOperationException("Preview lookup returned a different dossier.");
+        template.Title = PreviewText(dossierId, "Title", title);
+        template.ShortName = PreviewText(dossierId, "ShortName", shortName);
+        template.Description = PreviewDescription(dossierId, description);
         return template;
     }
 
@@ -210,7 +224,11 @@ public sealed class PromotionSystem : JiangyuSystem
     }
 
     private static bool IsPreview(object instance) =>
-        instance is DossierItemTemplate template && template.GetID() == DossierId;
+        instance is DossierItemTemplate template &&
+        (template.GetID() == DossierId || template.GetID() == VehicleDossierId);
+
+    private static bool IsVehiclePreview(object instance) =>
+        instance is DossierItemTemplate template && template.GetID() == VehicleDossierId;
 
     internal static int NormalizePrice(int value) => System.Math.Clamp(value, PriceStep, MaximumPrice) / PriceStep * PriceStep;
     private static int Price => NormalizePrice(ModSettings.Get<int>(Group, PriceKey));
@@ -266,46 +284,54 @@ public sealed class PromotionSystem : JiangyuSystem
             else
             {
                 var ledger = Context.State.Get<PromotionLedger>();
-                ReconcilePreviewSources(state, ledger);
-                // Fresh snapshot at redemption, not stale market-open data; already promoted soldiers are skipped.
-                var selection = NativeCandidates.Read(state, ledger.PromotedSquaddieIds());
-                if (selection == null) text = PromotionRules.Describe(null, null);
+                if (IsVehiclePreview(info.Instance))
+                {
+                    ReconcileVehiclePromotions(state, ledger);
+                    text = PromoteVehicleCrew(state, ledger);
+                }
                 else
                 {
-                    if (!_forge.AssetsPresent)
-                        throw new InvalidOperationException("Bundled portrait assets are missing; reinstall the mod.");
-                    var record = LeaderForge.CreateRecord(state, selection, ledger.NextBadgeIndex(),
-                        ledger.FindServiceRecord(selection.Soldier.Id),
-                        PromotionProgression.RootSourceTemplateId(selection.Soldier.SourceLeaderTemplateId, ledger));
-                    PromotionPortraitAssignment.TryAssignRotatingProfile(ledger, record);
-                    _forge.TryAssignVoiceSet(ledger, record);
-                    var source = new SourceSquaddieRemoval(state, record);
-                    if (!source.Present) throw new InvalidOperationException("Selected source soldier no longer exists.");
-                    string detail;
-                    try
+                    ReconcilePreviewSources(state, ledger);
+                    // Fresh snapshot at redemption, not stale market-open data; already promoted soldiers are skipped.
+                    var selection = NativeCandidates.Read(state, ledger.PromotedSquaddieIds());
+                    if (selection == null) text = PromotionRules.Describe(null, null);
+                    else
                     {
-                        detail = _forge.Install(state, record, ForceGenericHeads);
-                        source.Remove();
-                        record.SourceRemoved = true;
-                        ledger.Records.Add(record); // Persisted beside the next game save, with the native pool.
-                        Context.State.Save();
+                        if (!_forge.AssetsPresent)
+                            throw new InvalidOperationException("Bundled portrait assets are missing; reinstall the mod.");
+                        var record = LeaderForge.CreateRecord(state, selection, ledger.NextBadgeIndex(),
+                            ledger.FindServiceRecord(selection.Soldier.Id),
+                            PromotionProgression.RootSourceTemplateId(selection.Soldier.SourceLeaderTemplateId, ledger));
+                        PromotionPortraitAssignment.TryAssignRotatingProfile(ledger, record);
+                        _forge.TryAssignVoiceSet(ledger, record);
+                        var source = new SourceSquaddieRemoval(state, record);
+                        if (!source.Present) throw new InvalidOperationException("Selected source soldier no longer exists.");
+                        string detail;
+                        try
+                        {
+                            detail = _forge.Install(state, record, ForceGenericHeads);
+                            source.Remove();
+                            record.SourceRemoved = true;
+                            ledger.Records.Add(record); // Persisted beside the next game save, with the native pool.
+                            Context.State.Save();
+                        }
+                        catch (Exception failure)
+                        {
+                            ledger.Records.Remove(record);
+                            // Attempt both rollbacks even if restoring one native collection fails.
+                            Exception rollbackFailure = null;
+                            try { source.Restore(); }
+                            catch (Exception error) { rollbackFailure = error; }
+                            try { _forge.RollbackInstall(state, record); }
+                            catch (Exception error) { rollbackFailure = new AggregateException(rollbackFailure ?? failure, error); }
+                            if (rollbackFailure != null) throw new PromotionRollbackException(rollbackFailure);
+                            throw;
+                        }
+                        NotifySourceChanged(source);
+                        text = PromotionRules.Describe(selection, record);
+                        Debug($"Promoted: source={selection.Soldier.Id}, sourceRemoved={record.SourceRemoved}, poolAlive={state.Squaddies.m_AliveSquaddies.Count}, criterion={selection.Criterion}, living={selection.LivingCount}, {detail}");
+                        ScheduleVoices();
                     }
-                    catch (Exception failure)
-                    {
-                        ledger.Records.Remove(record);
-                        // Attempt both rollbacks even if restoring one native collection fails.
-                        Exception rollbackFailure = null;
-                        try { source.Restore(); }
-                        catch (Exception error) { rollbackFailure = error; }
-                        try { _forge.RollbackInstall(state, record); }
-                        catch (Exception error) { rollbackFailure = new AggregateException(rollbackFailure ?? failure, error); }
-                        if (rollbackFailure != null) throw new PromotionRollbackException(rollbackFailure);
-                        throw;
-                    }
-                    NotifySourceChanged(source);
-                    text = PromotionRules.Describe(selection, record);
-                    Debug($"Promoted: source={selection.Soldier.Id}, sourceRemoved={record.SourceRemoved}, poolAlive={state.Squaddies.m_AliveSquaddies.Count}, criterion={selection.Criterion}, living={selection.LivingCount}, {detail}");
-                    ScheduleVoices();
                 }
             }
         }
@@ -333,6 +359,132 @@ public sealed class PromotionSystem : JiangyuSystem
     {
         try { source.NotifyChanged(); }
         catch (Exception error) { WarnOnce("squaddie-ui", "Promotion committed, but the squad UI notification failed: " + error.Message); }
+    }
+
+    private string PromoteVehicleCrew(StrategyState state, PromotionLedger ledger)
+    {
+        if (!VehicleCrewCompatibility.IsAvailable)
+            throw new InvalidOperationException("Vehicle crew promotions require the versioned Squaddie Veterancy API.");
+        if (!_forge.AssetsPresent)
+            throw new InvalidOperationException("Bundled portrait assets are missing; reinstall the mod.");
+
+        var selection = VehiclePromotionRules.Choose(VehicleCrewCompatibility.ReadCandidates(),
+            ledger.PromotedVehicleCrewKeys());
+        if (selection == null)
+            return "No eligible healthy vehicle crew member is available. Deployed pilots, deployed crew, " +
+                   "wounded crew, and already promoted crew are not eligible. No leader or crew member was changed.";
+
+        var record = LeaderForge.CreateVehicleRecord(state, selection, ledger.NextBadgeIndex(), ledger);
+        _forge.TryAssignVoiceSet(ledger, record);
+        ledger.Records.Add(record);
+        try { Context.State.Save(); } // Write the source identity and rollback data before Veterancy is changed.
+        catch
+        {
+            ledger.Records.Remove(record);
+            throw;
+        }
+
+        bool mutationAttempted = false;
+        bool installAttempted = false;
+        string detail;
+        try
+        {
+            mutationAttempted = true;
+            var consumed = VehicleCrewCompatibility.Promote(record);
+            if (!consumed.Success || !consumed.Changed)
+                throw new InvalidOperationException("Veterancy did not consume the selected crew identity: " + consumed.Error);
+            record.SourceRemoved = true;
+            record.CrewTransactionState = "SourceReplaced";
+            Context.State.Save();
+
+            installAttempted = true;
+            detail = _forge.Install(state, record, ForceGenericHeads);
+            record.CrewTransactionState = "Committed";
+            Context.State.Save();
+        }
+        catch
+        {
+            Exception rollbackFailure = null;
+            if (installAttempted)
+            {
+                try { _forge.RollbackInstall(state, record); }
+                catch (Exception error) { rollbackFailure = error; }
+            }
+            if (mutationAttempted)
+            {
+                try
+                {
+                    var restored = VehicleCrewCompatibility.Restore(record);
+                    if (!restored.Success)
+                        throw new InvalidOperationException("Veterancy could not restore the source crew identity: " + restored.Error);
+                }
+                catch (Exception error)
+                {
+                    rollbackFailure = rollbackFailure == null ? error : new AggregateException(rollbackFailure, error);
+                }
+            }
+            if (rollbackFailure == null) ledger.Records.Remove(record);
+            try { Context.State.Save(); }
+            catch (Exception error)
+            {
+                rollbackFailure = rollbackFailure == null ? error : new AggregateException(rollbackFailure, error);
+            }
+            if (rollbackFailure != null) throw new PromotionRollbackException(rollbackFailure);
+            throw;
+        }
+
+        ScheduleVoices();
+        Debug($"Promoted vehicle crew: source={record.SourceCrewPilotTemplateId}/{record.SourceCrewPersonId}, " +
+              $"xp={record.SourceCrewXp}, sourceRemoved={record.SourceRemoved}, eligible={selection.EligibleCount}, {detail}");
+        return "Promoted " + record.Name + " from " + record.SourceCrewRole + " crew (" +
+            record.SourceCrewXp + " Veterancy XP). A fresh crew member replaced the source; the new commander " +
+            "is in Hire for 0 credits, with no vehicle included.";
+    }
+
+    private void ReconcileVehiclePromotions(StrategyState state, PromotionLedger ledger)
+    {
+        var records = ledger.Validated().Where(record => record.IsVehicleCrewPromotion).ToList();
+        if (records.Count == 0) return;
+        if (!VehicleCrewCompatibility.IsAvailable)
+            throw new InvalidOperationException("Squaddie Veterancy's compatible crew API is required to recover saved vehicle promotions.");
+
+        foreach (PromotionRecord record in records)
+        {
+            bool leaderPresent = LeaderForge.RosterContainsAnyLeader(state, record.LeaderId);
+            var result = leaderPresent
+                ? VehicleCrewCompatibility.Reconcile(record)
+                : VehicleCrewCompatibility.Restore(record);
+            if (!result.Success)
+                throw new InvalidOperationException("Cannot reconcile vehicle crew promotion " + record.LeaderId + ": " + result.Error);
+
+            if (leaderPresent)
+            {
+                bool oldRemoved = record.SourceRemoved;
+                string oldState = record.CrewTransactionState;
+                record.SourceRemoved = true;
+                record.CrewTransactionState = "Committed";
+                if (!oldRemoved || oldState != "Committed")
+                {
+                    try { Context.State.Save(); }
+                    catch
+                    {
+                        record.SourceRemoved = oldRemoved;
+                        record.CrewTransactionState = oldState;
+                        throw;
+                    }
+                }
+            }
+            else
+            {
+                ledger.Records.Remove(record);
+                try { Context.State.Save(); }
+                catch
+                {
+                    ledger.Records.Add(record);
+                    throw;
+                }
+            }
+        }
     }
 
     private void ReconcilePreviewSources(StrategyState state, PromotionLedger ledger)
@@ -538,23 +690,33 @@ public sealed class PromotionSystem : JiangyuSystem
                 if (Enabled) WarnOnce("template", "Promotion dossier template missing; no stock added. Check Jiangyu template self-check.");
                 return;
             }
+            var vehicleTemplate = PrepareVehicleTemplate();
             if (!Enabled || state.IsIronman())
             {
                 RemovePreviewStock(state.BlackMarket);
                 return;
             }
-            if (state.BlackMarket.ContainsItem(template)) return;
-            // Empty donor list is a second barrier against accidental vanilla unlocks.
-            if (template.m_UnlockedLeaders == null || template.m_UnlockedLeaders.Length != 0 ||
-                template.GetTradeValue() != Price)
-                throw new InvalidOperationException("Preview template safety/price validation failed.");
-            var item = template.CreateItem(BaseItemTemplate.CreateGuid());
-            if (item == null || item.GetBaseItemTemplate()?.GetID() != DossierId)
-                throw new InvalidOperationException("Native preview item creation failed.");
-            state.BlackMarket.AddItem(item, PreviewStockTimeout);
-            if (!state.BlackMarket.ContainsItem(template))
-                throw new InvalidOperationException("Native stock insertion readback failed.");
-            Debug($"Promotion-review dossier stocked in native Black Market (price {Price}, timeout {PreviewStockTimeout}).");
+            StockDossier(state.BlackMarket, template, DossierId, "Infantry promotion");
+            try
+            {
+                if (vehicleTemplate == null || !VehicleCrewCompatibility.IsAvailable)
+                {
+                    RemovePreviewStock(state.BlackMarket, VehicleDossierId);
+                    return;
+                }
+                var ledger = Context.State.Get<PromotionLedger>();
+                var selection = VehiclePromotionRules.Choose(VehicleCrewCompatibility.ReadCandidates(),
+                    ledger.PromotedVehicleCrewKeys());
+                if (selection == null)
+                    RemovePreviewStock(state.BlackMarket, VehicleDossierId);
+                else
+                    StockDossier(state.BlackMarket, vehicleTemplate, VehicleDossierId, "Vehicle crew promotion");
+            }
+            catch (Exception error)
+            {
+                RemovePreviewStock(state.BlackMarket, VehicleDossierId);
+                WarnOnce("vehicle-stock", "Vehicle crew promotion dossier unavailable: " + error.Message);
+            }
         }
         catch (Exception error)
         {
@@ -562,7 +724,29 @@ public sealed class PromotionSystem : JiangyuSystem
         }
     }
 
+    private static void StockDossier(BlackMarket market, DossierItemTemplate template, string dossierId, string label)
+    {
+        if (market.ContainsItem(template)) return;
+        // Empty donor list is a second barrier against accidental vanilla unlocks.
+        if (template.m_UnlockedLeaders == null || template.m_UnlockedLeaders.Length != 0 ||
+            template.GetTradeValue() != Price)
+            throw new InvalidOperationException("Preview template safety/price validation failed.");
+        var item = template.CreateItem(BaseItemTemplate.CreateGuid());
+        if (item == null || item.GetBaseItemTemplate()?.GetID() != dossierId)
+            throw new InvalidOperationException("Native preview item creation failed.");
+        market.AddItem(item, PreviewStockTimeout);
+        if (!market.ContainsItem(template))
+            throw new InvalidOperationException("Native stock insertion readback failed.");
+        Debug(label + " dossier stocked in native Black Market (price " + Price + ", timeout " + PreviewStockTimeout + ").");
+    }
+
     private static void RemovePreviewStock(BlackMarket market)
+    {
+        RemovePreviewStock(market, DossierId);
+        RemovePreviewStock(market, VehicleDossierId);
+    }
+
+    private static void RemovePreviewStock(BlackMarket market, string dossierId)
     {
         // Enumerate both offer categories first, then remove ONLY this exact template.
         var items = new Il2CppSystem.Collections.Generic.List<BaseItem>();
@@ -572,7 +756,7 @@ public sealed class PromotionSystem : JiangyuSystem
             items.Clear();
             market.GetInstances(items, special);
             for (int i = 0; i < items.Count; i++)
-                if (items[i]?.GetBaseItemTemplate()?.GetID() == DossierId)
+                if (items[i]?.GetBaseItemTemplate()?.GetID() == dossierId)
                     previews[items[i].GetGuid()] = items[i];
         }
         foreach (var item in previews.Values) market.RemoveItem(item);
@@ -585,7 +769,15 @@ public sealed class PromotionSystem : JiangyuSystem
         {
             var state = StrategyState.Get();
             if (state?.Squaddies != null && state.Roster != null && !state.IsIronman())
-                ReconcilePreviewSources(state, Context.State.Get<PromotionLedger>());
+            {
+                var ledger = Context.State.Get<PromotionLedger>();
+                ReconcilePreviewSources(state, ledger);
+                try { ReconcileVehiclePromotions(state, ledger); }
+                catch (Exception error)
+                {
+                    WarnOnce("vehicle-recovery", "Saved vehicle crew promotions could not be reconciled: " + error.Message);
+                }
+            }
         }
         catch (Exception error) { WarnOnce("preview-sources", "Cannot remove an old preview source soldier: " + error.Message); }
         Stock();
@@ -628,7 +820,8 @@ public sealed class PromotionSystem : JiangyuSystem
     {
         int count = 0;
         for (int i = 0; i < items.Count; i++)
-            if (items[i]?.GetBaseItemTemplate()?.GetID() == DossierId)
+            if (items[i]?.GetBaseItemTemplate()?.GetID() == DossierId ||
+                items[i]?.GetBaseItemTemplate()?.GetID() == VehicleDossierId)
                 count++;
         return count;
     }

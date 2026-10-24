@@ -142,6 +142,7 @@ internal sealed class CrewMemberVeterancyView
 {
     public int Slot { get; init; }
     public string Key { get; init; } = "";
+    public string PersonId { get; init; } = "";
     public string Role { get; init; } = "Crewman";
     public int Xp { get; init; }
     public string Status { get; init; } = "Healthy";

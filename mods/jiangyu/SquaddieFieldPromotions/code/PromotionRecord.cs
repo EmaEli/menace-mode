@@ -18,6 +18,20 @@ public sealed class PromotionRecord
     public string SpeakerId { get; set; } = "";
     public int NumericGuid { get; set; }
     public int SourceSquaddieId { get; set; }
+    public string Forename { get; set; } = "";
+    public string Surname { get; set; } = "";
+    public bool IsVehicleCrewPromotion { get; set; }
+    public string SourceCrewPilotTemplateId { get; set; } = "";
+    public string SourceCrewPersonId { get; set; } = "";
+    public string ReplacementCrewPersonId { get; set; } = "";
+    public string SourceCrewPilotName { get; set; } = "";
+    public string SourceCrewRole { get; set; } = "";
+    public string SourceCrewVehicleGuid { get; set; } = "";
+    public string SourceVehicleName { get; set; } = "";
+    public int SourceCrewXp { get; set; }
+    public bool SourceCrewWasActive { get; set; }
+    // Vehicle promotions persist their source identity before consuming it, then reconcile on load.
+    public string CrewTransactionState { get; set; } = "";
     // Absent/false in 0.9.x ledgers. Migrated only after a matching leader exists in this save.
     public bool SourceRemoved { get; set; }
     public string Name { get; set; } = "";
@@ -53,6 +67,16 @@ public sealed class PromotionRecord
         SourceLeaderTemplateId ??= "";
         PortraitProfile ??= "";
         VoiceSetId ??= "";
+        Forename ??= "";
+        Surname ??= "";
+        SourceCrewPilotTemplateId ??= "";
+        SourceCrewPersonId ??= "";
+        ReplacementCrewPersonId ??= "";
+        SourceCrewPilotName ??= "";
+        SourceCrewRole ??= "";
+        SourceCrewVehicleGuid ??= "";
+        SourceVehicleName ??= "";
+        CrewTransactionState ??= "";
         if (!ValidId(LeaderId, LeaderPrefix) || !ValidId(SpeakerId, SpeakerPrefix) ||
             !string.Equals(LeaderId.Substring(LeaderPrefix.Length),
                            SpeakerId.Substring(SpeakerPrefix.Length), StringComparison.Ordinal))
@@ -86,7 +110,40 @@ public sealed class PromotionRecord
             throw new InvalidDataException("Promotion record leader attributes invalid.");
         foreach (byte attribute in InitialAttributes)
             if (attribute > 100) throw new InvalidDataException("Promotion record attribute outside 0..100.");
-        PerkGeneration.Validate(this);
+        if (IsVehicleCrewPromotion)
+        {
+            if (SourceSquaddieId != 0 || SourceCrewXp < 0 ||
+                !PromotionProgression.IsSafeTemplateId(SourceCrewPilotTemplateId) ||
+                !ValidToken(SourceCrewPersonId) || !ValidToken(ReplacementCrewPersonId) ||
+                SourceCrewPersonId == ReplacementCrewPersonId ||
+                SourceCrewPilotName.Length > 160 || SourceCrewPilotName.Any(char.IsControl) ||
+                string.IsNullOrWhiteSpace(SourceCrewRole) || SourceCrewRole.Length > 100 ||
+                SourceCrewRole.Any(char.IsControl) || SourceCrewVehicleGuid.Length > 128 ||
+                SourceCrewVehicleGuid.Any(char.IsControl) || SourceVehicleName.Length > 120 ||
+                SourceVehicleName.Any(char.IsControl) || Forename.Length == 0 || Forename.Length > 80 ||
+                Surname.Length == 0 || Surname.Length > 80 ||
+                (CrewTransactionState != "Pending" && CrewTransactionState != "SourceReplaced" &&
+                 CrewTransactionState != "Committed") ||
+                (CrewTransactionState == "Pending" && SourceRemoved) ||
+                (CrewTransactionState != "Pending" && !SourceRemoved))
+                throw new InvalidDataException("Vehicle crew promotion source transaction is invalid.");
+        }
+        else if (SourceCrewPilotTemplateId.Length != 0 || SourceCrewPersonId.Length != 0 ||
+                 ReplacementCrewPersonId.Length != 0 || SourceCrewPilotName.Length != 0 ||
+                 SourceCrewRole.Length != 0 || SourceCrewVehicleGuid.Length != 0 ||
+                 SourceVehicleName.Length != 0 || SourceCrewXp != 0 || SourceCrewWasActive ||
+                 CrewTransactionState.Length != 0)
+            throw new InvalidDataException("Infantry promotion contains vehicle crew transaction data.");
+        if (IsVehicleCrewPromotion) VehiclePerkGeneration.Validate(this);
+        else PerkGeneration.Validate(this);
+    }
+
+    private static bool ValidToken(string value)
+    {
+        if (value == null || value.Length != 32) return false;
+        foreach (char c in value)
+            if (!((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f'))) return false;
+        return true;
     }
 
     private static bool ValidId(string value, string prefix)
@@ -133,13 +190,16 @@ public sealed class PromotionLedger
         var leaderIds = new HashSet<string>(StringComparer.Ordinal);
         var guids = new HashSet<int>();
         var squaddies = new HashSet<int>();
+        var vehicleCrew = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var badges = new HashSet<int>();
         foreach (var record in records)
         {
             if (record == null) throw new InvalidDataException("Promotion ledger contains a null record.");
             record.Validate();
             if (!leaderIds.Add(record.LeaderId) || !guids.Add(record.NumericGuid) || !badges.Add(record.BadgeIndex) ||
-                (record.SourceSquaddieId > 0 && !squaddies.Add(record.SourceSquaddieId)))
+                (record.SourceSquaddieId > 0 && !squaddies.Add(record.SourceSquaddieId)) ||
+                (record.IsVehicleCrewPromotion && !vehicleCrew.Add(VehiclePromotionRules.SourceKey(
+                    record.SourceCrewPilotTemplateId, record.SourceCrewPersonId))))
                 throw new InvalidDataException("Promotion ledger contains duplicate identities.");
         }
         ServiceRecords ??= new List<SquaddieServiceRecord>();
@@ -172,6 +232,16 @@ public sealed class PromotionLedger
         foreach (var record in Validated())
             if (record.SourceSquaddieId > 0) ids.Add(record.SourceSquaddieId);
         return ids;
+    }
+
+    public HashSet<string> PromotedVehicleCrewKeys()
+    {
+        var keys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var record in Validated())
+            if (record.IsVehicleCrewPromotion)
+                keys.Add(VehiclePromotionRules.SourceKey(record.SourceCrewPilotTemplateId,
+                    record.SourceCrewPersonId));
+        return keys;
     }
 
     public int NextBadgeIndex()

@@ -214,6 +214,133 @@ internal sealed class ProbeRuntime : IDisposable
         if (current == null || squaddieId <= 0) return -1;
         return current._xp.GetXp(squaddieId);
     }
+
+    internal static VehicleCrewMemberSnapshot[] GetVehicleCrewForCompatibility()
+    {
+        var current = Current;
+        if (current == null || !current._vehicleCrewVeterancy || current._loadRosterSyncPending)
+            return Array.Empty<VehicleCrewMemberSnapshot>();
+
+        var snapshots = new List<VehicleCrewMemberSnapshot>();
+        foreach (var pilot in current._pilotRoster.Values
+                     .Where(pilot => pilot.Alive)
+                     .OrderBy(pilot => pilot.TemplateId, StringComparer.OrdinalIgnoreCase))
+        {
+            var activeKeys = new HashSet<string>(current._xp.GetActivePilotCrewKeysSnapshot(pilot.TemplateId),
+                StringComparer.OrdinalIgnoreCase);
+            foreach (var member in current._xp.GetPilotCrewMembersSnapshot(pilot.TemplateId))
+            {
+                snapshots.Add(new VehicleCrewMemberSnapshot
+                {
+                    PilotTemplateId = pilot.TemplateId,
+                    PilotName = pilot.Name,
+                    VehicleGuid = pilot.VehicleGuid,
+                    VehicleName = pilot.VehicleName,
+                    PersonId = member.PersonId,
+                    Role = member.Role,
+                    Status = member.Status,
+                    Rank = VeterancyRules.DisplayName(VeterancyRules.RankFromXp(member.Xp)),
+                    Xp = member.Xp,
+                    IsActive = activeKeys.Contains(member.Key),
+                    IsPilotDeployed = current._deployedPilots.ContainsKey(pilot.TemplateId)
+                });
+            }
+        }
+        return snapshots.ToArray();
+    }
+
+    internal static VehicleCrewMutationResult PromoteVehicleCrewForCompatibility(string pilotTemplateId,
+        string sourcePersonId, string replacementPersonId, int expectedXp)
+    {
+        var current = Current;
+        return current == null
+            ? VehicleCrewMutationResult.Failed("Squaddie Veterancy is not available.")
+            : current.PromoteVehicleCrewMember(pilotTemplateId, sourcePersonId, replacementPersonId, expectedXp);
+    }
+
+    internal static VehicleCrewMutationResult RestoreVehicleCrewForCompatibility(string pilotTemplateId,
+        string sourcePersonId, string replacementPersonId, int sourceXp)
+    {
+        var current = Current;
+        return current == null
+            ? VehicleCrewMutationResult.Failed("Squaddie Veterancy is not available.")
+            : current.RestoreVehicleCrewMember(pilotTemplateId, sourcePersonId, replacementPersonId, sourceXp);
+    }
+
+    internal static VehicleCrewMutationResult ReconcileVehicleCrewForCompatibility(string pilotTemplateId,
+        string sourcePersonId, string replacementPersonId, int sourceXp)
+    {
+        var current = Current;
+        return current == null
+            ? VehicleCrewMutationResult.Failed("Squaddie Veterancy is not available.")
+            : current.ReconcilePromotedVehicleCrewMember(pilotTemplateId, sourcePersonId, replacementPersonId, sourceXp);
+    }
+
+    private VehicleCrewMutationResult PromoteVehicleCrewMember(string pilotTemplateId, string sourcePersonId,
+        string replacementPersonId, int expectedXp)
+    {
+        if (!_vehicleCrewVeterancy || _loadRosterSyncPending)
+            return VehicleCrewMutationResult.Failed("Vehicle crew veterancy is not ready for promotion.");
+        try
+        {
+            RefreshPilotRoster(syncStore: true, force: true);
+            if (!_pilotRoster.TryGetValue(pilotTemplateId ?? "", out var pilot) || !pilot.Alive)
+                return VehicleCrewMutationResult.Failed("The source pilot is no longer a living hired commander.");
+            if (_deployedPilots.ContainsKey(pilot.TemplateId))
+                return VehicleCrewMutationResult.Failed("Crew cannot be promoted while their pilot is deployed.");
+            if (!_xp.TryPromoteCrewMember(pilot.TemplateId, sourcePersonId, replacementPersonId,
+                    expectedXp, out bool changed, out string error))
+                return VehicleCrewMutationResult.Failed(error);
+            _log($"VEHICLE CREW PROMOTION source={sourcePersonId} replacement={replacementPersonId} pilot={pilot.TemplateId} changed={(changed ? 1 : 0)}");
+            return VehicleCrewMutationResult.Succeeded(changed);
+        }
+        catch (Exception error)
+        {
+            _log($"VEHICLE CREW PROMOTION ERROR {error.GetType().Name}: {error.Message}");
+            return VehicleCrewMutationResult.Failed("Crew promotion could not be applied safely.");
+        }
+    }
+
+    private VehicleCrewMutationResult RestoreVehicleCrewMember(string pilotTemplateId, string sourcePersonId,
+        string replacementPersonId, int sourceXp)
+    {
+        if (_loadRosterSyncPending)
+            return VehicleCrewMutationResult.Failed("The loaded vehicle-crew snapshot is not ready for rollback.");
+        try
+        {
+            if (!_xp.TryRestorePromotedCrewMember(pilotTemplateId, sourcePersonId, replacementPersonId,
+                    sourceXp, out bool changed, out string error))
+                return VehicleCrewMutationResult.Failed(error);
+            _log($"VEHICLE CREW PROMOTION RESTORE source={sourcePersonId} replacement={replacementPersonId} pilot={pilotTemplateId} changed={(changed ? 1 : 0)}");
+            return VehicleCrewMutationResult.Succeeded(changed);
+        }
+        catch (Exception error)
+        {
+            _log($"VEHICLE CREW PROMOTION RESTORE ERROR {error.GetType().Name}: {error.Message}");
+            return VehicleCrewMutationResult.Failed("Crew promotion rollback could not be applied safely.");
+        }
+    }
+
+    private VehicleCrewMutationResult ReconcilePromotedVehicleCrewMember(string pilotTemplateId,
+        string sourcePersonId, string replacementPersonId, int sourceXp)
+    {
+        if (_loadRosterSyncPending)
+            return VehicleCrewMutationResult.Failed("The loaded vehicle-crew snapshot is not ready for reconciliation.");
+        try
+        {
+            if (!_xp.TryPromoteCrewMember(pilotTemplateId, sourcePersonId, replacementPersonId,
+                    sourceXp, out bool changed, out string error))
+                return VehicleCrewMutationResult.Failed(error);
+            _log($"VEHICLE CREW PROMOTION RECONCILE source={sourcePersonId} replacement={replacementPersonId} pilot={pilotTemplateId} changed={(changed ? 1 : 0)}");
+            return VehicleCrewMutationResult.Succeeded(changed);
+        }
+        catch (Exception error)
+        {
+            _log($"VEHICLE CREW PROMOTION RECONCILE ERROR {error.GetType().Name}: {error.Message}");
+            return VehicleCrewMutationResult.Failed("Saved crew promotion could not be reconciled safely.");
+        }
+    }
+
     private static bool _hpMutationGuard;
     private int _suppressionImpactPropertyValue = int.MinValue;
 
@@ -854,6 +981,7 @@ internal sealed class ProbeRuntime : IDisposable
                     {
                         Slot = m.Slot,
                         Key = m.Key,
+                        PersonId = m.PersonId,
                         Role = m.Role,
                         Xp = m.Xp,
                         Status = m.Status

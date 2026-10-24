@@ -61,8 +61,10 @@ internal sealed class ExperienceStore : IDisposable
     {
         // Slot remains as a stable persistence/display ordinal for compatibility.
         public int Slot { get; set; }
-        // Stable personnel-pool identity. It must not change when the loadout changes.
+        // Stable slot key. It does not change when a loadout reassigns crew roles.
         public string Key { get; set; } = "";
+        // Identity of the person occupying this slot; a casualty replacement gets a new ID.
+        public string PersonId { get; set; } = "";
         // Current role assignment. This can change freely without affecting XP/status.
         public string AssignedRoleKey { get; set; } = "";
         public string Role { get; set; } = "Crewman";
@@ -556,6 +558,21 @@ internal sealed class ExperienceStore : IDisposable
         return r.Crew.OrderBy(x => x.Slot).Select(CloneCrewMember).ToList();
     }
 
+    // Compatibility readers must not normalize, initialize or dirty the persistent store.
+    public IReadOnlyList<CrewMemberRecord> GetPilotCrewMembersSnapshot(string templateId)
+    {
+        if (string.IsNullOrWhiteSpace(templateId) || !_pilotRecords.TryGetValue(templateId, out var r))
+            return Array.Empty<CrewMemberRecord>();
+        return r.Crew.OrderBy(x => x.Slot).Select(CloneCrewMember).ToList();
+    }
+
+    public IReadOnlyList<string> GetActivePilotCrewKeysSnapshot(string templateId)
+    {
+        if (string.IsNullOrWhiteSpace(templateId) || !_pilotRecords.TryGetValue(templateId, out var r))
+            return Array.Empty<string>();
+        return (r.ActiveCrewKeys ?? new List<string>()).ToList();
+    }
+
     public IReadOnlyList<CrewMemberRecord> GetActivePilotCrewMembers(string templateId, bool includeReplacements = true)
     {
         if (string.IsNullOrWhiteSpace(templateId) || !_pilotRecords.TryGetValue(templateId, out var r))
@@ -650,6 +667,7 @@ internal sealed class ExperienceStore : IDisposable
         if (member == null) return new CrewMutationResult { Key = crewKey };
         int before = Math.Max(0, member.Xp);
         string statusBefore = member.Status ?? "Healthy";
+        member.PersonId = CrewPersonIdentity.Create();
         member.Xp = 0;
         member.Status = "Replacement";
         _dirty = true;
@@ -659,6 +677,95 @@ internal sealed class ExperienceStore : IDisposable
             XpBefore = before, XpAfter = 0,
             StatusBefore = statusBefore, StatusAfter = member.Status
         };
+    }
+
+    public bool TryPromoteCrewMember(string templateId, string sourcePersonId, string replacementPersonId,
+        int expectedXp, out bool changed, out string error)
+    {
+        changed = false;
+        error = "";
+        if (string.IsNullOrWhiteSpace(templateId) || !CrewPersonIdentity.IsValid(sourcePersonId) ||
+            !CrewPersonIdentity.IsValid(replacementPersonId) ||
+            string.Equals(sourcePersonId, replacementPersonId, StringComparison.OrdinalIgnoreCase) || expectedXp < 0)
+        {
+            error = "Crew promotion identity or XP is invalid.";
+            return false;
+        }
+        if (!_pilotRecords.TryGetValue(templateId, out var record))
+        {
+            error = "Veterancy has no crew record for the selected pilot.";
+            return false;
+        }
+
+        NormalizeCrewRecord(record);
+        var source = record.Crew.FirstOrDefault(member =>
+            string.Equals(member.PersonId, sourcePersonId, StringComparison.OrdinalIgnoreCase));
+        var replacement = record.Crew.FirstOrDefault(member =>
+            string.Equals(member.PersonId, replacementPersonId, StringComparison.OrdinalIgnoreCase));
+        if (source == null)
+        {
+            if (replacement != null) return true; // The exact target identity proves this transaction already ran.
+            error = "The source crew member changed before promotion could be applied.";
+            return false;
+        }
+        if (replacement != null)
+        {
+            error = "The replacement crew identity is already in use.";
+            return false;
+        }
+        if (source.Xp != expectedXp ||
+            !string.Equals(source.Status, "Healthy", StringComparison.OrdinalIgnoreCase))
+        {
+            error = "The source crew member's XP or status changed; refresh the candidate list.";
+            return false;
+        }
+
+        source.PersonId = replacementPersonId;
+        source.Xp = 0;
+        source.Status = "Replacement";
+        _dirty = true;
+        changed = true;
+        return true;
+    }
+
+    public bool TryRestorePromotedCrewMember(string templateId, string sourcePersonId,
+        string replacementPersonId, int sourceXp, out bool changed, out string error)
+    {
+        changed = false;
+        error = "";
+        if (string.IsNullOrWhiteSpace(templateId) || !CrewPersonIdentity.IsValid(sourcePersonId) ||
+            !CrewPersonIdentity.IsValid(replacementPersonId) ||
+            string.Equals(sourcePersonId, replacementPersonId, StringComparison.OrdinalIgnoreCase) || sourceXp < 0)
+        {
+            error = "Crew promotion rollback identity or XP is invalid.";
+            return false;
+        }
+        if (!_pilotRecords.TryGetValue(templateId, out var record))
+        {
+            error = "Veterancy has no crew record to restore.";
+            return false;
+        }
+
+        NormalizeCrewRecord(record);
+        var source = record.Crew.FirstOrDefault(member =>
+            string.Equals(member.PersonId, sourcePersonId, StringComparison.OrdinalIgnoreCase));
+        if (source != null) return true;
+
+        var replacement = record.Crew.FirstOrDefault(member =>
+            string.Equals(member.PersonId, replacementPersonId, StringComparison.OrdinalIgnoreCase));
+        if (replacement == null || replacement.Xp != 0 ||
+            !string.Equals(replacement.Status, "Replacement", StringComparison.OrdinalIgnoreCase))
+        {
+            error = "The exact promotion replacement is unavailable; refusing to overwrite another crew member.";
+            return false;
+        }
+
+        replacement.PersonId = sourcePersonId;
+        replacement.Xp = sourceXp;
+        replacement.Status = "Healthy";
+        _dirty = true;
+        changed = true;
+        return true;
     }
 
     public int GetXp(int id) => id > 0 && _records.TryGetValue(id, out var r) ? Math.Max(0, r.Xp) : 0;
@@ -910,6 +1017,7 @@ internal sealed class ExperienceStore : IDisposable
     {
         Slot = m.Slot,
         Key = m.Key ?? "",
+        PersonId = m.PersonId ?? "",
         AssignedRoleKey = m.AssignedRoleKey ?? "",
         Role = string.IsNullOrWhiteSpace(m.Role) ? "Crewman" : m.Role,
         Xp = Math.Max(0, m.Xp),
@@ -922,9 +1030,16 @@ internal sealed class ExperienceStore : IDisposable
         r.Crew ??= new List<CrewMemberRecord>();
         r.ActiveCrewKeys ??= new List<string>();
         var seenSlots = new HashSet<int>();
+        var personIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         int nextSlot = 1;
         foreach (var member in r.Crew.Where(x => x != null).OrderBy(x => x.Slot))
         {
+            string personId = CrewPersonIdentity.EnsureUnique(member.PersonId, personIds);
+            if (!string.Equals(member.PersonId, personId, StringComparison.Ordinal))
+            {
+                member.PersonId = personId;
+                changed = true;
+            }
             if (member.Slot <= 0 || !seenSlots.Add(member.Slot))
             {
                 while (seenSlots.Contains(nextSlot)) nextSlot++;
@@ -1074,6 +1189,7 @@ internal sealed class ExperienceStore : IDisposable
             {
                 Slot = nextSlot,
                 Key = $"crew:{nextSlot}",
+                PersonId = CrewPersonIdentity.Create(),
                 AssignedRoleKey = "",
                 Role = "Crewman",
                 Xp = 0,

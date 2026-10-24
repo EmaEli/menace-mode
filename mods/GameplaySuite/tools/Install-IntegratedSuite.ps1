@@ -77,18 +77,19 @@ try {
         $selected = @('MenaceModSettings') + @($Modules | Where-Object { $_ -ne 'MenaceModSettings' } | Select-Object -Unique)
     }
     if ($UseInstalledSettings) {
-        if ($Product -ne 'Standalone' -or $Modules.Count -ne 1 -or $Modules[0] -ne 'SquaddieFieldPromotions') {
-            throw 'UseInstalledSettings is supported only for standalone SquaddieFieldPromotions.'
+        $supportedSettingsModules = @('SquaddieFieldPromotions', 'SquaddieVeterancy')
+        if ($Product -ne 'Standalone' -or $Modules.Count -ne 1 -or $supportedSettingsModules -notcontains $Modules[0]) {
+            throw 'UseInstalledSettings is supported only for standalone SquaddieFieldPromotions or SquaddieVeterancy.'
         }
-        $selected = @('SquaddieFieldPromotions')
-        $dependencyManifest = Get-Content -LiteralPath (Join-Path $BundleRoot 'source\mods\jiangyu\SquaddieFieldPromotions\jiangyu.json') -Raw | ConvertFrom-Json
+        $selected = @($Modules[0])
+        $dependencyManifest = Get-Content -LiteralPath (Join-Path $BundleRoot ('source\mods\jiangyu\' + $Modules[0] + '\jiangyu.json')) -Raw | ConvertFrom-Json
         $requirements = @($dependencyManifest.depends | Where-Object { $_ -match '^MenaceModSettings >= ([0-9]+\.[0-9]+\.[0-9]+)$' })
         if ($requirements.Count -ne 1) { throw 'Missing/ambiguous installed settings requirement.' }
         $minimum = $requirements[0].Substring('MenaceModSettings >= '.Length)
         $settingsDll = Get-InstalledSettingsReference $GamePath $minimum
         $settingsHash = (Get-FileHash -LiteralPath $settingsDll -Algorithm SHA256).Hash
         Assert-Hash (Join-Path $GamePath 'Mods\Jiangyu.Loader.dll') $catalog.loaderSha256
-        Write-Host 'Reusing validated installed MenaceModSettings and Jiangyu.Loader; neither will be replaced.'
+        Write-Host "Reusing validated installed MenaceModSettings and Jiangyu.Loader for $($Modules[0]); neither will be replaced."
     }
     elseif ($Modules -contains 'SquaddieFieldPromotions') { throw 'SFP preview requires -UseInstalledSettings.' }
     if ($Product -ne 'Suite' -and (Test-Path -LiteralPath (Join-Path $GamePath 'Mods\MenaceGameplaySuite'))) {

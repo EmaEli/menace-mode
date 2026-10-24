@@ -1,6 +1,6 @@
 # SFP: vehicle crew promotions
 
-Status: **design proposal, not implemented** (21 October 2026).
+Status: **implementation in progress; identity/snapshot foundation only** (23 October 2026).
 Tracked in [vehicle promotions #66](https://github.com/EmaEli/menace-mode/issues/66).
 Related: [promotion flow #27](https://github.com/EmaEli/menace-mode/issues/27),
 [service history #53](https://github.com/EmaEli/menace-mode/issues/53).
@@ -10,7 +10,10 @@ Related: [promotion flow #27](https://github.com/EmaEli/menace-mode/issues/27),
 Promote a generic veteran vehicle crew member into a new **vehicle commander**,
 using the same dossier -> Hire -> deployment flow as infantry promotions.
 Do not promote or replace an existing named commander such as Bog or Petra.
-This interpretation of "pilot" is the recommended scope, not a confirmed UX decision.
+Scope confirmed in the issue: promote generic crew serving under existing hired pilots,
+not named commanders such as Bog or Petra; create a new vehicle commander. Start with
+the balaclava pilot artwork and use the same Veterancy-band/source-learned-perk approach
+as squaddie promotions.
 
 Recommend a separate Vehicle Field Promotion Dossier, with the same pricing rules,
 so buying an infantry dossier cannot unexpectedly consume a vehicle crew member.
@@ -21,13 +24,13 @@ Keep the existing infantry selection and promotion behavior unchanged.
 - `mods/jiangyu/SquaddieFieldPromotions/code/NativeCandidates.cs` reads only native
   living squaddies. It cannot currently select vehicle crew.
 - `mods/GameplaySuite/src/SquaddieVeterancy/ExperienceStore.cs` stores individual
-  `CrewMemberRecord` entries inside each native commander's `PilotRecord`.
-  A member already has XP, status, a pool key and a current role. Roles can change
-  with mounted weapons; neither a role nor a vehicle is a personal identity.
-- `KillAndReplaceCrewMember` resets XP and marks Replacement **on the same key**.
-  A key therefore does not distinguish a deceased person from their replacement.
-- `mods/GameplaySuite/src/SquaddieVeterancy/CompatibilityApi.cs` exposes only
-  squaddie XP/rank. There is no public crew snapshot or crew-promotion transaction.
+  `CrewMemberRecord` entries inside each native commander's `PilotRecord`. Each now has
+  a generated `PersonId`, separate from its persistent pool/slot key. Migration repairs
+  missing/duplicate IDs without changing XP; death/replacement gives the new person a
+  new ID, while wounds and loadout reassignment retain it.
+- `CompatibilityApi` now exposes a versioned, copied crew snapshot for living hired
+  commanders. Its reader uses cached data and does not normalize or mutate the store.
+  There is still no explicit crew-promotion transaction.
 - `mods/jiangyu/SquaddieFieldPromotions/code/PromotionRecord.cs` requires a native
   squaddie source ID. Its current ledger cannot represent crew sources correctly.
 - `mods/jiangyu/SquaddieFieldPromotions/code/LeaderForge.cs` clones Sachin's leader
@@ -38,11 +41,12 @@ Keep the existing infantry selection and promotion behavior unchanged.
 
 ## 1. Give the person an identity before generating names
 
-Let Veterancy own a new persistent `PersonId` on each crew record. Keep the existing
-pool key for assignment compatibility. Death/replacement creates a new PersonId;
-wounds, loadout changes and moving between active/reserve assignments preserve it.
-Generate it once when migrating an existing living crew member, without changing XP.
-Never reconstruct earlier identities, missions or deaths from missing data.
+Let Veterancy own a persistent `PersonId` on each crew record, separate from the pool
+key used for assignment compatibility. The source now generates a GUID identity when
+migrating a record with no valid ID, without changing XP. Death/replacement creates a
+new PersonId; wounds and loadout/active-reserve reassignment preserve it. Remaining
+checks must prove this through sidecar reload and runtime crew mutations. Never
+reconstruct earlier identities, missions or deaths from missing data.
 
 Store generated identity with the person: forename, surname, callsign, native
 gender/skin values, portrait/voice choice and generator/catalog version. Persist the
@@ -114,9 +118,9 @@ Native dossier purchase/refund behavior must be tested separately from pool roll
 
 ## Implementation order and focused checks
 
-1. Add/migrate PersonId and generated identity in Veterancy; expose a read-only crew
-   snapshot. Test reload, deterministic generation, death versus wound, reassignment,
-   distinct saves, malformed IDs and replacements; do not enable promotions yet.
+1. Complete PersonId migration and the read-only crew snapshot in Veterancy. Test
+   sidecar reload, stable IDs, death versus wound, reassignment, distinct saves,
+   malformed IDs and replacements. Promotion remains disabled until these checks pass.
 2. Add source-kind records and vehicle forge. Verify a generated leader is a native
    Pilot in Hire/Armory/deployment, with correct text, equipment and save rehydration.
 3. Add coordinated consume/rollback/recovery and the vehicle dossier. Test exact-source
@@ -125,4 +129,6 @@ Native dossier purchase/refund behavior must be tested separately from pool roll
 4. Run targeted automated checks, canonical Windows build/install with backup, then
    user gameplay acceptance. Install only with MENACE closed; never interrupt a run.
 
-No runtime code, installed mods or save files were changed for this proposal.
+Only the Veterancy identity/snapshot source foundation is being changed at this stage.
+The vehicle dossier, forge, promotion transaction and recovery are not implemented;
+no installed mods or save files have been changed.

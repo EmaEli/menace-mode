@@ -1,5 +1,6 @@
 using MenaceModSettings;
 using MenaceOverwatch;
+using SquaddieProbe;
 
 int checks = 0;
 void Check(bool condition, string message)
@@ -47,6 +48,7 @@ capture.Reset();
 Check(!capture.Sample(41, false, 0, 0), "scene/focus reset clears capture");
 CinematicHudChecks.Run(Check);
 LeaderNameChecks.Run(Check);
+CrewPersonIdentityChecks.Run(Check);
 SettingsChecks.Run(Check);
 CoverSettingsChecks.Run(Check);
 CoordinatedFireChecks.Run(Check);

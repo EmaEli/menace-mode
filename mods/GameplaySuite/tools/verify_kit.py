@@ -24,7 +24,7 @@ def read_archive(path):
                        ("sfp_john_jane_voice.sfpbundle", "sfp_xcom_voicepacks.sfpbundle")}
         voice_bytes = sum(i.file_size for i in archive.infolist() if i.filename in voice_names)
         other_bytes = sum(i.file_size for i in archive.infolist() if i.filename not in voice_names)
-        if voice_bytes > 128 * 1024 * 1024 or other_bytes > 100 * 1024 * 1024:
+        if voice_bytes > 320 * 1024 * 1024 or other_bytes > 100 * 1024 * 1024:
             raise ValueError("Unexpectedly large candidate payload")
         for entry in archive.infolist():
             if not safe_path(entry.filename) or stat.S_ISLNK(entry.external_attr >> 16):
@@ -68,8 +68,13 @@ def compile_clean(files, game, sdk, dotnet):
             build_args = [dotnet, "build", str(project), "-c", "Release", "--nologo", "-v", "quiet",
                           f"-p:GameDir={game}", f"-p:GameAssembliesDir={refs}", f"-p:MelonLoaderDir={runtime}",
                           f"-p:JiangyuSdkDir={sdk}", "-p:JiangyuDev=false"]
-            if module == "SquaddieFieldPromotions":
-                build_args.append(f"-p:MenaceModSettingsPath={game / 'Mods/MenaceModSettings/code/MenaceModSettings.dll'}")
+            if module in {"SquaddieFieldPromotions", "SquaddieVeterancy"} and "MenaceModSettings" not in modules:
+                settings_dll = game / "Mods/MenaceModSettings/code/MenaceModSettings.dll"
+                if not settings_dll.is_file():
+                    settings_dll = ROOT / "mods/jiangyu/MenaceModSettings/compiled/code/MenaceModSettings.dll"
+                if not settings_dll.is_file():
+                    raise ValueError("Installed-settings candidate has no MenaceModSettings build reference")
+                build_args.append(f"-p:MenaceModSettingsPath={settings_dll}")
             subprocess.run(build_args, check=True, cwd=source)
             assembly = ET.parse(project).findtext("PropertyGroup/AssemblyName", module)
             shutil.copy2(root / "code/bin/Release" / (assembly + ".dll"), root / "compiled/code" / (assembly + ".dll"))
@@ -78,13 +83,29 @@ def compile_clean(files, game, sdk, dotnet):
             subprocess.run([dotnet, "build", str(camera), "-c", "Release", "--nologo", "-v", "quiet",
                             f"-p:MenaceInteropDir={refs}", f"-p:MenaceRuntimeDir={runtime}",
                             "-p:DebugType=none", "-p:DebugSymbols=false"], check=True, cwd=source)
+        check_modules = list(modules)
+        if "MenaceModSettings" not in check_modules:
+            depends_on_settings = any(
+                any(requirement.startswith("MenaceModSettings >= ") for requirement in
+                    json.loads((source / "mods/jiangyu" / module / "jiangyu.json").read_text())["depends"])
+                for module in check_modules
+            )
+            if depends_on_settings:
+                settings_source = ROOT / "mods/jiangyu/MenaceModSettings"
+                settings_target = source / "mods/jiangyu/MenaceModSettings"
+                for relative in ("jiangyu.json", "compiled/jiangyu.json", "compiled/code/MenaceModSettings.dll"):
+                    target = settings_target / relative
+                    target.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copy2(settings_source / relative, target)
+                check_modules.insert(0, "MenaceModSettings")
+
         runner = ROOT / "mods/GameplaySuite/tests/OfflineChecks/OfflineChecks.csproj"
         check_args = [dotnet, "run", "--project", str(runner), "-c", "Release", "--", str(source)]
         if modules == ["SquaddieFieldPromotions"]:
             runner = source / "mods/jiangyu/SquaddieFieldPromotions/tests/OfflineChecks/OfflineChecks.csproj"
             check_args[3] = str(runner)
         else:
-            check_args.extend(["--modules", ",".join(modules)])
+            check_args.extend(["--modules", ",".join(check_modules)])
         subprocess.run(check_args, check=True, cwd=ROOT)
         print("Clean extracted-source build and real DLL metadata checks passed (local host, NOT Windows).")
 
