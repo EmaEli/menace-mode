@@ -49,7 +49,7 @@ KDL counts below are **source files**, not patch-operation counts.
 | GarrisonableBuildings | 1.2.0 | Shared SuiteSystem host; #62 native deployed-stance accuracy mirror, live comparison pending |
 | InfantryAssault | 0.5.9 | Shared SuiteSystem host + 2 KDL files; defensive suppression fix candidate #47 |
 | LargerMaps | 2.3.2 | Jiangyu system; recovery ON-default, selective positioning OFF; Windows installed and ON/OFF gameplay compared; user accepted the bounded gameplay improvement and MEN-002 is closed; distinct slowdown #57 remains separate |
-| Overwatch | 0.33.2.0 | Shared SuiteSystem host, native reactions/HUD; #55 captures leftover AP before native turn-end resets it, allocates afterward once per activation; #78 probe unchanged; candidate checks/deployment and gameplay acceptance pending |
+| Overwatch | 0.33.2.0 | Shared SuiteSystem host, native reactions/HUD; #55 captures AP before native turn-end resets it and allocates afterward once per activation; #78 probe unchanged; 164 Python/17,855 offline checks and clean-source verification passed; canonical Windows BuildOnly/install and installed metadata/hashes verified 2026-10-24, backup 20261024-194533-9a1ab73feb9745eab0518d220384e56a outside Mods; gameplay acceptance pending |
 | SmokeOverhaul | 0.7.0 | Shared SuiteSystem host; bounded AI smoke rules retained, free infantry grenade grants opt-in OFF (#51); package delivered to Downloads, installation not verified |
 | SquaddieVeterancy | 1.10.3 | Shared SuiteSystem host, native hooks/HUD/save sidecars; managed Element.GetEntity owner lookup (#21) |
 | StartingOptions | 0.1.1 | Shared SuiteSystem host, new-campaign settings |
