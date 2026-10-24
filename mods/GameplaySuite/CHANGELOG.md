@@ -1,3 +1,8 @@
+## Overwatch 0.33.2.0 — #55 capture leftover AI AP before turn-end reset
+
+- Capture AP in the native Actor.OnTurnEnd prefix and allocate after native finalization, rather than polling an already inactive actor with zero AP. No earlier-frame AP snapshot or native AP mutation.
+- Finalize once per actor activation, including failed/zero allocations; reset only on native turn-start or scene cleanup. Weapon/ammo/readiness checks and fractional probability remain unchanged. In-game acceptance pending.
+
 ## Overwatch 0.33.1.0 — #78 movement visibility timing diagnostic
 
 - Add a default-off diagnostic that records movement candidates rejected by native actor detection, then samples detection again after 150 ms only when watcher and mover remain on their original tiles. If visible, record whether existing eligibility and hit-chance checks would qualify.

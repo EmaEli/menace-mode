@@ -66,9 +66,8 @@ class OverwatchVehicleSectorTests(unittest.TestCase):
         self.assertIn("Native.AmmoBound(skill)", reserve)
         self.assertIn("aiReservation: true", reserve)
         self.assertNotIn("Native.CanReserveAI(actor, s, ap", reserve)
-        observe = RUNTIME.split("private void ObserveAI", 1)[1].split("private void TryArmAI", 1)[0]
-        self.assertIn("if (Native.Valid(_lastAiActor) && !_lastAiFinalized)", observe)
-        self.assertIn("_lastAiFinalized = true;", observe)
+        self.assertNotIn("ObserveAI(", RUNTIME)
+        self.assertIn("_aiFinalizedActors.Add(Native.Key(actor))", RUNTIME)
         self.assertIn("DebugBonusAIOverwatch", (ROOT / "src/Overwatch/Plugin.cs").read_text())
 
 

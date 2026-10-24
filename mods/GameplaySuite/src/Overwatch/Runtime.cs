@@ -114,6 +114,7 @@ internal sealed class Runtime : IDisposable
     private readonly Dictionary<long, PlayerSelection> _playerSelections = new();
     private readonly Dictionary<long, NativeHudMarker> _nativeHudMarkers = new();
     private readonly Dictionary<string, Sprite> _markerSprites = new();
+    private readonly HashSet<long> _aiFinalizedActors = new();
     private Actor? _selected;
     private Skill? _squad;
     private Skill? _leader;
@@ -123,8 +124,6 @@ internal sealed class Runtime : IDisposable
     private int _leaderIndex;
     private int _vehicleIndex;
     private OverwatchMode _mode = OverwatchMode.Squad;
-    private Actor? _lastAiActor;
-    private bool _lastAiFinalized;
     private bool _aiEnabled;
     private bool _actionTriggersEnabled;
     private bool _vehicleEnabled;
@@ -187,6 +186,15 @@ internal sealed class Runtime : IDisposable
         _coordinatedFireInstalled = coordinatedFireInstalled;
         _alphaStrikeInstalled = alphaStrikeInstalled;
         Hooks.Owner = this;
+
+        var actorTurnStart = AccessTools.Method(typeof(Actor), nameof(Actor.OnTurnStart), Type.EmptyTypes)
+            ?? throw new MissingMethodException("Actor.OnTurnStart() was not found.");
+        var actorTurnEnd = AccessTools.Method(typeof(Actor), nameof(Actor.OnTurnEnd), Type.EmptyTypes)
+            ?? throw new MissingMethodException("Actor.OnTurnEnd() was not found.");
+        _harmony.Patch(actorTurnStart, postfix: new HarmonyMethod(typeof(Hooks), nameof(Hooks.ActorTurnStarted)));
+        _harmony.Patch(actorTurnEnd,
+            prefix: new HarmonyMethod(typeof(Hooks), nameof(Hooks.ActorTurnEnding)),
+            postfix: new HarmonyMethod(typeof(Hooks), nameof(Hooks.ActorTurnEnded)));
 
         var movementStarted = AccessTools.Method(typeof(TacticalManager), "InvokeOnMovement",
             new[] { typeof(Actor), typeof(Tile), typeof(Tile), typeof(MovementAction), typeof(Entity) });
@@ -336,7 +344,6 @@ internal sealed class Runtime : IDisposable
         // opposing phase in the same frame, and its valid Overwatch reaction must not be lost.
         ProcessPendingActionTriggers();
         CleanupInvalidWatches();
-        ObserveAI(manager);
         ProcessReaction();
 
         if (Time.realtimeSinceStartup >= _nextMarkerRefresh)
@@ -1012,9 +1019,8 @@ internal sealed class Runtime : IDisposable
             InitialReactions = reactions
         };
 
-        // Player Overwatch commits all remaining AP immediately. AI Overwatch is reserved only
-        // after MENACE has already ended/switched that AI activation, so mutating the inactive
-        // actor's AP/state here is unnecessary and risks perturbing native AI turn finalization.
+        // Player Overwatch commits all remaining AP immediately. AI reservation uses AP captured
+        // on entry to native OnTurnEnd, then arms after native finalization without changing AP.
         if (!aiReservation)
         {
             actor.SetActionPoints(0, true);
@@ -1025,7 +1031,7 @@ internal sealed class Runtime : IDisposable
 
         _reason = $"Overwatch armed with {reactions} reaction(s).";
         string actorType = Native.IsVehicleActor(actor) ? "vehicle" : "infantry";
-        string apState = aiReservation ? $"{apBefore} reserved-at-end" : $"{apBefore}->0";
+        string apState = aiReservation ? $"{apBefore} native-after-end (budget logged separately)" : $"{apBefore}->0";
         if (_debugLogging) _debugLog($"Overwatch armed: shooter={Native.Key(actor)} actorType={actorType} mode={mode} primary={primary.GetID()} secondary={(Native.Valid(secondary) ? secondary!.GetID() : "-")} alphaStrike={Native.IsAlphaStrikeSkill(primary)} AP={apState} costPerReaction={cost} reactions={reactions} threshold={Math.Clamp(threshold, 1, 100)}% aimPenalty={Math.Max(0, aimPenalty)} playerSide={playerSide}.");
 
         if (playerSide)
@@ -1040,53 +1046,30 @@ internal sealed class Runtime : IDisposable
         return true;
     }
 
-    private void ObserveAI(TacticalManager manager)
+    private void OnActorTurnStarted(Actor actor)
     {
-        if (!_aiEnabled)
-        {
-            _lastAiActor = null;
-            _lastAiFinalized = false;
-            return;
-        }
-
-        // The old code evaluated AI Overwatch only after an actor had already become
-        // turn-done/inactive, then reused the player-turn usability check. MENACE rejects that
-        // check for an inactive actor, so AI Overwatch could never arm. Finalize each AI actor
-        // exactly once and use the dedicated end-of-activation reservation validation below.
-        if (manager.IsPlayerTurn())
-        {
-            if (Native.Valid(_lastAiActor) && !_lastAiFinalized)
-            {
-                TryArmAI(_lastAiActor!, "AI phase ended");
-                _lastAiFinalized = true;
-            }
-            _lastAiActor = null;
-            _lastAiFinalized = false;
-            return;
-        }
-
-        var current = manager.GetActiveActor();
-        if (!Native.Valid(_lastAiActor))
-        {
-            _lastAiActor = current;
-            _lastAiFinalized = false;
-        }
-        else if (!Native.Same(current, _lastAiActor))
-        {
-            if (!_lastAiFinalized)
-                TryArmAI(_lastAiActor!, "active actor changed");
-            _lastAiActor = current;
-            _lastAiFinalized = false;
-        }
-
-        if (Native.Valid(_lastAiActor) && !_lastAiFinalized && _lastAiActor!.IsTurnDone())
-        {
-            TryArmAI(_lastAiActor!, "actor marked turn-done");
-            _lastAiFinalized = true;
-        }
+        if (Native.Valid(actor)) _aiFinalizedActors.Remove(Native.Key(actor));
     }
 
-    private void TryArmAI(Actor actor, string trigger)
+    private int CaptureAITurnEndAP(Actor actor)
+    {
+        if (_disposed || !_aiEnabled || !TacticalManager.IsMissionRunning() || !Native.Valid(actor)
+            || Native.IsPlayerControlled(actor)) return -1;
+        // Mark even zero-budget/failed rolls as finalized. Only a native fresh activation may
+        // permit another roll, never frame polling, actor selection or a repeated end callback.
+        if (!_aiFinalizedActors.Add(Native.Key(actor))) return -1;
+        return Math.Max(0, actor.GetActionPoints());
+    }
+
+    private void OnActorTurnEnded(Actor actor, int remainingAp)
+    {
+        if (_disposed || !_aiEnabled || remainingAp < 0 || !TacticalManager.IsMissionRunning()) return;
+        // __state belongs to this native call, not an earlier frame. OnTurnEnd clears AP at
+        // offset 0x148 in MENACE 0.7.17; weapon/ammo/readiness checks run after it completes.
+        TryArmAI(actor, "native actor turn-end (pre-reset AP)", remainingAp);
+    }
+
+    private void TryArmAI(Actor actor, string trigger, int remainingAp)
     {
         if (!Native.Valid(actor) || Native.IsPlayerControlled(actor) || _watches.ContainsKey(Native.Key(actor))) return;
 
@@ -1097,7 +1080,7 @@ internal sealed class Runtime : IDisposable
 
         bool infantry = Native.IsInfantryActor(actor);
         bool vehicle = Native.IsVehicleActor(actor);
-        int ap = Math.Max(0, actor.GetActionPoints());
+        int ap = Math.Max(0, remainingAp);
         long key = Native.Key(actor);
 
         if (!infantry && !vehicle)
@@ -1730,8 +1713,7 @@ internal sealed class Runtime : IDisposable
         _playerSelections.Clear();
         _selected = null;
         _squad = _leader = _vehicle = _alphaStrike = null;
-        _lastAiActor = null;
-        _lastAiFinalized = false;
+        _aiFinalizedActors.Clear();
         _squadIndex = _leaderIndex = _vehicleIndex = 0;
         _mode = OverwatchMode.Squad;
         ClearPenaltyContext();
@@ -1751,6 +1733,25 @@ internal sealed class Runtime : IDisposable
     private static class Hooks
     {
         internal static Runtime? Owner;
+
+        public static void ActorTurnStarted(Actor __instance)
+        {
+            try { Owner?.OnActorTurnStarted(__instance); }
+            catch (Exception e) { Owner?._errorLog("Actor-turn-start hook error: " + e); }
+        }
+
+        public static void ActorTurnEnding(Actor __instance, out int __state)
+        {
+            __state = -1;
+            try { __state = Owner?.CaptureAITurnEndAP(__instance) ?? -1; }
+            catch (Exception e) { Owner?._errorLog("Actor-turn-end capture error: " + e); }
+        }
+
+        public static void ActorTurnEnded(Actor __instance, int __state)
+        {
+            try { Owner?.OnActorTurnEnded(__instance, __state); }
+            catch (Exception e) { Owner?._errorLog("Actor-turn-end reservation error: " + e); }
+        }
 
         public static void MovementStarted(Actor __0)
         {
