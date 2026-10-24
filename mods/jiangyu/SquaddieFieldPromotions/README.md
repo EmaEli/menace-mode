@@ -2,6 +2,9 @@
 
 > **Experimental 0.20.1 test candidate; in-game acceptance is pending.** Fixes vehicle promotions mixing native pilot Hire slots with infantry voice-donor portraits: all views now use the bundled male/female balaclava family, including reconstructed vehicle commanders. Vehicle promotions consume only the selected crew identity, install a separate vehicle commander with an XP-banded vehicle perk tree, and grant no vehicle. The transaction is saved before mutation and rolls back or reconciles on failure/load. New infantry leaders still start with the B Team perk; existing records and purchased perks are unchanged.
 > The 24 October mission-start crash recorded VERSION.dll / 0xc0000602 / offset 0x7ddf6d, matching the MelonLoader failure tracked in #72 and previously reproduced with zero mods. This portrait fix does not fix that crash; vehicle gameplay acceptance remains blocked.
+> Version 0.20.1 canonical Windows BuildOnly/install passed on 24 October: zero warnings/errors,
+> 11,586 offline behavior checks, six installed-settings checks, verified manifest/assembly/file versions.
+> Prior SFP is backed up outside Mods; all 174 runtime assets, unrelated Mods and UserData are unchanged. Visual acceptance is pending.
 > Version 0.18.0 adds 1,619 distinct recordings and
 > 1,155 route mappings across the other 55 human profiles. The existing quality gate now admits 36 profiles
 > (26 male/10 female); its route and distinct-clip minimums are unchanged. The 818 legacy recordings and

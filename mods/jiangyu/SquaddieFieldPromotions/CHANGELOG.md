@@ -8,6 +8,9 @@
 - Add offline coverage of the production portrait assignment across all image fields and repeated application.
 - Not a crash fix: the 24 October mission-start failure has the VERSION.dll / 0xc0000602 / 0x7ddf6d
   signature tracked in #72, previously reproduced with MelonLoader and zero mods. Gameplay remains unverified.
+- Canonical Windows BuildOnly/install passed on 24 October with zero warnings/errors, 11,586 behavior checks
+  and six installed-settings checks. Manifest/DLL versions verified; SFP-only backup retained, 174 runtime
+  assets and unrelated Mods/UserData unchanged. Visual acceptance pending.
 
 ## 0.20.0 — Veterancy-backed vehicle crew promotions (#66)
 
