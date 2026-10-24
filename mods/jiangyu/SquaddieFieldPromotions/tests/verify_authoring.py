@@ -9,9 +9,28 @@ KDL = (ROOT / 'templates' / 'field-promotion-dossier.kdl').read_text(encoding='u
 
 
 class AuthoringTests(unittest.TestCase):
+    def test_new_dynamic_perk_snapshot_wiring(self):
+        generated = (ROOT / 'code/PerkGeneration.cs').read_text()
+        forge = (ROOT / 'code/LeaderForge.cs').read_text()
+        record = (ROOT / 'code/PromotionRecord.cs').read_text()
+        native = (ROOT / 'code/DynamicPerkTrees.cs').read_text()
+        mentor = (ROOT / 'code/MentorPerks.cs').read_text()
+        self.assertIn('PerkGeneration.Generate(record', forge)
+        self.assertIn('DynamicPerkTrees.Apply(record, leader', forge)
+        self.assertIn('PerkGeneration.Validate(this)', record)
+        self.assertIn('public int PerkSchemaVersion', record)
+        self.assertIn('public List<GeneratedPerk> GeneratedPerks', record)
+        self.assertIn('public int? XpAtPromotion', record)
+        self.assertIn('new MentorSnapshot', mentor)
+        self.assertIn('leader.GetPerks()', mentor)
+        self.assertIn('leader.PerkTrees =', native)
+        self.assertIn('leader.InitialPerk = initial', native)
+        self.assertIn('StableRandom', generated)
+        self.assertIn('if (record.PerkSchemaVersion == 0) return', generated)
+
     def test_jiangyu_not_old_modpack(self):
         self.assertEqual(MANIFEST['name'], 'SquaddieFieldPromotions')
-        self.assertEqual(MANIFEST['version'], '0.11.8')
+        self.assertEqual(MANIFEST['version'], '0.12')
         self.assertTrue(any(dep.startswith('Jiangyu ') for dep in MANIFEST['depends']))
         self.assertIn('JiangyuSystem', CS)
         self.assertNotIn('IModpackPlugin', CS)

@@ -1,8 +1,12 @@
-# Squaddie Field Promotions 0.11.8
+# Squaddie Field Promotions 0.12 (development)
 
 **Experimental: promotes real squaddies to hirable leaders and persists them across save/load.**
 Tracked in [#27](https://github.com/EmaEli/menace-mode/issues/27) and
 [#53](https://github.com/EmaEli/menace-mode/issues/53).
+
+## Dynamic perk trees (0.12 development; NOT Windows-compiled or tested in game)
+
+Newly promoted infantry leaders get an individual 16-option tree (5/5/4/2 native tier distribution), with choices generated ONCE from personal Veterancy XP and inherited **learned** mentor abilities. No free mentor perks are granted: normal Promotion Points and ranks still apply. The selected perk IDs/tiers, original XP snapshot and mentor ID are stored in the per-save promotion ledger and rehydrated before native roster loading. Unknown Veterancy XP uses the basic conservative pool, not invented XP. Older promotions (schema 0) keep their original donor tree and already purchased perks. Generated trees use only a curated native allowlist; the mentor's unique abilities and special active skills are excluded. A native game/Windows build and save-load acceptance are REQUIRED before distribution. Keep diagnostic logging off by default.
 
 ## Requirements
 
@@ -37,7 +41,7 @@ Tracked in [#27](https://github.com/EmaEli/menace-mode/issues/27) and
   promoted leaders use the game's generic appearance even if **Show Unique Leader Heads**
   is enabled. Turn it off to restore gender-matched custom heads.
 - Attributes: baseline **65/65/62/50/50/5/45** (AGI/WS/VAL/TOU/VIT/PRE/POS) plus a
-  Veterancy rank-aligned bonus; perks/stats of the donor template are not inherited.
+  Veterancy rank-aligned bonus; new promotions replace donor perks with a saved, XP-graded, per-leader perk tree.
 - **The exact source soldier is removed** from their assigned squad and the living pool after
   the new leader is offered in Hire. No random removal, fake death or replacement soldier.
   On a failed promotion, source objects/assignment order, Hire offer and ledger are rolled back.
@@ -84,7 +88,7 @@ The kit also ships the module's raw `runtime_assets/` (portraits, prebuilt John/
 voice bundle with its build receipt, voice routes); the installer stages them next to
 the compiled package because `jiangyu compile --clean` does not preserve them.
 
-## Acceptance test (0.11.8 in-game warning display pending)
+## Acceptance test (0.12 in-game verification pending)
 
 Versions 0.8.0-0.8.4 verified in game that the native dossier is stocked, visible at
 1 credit, redeemable and restocked. Version 0.9.0 reconnects the recovered 0.6.1 leader

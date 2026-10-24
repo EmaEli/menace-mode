@@ -6,6 +6,7 @@
     <Nullable>disable</Nullable>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="../../code/PerkGeneration.cs" Link="PerkGeneration.cs" />
     <Compile Include="../../code/PromotionRules.cs" Link="PromotionRules.cs" />
     <Compile Include="../../code/PromotionRecord.cs" Link="PromotionRecord.cs" />
     <Compile Include="../../code/PromotionTemplateText.cs" Link="PromotionTemplateText.cs" />
