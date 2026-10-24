@@ -955,20 +955,17 @@ internal sealed class Runtime : IDisposable
     }
 
     private bool Arm(Actor actor, Skill primary, Skill? secondary, OverwatchMode mode, int threshold,
-        int aimPenalty, bool playerSide, int cost, int reactions, bool aiReservation = false, bool aiBonusReservation = false)
+        int aimPenalty, bool playerSide, int cost, int reactions, bool aiReservation = false)
     {
-        int validationAp = Math.Max(0, actor.GetActionPoints());
         string why;
-        bool primaryOk = aiBonusReservation
-            ? Native.CanReserveAIDebugBonus(actor, primary, out why)
-            : aiReservation ? Native.CanReserveAI(actor, primary, validationAp, out why)
+        bool primaryOk = aiReservation
+            ? Native.CanReserveAIWeapon(actor, primary, out why)
             : Native.CanArm(actor, primary, out why);
         if (!primaryOk) { _reason = why; return false; }
         if (Native.Valid(secondary))
         {
-            bool secondaryOk = aiBonusReservation
-                ? Native.CanReserveAIDebugBonus(actor, secondary!, out why)
-                : aiReservation ? Native.CanReserveAI(actor, secondary!, validationAp, out why)
+            bool secondaryOk = aiReservation
+                ? Native.CanReserveAIWeapon(actor, secondary!, out why)
                 : Native.CanArm(actor, secondary!, out why);
             if (!secondaryOk) { _reason = why; return false; }
         }
@@ -1097,24 +1094,25 @@ internal sealed class Runtime : IDisposable
 
         bool diagnosticBonus = _debugBonusAIOverwatch;
         var attacks = pool
-            .Where(s => diagnosticBonus
-                ? Native.CanReserveAIDebugBonus(actor, s, out _)
-                : Native.CanReserveAI(actor, s, ap, out _))
+            .Where(s => Native.CanReserveAIWeapon(actor, s, out _))
             .OrderByDescending(s => s.GetMaxRange())
             .ThenBy(s => s.GetActionPointCost())
             .ToList();
 
+        // Preserve the existing choice among attacks the unit can pay for. Only fall back to
+        // under-budget weapons when none are affordable; their leftover AP then sets the chance.
+        if (!diagnosticBonus)
+        {
+            var affordable = attacks.Where(s => s.GetActionPointCost() <= ap).ToList();
+            if (affordable.Count > 0) attacks = affordable;
+        }
+
         if (attacks.Count == 0)
         {
-            string why = pool.Count == 0 ? "no supported ranged attacks" : diagnosticBonus
-                ? "no attack passed the diagnostic bonus eligibility/ammo checks"
-                : "no attack can be reserved with the remaining AP/ammo";
+            string why = pool.Count == 0 ? "no supported ranged attacks" : "no attack passed combat/setup/weapon/ammo checks";
             if (pool.Count > 0)
             {
-                string detail;
-                bool valid = diagnosticBonus
-                    ? Native.CanReserveAIDebugBonus(actor, pool[0], out detail)
-                    : Native.CanReserveAI(actor, pool[0], ap, out detail);
+                bool valid = Native.CanReserveAIWeapon(actor, pool[0], out string detail);
                 if (!valid) why += $" ({detail})";
             }
             if (_debugLogging) _debugLog($"AI Overwatch skipped: actor={key} trigger={trigger} actorType={(vehicle ? "vehicle" : "infantry")} AP={ap} candidates={pool.Count} reason={why}.");
@@ -1123,10 +1121,17 @@ internal sealed class Runtime : IDisposable
 
         var skill = attacks[0];
         int cost = skill.GetActionPointCost();
-        int reactions = Math.Min(ap / Math.Max(1, cost) + (diagnosticBonus ? 1 : 0), Native.AmmoBound(skill));
+        int ammoBound = Native.AmmoBound(skill);
+        int guaranteed = ap / cost;
+        int apRemainder = ap % cost;
+        int randomDraw = apRemainder > 0 && guaranteed < ammoBound
+            ? global::System.Random.Shared.Next(0, cost)
+            : -1;
+        int reactions = AIReactionBudget.Calculate(ap, cost, ammoBound, randomDraw);
+        if (diagnosticBonus && reactions < ammoBound) reactions++;
         if (reactions <= 0)
         {
-            if (_debugLogging) _debugLog($"AI Overwatch skipped: actor={key} trigger={trigger} AP={ap} skill={skill.GetID()} cost={cost} reason=no reaction budget.");
+            if (_debugLogging) _debugLog($"AI Overwatch skipped: actor={key} trigger={trigger} AP={ap} skill={skill.GetID()} cost={cost} whole={guaranteed} fractionalAP={apRemainder}/{cost} draw={randomDraw} reason=no reaction allocated.");
             return;
         }
 
@@ -1134,8 +1139,8 @@ internal sealed class Runtime : IDisposable
             ? (Native.IsAlphaStrikeSkill(skill) ? OverwatchMode.AlphaStrike : OverwatchMode.Vehicle)
             : (Native.Role(skill) == WeaponRole.Leader ? OverwatchMode.Leader : OverwatchMode.Squad);
 
-        if (Arm(actor, skill, null, mode, _aiThreshold, _aimPenalty, false, cost, reactions, aiReservation: true, aiBonusReservation: diagnosticBonus))
-            if (_debugLogging) _debugLog($"AI Overwatch armed: actor={key} trigger={trigger} actorType={(vehicle ? "vehicle" : "infantry")} skill={skill.GetID()} alphaStrike={Native.IsAlphaStrikeSkill(skill)} cost={cost} reactions={reactions} diagnosticBonus={(diagnosticBonus ? 1 : 0)} threshold={_aiThreshold}%.");
+        if (Arm(actor, skill, null, mode, _aiThreshold, _aimPenalty, false, cost, reactions, aiReservation: true))
+            if (_debugLogging) _debugLog($"AI Overwatch armed: actor={key} trigger={trigger} actorType={(vehicle ? "vehicle" : "infantry")} skill={skill.GetID()} alphaStrike={Native.IsAlphaStrikeSkill(skill)} AP={ap} cost={cost} whole={guaranteed} fractionalAP={apRemainder}/{cost} draw={randomDraw} reactions={reactions} ammoBound={ammoBound} diagnosticBonus={(diagnosticBonus ? 1 : 0)} threshold={_aiThreshold}%.");
         else
             if (_debugLogging) _debugLog($"AI Overwatch failed to arm: actor={key} trigger={trigger} AP={ap} skill={skill.GetID()} reason={_reason}.");
     }

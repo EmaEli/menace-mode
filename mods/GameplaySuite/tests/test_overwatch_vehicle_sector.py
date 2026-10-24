@@ -48,20 +48,26 @@ class OverwatchVehicleSectorTests(unittest.TestCase):
         compiled = json.loads((package / "compiled/jiangyu.json").read_text())
         self.assertEqual(compiled["version"], version)
 
-    def test_bonus_diagnostic_bypasses_only_leftover_ap_and_is_ammo_capped(self):
-        native_bonus = NATIVE.split("public static bool CanReserveAIDebugBonus", 1)[1].split("public static int AmmoBound", 1)[0]
+    def test_ai_weapon_eligibility_retains_combat_setup_and_ammo_gates(self):
+        native_eligibility = NATIVE.split("public static bool CanReserveAIWeapon", 1)[1].split("public static int AmmoBound", 1)[0]
         for gate in ("IsCombatReady(actor)", "IsIndirectFire(skill)", "SupportedForActor(actor, skill)",
                      "RequirementsSatisfied(skill, actor)", "skill.IsEnabled()", "skill.GetUses() <= 0",
                      "cost <= 0"):
-            self.assertIn(gate, native_bonus)
-        self.assertNotIn("availableAp", native_bonus)
+            self.assertIn(gate, native_eligibility)
+        self.assertNotIn("availableAp", native_eligibility)
 
         reserve = RUNTIME.split("private void TryArmAI", 1)[1].split("private bool RemoveWatch", 1)[0]
         self.assertIn("bool diagnosticBonus = _debugBonusAIOverwatch", reserve)
-        self.assertIn("Native.CanReserveAIDebugBonus(actor, s, out _)", reserve)
-        self.assertIn("ap / Math.Max(1, cost) + (diagnosticBonus ? 1 : 0)", reserve)
+        self.assertIn("Native.CanReserveAIWeapon(actor, s, out _)", reserve)
+        self.assertIn("global::System.Random.Shared.Next(0, cost)", reserve)
+        self.assertIn("AIReactionBudget.Calculate(ap, cost, ammoBound, randomDraw)", reserve)
+        self.assertIn("if (diagnosticBonus && reactions < ammoBound) reactions++;", reserve)
         self.assertIn("Native.AmmoBound(skill)", reserve)
-        self.assertIn("aiBonusReservation: diagnosticBonus", reserve)
+        self.assertIn("aiReservation: true", reserve)
+        self.assertNotIn("Native.CanReserveAI(actor, s, ap", reserve)
+        observe = RUNTIME.split("private void ObserveAI", 1)[1].split("private void TryArmAI", 1)[0]
+        self.assertIn("if (Native.Valid(_lastAiActor) && !_lastAiFinalized)", observe)
+        self.assertIn("_lastAiFinalized = true;", observe)
         self.assertIn("DebugBonusAIOverwatch", (ROOT / "src/Overwatch/Plugin.cs").read_text())
 
 

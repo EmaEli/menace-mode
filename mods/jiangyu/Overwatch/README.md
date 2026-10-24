@@ -1,4 +1,9 @@
-# Overwatch 0.32.4.0
+# Overwatch 0.33.0.0
+
+## 0.33.0.0 — fractional AI Overwatch AP reservation
+
+- Hostile AI now reserves every whole Overwatch reaction its leftover AP can pay for, plus a single extra reaction with probability equal to the remaining AP divided by the selected weapon's AP cost. The fractional roll happens once when the activation is finalized; an available weapon with less than one full cost can still be selected probabilistically.
+- Reaction counts remain capped by ammo/uses. AI AP is not modified, and all normal combat, setup, range, line-of-sight, visibility, hit-chance and vehicle-sector checks remain in force. The separate debug bonus remains default OFF.
 
 ## 0.32.4.0 — temporary AI reaction diagnostic
 
@@ -51,8 +56,8 @@ Adds XCOM-style reaction fire to MENACE infantry and, optionally, vehicles.
 - Attack reactions occur after the native attack resolves and evaluate the acting enemy on its current tile. Utility/state-transition skills such as reloads, stance/setup actions and embark/eject-passenger actions do not provoke Overwatch.
 - Movement skills are not also treated as attack triggers, avoiding double reactions for the same movement.
 - Overwatch reaction shots do **not** recursively trigger Overwatch.
-- Arming Overwatch consumes all remaining AP and ends that actor's turn.
-- Reaction charges are `floor(AP before arming / selected reaction cost)` and are also bounded by native uses/ammo. In BOTH mode, charges may continue while at least one selected weapon still has uses remaining.
+- Player arming consumes all remaining AP and ends that actor's turn. Hostile AI reserves Overwatch after activation without changing its AP.
+- Player reaction charges are `floor(AP before arming / selected reaction cost)`. Hostile AI gets each whole-cost reaction plus one fractional reaction roll based on `AP remainder / selected reaction cost`; both are bounded by native uses/ammo. In BOTH mode, charges may continue while at least one selected weapon still has uses remaining.
 - Unused reaction charges persist across enemy activations and into the watching unit's next turn. Merely selecting or cycling to that unit does not cancel Overwatch. The watch expires when that unit commits movement or another active skill, or when charges/ammo are exhausted or the unit becomes invalid.
 - One watching unit spends at most one reaction on a given movement completion or completed attack event.
 - Default player trigger threshold is 60% after the configurable Overwatch aim penalty (default -10 percentage points).
@@ -114,7 +119,7 @@ Composite native child skill events are coalesced so one Alpha Strike action doe
 
 ## AI Overwatch
 
-AI Overwatch is reserved at the end of a hostile AI actor's activation using its leftover AP. An AI unit that spends all of its AP cannot enter Overwatch; an AI unit with enough leftover AP may reserve one or more reactions.
+AI Overwatch is reserved at the end of a hostile AI actor's activation using its leftover AP. For a selected weapon costing `C` AP and `A` AP left, the AI gets `floor(A/C)` reactions for sure, then one additional reaction with probability `(A mod C)/C`. For example, a 40-AP weapon gets one reaction at 40 AP, and a 30-AP remainder gives a 30/40 chance of one reaction. The fractional roll is made once per activation; an all-zero-AP unit still gets no normal reservation.
 
 AI Overwatch can react to player movement completion **and**, when attack triggers are enabled, completed native player attack skills such as weapon fire. Non-attack utility/transport skills do not provoke it. The same range, line-of-sight, ammo and hit-threshold validation applies.
 

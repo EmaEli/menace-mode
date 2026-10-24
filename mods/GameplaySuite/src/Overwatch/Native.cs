@@ -330,22 +330,10 @@ internal static class Native
         return true;
     }
 
-    // AI Overwatch is reserved at the end of an AI activation, when the actor may already be
-    // marked turn-done or no longer be the active actor. In that state Skill.IsUsable(Player)
-    // can legitimately return false even though the weapon, ammo and leftover AP are valid for
-    // a later reaction shot. Keep all physical/weapon checks, but do not require active-turn
-    // usability for this end-of-activation reservation.
-    public static bool CanReserveAI(Actor actor, Skill skill, int availableAp, out string reason)
-    {
-        if (!CanReserveAIDebugBonus(actor, skill, out reason)) return false;
-        int cost = skill.GetActionPointCost();
-        if (availableAp < cost) { reason = $"only {availableAp} AP remain; attack costs {cost}"; return false; }
-        return true;
-    }
-
-    // Diagnostic-only eligibility: check the same combat, weapon, setup and ammo gates as
-    // normal AI reservation, but omit only the leftover-AP requirement. This never changes AP.
-    public static bool CanReserveAIDebugBonus(Actor actor, Skill skill, out string reason)
+    // Check AI weapon/combat/setup/ammo eligibility independently of leftover AP. Runtime turns
+    // AP into guaranteed and probabilistic reactions; the optional diagnostic bonus reuses these
+    // same safety checks and never changes actor AP.
+    public static bool CanReserveAIWeapon(Actor actor, Skill skill, out string reason)
     {
         reason = "Ready.";
         if (!IsCombatReady(actor)) { reason = "unit is not combat-ready"; return false; }
