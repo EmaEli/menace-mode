@@ -105,7 +105,11 @@ public sealed partial class Plugin
     private static int _recoverDropoffRectsScaled;
     private static List<object> _recoverDropoffAreaConfigs;
 
-    private sealed class EvacSetpieceOffsetRestore
+    private const int MaximumSetpieceSummaryLogs = 4;
+    private static bool _scaleAllSetpieces;
+    private static int _setpieceSummaryLogs;
+
+    private sealed class SetpieceOffsetRestore
     {
         public object Placement;
         public int X;
@@ -116,9 +120,9 @@ public sealed partial class Plugin
         public bool RestoreVariance;
     }
 
-    private sealed class EvacSetpiecePatchState
+    private sealed class SetpiecePatchState
     {
-        public readonly List<EvacSetpieceOffsetRestore> Restores = new();
+        public readonly List<SetpieceOffsetRestore> Restores = new();
         public string MissionId = "<unknown>";
     }
 
@@ -230,6 +234,7 @@ public sealed partial class Plugin
             settings.AddHeader("Map");
             settings.AddSlider("TacticalMapSize", "Tactical map size 64-96 (restart required)", 64f, 96f, 80f);
             settings.AddSlider("MissionRoundMultiplier", "Round limit multiplier for timed objectives", 1f, 3f, 2f);
+            settings.AddToggle("ScaleSetpiecePlacement", "Place mission structures at vanilla relative positions (restart required)", true);
             settings.AddHeader("Terrain landmarks (restart required)");
             settings.AddToggle("PreserveTerrainStampFootprint", "Keep landmark stamps at vanilla world size (fixes raised lakes)", true);
             settings.AddToggle("IncreaseTerrainStampDensity", "More terrain stamps on maps above 64x64", false);
@@ -399,7 +404,7 @@ public sealed partial class Plugin
             // on extended maps; it cannot rewrite already-valid spawn areas.
             if (TargetSize > ZoneReferenceSize)
                 PatchFinalSpawnAreaSafety(harmony);
-            PatchEvacSetpiecePlacement(harmony);
+            PatchSetpiecePlacement(harmony);
             PatchMissionRoundLimits(harmony);
             PatchAiTaskLifetime(harmony);
             PatchAiPerformance(harmony);
@@ -2394,11 +2399,17 @@ public sealed partial class Plugin
         }
     }
 
-    private static void PatchEvacSetpiecePlacement(HarmonyLib.Harmony harmony)
+    // Mission setpiece offsets are authored relative to the map centre of a 42x42
+    // map. Scaling offset and variance by N/42 keeps every structure at the same
+    // relative position on all sizes; the structures themselves keep their size.
+    // A layout that fits 42x42 also fits N, since only the gaps grow.
+    private static void PatchSetpiecePlacement(HarmonyLib.Harmony harmony)
     {
+        _scaleAllSetpieces = ReadBool("ScaleSetpiecePlacement", true);
+        string scope = _scaleAllSetpieces ? "all mission setpieces" : "evacuation setpieces only";
         if (_chunkMetaGeneratorType == null)
         {
-            if (Debug()) _log.Warning($"{ModName}: ChunkMetaGenerator type not found; evacuation setpiece placement scaling unavailable.");
+            _log.Warning($"{ModName}: ChunkMetaGenerator type not found; setpiece placement scaling unavailable.");
             return;
         }
 
@@ -2406,18 +2417,18 @@ public sealed partial class Plugin
             .FirstOrDefault(m => m.Name == "AddSetpiecesFromList" && m.GetParameters().Length == 4);
         if (method == null)
         {
-            if (Debug()) _log.Warning($"{ModName}: ChunkMetaGenerator.AddSetpiecesFromList/4 not found; evacuation setpiece placement scaling unavailable.");
+            _log.Warning($"{ModName}: ChunkMetaGenerator.AddSetpiecesFromList/4 not found; setpiece placement scaling unavailable.");
             return;
         }
 
         harmony.Patch(
             method,
-            prefix: new HarmonyMethod(typeof(Plugin).GetMethod(nameof(EvacSetpiecesPrefix), BindingFlags.Static | BindingFlags.NonPublic)),
-            postfix: new HarmonyMethod(typeof(Plugin).GetMethod(nameof(EvacSetpiecesPostfix), BindingFlags.Static | BindingFlags.NonPublic)));
-        _log.Msg($"{ModName}: hooked {FormatMethod(method)} for proportional evacuation setpiece placement.");
+            prefix: new HarmonyMethod(typeof(Plugin).GetMethod(nameof(SetpiecesPrefix), BindingFlags.Static | BindingFlags.NonPublic)),
+            finalizer: new HarmonyMethod(typeof(Plugin).GetMethod(nameof(SetpiecesFinalizer), BindingFlags.Static | BindingFlags.NonPublic)));
+        _log.Msg($"{ModName}: hooked {FormatMethod(method)} for proportional setpiece placement ({scope}).");
     }
 
-    private static void EvacSetpiecesPrefix(object[] __args, out EvacSetpiecePatchState __state)
+    private static void SetpiecesPrefix(object[] __args, out SetpiecePatchState __state)
     {
         __state = null;
         if (!Enabled() || __args == null || __args.Length < 4) return;
@@ -2433,7 +2444,7 @@ public sealed partial class Plugin
         if (groupCount <= 0) return;
 
         float scale = TargetSize / (float)VanillaSize;
-        EvacSetpiecePatchState state = new() { MissionId = missionId };
+        SetpiecePatchState state = new() { MissionId = missionId };
 
         for (int g = 0; g < groupCount; g++)
         {
@@ -2447,7 +2458,7 @@ public sealed partial class Plugin
 
                 object setpiece = GetMember(placement, "Setpiece");
                 string setpieceId = GetDataTemplateId(setpiece);
-                if (!IsEvacSetpiece(setpieceId)) continue;
+                if (!_scaleAllSetpieces && !IsEvacSetpiece(setpieceId)) continue;
 
                 object offset = GetMember(placement, "Offset");
                 if (offset == null) continue;
@@ -2494,7 +2505,7 @@ public sealed partial class Plugin
                     varianceApplied = true;
                 }
 
-                state.Restores.Add(new EvacSetpieceOffsetRestore
+                state.Restores.Add(new SetpieceOffsetRestore
                 {
                     Placement = placement,
                     X = x,
@@ -2505,21 +2516,26 @@ public sealed partial class Plugin
                     RestoreVariance = varianceApplied
                 });
 
-                _log.Msg($"{ModName}: EVAC SETPIECE {missionId} {setpieceId} [{(primary ? "primary" : "secondary")}/{sourceListName}] offset ({x},{y}) -> ({newX},{newY}), variance ({varianceX},{varianceY}) -> ({newVarianceX},{newVarianceY}) scale={scale:0.###}.");
+                if (AreaDiagnostics())
+                    _log.Msg($"{ModName}: SETPIECE {missionId} {setpieceId} [{(primary ? "primary" : "secondary")}/{sourceListName}] offset ({x},{y}) -> ({newX},{newY}), variance ({varianceX},{varianceY}) -> ({newVarianceX},{newVarianceY}) scale={scale:0.###}.");
             }
         }
 
         if (state.Restores.Count > 0)
         {
             __state = state;
-            _log.Msg($"{ModName}: EVAC SETPIECE placement adjusted {state.Restores.Count} authored placement(s) for {missionId}.");
+            if (_setpieceSummaryLogs < MaximumSetpieceSummaryLogs || AreaDiagnostics())
+            {
+                _setpieceSummaryLogs++;
+                _log.Msg($"{ModName}: SETPIECE placement scaled {state.Restores.Count} authored {(primary ? "primary" : "secondary")} placement(s) for {missionId} (x{scale:0.###}).");
+            }
         }
     }
 
-    private static void EvacSetpiecesPostfix(EvacSetpiecePatchState __state)
+    private static Exception SetpiecesFinalizer(SetpiecePatchState __state, Exception __exception)
     {
-        if (__state == null) return;
-        foreach (EvacSetpieceOffsetRestore restore in __state.Restores)
+        if (__state == null) return __exception;
+        foreach (SetpieceOffsetRestore restore in __state.Restores)
         {
             try
             {
@@ -2539,6 +2555,7 @@ public sealed partial class Plugin
             }
             catch { }
         }
+        return __exception;
     }
 
     private static string GetMissionTemplateIdFromMapgenInput(object input)

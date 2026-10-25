@@ -1,8 +1,17 @@
-# Larger Maps 2.3.2 — native Move cost-validation candidate
+# Larger Maps 2.4.0 — proportional mission setpiece placement
 
 The current host compiles the shared `mods/LargerMaps/src/LargerMaps` sources.
 Use the canonical Suite installer in `mods/GameplaySuite`; do not revive the old
 PR #18 one-click installer or install a second legacy Modpack Loader copy.
+
+## Proportional setpiece placement (#81, on by default)
+
+`ScaleSetpiecePlacement` (ON, restart required) scales every mission setpiece's
+centre-relative offset and variance from 42x42 to the selected size, so structures
+keep their vanilla relative positions at 64–96. Structures keep their native size;
+chunk-anchored areas follow them. Border bands, authored Rect areas, terrain stamps
+and unit counts are unchanged. OFF restores the 2.3.2 behaviour (evacuation setpieces
+only). Not yet gameplay-verified.
 
 ## Conditional advance recovery (#2, on by default)
 
