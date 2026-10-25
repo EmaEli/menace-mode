@@ -7,8 +7,8 @@ using UnityEngine;
 namespace SquaddieFieldPromotions;
 
 /// <summary>
-/// Experimental on-demand badge lettering for the self-contained generic art families.
-/// Replaces the red A/D source glyph pixels on private readable Unity sprite copies.
+/// Experimental on-demand squad lettering for bundled infantry and native pilot badge sprites.
+/// Replaces source glyph pixels on private readable Unity sprite copies; pilot labels are yellow.
 /// No original Generic Leaders mod, external templates, or disk mutation.
 /// Tactical badge getters must also be overridden for promoted infantry.
 /// </summary>
@@ -43,6 +43,8 @@ internal static class DynamicBadgeFactory
         ['Y'] = new[] { "10001", "10001", "01010", "00100", "00100", "00100", "00100" },
         ['Z'] = new[] { "11111", "00001", "00010", "00100", "01000", "10000", "11111" }
     };
+    private static readonly Color32 InfantryLabelColor = new(240, 26, 32, 255);
+    private static readonly Color32 PilotLabelColor = new(255, 220, 0, 255);
 
     // Excel-style bijective base 26: A..Z, AA..AZ, BA..BZ, ...
     // The current MENACE cap is far below the point where these labels are illegible.
@@ -64,23 +66,40 @@ internal static class DynamicBadgeFactory
     internal static string Apply(UnitLeaderTemplate target, StandalonePortraitAssets art,
         string label, List<UnityEngine.Object> pinned)
     {
+        return ApplySources(target, new[]
+        {
+            art.Get("badge.png"), art.Get("badge_mini.png"), art.Get("badge_dragged.png"),
+            art.Get("badge_unit.png"), art.Get("slot_badge.png"), art.Get("big_badge.png")
+        }, label, pinned, InfantryLabelColor);
+    }
+
+    internal static string ApplyPilot(UnitLeaderTemplate target, string label,
+        List<UnityEngine.Object> pinned)
+    {
+        return ApplySources(target, new[]
+        {
+            target.Badge, target.BadgeMini, target.BadgeDragged,
+            target.BadgeUnitWindow, target.SlotBadge, target.BigBadge
+        }, label, pinned, PilotLabelColor);
+    }
+
+    private static string ApplySources(UnitLeaderTemplate target, Sprite[] sources, string label,
+        List<UnityEngine.Object> pinned, Color32 labelColor)
+    {
         int attempted = 0, created = 0;
-        // Preserve the specialised placement/drag sprite, which contains the
-        // donor soldier's portrait ABOVE the black/red letter shield.
-        target.Badge = Generate(art.Get("badge.png"), label, pinned, ref attempted, ref created) ?? art.Get("badge.png");
-        target.BadgeMini = Generate(art.Get("badge_mini.png"), label, pinned, ref attempted, ref created) ?? art.Get("badge_mini.png");
-        target.BadgeDragged = Generate(art.Get("badge_dragged.png"), label, pinned, ref attempted, ref created) ?? art.Get("badge_dragged.png");
-        target.BadgeUnitWindow = Generate(art.Get("badge_unit.png"), label, pinned, ref attempted, ref created) ?? art.Get("badge_unit.png");
-        target.SlotBadge = Generate(art.Get("slot_badge.png"), label, pinned, ref attempted, ref created) ?? art.Get("slot_badge.png");
-        target.BigBadge = Generate(art.Get("big_badge.png"), label, pinned, ref attempted, ref created) ?? art.Get("big_badge.png");
-        // The tactical status overlay must never retain the cloned Singh emblem.
-        // Reuse the same shield silhouette and letter for both tactical layers.
+        target.Badge = Generate(sources[0], label, pinned, ref attempted, ref created, labelColor) ?? sources[0];
+        target.BadgeMini = Generate(sources[1], label, pinned, ref attempted, ref created, labelColor) ?? sources[1];
+        target.BadgeDragged = Generate(sources[2], label, pinned, ref attempted, ref created, labelColor) ?? sources[2];
+        target.BadgeUnitWindow = Generate(sources[3], label, pinned, ref attempted, ref created, labelColor) ?? sources[3];
+        target.SlotBadge = Generate(sources[4], label, pinned, ref attempted, ref created, labelColor) ?? sources[4];
+        target.BigBadge = Generate(sources[5], label, pinned, ref attempted, ref created, labelColor) ?? sources[5];
+        // Reuse the same generated shield for both tactical layers.
         target.BadgeWhite = target.Badge;
         return created + "/" + attempted;
     }
 
     private static Sprite Generate(Sprite source, string label,
-        List<UnityEngine.Object> pinned, ref int attempted, ref int created)
+        List<UnityEngine.Object> pinned, ref int attempted, ref int created, Color32 labelColor)
     {
         if (source == null) return null;
         attempted++;
@@ -128,7 +147,7 @@ internal static class DynamicBadgeFactory
             for (int y = y0; y <= y1; y++)
                 for (int x = x0; x <= x1; x++)
                     output[y * w + x] = new Color32(0, 0, 0, 255);
-            DrawLabel(output, w, h, label, x0, y0, x1, y1);
+            DrawLabel(output, w, h, label, x0, y0, x1, y1, labelColor);
 
             var texture = new Texture2D(w, h, TextureFormat.RGBA32, false);
             texture.SetPixels32(new Il2CppStructArray<Color32>(output));
@@ -152,7 +171,7 @@ internal static class DynamicBadgeFactory
     }
 
     private static void DrawLabel(Color32[] pixels, int width, int height,
-        string label, int x0, int y0, int x1, int y1)
+        string label, int x0, int y0, int x1, int y1, Color32 labelColor)
     {
         int glyphWidth = label.Length * 6 - 1;
         int boxW = x1 - x0 + 1, boxH = y1 - y0 + 1;
@@ -162,7 +181,6 @@ internal static class DynamicBadgeFactory
         int inkH = 7 * scale;
         int startX = x0 + (boxW - inkW) / 2;
         int startY = y0 + (boxH - inkH) / 2;
-        var red = new Color32(240, 26, 32, 255);
         for (int i = 0; i < label.Length; i++)
         {
             if (!Font.TryGetValue(label[i], out string[] glyph)) continue;
@@ -177,7 +195,7 @@ internal static class DynamicBadgeFactory
                         {
                             int px = xx + dx, py = yy + dy;
                             if (px >= 0 && px < width && py >= 0 && py < height)
-                                pixels[py * width + px] = red;
+                                pixels[py * width + px] = labelColor;
                         }
                 }
         }

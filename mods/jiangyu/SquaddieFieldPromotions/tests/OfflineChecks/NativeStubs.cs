@@ -26,6 +26,11 @@ namespace Il2CppMenace.Items
         public string GetGuid() => _guid;
         public BaseItemTemplate GetBaseItemTemplate() => Template;
     }
+    public class CommodityTemplate : BaseItemTemplate
+    {
+        public int TradeValue = 40;
+        public int GetTradeValue() => TradeValue;
+    }
     public class DossierItemTemplate : BaseItemTemplate
     {
         public Il2CppMenace.Tools.LocalizedLine Title, ShortName;
@@ -51,6 +56,24 @@ namespace Il2CppMenace.Conversations
 }
 namespace Il2CppMenace.Strategy
 {
+    public class OwnedItems
+    {
+        public readonly List<Il2CppMenace.Items.BaseItem> Items = new();
+        public bool FailAdd, FailReadback;
+        public int AddCalls;
+        public int GetInstanceCount(Il2CppMenace.Items.BaseItemTemplate template) =>
+            FailReadback ? 0 : Items.Count(item => item.Template == template);
+        public Il2CppMenace.Items.BaseItem AddItem(Il2CppMenace.Items.BaseItemTemplate template, bool dialog, bool slot)
+        {
+            AddCalls++;
+            if (template is Il2CppMenace.Items.DossierItemTemplate || dialog || slot)
+                throw new InvalidOperationException("Unsafe compensation grant");
+            if (FailAdd) return null;
+            var item = new Il2CppMenace.Items.BaseItem { Template = template };
+            Items.Add(item);
+            return item;
+        }
+    }
     public class MissionTemplate
     {
         public string Id;
@@ -223,6 +246,7 @@ namespace Il2CppMenace.States
         public Il2CppMenace.Strategy.Roster Roster = new();
         public Il2CppMenace.Strategy.BattlePlan BattlePlan = new();
         public Il2CppMenace.Strategy.BlackMarket BlackMarket = new();
+        public Il2CppMenace.Strategy.OwnedItems OwnedItems = new();
         public bool Ironman;
         public bool IsIronman() => Ironman;
         public static StrategyState Get() => Current;

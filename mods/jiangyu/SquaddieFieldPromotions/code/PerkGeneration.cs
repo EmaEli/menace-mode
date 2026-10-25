@@ -66,10 +66,14 @@ internal static class PerkGeneration
     internal static int Band(int? xp) => xp >= 8000 ? 6 : xp >= 4000 ? 5 : xp >= 2000 ? 4 :
         xp >= 1000 ? 3 : xp >= 500 ? 2 : xp >= 250 ? 1 : 0;
 
-    internal static void Generate(PromotionRecord record, int? xp, MentorSnapshot mentor)
+    internal static void Generate(PromotionRecord record, int? xp, MentorSnapshot mentor,
+        Func<string, bool> isAvailable = null)
     {
         if (record == null) throw new ArgumentNullException(nameof(record));
         if (xp < 0) throw new ArgumentOutOfRangeException(nameof(xp));
+        // Historical extraction includes perks that need not resolve in the running game.
+        // Filter only NEW snapshots; never reroll an existing leader's saved progression.
+        isAvailable ??= _ => true;
         var random = new StableRandom(record.LeaderId + ":sfp-perks-v1");
         int band = Band(xp);
         string initial = PromotionProgression.InitialPerkId;
@@ -85,8 +89,8 @@ internal static class PerkGeneration
                 3 => band >= 5 ? 2 : band >= 3 ? 1 : 0,
                 _ => band >= 6 ? 2 : band >= 4 ? 1 : 0,
             };
-            var premium = Advanced[tier - 1].Select(Id).Where(id => !used.Contains(id)).ToList();
-            var ordinary = Base[tier - 1].Select(Id).Where(id => !used.Contains(id)).ToList();
+            var premium = Advanced[tier - 1].Select(Id).Where(id => !used.Contains(id) && isAvailable(id)).ToList();
+            var ordinary = Base[tier - 1].Select(Id).Where(id => !used.Contains(id) && isAvailable(id)).ToList();
             random.Shuffle(premium);
             random.Shuffle(ordinary);
             foreach (string id in premium.Take(advancedCount))
@@ -109,7 +113,7 @@ internal static class PerkGeneration
         if (maxMentor > 0 && mentor != null)
         {
             var learned = mentor.LearnedPerkIds
-                .Where(id => MentorTiers.TryGetValue(id, out int t) && t <= maxMentorTier && id != initial)
+                .Where(id => MentorTiers.TryGetValue(id, out int t) && t <= maxMentorTier && id != initial && isAvailable(id))
                 .OrderBy(id => id, StringComparer.Ordinal).ToList();
             random.Shuffle(learned);
             int inherited = 0;

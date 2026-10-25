@@ -167,6 +167,31 @@ internal sealed class StandalonePortraitAssets
         speaker.BarkImage = _sprites["bark.png"];
     }
 
+    internal static void ApplyPilotArt(UnitLeaderTemplate leader, SpeakerTemplate speaker,
+        UnitLeaderTemplate pilotDonor)
+    {
+        if (leader == null) throw new ArgumentNullException(nameof(leader));
+        if (speaker == null) throw new ArgumentNullException(nameof(speaker));
+        if (pilotDonor?.SpeakerTemplate == null)
+            throw new InvalidOperationException("Native vehicle-pilot portrait donor is missing.");
+
+        var pilotSpeaker = pilotDonor.SpeakerTemplate;
+        leader.Slot = pilotDonor.Slot;
+        leader.SlotInactive = pilotDonor.SlotInactive;
+        leader.Badge = pilotDonor.Badge;
+        leader.BadgeWhite = pilotDonor.BadgeWhite;
+        leader.BadgeMini = pilotDonor.BadgeMini;
+        leader.BadgeDragged = pilotDonor.BadgeDragged;
+        leader.BadgeUnitWindow = pilotDonor.BadgeUnitWindow;
+        leader.SlotBadge = pilotDonor.SlotBadge;
+        leader.BigBadge = pilotDonor.BigBadge;
+        speaker.StandLookRightImage = pilotSpeaker.StandLookRightImage;
+        speaker.StandLookLeftImage = pilotSpeaker.StandLookLeftImage;
+        speaker.StandLookRightInactiveImage = pilotSpeaker.StandLookRightInactiveImage;
+        speaker.OperationSelectImage = pilotSpeaker.OperationSelectImage;
+        speaker.BarkImage = pilotSpeaker.BarkImage;
+    }
+
     internal Sprite Get(string fileName) => _sprites[fileName];
 
     internal void ApplyBadges(UnitLeaderTemplate template)

@@ -34,7 +34,7 @@ internal static class PortraitChecks
             {
                 art.ApplyTo(leader, speaker);
                 check(leader.Slot == sprites["slot.png"] && leader.SlotInactive == sprites["slot_inactive.png"],
-                    gender + " bundled slots replace pilot donor on initial assignment and repeated reconstruction");
+                    gender + " infantry slots use the bundled art on initial assignment and repeated reconstruction");
                 check(speaker.StandLookRightImage == sprites["stand_right.png"].texture &&
                     speaker.StandLookLeftImage == sprites["stand_left.png"].texture &&
                     speaker.StandLookRightInactiveImage == sprites["stand_right_inactive.png"].texture &&

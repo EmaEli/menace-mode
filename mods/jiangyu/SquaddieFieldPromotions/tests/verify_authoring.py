@@ -12,9 +12,13 @@ PROGRESSION_KDL = (ROOT / 'templates' / 'generic-infantry-progression.kdl').read
 
 
 class AuthoringTests(unittest.TestCase):
+    def test_new_infantry_perks_use_runtime_availability(self):
+        forge = (ROOT / 'code/LeaderForge.cs').read_text(encoding='utf-8')
+        self.assertIn('id => DataTemplateLoader.Get<PerkTemplate>(id, false) != null', forge)
+
     def test_jiangyu_not_old_modpack(self):
         self.assertEqual(MANIFEST['name'], 'SquaddieFieldPromotions')
-        self.assertEqual(MANIFEST['version'], '0.20.1')
+        self.assertEqual(MANIFEST['version'], '0.22.1')
         compiled_manifest = json.loads((ROOT / 'compiled/jiangyu.json').read_text(encoding='utf-8'))
         self.assertEqual(compiled_manifest['version'], MANIFEST['version'])
         self.assertTrue(any(dep.startswith('Jiangyu ') for dep in MANIFEST['depends']))
@@ -236,9 +240,46 @@ class AuthoringTests(unittest.TestCase):
         self.assertIn('LegacyInitialPerkId = "perk.unique_sy_economics"', progression)
         self.assertIn('PromotionProgression.LegacyInitialPerkId', forge)
         self.assertIn('"Il2CppMenace.Tactical.Actor", "ApplyMorale", 2, ScaleBTeamCasualtyMorale', system)
-        self.assertIn('InitialPerk?.GetID() != PromotionProgression.InitialPerkId', system)
+        self.assertIn('BTeamPerkRules.AppliesTo(actor.GetLeader()', system)
         self.assertIn('IList<object> args', system)
         self.assertIn('AllyDestroyedEvent | ElementLostEvent', rules)
+
+    def test_vehicle_b_team_is_custom_and_preserves_the_infantry_tradeoff(self):
+        perk = 'mod.squaddiefieldpromotions.vehicle_b_team'
+        self.assertIn(f'clone "PerkTemplate" from="perk.power_in_numbers" id="{perk}"', PROGRESSION_KDL)
+        for expected in ('"DeployCostMult"', '"DisciplineMult"', '"AmountMult" 0.9',
+                         '10% lower deployment costs and Discipline', 'double morale loss'):
+            self.assertIn(expected, PROGRESSION_KDL)
+        progression = (ROOT / 'code/PromotionProgression.cs').read_text(encoding='utf-8')
+        morale = (ROOT / 'code/BTeamPerkRules.cs').read_text(encoding='utf-8')
+        self.assertIn(f'VehicleInitialPerkId = "{perk}"', progression)
+        self.assertIn('initialPerkId == PromotionProgression.VehicleInitialPerkId', morale)
+        templates = json.loads((ROOT / 'compiled/templates.json').read_text(encoding='utf-8'))
+        clone = next(clone for clone in templates['templateClones'] if clone['cloneId'] == perk)
+        patch = next(patch for patch in templates['templatePatches'] if patch['templateId'] == perk)
+        self.assertEqual(clone['sourceId'], 'perk.power_in_numbers')
+        labels = {
+            item['descent'][0]['field']: item['value'].get('string')
+            for item in patch['set']
+            if item['fieldPath'] == 'm_DefaultTranslation'
+        }
+        self.assertEqual(labels['Title'], 'Vehicle B Team')
+        self.assertIn('10% lower deployment costs and Discipline', labels['ShortDescription'])
+        handler_values = {}
+        for item in patch['set']:
+            descent = item.get('descent', [])
+            if not descent or descent[0].get('field') != 'EventHandlers':
+                continue
+            index = descent[0]['index']
+            value = item['value']
+            if item['fieldPath'] == 'PropertyType':
+                handler_values.setdefault(index, {})['PropertyType'] = value['enumValue']
+            elif item['fieldPath'] == 'AmountMult':
+                handler_values.setdefault(index, {})['AmountMult'] = value['single']
+        self.assertEqual(handler_values, {
+            0: {'PropertyType': 'DeployCostMult', 'AmountMult': 0.9},
+            1: {'PropertyType': 'DisciplineMult', 'AmountMult': 0.9},
+        })
 
     def test_provenance_remains_save_compatible_but_badges_use_only_bundled_black_art(self):
         record = (ROOT / 'code/PromotionRecord.cs').read_text()
@@ -251,8 +292,8 @@ class AuthoringTests(unittest.TestCase):
                       (ROOT / 'code/PromotionSystem.cs').read_text())
         self.assertIn('DynamicBadgeFactory.Apply(leader, art, badgeLabel, _pinned)', forge)
         self.assertNotIn('GetSourceLeader(record)', forge)
-        for field in ('Badge', 'BadgeMini', 'BadgeDragged', 'BadgeUnitWindow', 'SlotBadge', 'BigBadge'):
-            self.assertIn(f'target.{field} = Generate(art.Get(', badges)
+        for index in range(6):
+            self.assertIn(f'target.{("Badge", "BadgeMini", "BadgeDragged", "BadgeUnitWindow", "SlotBadge", "BigBadge")[index]} = Generate(sources[{index}]', badges)
         self.assertIn('target.BadgeWhite = target.Badge;', badges)
         self.assertNotIn('OverlaySource', badges)
         self.assertNotIn('RenderTexture', badges)
@@ -458,16 +499,23 @@ class AuthoringTests(unittest.TestCase):
         self.assertIn('SourceCrewPilotName = sourceCommander', identity)
         self.assertIn('if (IsVehicleCrewPromotion) VehiclePerkGeneration.Validate(this)', record)
         self.assertIn('VehiclePerkGeneration.Generate(record, mentor)', identity)
-        self.assertIn('InitialPerkId = "perk.expert_pilot_vehicle"', perks)
+        self.assertIn('LegacyInitialPerkId = "perk.expert_pilot_vehicle"', perks)
+        self.assertIn('InitialPerkId = PromotionProgression.VehicleInitialPerkId', perks)
+        self.assertIn('LegacySchema = 2', perks)
+        self.assertIn('internal const int Schema = 3;', perks)
         self.assertIn('int xp = record.SourceCrewXp;', perks)
-        self.assertNotIn('preserveNativeArtwork', forge)
-        self.assertNotIn('native-pilot-portrait', forge)
-        visuals = forge.split('private static string ApplyStandaloneVisuals', 1)[1].split(
+        self.assertIn('StandalonePortraitAssets.ApplyPilotArt(leader, speaker, pilotDonor)', forge)
+        self.assertIn('DynamicBadgeFactory.ApplyPilot(leader', forge)
+        self.assertIn('visual = "native-pilot"', forge)
+        visuals = forge.split('private string ApplyVehicleArtwork', 1)[1].split(
             'private void ApplyProgression', 1)[0]
-        self.assertLess(visuals.index('art.ApplyTo(leader, speaker)'), visuals.index('if (forceGenericHead)'))
+        self.assertIn('StandalonePortraitAssets.ApplyPilotArt(leader, speaker, pilotDonor)', visuals)
+        self.assertIn('DynamicBadgeFactory.ApplyPilot', visuals)
         reuse = forge.split('if (existing != null)', 1)[1].split('UnitLeaderTemplate leader = null', 1)[0]
         self.assertIn('if (record.IsVehicleCrewPromotion)', reuse)
-        self.assertIn('.ApplyTo(existing, existing.SpeakerTemplate)', reuse)
+        self.assertIn('ApplyVehicleArtwork(existing, existing.SpeakerTemplate', reuse)
+        self.assertIn('PilotLabelColor = new(255, 220, 0, 255)',
+                      (ROOT / 'code/DynamicBadgeFactory.cs').read_text())
         self.assertIn('sourceVehicle != null', forge)
         self.assertIn('Only the commander is added to Hire; no vehicle is included.', CS)
 

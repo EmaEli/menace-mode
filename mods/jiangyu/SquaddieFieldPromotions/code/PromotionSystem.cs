@@ -29,6 +29,8 @@ public sealed class PromotionSystem : JiangyuSystem
 {
     internal const string DossierId = "mod.squaddiefieldpromotions.field_promotion_dossier";
     internal const string VehicleDossierId = "mod.squaddiefieldpromotions.vehicle_crew_dossier";
+    internal const string FailureRefundItemId = "commodity.high_value_salvage";
+    internal const int FailureRefundValue = 40;
     internal const int PreviewStockTimeout = 3;
     // BlackMarketUIScreen.FilterItems drops merchant items whose GetTradeValue() < 1.
     internal const int DefaultPrice = 100;
@@ -79,6 +81,8 @@ public sealed class PromotionSystem : JiangyuSystem
         Require(typeof(BlackMarket), "Restock", new[] { typeof(bool), typeof(bool) }, typeof(void));
         Require(typeof(BlackMarketUIScreen), "OnOpened", new[] { typeof(IOpenScreenParams) }, typeof(void));
         Require(typeof(Roster), "AddHirableLeader", new[] { typeof(UnitLeaderTemplate) }, typeof(void));
+        Require(typeof(OwnedItems), "AddItem", new[] { typeof(BaseItemTemplate), typeof(bool), typeof(bool) }, typeof(BaseItem));
+        Require(typeof(OwnedItems), "GetInstanceCount", new[] { typeof(BaseItemTemplate) }, typeof(int));
         Require(typeof(UnitLeaderTemplate), "GetUnitTitle", Type.EmptyTypes, typeof(LocalizedLine));
         Require(typeof(UnitLeaderTemplate), "GetUnitDescription", Type.EmptyTypes, typeof(LocalizedMultiLine));
         Require(typeof(UnitLeaderTemplate), "GetBadge", Type.EmptyTypes, typeof(UnityEngine.Sprite));
@@ -139,7 +143,7 @@ public sealed class PromotionSystem : JiangyuSystem
             return;
         try
         {
-            if (actor.GetLeader()?.LeaderTemplate?.InitialPerk?.GetID() != PromotionProgression.InitialPerkId)
+            if (!BTeamPerkRules.AppliesTo(actor.GetLeader()?.LeaderTemplate?.InitialPerk?.GetID()))
                 return;
             var eventValue = Convert.ToInt32(info.Args[0]);
             var moraleChange = Convert.ToSingle(info.Args[1]);
@@ -273,10 +277,12 @@ public sealed class PromotionSystem : JiangyuSystem
     {
         if (!IsPreview(info.Instance)) return;
         info.Skip = true; // Always before ANY fallible lookup: never unlock a random vanilla leader.
+        bool committed = false, rollbackUncertain = false;
+        StrategyState state = null;
         string text;
         try
         {
-            var state = StrategyState.Get();
+            state = StrategyState.Get();
             if (_unloaded || !_ready || !Enabled)
                 text = "Field promotions are disabled in Menace Mod Settings. No leader or soldier was changed.";
             else if (state == null || state.Squaddies == null || state.Roster == null || state.IsIronman())
@@ -287,7 +293,7 @@ public sealed class PromotionSystem : JiangyuSystem
                 if (IsVehiclePreview(info.Instance))
                 {
                     ReconcileVehiclePromotions(state, ledger);
-                    text = PromoteVehicleCrew(state, ledger);
+                    text = PromoteVehicleCrew(state, ledger, out committed);
                 }
                 else
                 {
@@ -314,6 +320,7 @@ public sealed class PromotionSystem : JiangyuSystem
                             record.SourceRemoved = true;
                             ledger.Records.Add(record); // Persisted beside the next game save, with the native pool.
                             Context.State.Save();
+                            committed = true;
                         }
                         catch (Exception failure)
                         {
@@ -338,10 +345,16 @@ public sealed class PromotionSystem : JiangyuSystem
         catch (Exception error)
         {
             WarnOnce("promote:" + error.GetType().Name + ":" + error.Message, "Field promotion failed. " + error.Message);
-            text = "Field promotion failed: " + error.Message + (error is PromotionRollbackException
+            rollbackUncertain = error is PromotionRollbackException;
+            text = (committed ? "Promotion committed, but its follow-up failed: " : "Field promotion failed: ") + error.Message + (rollbackUncertain
                 ? "\nDo not save this session. Reload the previous save before continuing."
+                : committed ? "\nDo not purchase another dossier for this soldier."
                 : "\nThe attempted promotion was not committed.");
         }
+        // Redeem runs inside OwnedItems.AddItem during an already-paid native trade.
+        // Skipping this void method does not restore the payment. Adding another
+        // dossier here would immediately redeem recursively instead of storing it.
+        if (!committed && !rollbackUncertain) text += RefundFailedPromotion(state);
         try
         {
             var ui = UIManager.Get() ?? throw new InvalidOperationException("Native UI manager unavailable.");
@@ -355,14 +368,39 @@ public sealed class PromotionSystem : JiangyuSystem
         }
     }
 
+    private string RefundFailedPromotion(StrategyState state)
+    {
+        try
+        {
+            var owned = state?.OwnedItems ?? throw new InvalidOperationException("Campaign inventory unavailable.");
+            var salvage = DataTemplateLoader.Get<CommodityTemplate>(FailureRefundItemId, false);
+            if (salvage == null || salvage.GetID() != FailureRefundItemId || salvage.GetTradeValue() != FailureRefundValue)
+                throw new InvalidOperationException("The native 40-credit compensation item is unavailable.");
+            int before = owned.GetInstanceCount(salvage);
+            var item = owned.AddItem(salvage, false, false);
+            if (item?.GetBaseItemTemplate()?.GetID() != FailureRefundItemId || owned.GetInstanceCount(salvage) != before + 1)
+                throw new InvalidOperationException("Compensation inventory readback failed; do not retry the grant.");
+            Debug("Failed promotion compensated with one " + FailureRefundItemId + " (trade value 40).");
+            return "\nCompensation: one High-Value Salvage (trade value 40) added to your inventory. " +
+                   "Reopen the Black Market to trade it, or reload your pre-purchase save to undo the purchase.";
+        }
+        catch (Exception error)
+        {
+            WarnOnce("refund:" + error.Message, "Promotion compensation could not be verified. " + error.Message);
+            return "\nCompensation could not be verified. Reload your pre-purchase save to recover the payment; " +
+                   "do not buy another dossier in this session.";
+        }
+    }
+
     private void NotifySourceChanged(SourceSquaddieRemoval source)
     {
         try { source.NotifyChanged(); }
         catch (Exception error) { WarnOnce("squaddie-ui", "Promotion committed, but the squad UI notification failed: " + error.Message); }
     }
 
-    private string PromoteVehicleCrew(StrategyState state, PromotionLedger ledger)
+    private string PromoteVehicleCrew(StrategyState state, PromotionLedger ledger, out bool committed)
     {
+        committed = false;
         if (!VehicleCrewCompatibility.IsAvailable)
             throw new InvalidOperationException("Vehicle crew promotions require the versioned Squaddie Veterancy API.");
         if (!_forge.AssetsPresent)
@@ -433,6 +471,7 @@ public sealed class PromotionSystem : JiangyuSystem
             throw;
         }
 
+        committed = true;
         ScheduleVoices();
         Debug($"Promoted vehicle crew: source={record.SourceCrewPilotTemplateId}/{record.SourceCrewPersonId}, " +
               $"xp={record.SourceCrewXp}, sourceRemoved={record.SourceRemoved}, eligible={selection.EligibleCount}, {detail}");

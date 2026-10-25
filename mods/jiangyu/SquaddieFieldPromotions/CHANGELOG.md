@@ -1,5 +1,43 @@
 # Changelog
 
+## 0.22.1 — failed-promotion compensation (#79)
+
+- Check native perk availability when generating new infantry progression. The 0.22.0 failure
+  used `perk.payback`, present in the historical extraction but unavailable to the running game.
+  Existing saved perk snapshots are not regenerated or changed.
+- An uncommitted infantry/vehicle dossier redemption now grants one native High-Value Salvage
+  commodity with base trade value 40. This is fixed compensation, not a calculation of the configured
+  dossier price or market modifiers. Successful promotions grant nothing extra.
+- Verify the inventory insertion; report an unverified refund honestly without automatically repeating it.
+  Incomplete native rollback still requires a reload rather than encouraging another purchase.
+- This protects new redemptions, not purchases already consumed by older versions. Reload a
+  pre-purchase save to undo an older failed purchase. No installer or save-file edits are involved.
+- Local real-reference Release build passed with zero warnings/errors; 29 authoring, 21 package Python,
+  and 11,702 offline/package behavior checks passed. The 311-file BuildKit inventory verified.
+  Windows build, installation and gameplay checks pending.
+
+## 0.22.0 — native vehicle-pilot artwork and yellow squad labels (#66)
+
+- Keep the matching native pilot portraits and badge artwork for vehicle commanders instead of
+  replacing them with generic infantry images, including during same-session reconstruction.
+- Draw vehicle squad letters in yellow on private copies of the pilot badge sprites; infantry labels
+  keep their existing red color and bundled portrait behavior.
+- Add offline coverage for native pilot portrait assignment, yellow badge generation and unchanged
+  infantry label coloring.
+- Canonical Windows BuildOnly and SFP-only install passed on 24 October with zero warnings/errors,
+  11,590 behavior checks and six installed-settings checks. Manifest/DLL/file versions verified;
+  only SFP targets were backed up outside Mods, and Settings 0.8.2/Jiangyu.Loader were reused.
+  All 174 bundled runtime assets were verified; saves, UserData and unrelated Mods were untouched.
+- In-game visual acceptance remains pending. This is not a fix for the mission-start crash tracked in #72.
+
+## 0.21.0 — custom vehicle commander starting perk (#66, #67)
+
+- Give new vehicle commanders a dedicated Vehicle B Team initial perk: 10% lower tactical deployment
+  costs and Discipline, with doubled morale loss from squaddie casualties or destroyed allied units.
+- Preserve existing schema-2 vehicle promotion snapshots and their native `perk.expert_pilot_vehicle`;
+  no selectable perks, purchased perks, portraits, crew transactions or infantry behavior change.
+- Windows build/install and in-game acceptance pending.
+
 ## 0.20.1 — consistent vehicle portraits (#66)
 
 - Replace mixed native pilot Hire slots and infantry voice-donor large/bark images with the bundled

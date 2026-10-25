@@ -9,6 +9,7 @@ internal static class PromotionProgression
     internal const string TreeId = "mod.squaddiefieldpromotions.generic_infantry_tree";
     internal const string TemplateId = "mod.squaddiefieldpromotions.generic_perk_source";
     internal const string InitialPerkId = "mod.squaddiefieldpromotions.b_team";
+    internal const string VehicleInitialPerkId = "mod.squaddiefieldpromotions.vehicle_b_team";
     internal const string LegacyInitialPerkId = "perk.unique_sy_economics";
 
     internal static readonly (string SkillId, int Tier)[] GenericInfantryPerks =

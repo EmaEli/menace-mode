@@ -106,6 +106,12 @@ Check(vehicleRecord.IsVehicleCrewPromotion && vehicleRecord.SourceSquaddieId == 
     vehicleRecord.SourceCrewVehicleGuid == "vehicle-guid" && vehicleRecord.Gender == 1 && vehicleRecord.SkinColor == 0 &&
     vehicleRecord.InitialPerkId == VehiclePerkGeneration.InitialPerkId,
     "vehicle promotion record preserves source pilot gender/skin, vehicle, active slot, crew identity and XP");
+var legacyVehicleRecord = JsonSerializer.Deserialize<PromotionRecord>(JsonSerializer.Serialize(vehicleRecord));
+legacyVehicleRecord.PerkSchemaVersion = VehiclePerkGeneration.LegacySchema;
+legacyVehicleRecord.InitialPerkId = VehiclePerkGeneration.LegacyInitialPerkId;
+legacyVehicleRecord.Validate();
+Check(legacyVehicleRecord.InitialPerkId == "perk.expert_pilot_vehicle",
+    "existing schema-2 vehicle promotions retain their native expert-pilot starting perk");
 Check(vehicleRecord.GeneratedPerks.Count == 15 &&
     new[] { 1, 2, 3, 4 }.Select(tier => vehicleRecord.GeneratedPerks.Count(perk => perk.Tier == tier))
         .SequenceEqual(new[] { 4, 5, 4, 2 }) &&
@@ -320,8 +326,9 @@ Check(PromotionProgression.GenericInfantryPerks.Length == 16 &&
     PromotionProgression.GenericInfantryPerks.Count(perk => perk.Tier == 4) == 2,
     "generic promotion tree has all 16 perks in the chosen tier distribution");
 Check(PromotionProgression.InitialPerkId == "mod.squaddiefieldpromotions.b_team" &&
+    PromotionProgression.VehicleInitialPerkId == "mod.squaddiefieldpromotions.vehicle_b_team" &&
     PromotionProgression.LegacyInitialPerkId == "perk.unique_sy_economics",
-    "new promotions use B Team while legacy generic leaders retain their original initial perk");
+    "infantry and vehicle promotions use distinct custom starting perks while legacy infantry keeps its original perk");
 Check(BTeamPerkRules.ScaleMoraleLoss(BTeamPerkRules.AllyDestroyedEvent, -10f) == -20f &&
     BTeamPerkRules.ScaleMoraleLoss(BTeamPerkRules.ElementLostEvent, -10f) == -20f,
     "B Team doubles morale loss for allied-unit destruction and squaddie casualties");
@@ -367,6 +374,22 @@ var stableId = PromotionRecord.LeaderPrefix + new string('a', 32);
 var firstTree = PerkRecord(2000, null, stableId).GeneratedPerks.Select(p => p.Id + ":" + p.Tier);
 var secondTree = PerkRecord(2000, null, stableId).GeneratedPerks.Select(p => p.Id + ":" + p.Tier);
 Check(firstTree.SequenceEqual(secondTree), "same leader identity always produces the same tree");
+for (int index = 0; index < 100; index++)
+{
+    var filtered = PerkRecord(8000);
+    PerkGeneration.Generate(filtered, 8000, new MentorSnapshot("squad_leader.lim", new[] { "perk.stubborn" }),
+        id => id != "perk.payback" && id != "perk.stubborn");
+    Check(filtered.GeneratedPerks.Count == 16 &&
+        filtered.GeneratedPerks.All(perk => perk.Id != "perk.payback" && perk.Id != "perk.stubborn"),
+        "unavailable runtime perks excluded from new base, advanced and mentor choices " + index);
+}
+var unavailableTree = PerkRecord(8000);
+var originalSnapshot = JsonSerializer.Serialize(unavailableTree);
+bool rejectedEmptyPool = false;
+try { PerkGeneration.Generate(unavailableTree, 8000, null, _ => false); }
+catch (InvalidOperationException) { rejectedEmptyPool = true; }
+Check(rejectedEmptyPool, "insufficient native perk pool fails before committing a partial snapshot");
+Check(JsonSerializer.Serialize(unavailableTree) == originalSnapshot, "failed generation preserves the previous snapshot");
 Check(!firstTree.SequenceEqual(PerkRecord(2000, null, PromotionRecord.LeaderPrefix + new string('b', 32))
     .GeneratedPerks.Select(p => p.Id + ":" + p.Tier)), "different promotions get different trees");
 var mentor = new MentorSnapshot("squad_leader.lim",
@@ -784,6 +807,8 @@ Check(PromotionSystem.ReadLedger("{\"Other.Type\":{}}") == null, "sidecar withou
 Check(PromotionSystem.SidecarSuffix == ".jiangyu.SquaddieFieldPromotions.json", "sidecar suffix follows Jiangyu convention");
 
 var preview = new DossierItemTemplate { Id = PromotionSystem.DossierId };
+var refundTemplate = new CommodityTemplate { Id = PromotionSystem.FailureRefundItemId, TradeValue = 40 };
+DataTemplateLoader.AdditionalTemplates[PromotionSystem.FailureRefundItemId] = refundTemplate;
 var vehiclePreview = new DossierItemTemplate { Id = PromotionSystem.VehicleDossierId };
 DataTemplateLoader.AdditionalTemplates[PromotionSystem.VehicleDossierId] = vehiclePreview;
 var vanilla = new DossierItemTemplate { Id = "dossier.squad_leader", Price = 25 };
@@ -826,12 +851,36 @@ var legacyUnit = new UnitActor
         },
     },
 };
+var vehicleBTeamUnit = new UnitActor
+{
+    Leader = new BaseUnitLeader
+    {
+        LeaderTemplate = new UnitLeaderTemplate
+        {
+            InitialPerk = new PerkTemplate { Id = PromotionProgression.VehicleInitialPerkId },
+        },
+    },
+};
+var oldVehicleUnit = new UnitActor
+{
+    Leader = new BaseUnitLeader
+    {
+        LeaderTemplate = new UnitLeaderTemplate
+        {
+            InitialPerk = new PerkTemplate { Id = VehiclePerkGeneration.LegacyInitialPerkId },
+        },
+    },
+};
 Check(ApplyMoraleHook(bTeamUnit, MoraleEvent.ElementLost, -10f) == -20f &&
-    ApplyMoraleHook(bTeamUnit, MoraleEvent.AllyDestroyed, -10f) == -20f,
-    "native ApplyMorale hook doubles B Team casualty losses");
+    ApplyMoraleHook(bTeamUnit, MoraleEvent.AllyDestroyed, -10f) == -20f &&
+    ApplyMoraleHook(vehicleBTeamUnit, MoraleEvent.ElementLost, -10f) == -20f &&
+    ApplyMoraleHook(vehicleBTeamUnit, MoraleEvent.AllyDestroyed, -10f) == -20f,
+    "native ApplyMorale hook doubles infantry and vehicle B Team casualty losses");
 Check(ApplyMoraleHook(bTeamUnit, MoraleEvent.AllyRouting, -10f) == -10f &&
     ApplyMoraleHook(bTeamUnit, MoraleEvent.ElementLost, 10f) == 10f &&
-    ApplyMoraleHook(legacyUnit, MoraleEvent.ElementLost, -10f) == -10f,
+    ApplyMoraleHook(vehicleBTeamUnit, MoraleEvent.AllyRouting, -10f) == -10f &&
+    ApplyMoraleHook(legacyUnit, MoraleEvent.ElementLost, -10f) == -10f &&
+    ApplyMoraleHook(oldVehicleUnit, MoraleEvent.ElementLost, -10f) == -10f,
     "native morale hook leaves routing, morale gains and legacy leaders unchanged");
 PortraitChecks.Run(Check);
 var badgeSprites = new Dictionary<string, UnityEngine.Sprite>();
@@ -853,6 +902,8 @@ Check(textClone.BadgeWhite == textClone.Badge && textClone.Badge != badgeSource 
     textClone.Badge.pixelsPerUnit == 73 && textClone.Badge.pivot.x == badgeSource.pivot.x &&
     textClone.Badge.pivot.y == badgeSource.pivot.y,
     "tactical overlay uses the same letter shield with original sprite scale and pivot");
+Check(textClone.Badge.texture.GetPixels32().Any(pixel => pixel.r == 240 && pixel.g == 26 && pixel.b == 32 && pixel.a == 255),
+    "infantry squad letters retain their established red color");
 Check(badgeTexture.GetPixels32().SequenceEqual(badgePixels) &&
     textClone.Badge.texture.GetPixels32()[0].a == 0 &&
     !textClone.Badge.texture.GetPixels32().SequenceEqual(badgePixels),
@@ -861,6 +912,45 @@ Check(textClone.GetBadge() == textClone.Badge && textClone.GetBadgeWhite() == te
     "tactical getter callbacks expose SFP shield sprites instead of shared infantry badges");
 Check(DynamicBadgeFactory.LabelForIndex(25) == "Z" && DynamicBadgeFactory.LabelForIndex(26) == "AA" &&
     DynamicBadgeFactory.LabelForIndex(52) == "BA", "production promotion labels continue beyond Z");
+var pilotBadge = UnityEngine.Sprite.Create(badgeTexture, new(0, 0, 40, 40), new(.5f, .5f));
+var pilotSlot = UnityEngine.Sprite.Create(new UnityEngine.Texture2D(24, 24, UnityEngine.TextureFormat.RGBA32, false),
+    new(0, 0, 24, 24), new(.5f, .5f));
+var pilotSpeaker = new SpeakerTemplate
+{
+    StandLookRightImage = new UnityEngine.Texture2D(2, 2, UnityEngine.TextureFormat.RGBA32, false),
+    StandLookLeftImage = new UnityEngine.Texture2D(3, 3, UnityEngine.TextureFormat.RGBA32, false),
+    StandLookRightInactiveImage = new UnityEngine.Texture2D(4, 4, UnityEngine.TextureFormat.RGBA32, false),
+    OperationSelectImage = new UnityEngine.Texture2D(5, 5, UnityEngine.TextureFormat.RGBA32, false),
+    BarkImage = pilotBadge,
+};
+var pilotDonor = new UnitLeaderTemplate
+{
+    Slot = pilotSlot, SlotInactive = pilotSlot, SpeakerTemplate = pilotSpeaker,
+    Badge = pilotBadge, BadgeWhite = pilotBadge, BadgeMini = pilotBadge, BadgeDragged = pilotBadge,
+    BadgeUnitWindow = pilotBadge, SlotBadge = pilotBadge, BigBadge = pilotBadge,
+};
+var promotedPilotSpeaker = new SpeakerTemplate();
+var promotedPilot = new UnitLeaderTemplate
+{
+    Slot = badgeSource, SlotInactive = badgeSource, SpeakerTemplate = promotedPilotSpeaker,
+    Badge = badgeSource, BadgeMini = badgeSource, BadgeDragged = badgeSource,
+    BadgeUnitWindow = badgeSource, SlotBadge = badgeSource, BigBadge = badgeSource,
+};
+StandalonePortraitAssets.ApplyPilotArt(promotedPilot, promotedPilotSpeaker, pilotDonor);
+Check(promotedPilot.Slot == pilotSlot && promotedPilot.SlotInactive == pilotSlot &&
+    promotedPilotSpeaker.StandLookRightImage == pilotSpeaker.StandLookRightImage &&
+    promotedPilotSpeaker.StandLookLeftImage == pilotSpeaker.StandLookLeftImage &&
+    promotedPilotSpeaker.StandLookRightInactiveImage == pilotSpeaker.StandLookRightInactiveImage &&
+    promotedPilotSpeaker.OperationSelectImage == pilotSpeaker.OperationSelectImage &&
+    promotedPilotSpeaker.BarkImage == pilotSpeaker.BarkImage,
+    "vehicle promotion copies native pilot portraits instead of generic infantry art");
+var pilotBadgePinned = new List<UnityEngine.Object>();
+Check(DynamicBadgeFactory.ApplyPilot(promotedPilot, "A", pilotBadgePinned) == "6/6" &&
+    promotedPilot.BadgeWhite == promotedPilot.Badge &&
+    promotedPilot.Badge.texture.GetPixels32().Any(pixel => pixel.r == 255 && pixel.g == 220 && pixel.b == 0 && pixel.a == 255) &&
+    !promotedPilot.Badge.texture.GetPixels32().Any(pixel => pixel.r == 240 && pixel.g == 26 && pixel.b == 32 && pixel.a == 255) &&
+    pilotBadge.texture.GetPixels32().SequenceEqual(badgePixels),
+    "vehicle squad icons use private native pilot badge copies with yellow lettering");
 Check(textClone.GetUnitTitle() == textClone.UnitTitle &&
     textClone.GetUnitDescription() == textClone.UnitDescription,
     "SFP native getter postfixes expose generated infantry identity");
@@ -998,6 +1088,7 @@ StrategyState.Current.Squaddies.OnSquaddiesChanged = () => poolNotifications++;
 var liveLedger = system.Context.State.Get<PromotionLedger>();
 Check(Redeem(preview).Skip && preview.VanillaRedeems == 0, "custom redemption NEVER calls vanilla");
 Check(UIManager.Current.Last.Text.Contains("is now a squad leader"), "promotion result visible");
+Check(StrategyState.Current.OwnedItems.Items.Count == 0, "successful promotion grants no compensation");
 Check(!UIManager.Current.Last.Label.enableRichText, "names cannot inject markup");
 Check(LeaderForge.Last.Installed.Count == 1 && StrategyState.Current.Roster.Hirable.Count == 1, "leader installed once into Hire");
 Check(liveLedger.Records.Count == 1 && liveLedger.Records[0].SourceSquaddieId == selection.Soldier.Id &&
@@ -1050,12 +1141,18 @@ Check(LeaderForge.Last.HeadModes.Last(), "head setting reapplies generic leader 
 NativeCandidates.Value = excluded;
 var secondSource = Seed(excluded.Soldier);
 LeaderForge.FailInstall = true;
+int refundsBefore = StrategyState.Current.OwnedItems.Items.Count;
 Check(Redeem(preview).Skip && UIManager.Current.Last.Text.Contains("Field promotion failed") && liveLedger.Records.Count == 1,
     "native clone failure keeps the ledger unchanged and tells the player");
+Check(StrategyState.Current.OwnedItems.Items.Count == refundsBefore + 1 &&
+    StrategyState.Current.OwnedItems.Items.Last().Template == refundTemplate &&
+    UIManager.Current.Last.Text.Contains("trade value 40"), "failed promotion grants exactly one 40-credit native commodity");
 LeaderForge.FailInstall = false;
 Check(StrategyState.Current.Squaddies.m_AliveSquaddies.Contains(secondSource), "forge failure preserves source soldier");
 system.Context.State.FailSave = true;
 Redeem(preview);
+Check(StrategyState.Current.OwnedItems.Items.Count == refundsBefore + 2,
+    "sidecar failure compensates once after soldier and Hire rollback");
 Check(liveLedger.Records.Count == 1 && StrategyState.Current.Roster.Hirable.Count == 1 &&
     StrategyState.Current.Squaddies.m_AliveSquaddies.SequenceEqual(new[] { untouched, secondSource }) && poolNotifications == 1,
     "state failure rolls back Hire, source and ledger without notifying observers");
@@ -1065,9 +1162,34 @@ Redeem(preview);
 Check(liveLedger.Records.Count == 1 && StrategyState.Current.Roster.Hirable.Count == 1 &&
     StrategyState.Current.Squaddies.m_AliveSquaddies.Contains(secondSource), "failed removal readback rolls back Hire and source");
 StrategyState.Current.Squaddies.FailReadback = false;
+LeaderForge.FailInstall = true;
+var inventory = StrategyState.Current.OwnedItems;
+inventory.FailAdd = true;
+int grantsBefore = inventory.AddCalls, countBefore = inventory.Items.Count;
+Redeem(preview);
+Check(inventory.AddCalls == grantsBefore + 1 && inventory.Items.Count == countBefore &&
+    UIManager.Current.Last.Text.Contains("Reload your pre-purchase save"),
+    "failed compensation does not report success or recursively retry");
+inventory.FailAdd = false;
+inventory.FailReadback = true;
+grantsBefore = inventory.AddCalls;
+Redeem(preview);
+Check(inventory.AddCalls == grantsBefore + 1 && inventory.Items.Count == countBefore + 1 &&
+    UIManager.Current.Last.Text.Contains("Compensation could not be verified"),
+    "uncertain inventory readback never double-grants compensation");
+inventory.FailReadback = false;
+refundTemplate.TradeValue = 41;
+grantsBefore = inventory.AddCalls;
+Redeem(preview);
+Check(inventory.AddCalls == grantsBefore && UIManager.Current.Last.Text.Contains("Compensation could not be verified"),
+    "unexpected commodity value fails closed instead of granting the wrong item");
+refundTemplate.TradeValue = 40;
+LeaderForge.FailInstall = false;
+countBefore = inventory.Items.Count;
 Check(Redeem(preview).Skip && liveLedger.Records.Count == 2 && liveLedger.Records[1].BadgeIndex == 1 &&
     liveLedger.Records[1].PortraitProfile == PromotionPortraitAssignment.MaleBrown04,
     "next promotion gets the next badge and the category's next portrait set");
+Check(inventory.Items.Count == countBefore, "successful retry cannot award both a leader and compensation");
 Check(!StrategyState.Current.Squaddies.IsAlive(secondSource.Id), "unassigned promoted source also removed");
 Check(UIManager.Current.Last.Text.Contains("1 already promoted skipped") || liveLedger.Records[1].SourceSquaddieId == excluded.Soldier.Id, "second leader from a different soldier");
 Log.Warnings.Clear();
@@ -1161,8 +1283,10 @@ Open();
 Check(StrategyState.Current.BlackMarket.ContainsItem(vehiclePreview) &&
     vehiclePreview.Title.GetRawDefaultTranslation() == "Vehicle Crew Promotion Dossier",
     "compatible Veterancy exposes a separate localized vehicle crew dossier");
+int vehicleRefundsBefore = inventory.Items.Count;
 Check(Redeem(vehiclePreview).Skip && vehiclePreview.VanillaRedeems == 0,
     "vehicle dossier blocks vanilla redemption and executes the custom transaction");
+Check(inventory.Items.Count == vehicleRefundsBefore, "committed vehicle promotion grants no compensation");
 VehicleCrewCompatibility.BeforePromote = null;
 var promotedVehicleRecord = system.Context.State.Get<PromotionLedger>().Records.Single(record => record.IsVehicleCrewPromotion);
 var replacedVehicleCrew = VehicleCrewCompatibility.Candidates.Single(candidate =>
@@ -1196,12 +1320,22 @@ VehicleCrewCompatibility.Candidates = new List<VehicleCrewCandidate>
     VC("pilot.rewa", "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee", 3100),
 };
 LeaderForge.FailInstall = true;
+vehicleRefundsBefore = inventory.Items.Count;
 Check(Redeem(vehiclePreview).Skip && VehicleCrewCompatibility.Candidates.Single().PersonId ==
     "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee" && VehicleCrewCompatibility.Candidates.Single().Xp == 3100 &&
     VehicleCrewCompatibility.Candidates.Single().Status == "Healthy" &&
     !system.Context.State.Get<PromotionLedger>().Records.Any(record => record.IsVehicleCrewPromotion),
     "forge failure rolls back the crew mutation and removes its pending ledger transaction");
+Check(inventory.Items.Count == vehicleRefundsBefore + 1, "fully rolled-back vehicle failure compensates exactly once");
+vehicleRefundsBefore = inventory.Items.Count;
+VehicleCrewCompatibility.FailRestore = true;
+Redeem(vehiclePreview);
+Check(inventory.Items.Count == vehicleRefundsBefore && UIManager.Current.Last.Text.Contains("Do not save this session") &&
+    !UIManager.Current.Last.Text.Contains("Compensation:"),
+    "uncertain crew rollback requires reload without masking the failure with compensation");
+VehicleCrewCompatibility.FailRestore = false;
 LeaderForge.FailInstall = false;
+Open(); // Reconcile the retained failed transaction before the next independent scenario.
 VehicleCrewCompatibility.Candidates[0].Status = "Wounded";
 Open();
 Check(!StrategyState.Current.BlackMarket.ContainsItem(vehiclePreview),

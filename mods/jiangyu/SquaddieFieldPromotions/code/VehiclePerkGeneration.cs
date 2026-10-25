@@ -8,8 +8,11 @@ namespace SquaddieFieldPromotions;
 /// <summary>Saved, XP-banded generic vehicle-leader tree; named-pilot signature perks are excluded.</summary>
 internal static class VehiclePerkGeneration
 {
-    internal const int Schema = 2;
-    internal const string InitialPerkId = "perk.expert_pilot_vehicle";
+    // Schema 2 vehicle promotions retain their original native starting perk on old saves.
+    internal const int LegacySchema = 2;
+    internal const int Schema = 3;
+    internal const string LegacyInitialPerkId = "perk.expert_pilot_vehicle";
+    internal const string InitialPerkId = PromotionProgression.VehicleInitialPerkId;
     private static readonly int[] Slots = { 4, 5, 4, 2 };
 
     private static readonly string[][] Base =
@@ -132,13 +135,16 @@ internal static class VehiclePerkGeneration
     {
         record.InitialPerkId ??= "";
         record.MentorLeaderTemplateId ??= "";
-        if (!record.IsVehicleCrewPromotion || record.PerkSchemaVersion != Schema ||
+        string expectedInitialPerkId = record.PerkSchemaVersion == LegacySchema
+            ? LegacyInitialPerkId
+            : record.PerkSchemaVersion == Schema ? InitialPerkId : null;
+        if (!record.IsVehicleCrewPromotion || expectedInitialPerkId == null ||
             record.XpAtPromotion != record.SourceCrewXp || record.MentorLeaderTemplateId.Length > 256 ||
-            record.MentorLeaderTemplateId.Any(char.IsControl) || record.InitialPerkId != InitialPerkId ||
+            record.MentorLeaderTemplateId.Any(char.IsControl) || record.InitialPerkId != expectedInitialPerkId ||
             record.GeneratedPerks == null || record.GeneratedPerks.Count != Slots.Sum())
             throw new InvalidDataException("Invalid saved vehicle perk snapshot.");
 
-        var seen = new HashSet<string>(StringComparer.Ordinal) { InitialPerkId };
+        var seen = new HashSet<string>(StringComparer.Ordinal) { expectedInitialPerkId };
         int previousTier = 1;
         foreach (var perk in record.GeneratedPerks)
         {

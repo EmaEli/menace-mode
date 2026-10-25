@@ -63,7 +63,8 @@ internal sealed class LeaderForge
             InitialAttributes = PromotionRules.Attributes(selection.UsesXp ? soldier.Xp : null),
         };
         PromotionIdentity.Populate(record, soldier, service, sourceLeaderTemplateId);
-        PerkGeneration.Generate(record, selection.UsesXp ? soldier.Xp : null, ReadMentor(state, soldier.Id, service));
+        PerkGeneration.Generate(record, selection.UsesXp ? soldier.Xp : null, ReadMentor(state, soldier.Id, service),
+            id => DataTemplateLoader.Get<PerkTemplate>(id, false) != null);
         record.Validate();
         return record;
     }
@@ -226,10 +227,15 @@ internal sealed class LeaderForge
                 throw new InvalidOperationException("Native leader template ID collision / identity mismatch.");
             ApplyIdentityText(record, existing);
             ApplyProgression(record, existing);
-            // Repair 0.20.0's mixed pilot-slot / infantry-speaker artwork on same-session reloads too.
             if (record.IsVehicleCrewPromotion)
-                GenderArt(record.Gender == PromotionPortraitAssignment.FemaleGender)
-                    .ApplyTo(existing, existing.SpeakerTemplate);
+            {
+                var pilotDonor = DataTemplateLoader.Get<UnitLeaderTemplate>(SourceLeaderIdFor(record), false);
+                if (pilotDonor == null) throw new InvalidOperationException("Native vehicle-pilot art donor is missing.");
+                string badgeLabel = DynamicBadgeFactory.LabelForIndex(record.BadgeIndex);
+                string badge = ApplyVehicleArtwork(existing, existing.SpeakerTemplate, pilotDonor, record.BadgeIndex);
+                SetHeadMode(record, forceGenericHead);
+                return $"reuse=registered, visual=native-pilot, badge={badgeLabel}/{badge}";
+            }
             SetHeadMode(record, forceGenericHead);
             return "reuse=registered, badge=" + DynamicBadgeFactory.LabelForIndex(record.BadgeIndex);
         }
@@ -255,7 +261,7 @@ internal sealed class LeaderForge
             bool female = record.Gender == Convert.ToInt32(sy.Gender);
             var voiceDonor = female ? sy : lim;
             string gender = female ? "female" : "male";
-            var art = GenderArt(female);
+            var art = record.IsVehicleCrewPromotion ? null : GenderArt(female);
             DataTemplateLoader.GetAll<UnitLeaderTemplate>();
             DataTemplateLoader.GetAll<SpeakerTemplate>();
             var bridge = new JiangyuCloneBridge();
@@ -285,24 +291,35 @@ internal sealed class LeaderForge
             ApplyIdentityText(record, leader, source, voiceDonor);
             leader.Gender = (Il2CppMenace.Tactical.Gender)record.Gender;
             leader.SkinColor = (Il2CppMenace.Tactical.SkinColor)record.SkinColor;
-            string head = ApplyStandaloneVisuals(leader, speaker, voiceDonor, art, female,
-                record.IsVehicleCrewPromotion || forceGenericHead);
-            string visual = "embedded-" + gender;
-            if (record.PortraitProfile.Length != 0)
-            {
-                if (!_portraitProfileArt.TryGetValue(record.PortraitProfile, out var portrait) ||
-                    portrait == null || !portrait.IsAlive)
-                {
-                    portrait = StandalonePortraitAssets.LoadPortraitProfile(
-                        _modFolder, record.PortraitProfile, _pinned);
-                    _portraitProfileArt[record.PortraitProfile] = portrait;
-                }
-                // Only the six portrait fields change; default gender art still supplies dynamic badges.
-                portrait.ApplyTo(leader, speaker);
-                visual = "embedded-" + record.PortraitProfile;
-            }
+            string head;
+            string visual;
             string badgeLabel = DynamicBadgeFactory.LabelForIndex(record.BadgeIndex);
-            string badge = DynamicBadgeFactory.Apply(leader, art, badgeLabel, _pinned);
+            string badge;
+            if (record.IsVehicleCrewPromotion)
+            {
+                badge = ApplyVehicleArtwork(leader, speaker, source, record.BadgeIndex);
+                head = "native-pilot";
+                visual = "native-pilot";
+            }
+            else
+            {
+                head = ApplyStandaloneVisuals(leader, speaker, voiceDonor, art, female, forceGenericHead);
+                visual = "embedded-" + gender;
+                if (record.PortraitProfile.Length != 0)
+                {
+                    if (!_portraitProfileArt.TryGetValue(record.PortraitProfile, out var portrait) ||
+                        portrait == null || !portrait.IsAlive)
+                    {
+                        portrait = StandalonePortraitAssets.LoadPortraitProfile(
+                            _modFolder, record.PortraitProfile, _pinned);
+                        _portraitProfileArt[record.PortraitProfile] = portrait;
+                    }
+                    // Portrait profiles change the six portrait fields only; badges stay dynamic.
+                    portrait.ApplyTo(leader, speaker);
+                    visual = "embedded-" + record.PortraitProfile;
+                }
+                badge = DynamicBadgeFactory.Apply(leader, art, badgeLabel, _pinned);
+            }
             ApplyProgression(record, leader);
             leader.QualityLevel = 1;
             leader.HiringCosts = 0;
@@ -356,6 +373,15 @@ internal sealed class LeaderForge
             if (female) _femaleArt = art; else _maleArt = art;
         }
         return art;
+    }
+
+    private string ApplyVehicleArtwork(UnitLeaderTemplate leader, SpeakerTemplate speaker,
+        UnitLeaderTemplate pilotDonor, int badgeIndex)
+    {
+        ValidateVehicleSource(pilotDonor, Convert.ToInt32(leader.Gender));
+        StandalonePortraitAssets.ApplyPilotArt(leader, speaker, pilotDonor);
+        leader.CustomHead = null;
+        return DynamicBadgeFactory.ApplyPilot(leader, DynamicBadgeFactory.LabelForIndex(badgeIndex), _pinned);
     }
 
     private static string ApplyStandaloneVisuals(UnitLeaderTemplate leader, SpeakerTemplate speaker,
