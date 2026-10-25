@@ -7,6 +7,9 @@
 - Keep the native pilot badge artwork and yellow squad-letter overlays; crew transactions, vehicle actor type,
   progression, equipment and infantry portraits are unchanged.
 - Add regression coverage for both genders, all portrait views and same-session reconstruction.
+- Canonical Windows Standalone/UseInstalledSettings BuildOnly and SFP-only install passed on 25 October:
+  zero warnings/errors, 11,701 behavior checks, six installed-settings checks, verified installed versions
+  and all 174 runtime assets. In-game visual acceptance remains pending.
 
 ## 0.22.1 — failed-promotion compensation (#79)
 

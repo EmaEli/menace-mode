@@ -1,8 +1,8 @@
 # Squaddie Field Promotions 0.22.2
 
-> **0.22.2 portrait correction (#66):** new and reconstructed vehicle commanders use matching generic balaclava portraits instead of a named source pilot's character-specific image. Native pilot badge art and yellow squad letters remain. In-game visual acceptance is pending.
+> **0.22.2 portrait correction (#66):** new and reconstructed vehicle commanders use matching generic balaclava portraits instead of a named source pilot's character-specific image. Native pilot badge art and yellow squad letters remain. Local Release build, 29 authoring tests, 21 Python tests and 11,701 C# checks passed. On MENACE 0.7.17+22362, canonical Windows Standalone/UseInstalledSettings BuildOnly and SFP-only install passed with .NET SDK 10.0.113, zero warnings/errors and six installed-settings checks. Installed manifest/assembly/file versions are 0.22.2/0.22.2.0/0.22.2.0; all 174 runtime assets verified. Prior SFP 0.22.1 is backed up in `_MENACE_Backups/20261025-111056-8a2490e2015b403ea0aa74772dccd466`; 345 unrelated Mods files and 798 UserData files are unchanged. In-game visual acceptance is pending.
 
-> **0.22.1 failure-recovery candidate (#79):** new infantry trees exclude perks unavailable in the running game.
+> **Previously installed 0.22.1 failure-recovery candidate (#79; superseded by 0.22.2):** new infantry trees exclude perks unavailable in the running game.
 > An uncommitted dossier redemption grants one High-Value Salvage commodity (base trade value 40),
 > not another auto-redeeming dossier. Successful promotions grant no compensation. If rollback or
 > compensation cannot be verified, follow the dialog's reload instruction. Historical failed purchases
@@ -12,7 +12,7 @@
 > **Historical 0.22.0 test candidate:** introduced native pilot portraits and yellow squad labels. Version 0.22.2 supersedes its character-specific vehicle portraits with generic balaclava art while preserving native badges and yellow letters.
 > Version 0.21.0 gives new vehicle commanders a distinct custom Vehicle B Team starting perk: 10% lower tactical deployment costs and Discipline, with doubled morale loss for squaddie casualties or destroyed allied units. Existing vehicle promotions retain their saved native starting perk. The selectable vehicle perk tree and crew transaction remain unchanged.
 > Version 0.20.1 first unified vehicle portrait fields with bundled male/female balaclava images; 0.22.2 restores that generic portrait behavior. Vehicle promotions still consume only the selected crew identity, install a separate vehicle commander with an XP-banded vehicle perk tree, and grant no vehicle. The transaction is saved before mutation and rolls back or reconciles on failure/load.
-> The 24 October mission-start crash recorded VERSION.dll / 0xc0000602 / offset 0x7ddf6d, matching the MelonLoader failure tracked in #72 and previously reproduced with zero mods. This portrait fix does not fix that crash; vehicle gameplay acceptance remains blocked.
+> The 24 October mission-start crash recorded VERSION.dll / 0xc0000602 / offset 0x7ddf6d, matching the MelonLoader failure tracked in #72 and previously reproduced with zero mods. This portrait fix does not fix that crash; in-game portrait acceptance and mission-start stability remain unverified.
 > Version 0.22.0 canonical Windows BuildOnly/install passed on 24 October with zero warnings/errors, 11,590 behavior checks and six installed-settings checks. Manifest/DLL/file versions verified; only SFP targets were backed up outside Mods and updated. Menace Mod Settings 0.8.2 and Jiangyu.Loader were reused; all 174 bundled runtime assets were verified. Saves, UserData and unrelated Mods were untouched. In-game visual acceptance remains pending.
 > Version 0.20.1 canonical Windows BuildOnly/install passed on 24 October: zero warnings/errors,
 > 11,586 offline behavior checks, six installed-settings checks, verified manifest/assembly/file versions.
