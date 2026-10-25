@@ -1,21 +1,3 @@
-## 2.4.0 - Proportional mission setpiece placement (#81)
-
-- New `ScaleSetpiecePlacement` toggle (default **ON**, restart required): every mission
-  primary/secondary setpiece offset and variance, which the game authors relative to the
-  centre of a 42x42 map, is scaled by N/42 on all enlarged sizes (64–96). Structures keep
-  the same relative position as in vanilla (e.g. the southern settlement of
-  `mission.pirates_seize_gtam_site` again borders the southern deployment band) instead
-  of clustering around the centre. Previously only the five evacuation setpieces scaled.
-- Structures keep their native size; chunk-anchored deployment/objective areas follow them
-  unchanged. Border bands, authored Rect areas, terrain stamps and unit counts are unchanged.
-  A layout that fits 42x42 also fits N, because only the gaps between structures grow.
-- Authored offsets are now restored in a Harmony finalizer, so a native exception during
-  placement can no longer leave scaled values on the mission template.
-- Logging: at most four summary lines per session; per-setpiece lines need
-  `DiagnoseMissionAreas`. OFF restores 2.3.2 behaviour (evacuation setpieces only).
-
----
-
 ## 2.3.2 - Defer destination AP validation to native Move (MEN-002)
 
 - Fix the recovery's premature destination-cost check: at ConsiderZones.PostProcess,

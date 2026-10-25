@@ -191,7 +191,7 @@ class ReferenceScalingTests(unittest.TestCase):
     def test_version_and_dump_class_coverage(self):
         self.assertNotIn('private const string Version', SOURCE)
         m=json.loads((ROOT/'../jiangyu/LargerMaps/jiangyu.json').read_text())
-        self.assertEqual(m['version'],'2.4.0')
+        self.assertEqual(m['version'],'2.3.2')
         dump=Path('/mnt/data/dump.cs')
         if dump.exists():
             text=dump.read_text()
@@ -205,42 +205,5 @@ class ReferenceScalingTests(unittest.TestCase):
                 ix=text.find('public class '+klass+' :')
                 self.assertGreater(ix,0,klass)
                 self.assertIn(field,text[ix:ix+2500])
-
-
-class ProportionalSetpieceTests(unittest.TestCase):
-    def test_all_setpieces_scale_by_default_and_restore_in_finalizer(self):
-        self.assertIn('settings.AddToggle("ScaleSetpiecePlacement", "Place mission structures at vanilla relative positions (restart required)", true);', SOURCE)
-        self.assertIn('_scaleAllSetpieces = ReadBool("ScaleSetpiecePlacement", true);', SOURCE)
-        self.assertIn('if (!_scaleAllSetpieces && !IsEvacSetpiece(setpieceId)) continue;', SOURCE)
-        self.assertIn('float scale = TargetSize / (float)VanillaSize;', SOURCE)
-        self.assertIn('finalizer: new HarmonyMethod(typeof(Plugin).GetMethod(nameof(SetpiecesFinalizer)', SOURCE)
-        self.assertIn('private static Exception SetpiecesFinalizer(SetpiecePatchState __state, Exception __exception)', SOURCE)
-        self.assertNotIn('EvacSetpiecesPostfix', SOURCE)
-        self.assertIn('if (AreaDiagnostics())\n                    _log.Msg($"{ModName}: SETPIECE ', SOURCE)
-        self.assertIn('_setpieceSummaryLogs < MaximumSetpieceSummaryLogs', SOURCE)
-
-    def test_layout_that_fits_vanilla_fits_every_size(self):
-        # Centre-relative offset o, variance v, half-extent s on 42x42 (centre 21).
-        for o in range(-21, 22):
-            for v in range(0, 6):
-                for s in range(1, 12):
-                    lo, hi = 21 + o - v - s, 21 + o + v + s
-                    if lo < 0 or hi > 42:
-                        continue
-                    for n in SIZES:
-                        k = n / 42
-                        so, sv = round(o * k), round(v * k)
-                        self.assertGreaterEqual(n // 2 + so - sv - s, -1, (o, v, s, n))
-                        self.assertLessEqual(n // 2 + so + sv + s, n + 1, (o, v, s, n))
-
-    def test_gtam_site_settlement_keeps_vanilla_gap_to_south_band(self):
-        # mission.pirates_seize_gtam_site: SouthMapBorder width 6; southern civilian
-        # setpieces at centre offset y=-15. Vanilla gap from band edge to setpiece centre
-        # is 21-15-6 = 0 tiles; it must remain about 0 instead of ~20 at 96x96.
-        for n in SIZES:
-            band = round(6 * 64 / 42) if n == 64 else round(round(6 * 64 / 42) * n / 64)
-            centre = n // 2 + round(-15 * n / 42)
-            self.assertLessEqual(abs(centre - band), 2, (n, centre, band))
-
 
 if __name__=='__main__':unittest.main()
