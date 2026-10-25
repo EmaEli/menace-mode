@@ -191,7 +191,7 @@ class ReferenceScalingTests(unittest.TestCase):
     def test_version_and_dump_class_coverage(self):
         self.assertNotIn('private const string Version', SOURCE)
         m=json.loads((ROOT/'../jiangyu/LargerMaps/jiangyu.json').read_text())
-        self.assertEqual(m['version'],'2.3.2')
+        self.assertEqual(m['version'],'2.5.0')
         dump=Path('/mnt/data/dump.cs')
         if dump.exists():
             text=dump.read_text()
@@ -205,5 +205,58 @@ class ReferenceScalingTests(unittest.TestCase):
                 ix=text.find('public class '+klass+' :')
                 self.assertGreater(ix,0,klass)
                 self.assertIn(field,text[ix:ix+2500])
+
+
+CONSERVATIVE = (ROOT/'src/LargerMaps/ConservativeMissionAreas.cs').read_text()
+REFERENCE64 = (ROOT/'src/LargerMaps/Reference64MissionAreas.cs').read_text()
+EXTRACTED = ROOT.parents[1]/'game_files/extracted/ExtractedData/GenericMissionTemplate.json'
+
+
+def fixed_primary_setpieces(template):
+    return max((sum(1 for p in g['Templates'] if p['Variance']['m_X'] == 0 and p['Variance']['m_Y'] == 0)
+                for g in (template.get('PrimarySetpieces') or [])), default=0)
+
+
+def city_rect(x, y, w, h, n):
+    d = n//2 - 21
+    return (max(0, min(x+d, n-w)), max(0, min(y+d, n-h)), w, h)
+
+
+class CityLayoutAreaTests(unittest.TestCase):
+    def test_source_contract(self):
+        self.assertIn('settings.AddToggle("AnchorCityLayoutAreas", "City missions: deployment/spawn areas stay on the city (restart required)", true);', SOURCE)
+        self.assertIn('_anchorCityLayoutAreas = ReadBool("AnchorCityLayoutAreas", true);', SOURCE)
+        self.assertIn('private const int CityLayoutMinimumFixedSetpieces = 8;', SOURCE)
+        self.assertIn('dx = mapW / 2 - VanillaSize / 2;', SOURCE)
+        self.assertIn('bool cityLayout = mapWidth > ZoneReferenceSize && mapHeight > ZoneReferenceSize &&', SOURCE)
+        # Only the large-map conservative handler anchors; the hash-locked 64x64
+        # reference handler, evacuation/drop-off scopes and setpieces are unchanged.
+        self.assertIn('IsCityLayoutMission(__args.Length > 2 ? __args[2] : null)', CONSERVATIVE)
+        self.assertIn('!evacuationScope && !recoverScope', CONSERVATIVE)
+        self.assertNotIn('IsCityLayoutMission', REFERENCE64)
+        self.assertNotIn('ScaleSetpiecePlacement', SOURCE)
+
+    def test_defend_outskirts_deployment_lands_on_city_tile(self):
+        # Deployment Rect (0,0,16,5) overlaps the south-west 12x12 city tile at centre
+        # offset (-13,-13) in vanilla; it must still overlap that tile at every size.
+        for n in (42,) + SIZES[1:]:
+            x, y, w, h = city_rect(0, 0, 16, 5, n)
+            tile_lo = n//2 - 13 - 6
+            self.assertTrue(x < tile_lo + 12 and x + w > tile_lo and y < tile_lo + 12 and y + h > tile_lo, (n, x, y))
+
+    @unittest.skipUnless(EXTRACTED.exists(), 'extracted mission templates not available')
+    def test_city_classification_separates_mission_data(self):
+        items = json.loads(EXTRACTED.read_text())
+        items = items if isinstance(items, list) else list(items.values())
+        counts = {t['name']: fixed_primary_setpieces(t) for t in items}
+        city = {n for n, c in counts.items() if c >= 8}
+        self.assertTrue(all(c >= 9 or c <= 2 for c in counts.values()))
+        for name in ('mission.alien_city_defend_outskirts', 'mission.alien_city_enter_infested_city',
+                     'mission.constructs_defend_city_borders', 'mission.pirate_barricaded_suspects'):
+            self.assertIn(name, city)
+        for name in ('mission.pirates_seize_gtam_site', 'mission.pirates_break_off_raid',
+                     'mission.rogue_army_capture_area_landing_pad_fuel', 'mission.combat_tutorial'):
+            self.assertNotIn(name, city)
+
 
 if __name__=='__main__':unittest.main()

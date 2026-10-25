@@ -1,8 +1,16 @@
-# Larger Maps 2.3.2 — native Move cost-validation candidate
+# Larger Maps 2.5.0 — city missions deploy on the city
 
 The current host compiles the shared `mods/LargerMaps/src/LargerMaps` sources.
 Use the canonical Suite installer in `mods/GameplaySuite`; do not revive the old
 PR #18 one-click installer or install a second legacy Modpack Loader copy.
+
+## City-layout area anchoring (#81, on by default)
+
+`AnchorCityLayoutAreas` (ON, restart required) applies to maps above 64x64 and to
+missions whose primary setpieces form a fixed city grid. Their authored `Rect`
+deployment, spawn and objective AI zones keep vanilla size and follow the map centre,
+so they stay on the city. Setpieces and all other missions are unchanged. OFF
+restores 2.3.2. Not yet gameplay-verified.
 
 ## Conditional advance recovery (#2, on by default)
 

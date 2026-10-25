@@ -63,6 +63,13 @@ public sealed partial class Plugin
                 changed = TryScaleReferenceBorderRect(rect, areaType, mapW,
                     mapH, false, out replacement, out before, out after);
             }
+            else if (areaType == 6 && (enemyScope || deploymentScope || targetScope) &&
+                     !evacuationScope && !recoverScope &&
+                     IsCityLayoutMission(__args.Length > 2 ? __args[2] : null))
+            {
+                changed = TryTranslateCityLayoutRect(rect, mapW, mapH,
+                    out replacement, out before, out after);
+            }
             else if (areaType == 6)
             {
                 // Explicitly-authored Rect zones are still in the vanilla

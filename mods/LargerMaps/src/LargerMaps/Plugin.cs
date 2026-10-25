@@ -230,6 +230,7 @@ public sealed partial class Plugin
             settings.AddHeader("Map");
             settings.AddSlider("TacticalMapSize", "Tactical map size 64-96 (restart required)", 64f, 96f, 80f);
             settings.AddSlider("MissionRoundMultiplier", "Round limit multiplier for timed objectives", 1f, 3f, 2f);
+            settings.AddToggle("AnchorCityLayoutAreas", "City missions: deployment/spawn areas stay on the city (restart required)", true);
             settings.AddHeader("Terrain landmarks (restart required)");
             settings.AddToggle("PreserveTerrainStampFootprint", "Keep landmark stamps at vanilla world size (fixes raised lakes)", true);
             settings.AddToggle("IncreaseTerrainStampDensity", "More terrain stamps on maps above 64x64", false);
@@ -1818,6 +1819,7 @@ public sealed partial class Plugin
 
     private static void PatchMissionAreaScaling(HarmonyLib.Harmony harmony)
     {
+        _anchorCityLayoutAreas = ReadBool("AnchorCityLayoutAreas", true);
         if (_missionAreaConfigType == null)
         {
             _log.Warning($"{ModName}: MissionAreaConfig type not found; enemy spawn-area scaling unavailable.");
@@ -3545,6 +3547,9 @@ public sealed partial class Plugin
 
             float scaleX = mapWidth / (float)VanillaSize;
             float scaleY = mapHeight / (float)VanillaSize;
+            bool cityLayout = mapWidth > ZoneReferenceSize && mapHeight > ZoneReferenceSize &&
+                IsCityLayoutMission(__args.Length > 1 ? __args[1] : null);
+            CityLayoutOffset(mapWidth, mapHeight, out int cityDx, out int cityDy);
 
             for (int i = 0; i < zoneCount; i++)
             {
@@ -3567,10 +3572,10 @@ public sealed partial class Plugin
                 int h = ToInt(GetMember(rect, "m_Height") ?? GetMember(rect, "height"), 0);
                 if (w == 0 || h == 0) continue;
 
-                int newX = (int)Math.Round(x * scaleX);
-                int newY = (int)Math.Round(y * scaleY);
-                int newW = (int)Math.Round(w * scaleX);
-                int newH = (int)Math.Round(h * scaleY);
+                int newX = cityLayout ? Math.Clamp(x + cityDx, 0, Math.Max(0, mapWidth - Math.Abs(w))) : (int)Math.Round(x * scaleX);
+                int newY = cityLayout ? Math.Clamp(y + cityDy, 0, Math.Max(0, mapHeight - Math.Abs(h))) : (int)Math.Round(y * scaleY);
+                int newW = cityLayout ? w : (int)Math.Round(w * scaleX);
+                int newH = cityLayout ? h : (int)Math.Round(h * scaleY);
                 if (newX == x && newY == y && newW == w && newH == h) continue;
 
                 if (!TryRewriteRectIntBox(rect, newX, newY, newW, newH) || !TrySetMember(area, "Rect", rect))
@@ -3587,6 +3592,93 @@ public sealed partial class Plugin
         catch (Exception ex)
         {
             if (Debug()) _log.Warning($"{ModName}: objective AI-zone scaling failed safely: {ex.GetType().Name}: {ex.Message}");
+        }
+    }
+
+    // City missions build a dense layout of fixed, centre-relative setpieces that
+    // keeps its vanilla size. Their authored Rect deployment, spawn and AI zones sit
+    // on that layout, so they move with the map centre instead of being scaled from
+    // the map origin. Other missions keep proportional Rect scaling.
+    private const int CityLayoutMinimumFixedSetpieces = 8;
+    private const int MaximumCityLayoutAreaLogs = 6;
+    private static bool _anchorCityLayoutAreas = true;
+    private static int _cityLayoutAreaLogs;
+    private static readonly Dictionary<long, bool> _cityLayoutTemplates = new();
+
+    private static bool IsCityLayoutMission(object mission)
+    {
+        if (!_anchorCityLayoutAreas || mission == null) return false;
+        object template = InvokeNoArg(mission, "GetTemplate") ?? GetMember(mission, "m_Template");
+        if (template == null) return false;
+        long key = GetStableObjectKey(template);
+        if (_cityLayoutTemplates.TryGetValue(key, out bool cached)) return cached;
+
+        bool city = false;
+        try
+        {
+            object groups = GetMember(template, "PrimarySetpieces");
+            int groupCount = GetCollectionCount(groups);
+            for (int g = 0; g < groupCount && !city; g++)
+            {
+                object templates = GetMember(GetIndexedValue(groups, g), "Templates");
+                int count = GetCollectionCount(templates);
+                int fixedCount = 0;
+                for (int i = 0; i < count; i++)
+                {
+                    object variance = GetMember(GetIndexedValue(templates, i), "Variance");
+                    if (variance != null &&
+                        ReadVectorIntComponent(variance, "x", "X", "m_X") == 0 &&
+                        ReadVectorIntComponent(variance, "y", "Y", "m_Y") == 0)
+                        fixedCount++;
+                }
+                city = fixedCount >= CityLayoutMinimumFixedSetpieces;
+            }
+        }
+        catch (Exception ex)
+        {
+            if (Debug()) _log.Warning($"{ModName}: city layout detection failed: {ex.GetType().Name}: {ex.Message}");
+        }
+
+        _cityLayoutTemplates[key] = city;
+        if (city && _cityLayoutAreaLogs < MaximumCityLayoutAreaLogs)
+        {
+            _cityLayoutAreaLogs++;
+            _log.Msg($"{ModName}: CITY LAYOUT {GetDataTemplateId(template)}: authored Rect deployment/spawn/AI zones follow the map centre.");
+        }
+        return city;
+    }
+
+    private static void CityLayoutOffset(int mapW, int mapH, out int dx, out int dy)
+    {
+        dx = mapW / 2 - VanillaSize / 2;
+        dy = mapH / 2 - VanillaSize / 2;
+    }
+
+    private static bool TryTranslateCityLayoutRect(object rect, int mapW, int mapH,
+        out object moved, out string before, out string after)
+    {
+        moved = null;
+        before = after = "<unavailable>";
+        try
+        {
+            int x = ToInt(GetMember(rect, "m_XMin") ?? GetMember(rect, "x"), int.MinValue);
+            int y = ToInt(GetMember(rect, "m_YMin") ?? GetMember(rect, "y"), int.MinValue);
+            int w = ToInt(GetMember(rect, "m_Width") ?? GetMember(rect, "width"), 0);
+            int h = ToInt(GetMember(rect, "m_Height") ?? GetMember(rect, "height"), 0);
+            if (x == int.MinValue || y == int.MinValue || w <= 0 || h <= 0 || w > mapW || h > mapH) return false;
+            before = $"type=6 ({x},{y},{w},{h})";
+            CityLayoutOffset(mapW, mapH, out int dx, out int dy);
+            int nx = Math.Clamp(x + dx, 0, mapW - w);
+            int ny = Math.Clamp(y + dy, 0, mapH - h);
+            if (nx == x && ny == y) return false;
+            if (!TryNewRectInt(rect, nx, ny, w, h, out moved)) return false;
+            after = $"({nx},{ny},{w},{h}) city-anchored";
+            return true;
+        }
+        catch (Exception ex)
+        {
+            if (Debug()) _log.Warning($"{ModName}: city layout area move failed: {ex.GetType().Name}: {ex.Message}");
+            return false;
         }
     }
 

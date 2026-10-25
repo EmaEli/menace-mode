@@ -1,3 +1,19 @@
+## 2.5.0 - City missions deploy on the city (#81)
+
+- City missions build a fixed grid of 12x12 city tiles and street pieces around the map
+  centre (detected as 8+ zero-variance primary setpieces; 29 of 129 mission templates).
+  On maps above 64x64, their authored `Rect` deployment, enemy spawn, objective-target
+  spawn and objective AI zones now keep their vanilla size and move with the map centre,
+  instead of being scaled from the map origin into the empty corner. Example: on 96x96
+  `mission.alien_city_defend_outskirts` deploys at (27,27,16,5)/(27,33,5,10), on the
+  south-west city tile, instead of (0,0,37,11)/(0,14,11,23).
+- New `AnchorCityLayoutAreas` toggle (default **ON**, restart required). OFF restores 2.3.2.
+- Unchanged: setpiece placement (the rejected 2.4.0 scaling is reverted), border bands,
+  chunk-anchored areas, evacuation/drop-off areas, non-city missions, and 64x64 (the
+  hash-locked reference handler).
+
+---
+
 ## 2.3.2 - Defer destination AP validation to native Move (MEN-002)
 
 - Fix the recovery's premature destination-cost check: at ConsiderZones.PostProcess,
