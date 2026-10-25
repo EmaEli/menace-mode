@@ -18,7 +18,7 @@ class AuthoringTests(unittest.TestCase):
 
     def test_jiangyu_not_old_modpack(self):
         self.assertEqual(MANIFEST['name'], 'SquaddieFieldPromotions')
-        self.assertEqual(MANIFEST['version'], '0.22.2')
+        self.assertEqual(MANIFEST['version'], '0.22.3')
         compiled_manifest = json.loads((ROOT / 'compiled/jiangyu.json').read_text(encoding='utf-8'))
         self.assertEqual(compiled_manifest['version'], MANIFEST['version'])
         self.assertTrue(any(dep.startswith('Jiangyu ') for dep in MANIFEST['depends']))
@@ -98,6 +98,7 @@ class AuthoringTests(unittest.TestCase):
         assets = ROOT / 'runtime_assets'
         for gender in ('male', 'female'):
             self.assertTrue((assets / gender / 'stand_right.png').is_file())
+        self.assertTrue((assets / 'generic_pilot' / 'stand_right.png').is_file())
         self.assertTrue((assets / 'voice' / 'sfp_john_jane_voice.sfpbundle').is_file())
         self.assertTrue((assets / 'voice' / 'sfp_john_jane_voice.build.json').is_file())
         self.assertTrue((assets / 'voice' / 'voice_routes.json').is_file())
@@ -119,6 +120,8 @@ class AuthoringTests(unittest.TestCase):
         self.assertIn('internal const int FemaleGender = 1;', record)
         self.assertIn('skinColor == LegacyWhiteSkinColor', record)
         self.assertIn('ArePortraitProfilesPresent(_modFolder)', forge)
+        self.assertIn('AreGenericPilotPresent(_modFolder)', forge)
+        self.assertIn('LoadGenericPilot(_modFolder, _pinned)', forge)
         self.assertIn('portrait.ApplyTo(leader, speaker)', forge)
         self.assertIn('DynamicBadgeFactory.Apply(leader, art', forge)
         self.assertIn('PromotionPortraitAssignment.AllProfiles.All(', assets)
@@ -504,19 +507,23 @@ class AuthoringTests(unittest.TestCase):
         self.assertIn('LegacySchema = 2', perks)
         self.assertIn('internal const int Schema = 3;', perks)
         self.assertIn('int xp = record.SourceCrewXp;', perks)
-        self.assertIn('var art = GenderArt(female);', forge)
+        self.assertIn('var art = record.IsVehicleCrewPromotion ? null : GenderArt(female);', forge)
+        self.assertIn('GenericPilotArt()', forge)
+        self.assertIn('visual = "generic-pilot"', forge)
         self.assertNotIn('ApplyPilotArt', forge)
         self.assertIn('DynamicBadgeFactory.ApplyPilot(leader', forge)
-        self.assertIn('visual = "native-pilot"', forge)
+        self.assertIn('visual = "generic-pilot"', forge)
         visuals = forge.split('private string ApplyVehicleArtwork', 1)[1].split(
             'private void ApplyProgression', 1)[0]
-        self.assertIn('StandalonePortraitAssets art', visuals)
-        self.assertIn('art.ApplyTo(leader, speaker)', visuals)
+        self.assertIn('StandalonePortraitAssets pilotArt', visuals)
+        self.assertIn('pilotArt.ApplyTo(leader, speaker)', visuals)
         self.assertIn('DynamicBadgeFactory.ApplyPilot', visuals)
         reuse = forge.split('if (existing != null)', 1)[1].split('UnitLeaderTemplate leader = null', 1)[0]
         self.assertIn('if (record.IsVehicleCrewPromotion)', reuse)
-        self.assertIn('var art = GenderArt(record.Gender == PromotionPortraitAssignment.FemaleGender);', reuse)
+        self.assertNotIn('GenderArt(record.Gender', reuse)
         self.assertIn('ApplyVehicleArtwork(existing, existing.SpeakerTemplate, pilotDonor,', reuse)
+        self.assertIn('record.BadgeIndex, GenericPilotArt())', reuse)
+        self.assertIn('ApplyVehicleArtwork(leader, speaker, source, record.BadgeIndex, GenericPilotArt())', forge)
         self.assertIn('PilotLabelColor = new(255, 220, 0, 255)',
                       (ROOT / 'code/DynamicBadgeFactory.cs').read_text())
         self.assertIn('sourceVehicle != null', forge)

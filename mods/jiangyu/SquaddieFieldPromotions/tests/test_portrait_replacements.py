@@ -10,6 +10,11 @@ SIZES = {
     'stand_left.png': (1024, 1714), 'stand_right.png': (1024, 1714),
     'stand_right_inactive.png': (1024, 1714),
 }
+GENERIC_PILOT_SIZES = {
+    'slot.png': (162, 162), 'slot_inactive.png': (162, 162), 'bark.png': (460, 480),
+    'stand_left.png': (2192, 3668), 'stand_right.png': (2192, 3668),
+    'stand_right_inactive.png': (2192, 3668),
+}
 
 
 def rgba_png(path):
@@ -67,6 +72,12 @@ def rgba_png(path):
 
 
 class ReplacementPortraitTests(unittest.TestCase):
+    def test_generic_vehicle_pilot_portrait_family_is_valid_rgba8(self):
+        for filename, size in GENERIC_PILOT_SIZES.items():
+            with self.subTest(file=filename):
+                dimensions, _ = rgba_png(ROOT / 'runtime_assets' / 'generic_pilot' / filename)
+                self.assertEqual(dimensions, size)
+
     def test_transparency_mirroring_and_inactive_alpha(self):
         for gender in ('male', 'female'):
             for index in ('07', '08', '09'):

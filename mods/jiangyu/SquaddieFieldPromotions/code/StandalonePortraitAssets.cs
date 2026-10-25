@@ -12,7 +12,8 @@ namespace SquaddieFieldPromotions;
 
 /// <summary>
 /// Standalone portrait and badge sources, extracted from the author's Generic Low Level
-/// Squad Leaders 4.0.2. The balaclava male/female families remain the default; three optional
+/// Squad Leaders 4.0.2. Male/female families remain the generic infantry defaults; vehicle
+/// commanders use its Zulu pilot portrait family as a shared temporary placeholder. Three optional
 /// profiles can override the six portrait fields for the first matching record in each save.
 /// All artwork ships with THIS Jiangyu mod.
 ///
@@ -43,6 +44,12 @@ internal sealed class StandalonePortraitAssets
         return FileNames.All(name => File.Exists(Path.Combine(root, name)));
     }
 
+    internal static bool AreGenericPilotPresent(string modFolder)
+    {
+        string root = Path.Combine(modFolder, "runtime_assets", "generic_pilot");
+        return PortraitFileNames.All(name => File.Exists(Path.Combine(root, name)));
+    }
+
     internal static bool ArePortraitProfilePresent(string modFolder, string profile)
     {
         if (!PromotionPortraitAssignment.IsKnownProfile(profile)) return false;
@@ -65,6 +72,17 @@ internal sealed class StandalonePortraitAssets
 
         string folder = Path.Combine(modFolder, "runtime_assets", gender);
         return LoadFiles(folder, gender, FileNames, pinned);
+    }
+
+    internal static StandalonePortraitAssets LoadGenericPilot(string modFolder,
+        List<UnityEngine.Object> pinned)
+    {
+        if (!AreGenericPilotPresent(modFolder))
+            throw new InvalidOperationException("Standalone generic-pilot portrait files missing from deployed mod. Use Build-and-Deploy.cmd; " +
+                "the CLI deploy step alone does not preserve raw runtime_assets.");
+
+        string folder = Path.Combine(modFolder, "runtime_assets", "generic_pilot");
+        return LoadFiles(folder, "generic-pilot", PortraitFileNames, pinned);
     }
 
     internal static StandalonePortraitAssets LoadPortraitProfile(string modFolder, string profile,

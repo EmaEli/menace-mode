@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.22.3 — generic pilot portrait correction (#66)
+
+- Use the Zulu pilot portrait family from Generic Low Level Squad Leaders 4.0.2 as the temporary
+  generic artwork for both male and female vehicle commanders, across all six leader/speaker views,
+  on both first creation and rehydration. The separate infantry portrait families are unchanged.
+- Keep native pilot badge artwork and yellow squad-letter overlays; crew transactions, vehicle actor
+  type, progression and equipment are unchanged. The 0.22.2 balaclava artwork is superseded.
+- Add coverage for all six PNGs, both genders, creation/rehydration wiring and preserved pilot badges.
+- Local Release build, 29 authoring checks, 22 Python tests and 11,702 C# behavior checks passed.
+- Canonical Windows Standalone/UseInstalledSettings BuildOnly and SFP-only installation passed on MENACE
+  0.7.17+22362 (GameAssembly SHA256 matches the 0.7.17 pin) with SDK 10.0.113, zero warnings/errors and
+  six installed-settings checks. Installed manifest/assembly/file versions are 0.22.3/0.22.3.0/0.22.3.0;
+  all 180 runtime assets match the installer stage. Prior 0.22.2 is backed up outside Mods at
+  `_MENACE_Backups/20261025-114014-20d7a45fdeee43f4832770b675e081bb`; unrelated Mods/UserData counts
+  remain 345/798. Candidate ZIP SHA256: `35d9632ceaa1ffa9507c7c1ad952dd83bb37f1a181406846d8aae5c4faf847b6`;
+  installed DLL SHA256: `52486798865adc6d1506a9b40e020ddf74b90661ba3f9c2107577974fdc2ada6`.
+  Installer log: `E:\MENACE-Work\Temp\MENACE-install.log`. In-game visual acceptance remains pending.
+
 ## 0.22.2 — generic vehicle commander portraits (#66)
 
 - Use the existing gender-matched balaclava portrait family for new and reconstructed vehicle commanders,

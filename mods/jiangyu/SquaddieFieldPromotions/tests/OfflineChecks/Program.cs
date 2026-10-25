@@ -1361,6 +1361,8 @@ if (args.Length > 0)
     Check(portraitFiles.All(name => portraitSource.Contains('"' + name + '"')), "portrait file list mirrors production code");
     Check(new[] { "male", "female" }.All(gender => portraitFiles.All(name =>
         new FileInfo(Path.Combine(assets, gender, name)).Length > 0)), "bundled portrait assets complete for both genders");
+    Check(StandalonePortraitAssets.AreGenericPilotPresent(root),
+        "bundled generic-pilot portrait family contains all six runtime images");
     string voice = Path.Combine(assets, "voice");
     using var receipt = System.Text.Json.JsonDocument.Parse(File.ReadAllText(Path.Combine(voice, "sfp_john_jane_voice.build.json")));
     using var sha = System.Security.Cryptography.SHA256.Create();
