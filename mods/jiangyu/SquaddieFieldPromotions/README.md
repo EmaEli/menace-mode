@@ -4,8 +4,8 @@
 > An uncommitted dossier redemption grants one High-Value Salvage commodity (base trade value 40),
 > not another auto-redeeming dossier. Successful promotions grant no compensation. If rollback or
 > compensation cannot be verified, follow the dialog's reload instruction. Historical failed purchases
-> cannot be reconstructed automatically: reload a pre-purchase save for those. Local build and focused
-> checks passed; Windows installation and gameplay validation pending.
+> cannot be reconstructed automatically: reload a pre-purchase save for those. Local/focused checks and
+> canonical Windows BuildOnly/SFP-only installation passed (25 October); gameplay validation pending.
 
 > **Experimental 0.22.0 test candidate; canonical Windows BuildOnly and SFP-only install passed; in-game visual acceptance is pending.** Vehicle commanders now keep their native pilot portraits and badge artwork; their squad letters are yellow. Infantry portrait and red-letter behavior is unchanged.
 > Version 0.21.0 gives new vehicle commanders a distinct custom Vehicle B Team starting perk: 10% lower tactical deployment costs and Discipline, with doubled morale loss for squaddie casualties or destroyed allied units. Existing vehicle promotions retain their saved native starting perk. The selectable vehicle perk tree and crew transaction remain unchanged.

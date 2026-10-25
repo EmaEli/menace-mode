@@ -59,7 +59,14 @@ KDL counts below are **source files**, not patch-operation counts.
 | WeaponRangesRebalanced | 2.10.2 | Shared SuiteSystem host, ranges/linked skills/override JSON; runtime cached-range enforcement for the configurable thrown-grenade cap (#75); gameplay acceptance pending after 2.10.1 failed |
 | CinematicActionCamera | 1.2.2 | Windows test install and post-install startup log verified on MENACE 0.7.17+22362; manifests/DLLs verified, settings preserved, backup retained; no camera startup errors/warnings; positive user feedback but explicit allied Jetpack auto-follow acceptance still pending (#60) |
 
-Experimental package (not included in the default Suite): **SquaddieFieldPromotions 0.17.3 private PC test candidate**.
+Experimental package (not included in the default Suite): **SquaddieFieldPromotions 0.22.1 failure-recovery candidate (#79); canonically installed 2026-10-25, gameplay pending**.
+New infantry perk generation checks the current native catalog after 0.22.0 failed on unavailable
+`perk.payback`. Uncommitted redemptions grant one High-Value Salvage commodity (base trade value 40);
+successful promotions and existing saved perk snapshots are unchanged. Uncertain rollback/refund requires
+reloading a pre-purchase save. Older failed purchases are not compensated retroactively.
+Windows builds had zero warnings/errors; 11,702 behavior/six installed-settings checks passed.
+Installed versions, 174 runtime assets, outside-Mods backup and 1,140 unchanged unrelated Mods/UserData
+files verified; see [failure-recovery evidence](SFP_FAILURE_RECOVERY_2026-10-25.md).
 Versions 0.17.2/0.17.3 map the last 13 BlackOps slots (180/180) by reusing recordings already in the bundle:
 generic combat taunts for enemy, vehicle and construct damage and hazard warnings for destroyed buildings.
 No audio is rebuilt and no other profile changes. Offline/authoring/installer checks pass; listening and

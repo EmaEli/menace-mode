@@ -14,7 +14,10 @@
   pre-purchase save to undo an older failed purchase. No installer or save-file edits are involved.
 - Local real-reference Release build passed with zero warnings/errors; 29 authoring, 21 package Python,
   and 11,702 offline/package behavior checks passed. The 311-file BuildKit inventory verified.
-  Windows build, installation and gameplay checks pending.
+  Canonical Windows BuildOnly and SFP-only installation passed with zero warnings/errors and six
+  installed-settings checks. Installed manifest/assembly/file versions and all 174 runtime assets
+  verified; 1,140 unrelated Mods/UserData files unchanged. Previous 0.22.0 backed up outside Mods.
+  Gameplay acceptance pending; see `docs/SFP_FAILURE_RECOVERY_2026-10-25.md`.
 
 ## 0.22.0 — native vehicle-pilot artwork and yellow squad labels (#66)
 
