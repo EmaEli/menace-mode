@@ -18,7 +18,7 @@ class AuthoringTests(unittest.TestCase):
 
     def test_jiangyu_not_old_modpack(self):
         self.assertEqual(MANIFEST['name'], 'SquaddieFieldPromotions')
-        self.assertEqual(MANIFEST['version'], '0.22.1')
+        self.assertEqual(MANIFEST['version'], '0.22.2')
         compiled_manifest = json.loads((ROOT / 'compiled/jiangyu.json').read_text(encoding='utf-8'))
         self.assertEqual(compiled_manifest['version'], MANIFEST['version'])
         self.assertTrue(any(dep.startswith('Jiangyu ') for dep in MANIFEST['depends']))
@@ -504,16 +504,19 @@ class AuthoringTests(unittest.TestCase):
         self.assertIn('LegacySchema = 2', perks)
         self.assertIn('internal const int Schema = 3;', perks)
         self.assertIn('int xp = record.SourceCrewXp;', perks)
-        self.assertIn('StandalonePortraitAssets.ApplyPilotArt(leader, speaker, pilotDonor)', forge)
+        self.assertIn('var art = GenderArt(female);', forge)
+        self.assertNotIn('ApplyPilotArt', forge)
         self.assertIn('DynamicBadgeFactory.ApplyPilot(leader', forge)
         self.assertIn('visual = "native-pilot"', forge)
         visuals = forge.split('private string ApplyVehicleArtwork', 1)[1].split(
             'private void ApplyProgression', 1)[0]
-        self.assertIn('StandalonePortraitAssets.ApplyPilotArt(leader, speaker, pilotDonor)', visuals)
+        self.assertIn('StandalonePortraitAssets art', visuals)
+        self.assertIn('art.ApplyTo(leader, speaker)', visuals)
         self.assertIn('DynamicBadgeFactory.ApplyPilot', visuals)
         reuse = forge.split('if (existing != null)', 1)[1].split('UnitLeaderTemplate leader = null', 1)[0]
         self.assertIn('if (record.IsVehicleCrewPromotion)', reuse)
-        self.assertIn('ApplyVehicleArtwork(existing, existing.SpeakerTemplate', reuse)
+        self.assertIn('var art = GenderArt(record.Gender == PromotionPortraitAssignment.FemaleGender);', reuse)
+        self.assertIn('ApplyVehicleArtwork(existing, existing.SpeakerTemplate, pilotDonor,', reuse)
         self.assertIn('PilotLabelColor = new(255, 220, 0, 255)',
                       (ROOT / 'code/DynamicBadgeFactory.cs').read_text())
         self.assertIn('sourceVehicle != null', forge)

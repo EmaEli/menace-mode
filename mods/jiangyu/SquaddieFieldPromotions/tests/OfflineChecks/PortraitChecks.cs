@@ -19,29 +19,31 @@ internal static class PortraitChecks
         {
             var sprites = StandalonePortraitAssets.PortraitFileNames.ToDictionary(name => name, _ => Image());
             var art = Assets(sprites);
-            var pilotSlot = Image();
-            var voicePortrait = Image();
+            var namedPilotSlot = Image();
+            var namedPilotPortrait = Image();
             var badge = Image();
             var speaker = new SpeakerTemplate
             {
-                StandLookRightImage = voicePortrait.texture, StandLookLeftImage = voicePortrait.texture,
-                StandLookRightInactiveImage = voicePortrait.texture, OperationSelectImage = voicePortrait.texture,
-                BarkImage = voicePortrait,
+                StandLookRightImage = namedPilotPortrait.texture, StandLookLeftImage = namedPilotPortrait.texture,
+                StandLookRightInactiveImage = namedPilotPortrait.texture, OperationSelectImage = namedPilotPortrait.texture,
+                BarkImage = namedPilotPortrait,
             };
             var leader = new UnitLeaderTemplate
-            { Slot = pilotSlot, SlotInactive = pilotSlot, Badge = badge, SpeakerTemplate = speaker };
+            { Slot = namedPilotSlot, SlotInactive = namedPilotSlot, Badge = badge, SpeakerTemplate = speaker };
             for (int pass = 0; pass < 2; pass++)
             {
                 art.ApplyTo(leader, speaker);
-                check(leader.Slot == sprites["slot.png"] && leader.SlotInactive == sprites["slot_inactive.png"],
-                    gender + " infantry slots use the bundled art on initial assignment and repeated reconstruction");
+                check(leader.Slot == sprites["slot.png"] && leader.SlotInactive == sprites["slot_inactive.png"] &&
+                    leader.Slot != namedPilotSlot,
+                    gender + " vehicle commander slots use generic art instead of named pilot art on assignment and reconstruction");
                 check(speaker.StandLookRightImage == sprites["stand_right.png"].texture &&
                     speaker.StandLookLeftImage == sprites["stand_left.png"].texture &&
                     speaker.StandLookRightInactiveImage == sprites["stand_right_inactive.png"].texture &&
                     speaker.OperationSelectImage == sprites["slot.png"].texture &&
-                    speaker.BarkImage == sprites["bark.png"],
-                    gender + " large, inactive, operation and bark images all come from the same bundled family");
-                check(leader.Badge == badge, gender + " portrait repair leaves the leader's dynamic badge unchanged");
+                    speaker.BarkImage == sprites["bark.png"] &&
+                    speaker.StandLookRightImage != namedPilotPortrait.texture,
+                    gender + " large, inactive, operation and bark images replace named pilot art with one generic family");
+                check(leader.Badge == badge, gender + " generic portrait assignment preserves native pilot badge art");
             }
         }
     }

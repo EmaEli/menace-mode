@@ -913,37 +913,11 @@ Check(textClone.GetBadge() == textClone.Badge && textClone.GetBadgeWhite() == te
 Check(DynamicBadgeFactory.LabelForIndex(25) == "Z" && DynamicBadgeFactory.LabelForIndex(26) == "AA" &&
     DynamicBadgeFactory.LabelForIndex(52) == "BA", "production promotion labels continue beyond Z");
 var pilotBadge = UnityEngine.Sprite.Create(badgeTexture, new(0, 0, 40, 40), new(.5f, .5f));
-var pilotSlot = UnityEngine.Sprite.Create(new UnityEngine.Texture2D(24, 24, UnityEngine.TextureFormat.RGBA32, false),
-    new(0, 0, 24, 24), new(.5f, .5f));
-var pilotSpeaker = new SpeakerTemplate
+var promotedPilot = new UnitLeaderTemplate
 {
-    StandLookRightImage = new UnityEngine.Texture2D(2, 2, UnityEngine.TextureFormat.RGBA32, false),
-    StandLookLeftImage = new UnityEngine.Texture2D(3, 3, UnityEngine.TextureFormat.RGBA32, false),
-    StandLookRightInactiveImage = new UnityEngine.Texture2D(4, 4, UnityEngine.TextureFormat.RGBA32, false),
-    OperationSelectImage = new UnityEngine.Texture2D(5, 5, UnityEngine.TextureFormat.RGBA32, false),
-    BarkImage = pilotBadge,
-};
-var pilotDonor = new UnitLeaderTemplate
-{
-    Slot = pilotSlot, SlotInactive = pilotSlot, SpeakerTemplate = pilotSpeaker,
     Badge = pilotBadge, BadgeWhite = pilotBadge, BadgeMini = pilotBadge, BadgeDragged = pilotBadge,
     BadgeUnitWindow = pilotBadge, SlotBadge = pilotBadge, BigBadge = pilotBadge,
 };
-var promotedPilotSpeaker = new SpeakerTemplate();
-var promotedPilot = new UnitLeaderTemplate
-{
-    Slot = badgeSource, SlotInactive = badgeSource, SpeakerTemplate = promotedPilotSpeaker,
-    Badge = badgeSource, BadgeMini = badgeSource, BadgeDragged = badgeSource,
-    BadgeUnitWindow = badgeSource, SlotBadge = badgeSource, BigBadge = badgeSource,
-};
-StandalonePortraitAssets.ApplyPilotArt(promotedPilot, promotedPilotSpeaker, pilotDonor);
-Check(promotedPilot.Slot == pilotSlot && promotedPilot.SlotInactive == pilotSlot &&
-    promotedPilotSpeaker.StandLookRightImage == pilotSpeaker.StandLookRightImage &&
-    promotedPilotSpeaker.StandLookLeftImage == pilotSpeaker.StandLookLeftImage &&
-    promotedPilotSpeaker.StandLookRightInactiveImage == pilotSpeaker.StandLookRightInactiveImage &&
-    promotedPilotSpeaker.OperationSelectImage == pilotSpeaker.OperationSelectImage &&
-    promotedPilotSpeaker.BarkImage == pilotSpeaker.BarkImage,
-    "vehicle promotion copies native pilot portraits instead of generic infantry art");
 var pilotBadgePinned = new List<UnityEngine.Object>();
 Check(DynamicBadgeFactory.ApplyPilot(promotedPilot, "A", pilotBadgePinned) == "6/6" &&
     promotedPilot.BadgeWhite == promotedPilot.Badge &&

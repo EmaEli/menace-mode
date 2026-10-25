@@ -231,8 +231,10 @@ internal sealed class LeaderForge
             {
                 var pilotDonor = DataTemplateLoader.Get<UnitLeaderTemplate>(SourceLeaderIdFor(record), false);
                 if (pilotDonor == null) throw new InvalidOperationException("Native vehicle-pilot art donor is missing.");
+                var art = GenderArt(record.Gender == PromotionPortraitAssignment.FemaleGender);
                 string badgeLabel = DynamicBadgeFactory.LabelForIndex(record.BadgeIndex);
-                string badge = ApplyVehicleArtwork(existing, existing.SpeakerTemplate, pilotDonor, record.BadgeIndex);
+                string badge = ApplyVehicleArtwork(existing, existing.SpeakerTemplate, pilotDonor,
+                    record.BadgeIndex, art);
                 SetHeadMode(record, forceGenericHead);
                 return $"reuse=registered, visual=native-pilot, badge={badgeLabel}/{badge}";
             }
@@ -261,7 +263,7 @@ internal sealed class LeaderForge
             bool female = record.Gender == Convert.ToInt32(sy.Gender);
             var voiceDonor = female ? sy : lim;
             string gender = female ? "female" : "male";
-            var art = record.IsVehicleCrewPromotion ? null : GenderArt(female);
+            var art = GenderArt(female);
             DataTemplateLoader.GetAll<UnitLeaderTemplate>();
             DataTemplateLoader.GetAll<SpeakerTemplate>();
             var bridge = new JiangyuCloneBridge();
@@ -297,7 +299,7 @@ internal sealed class LeaderForge
             string badge;
             if (record.IsVehicleCrewPromotion)
             {
-                badge = ApplyVehicleArtwork(leader, speaker, source, record.BadgeIndex);
+                badge = ApplyVehicleArtwork(leader, speaker, source, record.BadgeIndex, art);
                 head = "native-pilot";
                 visual = "native-pilot";
             }
@@ -376,10 +378,10 @@ internal sealed class LeaderForge
     }
 
     private string ApplyVehicleArtwork(UnitLeaderTemplate leader, SpeakerTemplate speaker,
-        UnitLeaderTemplate pilotDonor, int badgeIndex)
+        UnitLeaderTemplate pilotDonor, int badgeIndex, StandalonePortraitAssets art)
     {
         ValidateVehicleSource(pilotDonor, Convert.ToInt32(leader.Gender));
-        StandalonePortraitAssets.ApplyPilotArt(leader, speaker, pilotDonor);
+        art.ApplyTo(leader, speaker);
         leader.CustomHead = null;
         return DynamicBadgeFactory.ApplyPilot(leader, DynamicBadgeFactory.LabelForIndex(badgeIndex), _pinned);
     }

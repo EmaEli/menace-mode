@@ -1,4 +1,6 @@
-# Squaddie Field Promotions 0.22.1
+# Squaddie Field Promotions 0.22.2
+
+> **0.22.2 portrait correction (#66):** new and reconstructed vehicle commanders use matching generic balaclava portraits instead of a named source pilot's character-specific image. Native pilot badge art and yellow squad letters remain. In-game visual acceptance is pending.
 
 > **0.22.1 failure-recovery candidate (#79):** new infantry trees exclude perks unavailable in the running game.
 > An uncommitted dossier redemption grants one High-Value Salvage commodity (base trade value 40),
@@ -7,9 +9,9 @@
 > cannot be reconstructed automatically: reload a pre-purchase save for those. Local/focused checks and
 > canonical Windows BuildOnly/SFP-only installation passed (25 October); gameplay validation pending.
 
-> **Experimental 0.22.0 test candidate; canonical Windows BuildOnly and SFP-only install passed; in-game visual acceptance is pending.** Vehicle commanders now keep their native pilot portraits and badge artwork; their squad letters are yellow. Infantry portrait and red-letter behavior is unchanged.
+> **Historical 0.22.0 test candidate:** introduced native pilot portraits and yellow squad labels. Version 0.22.2 supersedes its character-specific vehicle portraits with generic balaclava art while preserving native badges and yellow letters.
 > Version 0.21.0 gives new vehicle commanders a distinct custom Vehicle B Team starting perk: 10% lower tactical deployment costs and Discipline, with doubled morale loss for squaddie casualties or destroyed allied units. Existing vehicle promotions retain their saved native starting perk. The selectable vehicle perk tree and crew transaction remain unchanged.
-> Version 0.20.1 briefly unified vehicle portrait fields with bundled male/female balaclava images; 0.22.0 supersedes that behavior with native pilot artwork. Vehicle promotions still consume only the selected crew identity, install a separate vehicle commander with an XP-banded vehicle perk tree, and grant no vehicle. The transaction is saved before mutation and rolls back or reconciles on failure/load.
+> Version 0.20.1 first unified vehicle portrait fields with bundled male/female balaclava images; 0.22.2 restores that generic portrait behavior. Vehicle promotions still consume only the selected crew identity, install a separate vehicle commander with an XP-banded vehicle perk tree, and grant no vehicle. The transaction is saved before mutation and rolls back or reconciles on failure/load.
 > The 24 October mission-start crash recorded VERSION.dll / 0xc0000602 / offset 0x7ddf6d, matching the MelonLoader failure tracked in #72 and previously reproduced with zero mods. This portrait fix does not fix that crash; vehicle gameplay acceptance remains blocked.
 > Version 0.22.0 canonical Windows BuildOnly/install passed on 24 October with zero warnings/errors, 11,590 behavior checks and six installed-settings checks. Manifest/DLL/file versions verified; only SFP targets were backed up outside Mods and updated. Menace Mod Settings 0.8.2 and Jiangyu.Loader were reused; all 174 bundled runtime assets were verified. Saves, UserData and unrelated Mods were untouched. In-game visual acceptance remains pending.
 > Version 0.20.1 canonical Windows BuildOnly/install passed on 24 October: zero warnings/errors,
@@ -119,9 +121,9 @@ Squaddie Veterancy crew API. Infantry promotion remains available without Squadd
 - The separate **Vehicle Crew Promotion Dossier** appears only when a compatible Squaddie
   Veterancy API is loaded and a healthy, non-deployed crew member is eligible. It selects the
   highest-XP eligible crew member (active slot wins equal-XP ties), then creates a new vehicle
-  commander from the matching native generic pilot template. Native pilot images and badge artwork
-  are kept for both leader and speaker portraits, with yellow squad letters on the pilot badge; the
-  vehicle-leader actor type is retained. A saved XP-banded vehicle perk tree replaces the named
+  commander from the matching native generic pilot template. Matching gendered balaclava portraits
+  replace the named source pilot's personal images for leader and speaker views; native pilot badge
+  artwork remains with yellow squad letters. The vehicle-leader actor type is retained. A saved XP-banded vehicle perk tree replaces the named
   pilot's signature progression. Only the commander enters Hire (0 credits); **no vehicle is
   attached or granted**.
 - Vehicle crew transactions save the exact pilot/person/vehicle/role/active-slot identity and XP
@@ -216,7 +218,7 @@ The kit also ships the module's raw `runtime_assets/` (portraits, prebuilt John/
 voice bundle with its build receipt, voice routes); the installer stages them next to
 the compiled package because `jiangyu compile --clean` does not preserve them.
 
-## Acceptance test (0.22.1 test candidate; in-game checks pending)
+## Acceptance test (0.22.2 test candidate; in-game checks pending)
 
 On a disposable save, retry an infantry promotion with a high-XP soldier: a missing optional
 perk such as `perk.payback` must no longer abort generation when enough other perks are available.
@@ -227,8 +229,8 @@ save/reload to check the commodity persists. Do not use a valuable save or force
 
 Vehicle crew promotion: use a disposable non-Ironman save with Squaddie Veterancy loaded and
 at least one healthy, non-deployed crew member. Confirm the separate dossier appears, selects the
-highest-XP eligible crew member, and creates a new commander with the matching native pilot
-portraits and yellow squad-badge letter, Vehicle B Team starting perk and vehicle perk tree. Confirm the custom perk reduces tactical
+highest-XP eligible crew member, and creates a new commander with matching generic balaclava portraits
+in Hire, large, inactive and bark views, plus the native pilot badge with a yellow squad letter, Vehicle B Team starting perk and vehicle perk tree. Confirm the custom perk reduces tactical
 deployment costs and Discipline by 10%, and doubles morale loss on a squaddie casualty or allied-unit
 destruction. Verify the original pilot/vehicle/role and active-or-reserve slot
 remain intact, the replacement crew member has 0 XP, the commander costs 0 credits, and no vehicle
@@ -376,7 +378,7 @@ readability remain in-game acceptance gates.
 
 ## Remaining gates
 
-1. In-game acceptance of 0.22.0 native vehicle-pilot portraits and yellow squad labels, crew selection, identity/slot preservation, no-vehicle hire,
+1. In-game acceptance of 0.22.2 generic vehicle portraits and yellow squad labels, crew selection, identity/slot preservation, no-vehicle hire,
    save/load recovery and dismissal rollback; plus 0.10.0 infantry source removal (assigned/unassigned), old preview-save cleanup,
    price changes, and save → restart → load with no returning source soldier.
 2. Without optional Veterancy, plus dismissal/death, divergent saves and mission transitions.

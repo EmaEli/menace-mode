@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.22.2 — generic vehicle commander portraits (#66)
+
+- Use the existing gender-matched balaclava portrait family for new and reconstructed vehicle commanders,
+  rather than reusing a named source pilot's character-specific portrait (for example, Rewa's).
+- Keep the native pilot badge artwork and yellow squad-letter overlays; crew transactions, vehicle actor type,
+  progression, equipment and infantry portraits are unchanged.
+- Add regression coverage for both genders, all portrait views and same-session reconstruction.
+
 ## 0.22.1 — failed-promotion compensation (#79)
 
 - Check native perk availability when generating new infantry progression. The 0.22.0 failure
