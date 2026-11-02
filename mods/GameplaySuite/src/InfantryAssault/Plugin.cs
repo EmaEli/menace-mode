@@ -6,8 +6,8 @@ using Menace.SDK;
 using MenaceModSuite.Shared;
 using UnityEngine;
 
-[assembly: AssemblyVersion("0.5.9.0")]
-[assembly: AssemblyFileVersion("0.5.9.0")]
+[assembly: AssemblyVersion("0.5.11.0")]
+[assembly: AssemblyFileVersion("0.5.11.0")]
 
 namespace MenaceInfantryAssault;
 
@@ -15,7 +15,7 @@ namespace MenaceInfantryAssault;
 public sealed partial class Plugin : IHostedPlugin
 {
     private const string SettingsGroup = "Infantry Assault";
-    private const string Version = "0.5.9";
+    private const string Version = "0.5.11";
     private const int AssaultApCost = 40;
     private const string AssaultSkillId = "mod.infantry_assault";
 
@@ -115,10 +115,6 @@ public sealed partial class Plugin : IHostedPlugin
 
     private static object? _assaultTemplate;
 
-    // The IL2CPP lists are declared as List<BaseSkill>, and enumeration can create
-    // a new managed wrapper for the same native Skill every time. Cache native
-    // identity only; RuntimeHelpers.GetHashCode(wrapper) is not stable across casts.
-    private static readonly HashSet<IntPtr> AssaultSkillPointers = new();
     // The native actor and survivor count allow us to avoid work on every hover frame.
     private static readonly Dictionary<IntPtr, (IntPtr Actor, int Count)> ValidatedAssaultAimCounts = new();
     private static readonly Dictionary<int, object> LastTargetBySkill = new();
@@ -182,7 +178,6 @@ public sealed partial class Plugin : IHostedPlugin
         _phaseWeaponKey = 0;
         _activeActorKey = 0;
         LastTargetBySkill.Clear();
-        AssaultSkillPointers.Clear();
 
         if (!_inTacticalScene) return;
         MelonCoroutines.Start(DelayedTacticalSetup());
@@ -197,7 +192,6 @@ public sealed partial class Plugin : IHostedPlugin
     {
         ModSettings.OnSettingChanged -= OnSettingChanged;
         DevConsole.RemovePanel(SettingsGroup);
-        AssaultSkillPointers.Clear();
         LastTargetBySkill.Clear();
         _assaultBusy = false;
         _blockedPlayerAssaultActionKey = null;
@@ -498,9 +492,8 @@ public sealed partial class Plugin : IHostedPlugin
                 foreach (object? skill in EnumerateObjects(skills))
                 {
                     if (skill == null) continue;
-                    // The list is List<BaseSkill>, not List<Skill>. Use the
-                    // runtime wrapper's virtual GetID() rather than a MethodInfo
-                    // obtained from the concrete Skill class.
+                    // BaseSkill wrappers are classified by their actual native class
+                    // and template identity, not a reflected Skill.GetID() call.
                     if (IsAssaultSkill(skill)) return skill;
                 }
             }
@@ -1729,8 +1722,6 @@ public sealed partial class Plugin : IHostedPlugin
             // The skill is now owned by the container. Treat synchronization as successful here.
             // UI/enable refresh is best-effort: on loaded-save actors MENACE can throw while
             // refreshing transient UI state even though SkillContainer.Add already succeeded.
-            RememberAssaultSkill(skill);
-
             try { Method(skill.GetType(), "SetEnabled", 1)?.Invoke(skill, new object[] { true }); }
             catch (Exception e) { if (_verbose) Log("Assault skill enable refresh skipped: " + (e.InnerException?.Message ?? e.Message)); }
 
@@ -1834,27 +1825,6 @@ public sealed partial class Plugin : IHostedPlugin
         {
             Warn("Assault skill diagnostic scan failed: " + (e.InnerException?.Message ?? e.Message));
         }
-    }
-
-    private static bool IsAssaultSkill(object? skill)
-    {
-        if (skill == null || OffMainThread) return false;
-        IntPtr ptr = skill is Il2CppObjectBase native ? native.Pointer : IntPtr.Zero;
-        if (ptr != IntPtr.Zero && AssaultSkillPointers.Contains(ptr)) return true;
-
-        // Never trust managed wrapper hash codes: List<BaseSkill> and a Harmony
-        // Skill hook may represent the same IL2CPP object with different wrappers.
-        if (!string.Equals(GetSkillIdRuntime(skill), AssaultSkillId, StringComparison.Ordinal))
-            return false;
-
-        RememberAssaultSkill(skill);
-        return true;
-    }
-
-    private static void RememberAssaultSkill(object skill)
-    {
-        if (skill is Il2CppObjectBase native && native.Pointer != IntPtr.Zero)
-            AssaultSkillPointers.Add(native.Pointer);
     }
 
     private static string GetSkillId(object skill) => GetSkillIdRuntime(skill);

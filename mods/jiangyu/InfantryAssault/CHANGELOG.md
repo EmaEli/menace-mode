@@ -1,3 +1,9 @@
+## 0.5.11 - Shared native getter crash guard (#50)
+
+- Validate the actual IL2CPP class before treating a hook receiver as a Skill. MENACE 0.7.17 shares the native body of Skill.IsVisible with SkillContainer.IsAIDryrun; a managed Skill wrapper alone is not a valid type check.
+- Classify Assault by its native template pointer instead of reading Skill.GetID in hot hooks. Remove cached skill addresses so removed/reused pointers cannot inherit Assault behavior.
+- Targets the 2 November occupied 1x2 shelter crash whose dump ends in Infantry Assault's skill-ID conversion. Managed regression coverage is separate from pending in-game reproduction.
+
 ## 0.5.8 - Requested Assault icon (#31)
 
 - Use `skill_41` / `skill_41_inactive` for the Assault button, as requested in #31.
