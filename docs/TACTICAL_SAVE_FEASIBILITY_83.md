@@ -83,7 +83,8 @@ https://github.com/EmaEli/menace-mode/issues/83.
 - Production writer/boundary checks: 39 passed; Python regressions: 174 passed;
   C# regression and selected real-DLL metadata checks: 17,882 passed.
 - Canonical installed-settings candidate: 96 inventoried files, one module;
-  ZIP SHA256 `241023b124cb07aa650f716bad2376317904d1cc4899f8ae0d3c5ad6535d02ed`.
+  ZIP SHA256 `3ac3dd9e3c4a77bfbb83b343633427e0a8b8e6cc4e9e925882a4c5275ee4aebf`;
+  build base `4ad24d2`, `MENACE-TacticalRoundCheckpoint-0.1.0-issue83-verified.zip`.
   Inventory/hash verification and clean extracted-source rebuild passed locally.
 - Clean verification exposed an external-settings metadata-witness bug in the
   shared verifier. Fixed and regression-tested: inspect project XML after selected
