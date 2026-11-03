@@ -147,6 +147,12 @@ requires and validates the installed companion's manifest, DLL versions and the 
 Jiangyu loader. Only the selected module is built/staged/replaced. Neither installed dependency is
 overwritten; its DLL hash is rechecked before deployment. This avoids accidentally
 rebuilding a different companion source snapshot while testing an unrelated feature.
+The experimental capture-only `TacticalRoundCheckpoint` probe (#83) also supports
+this same path; it never enters the default Suite or replaces either companion.
+For local clean verification with an external installed-settings reference, include
+the companion's project XML as metadata alongside its manifests/DLL. Otherwise the
+artifact checker misidentifies it as a data-only package. Copy it only after selected
+builds; do not rebuild, bundle or install that external companion (regression #83).
 
 Explicit `-BuildOnly` may read installed game references while MENACE is running;
 its lock/SDK stay inside the kit and outputs/staging use temporary build directories,

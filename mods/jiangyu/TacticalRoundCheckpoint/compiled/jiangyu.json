@@ -1,0 +1,10 @@
+{
+  "name": "TacticalRoundCheckpoint",
+  "version": "0.1.0",
+  "author": "Luca",
+  "description": "Experimental full-round diagnostic snapshots only. NOT a tactical autosave: no battle restoration or load support.",
+  "depends": ["Jiangyu >= 1.4.8", "MenaceModSettings >= 0.4.1"],
+  "compiledForUnity": "6000.0.82f1",
+  "compiledForJiangyu": "1.4.8",
+  "textureReplacements": []
+}

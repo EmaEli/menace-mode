@@ -31,10 +31,18 @@ current installation target; use the exact 0.7.17 candidate recorded in the wrap
 ## Current source/package inventory
 
 The authoritative package list is `mods/GameplaySuite/tools/distribution.json`.
-All 19 source/compiled manifests and actual code DLL versions/dependencies were checked
-locally. There are 17 code packages and two data-only packages; the camera runtime is
-an additional MelonLoader DLL built from its source, not a twentieth Jiangyu package.
+It covers 20 default and three experimental packages: 21 code-backed and two data-only
+packages. The camera runtime is an additional MelonLoader DLL built from its source, not
+an additional Jiangyu package.
 KDL counts below are **source files**, not patch-operation counts.
+
+Experimental **TacticalRoundCheckpoint 0.1.0** (#83) is a capture-only round-boundary
+probe, NOT a tactical autosave and NOT loadable. See
+[the native feasibility report](TACTICAL_SAVE_FEASIBILITY_83.md). It is excluded
+from the default Suite. Local Release build, 39 writer checks, 174 Python tests,
+17,882 C# regression/artifact checks and the 96-file canonical candidate's clean
+rebuild passed. Windows build/install/gameplay remain blocked by PC connectivity;
+no installed files or saves changed. Evidence is recorded separately in #83.
 
 | Package | Version | Runtime / data authoring |
 | --- | --- | --- |

@@ -93,7 +93,11 @@ def compile_clean(files, game, sdk, dotnet):
             if depends_on_settings:
                 settings_source = ROOT / "mods/jiangyu/MenaceModSettings"
                 settings_target = source / "mods/jiangyu/MenaceModSettings"
-                for relative in ("jiangyu.json", "compiled/jiangyu.json", "compiled/code/MenaceModSettings.dll"):
+                # ArtifactChecks distinguishes code packages from data-only packages
+                # by the project file. Copy this metadata witness too, after builds;
+                # it is inspected only, never built or installed as a companion.
+                for relative in ("jiangyu.json", "compiled/jiangyu.json", "compiled/code/MenaceModSettings.dll",
+                                 "code/MenaceModSettings.csproj"):
                     target = settings_target / relative
                     target.parent.mkdir(parents=True, exist_ok=True)
                     shutil.copy2(settings_source / relative, target)

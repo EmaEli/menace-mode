@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <Version>0.1.0</Version>
+    <AssemblyVersion>0.1.0.0</AssemblyVersion>
+    <FileVersion>0.1.0.0</FileVersion>
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <DebugType>none</DebugType>
+    <DebugSymbols>false</DebugSymbols>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../../GameplaySuite/src/Shared/NullableMetadata.cs" Link="NullableMetadata.cs" />
+    <Reference Include="Jiangyu.Sdk" HintPath="$(JiangyuSdkDir)/Jiangyu.Sdk.dll" Private="false" />
+    <Reference Include="0Harmony" HintPath="$(MelonLoaderDir)/0Harmony.dll" Private="false" />
+    <Reference Include="Il2CppInterop.Runtime" HintPath="$(MelonLoaderDir)/Il2CppInterop.Runtime.dll" Private="false" />
+    <Reference Include="Assembly-CSharp" HintPath="$(GameAssembliesDir)/Assembly-CSharp.dll" Private="false" />
+    <Reference Include="Il2Cppmscorlib" HintPath="$(GameAssembliesDir)/Il2Cppmscorlib.dll" Private="false" />
+    <Reference Include="Il2CppSirenix.Serialization" HintPath="$(GameAssembliesDir)/Il2CppSirenix.Serialization.dll" Private="false" />
+    <Reference Include="UnityEngine.CoreModule" HintPath="$(GameAssembliesDir)/UnityEngine.CoreModule.dll" Private="false" />
+  </ItemGroup>
+</Project>

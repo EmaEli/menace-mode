@@ -217,12 +217,18 @@ class DistributionTests(unittest.TestCase):
                     output = project.parent / "bin/Release/SquaddieProbe.dll"
                     output.parent.mkdir(parents=True, exist_ok=True)
                     output.write_bytes(b"mock built DLL")
+                elif arguments[1] == "run":
+                    extracted = Path(arguments[arguments.index("--") + 1])
+                    # Without the project witness ArtifactChecks mistakes the
+                    # external code companion for a data package and fails.
+                    self.assertTrue((extracted / "mods/jiangyu/MenaceModSettings/code/MenaceModSettings.csproj").is_file())
 
             with patch.object(VERIFIER.subprocess, "run", side_effect=fake_run), redirect_stdout(io.StringIO()):
                 VERIFIER.compile_clean(payload, game, sdk, "dotnet")
 
         build = next(arguments for arguments in commands if arguments[1] == "build")
         self.assertIn(f"-p:MenaceModSettingsPath={settings_dll}", build)
+        self.assertEqual(sum(arguments[1] == "build" for arguments in commands), 1)
         offline = next(arguments for arguments in commands if arguments[1] == "run")
         self.assertEqual(offline[-1], "MenaceModSettings,SquaddieVeterancy")
 

@@ -77,9 +77,9 @@ try {
         $selected = @('MenaceModSettings') + @($Modules | Where-Object { $_ -ne 'MenaceModSettings' } | Select-Object -Unique)
     }
     if ($UseInstalledSettings) {
-        $supportedSettingsModules = @('SquaddieFieldPromotions', 'SquaddieVeterancy')
+        $supportedSettingsModules = @('SquaddieFieldPromotions', 'SquaddieVeterancy', 'TacticalRoundCheckpoint')
         if ($Product -ne 'Standalone' -or $Modules.Count -ne 1 -or $supportedSettingsModules -notcontains $Modules[0]) {
-            throw 'UseInstalledSettings is supported only for standalone SquaddieFieldPromotions or SquaddieVeterancy.'
+            throw 'UseInstalledSettings is unsupported for this product/module selection.'
         }
         $selected = @($Modules[0])
         $dependencyManifest = Get-Content -LiteralPath (Join-Path $BundleRoot ('source\mods\jiangyu\' + $Modules[0] + '\jiangyu.json')) -Raw | ConvertFrom-Json
