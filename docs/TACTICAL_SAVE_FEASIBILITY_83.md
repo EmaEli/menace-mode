@@ -89,7 +89,14 @@ https://github.com/EmaEli/menace-mode/issues/83.
 - Clean verification exposed an external-settings metadata-witness bug in the
   shared verifier. Fixed and regression-tested: inspect project XML after selected
   builds, without rebuilding/bundling/installing the external settings companion.
-- **Windows BuildOnly, installation, startup and gameplay NOT run.** The PC's SSH
-  connection timed out and its mDNS hostname could not resolve. No installed mods,
-  UserData or game saves were changed. Recheck native hash/fresh proxies/game closed
-  and use the canonical build/install gates when menace-pc becomes reachable.
+- Canonical Windows BuildOnly and install passed 3 November on MENACE 0.7.17+22362
+  with pinned SDK 10.0.113. Windows compilation: zero warnings/errors. Installed
+  manifest/assembly/file 0.1.0/0.1.0.0/0.1.0.0; installed DLL SHA256
+  `dbeba3bbfa17fc38990065923f823836cbfe04e9b26e75a9567b35429cdcc0e3`.
+- Installer log: `E:\MENACE-Work\Temp\MENACE-install.log`. Backup/rollback journal
+  outside Mods: `_MENACE_Backups/20261103-191717-c9e52ec720fd47d898ff8363564d88e3`;
+  the originals directory is empty because this was a new package install. All 537
+  unrelated Mods files and 817 UserData files were hash-identical before/after.
+  Installed settings and loader were validated/reused; campaign saves were untouched.
+- **Startup and in-game round-boundary acceptance still NOT run.** MENACE remains
+  closed after installation. Do not call this a gameplay-verified autosave or resume.
