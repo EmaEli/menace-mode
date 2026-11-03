@@ -109,6 +109,15 @@ class BerserkApRefundTests(unittest.TestCase):
         self.assertIn("var launchUsage = _childUsage | UsageParameter.NoApConsumed;", RUNTIME)
         self.assertNotIn("| UsageParameter.Free", RUNTIME)
 
+    def test_ai_pair_selection_uses_tested_production_helper(self):
+        section = RUNTIME.split("private bool TryBeginAICombinedUse(", 1)[1].split(
+            "private void RecordPairEligibilityRejection(", 1)[0]
+        self.assertIn("bool chosenUsesSquadSlot = AIPolicy.ChosenUsesSquadSlot(role, vehicleMode);", section)
+        self.assertIn("var squad = chosenUsesSquadSlot ? chosen : other;", section)
+        self.assertIn("var leader = chosenUsesSquadSlot ? other : chosen;", section)
+        self.assertIn("Evaluate(actor, squad, leader, allowAI: true)", section)
+        self.assertIn("AIPolicy.CanReplaceWithoutOwningTurnEnd", section)
+
     def test_versions_and_debug_default(self):
         version = MANIFEST["version"]
         self.assertIn(f'AssemblyVersion("{version}.0")', PLUGIN)

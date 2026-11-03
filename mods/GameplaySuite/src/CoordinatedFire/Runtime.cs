@@ -22,6 +22,7 @@ internal sealed class Runtime : IVolleyPort, IDisposable
     private int _readDepth, _nativeDepth, _round;
     private bool _settling, _faulted, _transactionIsAI, _roundCheckDeferred;
     private bool _apDebitIntercepted, _apReconciled, _suppressFee;
+    private readonly AIDiagnosticCapture _aiDiagnostics = new();
     private int _launchAp, _launchCost, _clampedApGain;
     private UsageParameter _childUsage = UsageParameter.Default;
     private int _squadIndex, _leaderIndex, _vehiclePairIndex;
@@ -38,6 +39,11 @@ internal sealed class Runtime : IVolleyPort, IDisposable
     public bool SynchronizedLaunchEnabled => _syncPlayerFire && !_transactionIsAI;
     public double SynchronizedLaunchDelay => 0.10;
     public bool IsVehicleMode => _enableVehicles && Native.Valid(_actor) && _actor!.IsVehicle();
+    public bool SkillUseHookInstalled { get; private set; }
+    public bool AIDiagnosticCaptureActive => _aiDiagnostics.IsCapturing;
+    public bool AITransactionActive => _transactionIsAI && _transaction != null;
+    public void StartAIDiagnosticCapture() => _aiDiagnostics.Start();
+    public string StopAIDiagnosticCapture() => _aiDiagnostics.StopAndFormat();
     public void SetAIEnabled(bool enabled) => _enableAI = enabled;
     public void SetSynchronizedFireEnabled(bool enabled) => _syncPlayerFire = enabled;
     public void SetVehicleEnabled(bool enabled)
@@ -96,6 +102,7 @@ internal sealed class Runtime : IVolleyPort, IDisposable
         var none = Type.EmptyTypes;
         Patch(typeof(Skill), nameof(Skill.Use), typeof(bool), false,
             new[] { typeof(Tile), typeof(UsageParameter) }, prefix: nameof(Hooks.Use));
+        SkillUseHookInstalled = true;
         Patch(typeof(Skill), nameof(Skill.GetMinRange), typeof(int), false, none, postfix: nameof(Hooks.MinRange));
         Patch(typeof(Skill), nameof(Skill.GetMaxRange), typeof(int), false, none, postfix: nameof(Hooks.MaxRange));
         Patch(typeof(Skill), nameof(Skill.IsUsable), typeof(bool), false, none, postfix: nameof(Hooks.Ready));
@@ -287,15 +294,64 @@ internal sealed class Runtime : IVolleyPort, IDisposable
 
     private bool BeforeUse(Skill skill, Tile target, UsageParameter usage, ref bool result)
     {
-        if (_nativeDepth != 0) return true;
+        bool capture = _aiDiagnostics.IsCapturing;
+        if (capture) _aiDiagnostics.Record(AIDiagnosticCounter.HookCalls);
+        if (_nativeDepth != 0)
+        {
+            if (capture) _aiDiagnostics.Record(AIDiagnosticCounter.NativeReentryCalls);
+            return true;
+        }
+
+        bool? isAITurnUse = capture ? CaptureUseTurnContext() : null;
 
         if (_armed != null && Native.Key(skill) == _armed.First.SkillKey)
             return BeforePlayerCombinedUse(skill, target, usage, ref result);
 
-        if (_enableAI && !Locked && _armed == null && TryBeginAICombinedUse(skill, target, usage, ref result))
-            return false;
+        if (!_enableAI)
+        {
+            if (isAITurnUse == true) _aiDiagnostics.Record(AIDiagnosticCounter.AIDisabled);
+            return true;
+        }
+        if (Locked)
+        {
+            if (isAITurnUse == true) _aiDiagnostics.Record(AIDiagnosticCounter.RuntimeLocked);
+            return true;
+        }
+        if (_armed != null)
+        {
+            if (isAITurnUse == true) _aiDiagnostics.Record(AIDiagnosticCounter.PlayerTargetingArmed);
+            return true;
+        }
+
+        if (isAITurnUse == true) _aiDiagnostics.Record(AIDiagnosticCounter.AIEvaluationAttempts);
+        if (TryBeginAICombinedUse(skill, target, usage, ref result)) return false;
 
         return true;
+    }
+
+    private bool? CaptureUseTurnContext()
+    {
+        try
+        {
+            var manager = TacticalManager.Get();
+            if (!Native.Valid(manager))
+            {
+                _aiDiagnostics.Record(AIDiagnosticCounter.DiagnosticContextUnavailable);
+                return null;
+            }
+            if (manager.IsPlayerTurn())
+            {
+                _aiDiagnostics.Record(AIDiagnosticCounter.CallsOnPlayerTurn);
+                return false;
+            }
+            _aiDiagnostics.Record(AIDiagnosticCounter.CallsOnAITurn);
+            return true;
+        }
+        catch
+        {
+            _aiDiagnostics.Record(AIDiagnosticCounter.DiagnosticContextUnavailable);
+            return null;
+        }
     }
 
     private bool BeforePlayerCombinedUse(Skill skill, Tile target, UsageParameter usage, ref bool result)
@@ -333,23 +389,37 @@ internal sealed class Runtime : IVolleyPort, IDisposable
 
     private bool TryBeginAICombinedUse(Skill chosen, Tile target, UsageParameter usage, ref bool result)
     {
-        if (_faulted || !InMission || IsActive || _settling) return false;
+        if (_faulted) { _aiDiagnostics.Record(AIDiagnosticCounter.RuntimeFaulted); return false; }
+        if (!InMission) { _aiDiagnostics.Record(AIDiagnosticCounter.OutsideMission); return false; }
+        if (IsActive) { _aiDiagnostics.Record(AIDiagnosticCounter.ExistingVolleyActive); return false; }
+        if (_settling) { _aiDiagnostics.Record(AIDiagnosticCounter.Settling); return false; }
         var manager = TacticalManager.Get();
-        if (!Native.Valid(manager) || manager.IsPlayerTurn() || manager.IsPaused() || manager.IsFinished()) return false;
+        if (!Native.Valid(manager)) { _aiDiagnostics.Record(AIDiagnosticCounter.ManagerUnavailable); return false; }
+        if (manager.IsPlayerTurn()) { _aiDiagnostics.Record(AIDiagnosticCounter.PlayerTurnGate); return false; }
+        if (manager.IsPaused()) { _aiDiagnostics.Record(AIDiagnosticCounter.Paused); return false; }
+        if (manager.IsFinished()) { _aiDiagnostics.Record(AIDiagnosticCounter.MissionFinished); return false; }
         var actor = Native.ResolveActorForSkill(chosen);
-        if (!Native.Valid(actor) || Native.IsPlayerControlled(actor!) || !Native.HasAttack(actor, chosen))
-            return false;
-        bool vehicleMode = actor.IsVehicle() && _enableVehicles;
+        if (!Native.Valid(actor)) { _aiDiagnostics.Record(AIDiagnosticCounter.ActorUnresolved); return false; }
+        if (Native.IsPlayerControlled(actor!)) { _aiDiagnostics.Record(AIDiagnosticCounter.PlayerControlledActor); return false; }
+        if (!Native.HasAttack(actor, chosen)) { _aiDiagnostics.Record(AIDiagnosticCounter.ChosenSkillNotOwned); return false; }
+        bool isVehicle = actor.IsVehicle();
+        bool vehicleMode = isVehicle && _enableVehicles;
         bool infantryMode = actor.IsInfantry();
-        if (!infantryMode && !vehicleMode) return false;
+        if (!infantryMode && !vehicleMode)
+        {
+            _aiDiagnostics.Record(isVehicle ? AIDiagnosticCounter.VehicleModeDisabled : AIDiagnosticCounter.UnsupportedActorMode);
+            return false;
+        }
 
         if (!Native.Supported(chosen))
         {
+            _aiDiagnostics.Record(AIDiagnosticCounter.UnsupportedChosenSkill);
             _log($"AI attack observed but not eligible for Coordinated Fire: skill={chosen.GetID()}, usage={usage}, supported=false.");
             return false;
         }
         if (!IsSafeAIUsage(usage))
         {
+            _aiDiagnostics.Record(AIDiagnosticCounter.UnsafeUsageFlags);
             _log($"AI attack observed but not converted: skill={chosen.GetID()}, usage={usage} ({(int)usage}); usage flags are not yet safe for combined fire.");
             return false;
         }
@@ -365,6 +435,7 @@ internal sealed class Runtime : IVolleyPort, IDisposable
         {
             if (role == WeaponRole.Unknown)
             {
+                _aiDiagnostics.Record(AIDiagnosticCounter.UnknownWeaponRole);
                 _log($"AI infantry attack observed but role is unsupported: skill={chosen.GetID()}, usage={usage}.");
                 return false;
             }
@@ -373,6 +444,7 @@ internal sealed class Runtime : IVolleyPort, IDisposable
         }
         if (others.Count == 0)
         {
+            _aiDiagnostics.Record(AIDiagnosticCounter.NoCompatiblePartner);
             _log($"AI attack observed but no compatible partner exists: skill={chosen.GetID()}, usage={usage}, vehicle={vehicleMode}.");
             return false;
         }
@@ -381,31 +453,53 @@ internal sealed class Runtime : IVolleyPort, IDisposable
         for (int i = 0; i < others.Count; i++)
         {
             var other = others[i];
-            var squad = vehicleMode || role == WeaponRole.Squad ? chosen : other;
-            var leader = vehicleMode || role == WeaponRole.Leader ? other : chosen;
+            bool chosenUsesSquadSlot = AIPolicy.ChosenUsesSquadSlot(role, vehicleMode);
+            var squad = chosenUsesSquadSlot ? chosen : other;
+            var leader = chosenUsesSquadSlot ? other : chosen;
             var decision = Read(() => Evaluate(actor, squad, leader, allowAI: true));
             if (!decision.Allowed || decision.Plan == null)
             {
                 lastReason = decision.Reason;
+                RecordPairEligibilityRejection(decision.Reason);
                 continue;
             }
             if (!Read(() => Native.CanTarget(squad, actor, target) && Native.CanTarget(leader, actor, target)))
             {
                 lastReason = "the selected target is not legal for both weapons";
+                _aiDiagnostics.Record(AIDiagnosticCounter.TargetRejected);
                 continue;
             }
             if (!AIPolicy.CanReplaceWithoutOwningTurnEnd(actor.GetActionPoints(), decision.Plan.Cost))
             {
+                _aiDiagnostics.Record(AIDiagnosticCounter.FinalAPGuard);
                 _log($"AI attack kept vanilla: skill={chosen.GetID()}, usage={usage} ({(int)usage}); combined fee {decision.Plan.Cost} would exhaust the actor's remaining {actor.GetActionPoints()} AP, so native AI turn hand-off is preserved.");
                 return false;
             }
+            _aiDiagnostics.Record(AIDiagnosticCounter.VolleyCandidateAccepted);
             BeginTransaction(actor, squad, leader, target, decision.Plan, isAI: true, usage);
             _log($"AI {(vehicleMode ? "Vehicle " : "")}Coordinated Fire: {squad.GetID()} + {leader.GetID()} on tile; usage={usage} ({(int)usage}); fee={decision.Plan.Cost}.");
             result = _volley.Begin(decision.Plan);
+            _aiDiagnostics.Record(result ? AIDiagnosticCounter.VolleyBeginAccepted : AIDiagnosticCounter.VolleyBeginRejected);
             return true;
         }
         _log($"AI attack kept vanilla: skill={chosen.GetID()}, usage={usage} ({(int)usage}); reason={lastReason}.");
         return false; // Let the AI execute its original attack unchanged.
+    }
+
+    private void RecordPairEligibilityRejection(string reason)
+    {
+        _aiDiagnostics.Record(AIDiagnosticCounter.PairEligibilityRejected);
+        if (reason == "Wait for the current action.")
+            _aiDiagnostics.Record(AIDiagnosticCounter.ActorBusyOrMoving);
+        else if (reason == "Both original attacks must be usable.")
+            _aiDiagnostics.Record(AIDiagnosticCounter.PlayerUsageParamsRejected);
+    }
+
+    private void RecordAIChildEvent(long skillKey, AIDiagnosticCounter first, AIDiagnosticCounter second)
+    {
+        if (!_aiDiagnostics.IsCapturing || !_transactionIsAI || _transaction == null) return;
+        if (skillKey == _transaction.First.SkillKey) _aiDiagnostics.Record(first);
+        else if (skillKey == _transaction.Second.SkillKey) _aiDiagnostics.Record(second);
     }
 
     private void BeginTransaction(Actor actor, Skill squad, Skill leader, Tile target, VolleyPlan plan, bool isAI, UsageParameter usage)
@@ -620,6 +714,8 @@ internal sealed class Runtime : IVolleyPort, IDisposable
         int cost = _transaction?.Cost ?? 0;
         bool suppressed = _suppressFee;
         bool wasAI = _transactionIsAI;
+        if (wasAI)
+            _aiDiagnostics.Record(success ? AIDiagnosticCounter.VolleyFinishedSuccessfully : AIDiagnosticCounter.VolleyInterrupted);
         bool endActorTurn = false;
         _settling = true;
         try
@@ -787,9 +883,21 @@ internal sealed class Runtime : IVolleyPort, IDisposable
             catch (Exception e) { __result = false; r.Fail(e); }
         }
         public static void Started(Actor __0, Skill __1, Tile __2)
-        { var r = Instance; if (r != null && Native.Same(__0, r._firingActor)) r._volley.NativeStarted(Native.Key(__1)); }
+        {
+            var r = Instance;
+            if (r == null || !Native.Same(__0, r._firingActor)) return;
+            long key = Native.Key(__1);
+            r.RecordAIChildEvent(key, AIDiagnosticCounter.FirstChildStarted, AIDiagnosticCounter.SecondChildStarted);
+            r._volley.NativeStarted(key);
+        }
         public static void Completed(Skill __0)
-        { Instance?._volley.NativeCompleted(Native.Key(__0)); }
+        {
+            var r = Instance;
+            if (r == null) return;
+            long key = Native.Key(__0);
+            r.RecordAIChildEvent(key, AIDiagnosticCounter.FirstChildCompleted, AIDiagnosticCounter.SecondChildCompleted);
+            r._volley.NativeCompleted(key);
+        }
         public static bool Round(ref bool __result)
         {
             var r = Instance;

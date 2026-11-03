@@ -1,6 +1,8 @@
 # Coordinated Fire
 
-**Version 1.6.11** for MENACE.
+**Version 1.6.12** for MENACE.
+
+Version 1.6.12 fixes AI infantry pair selection (#82): either native weapon choice now supplies distinct squad and leader attacks instead of duplicating one weapon into both slots. AP, ammo, targeting, usage-flag and final-AP hand-off safeguards are unchanged. Optional bounded AI capture is available in the developer panel; normal logging remains OFF by default. In-game acceptance is pending.
 
 Version 1.6.11 restores cinematic HUD hiding lost in the Jiangyu migration (MEN-006 / #7). Both drawing and mouse interception use the same optional Cinematic Action Camera state. The shared click-through guard and all combat rules are unchanged. Local build/offline tests passed; installed on the test PC with a verified backup, with in-game acceptance still pending.
 

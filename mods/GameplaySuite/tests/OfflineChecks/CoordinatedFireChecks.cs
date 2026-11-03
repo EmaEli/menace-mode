@@ -57,5 +57,49 @@ internal static class CoordinatedFireChecks
         check(!Rules.Evaluate(actor with { ActionPoints = 29 }, squad, leader).Allowed, "combined fee affordability");
         check(!AIPolicy.CanReplaceWithoutOwningTurnEnd(30, 30), "AI native final-AP handoff retained");
         check(AIPolicy.CanReplaceWithoutOwningTurnEnd(31, 30), "AI replacement requires spare AP");
+
+        foreach (bool chosenIsSquad in new[] { true, false })
+        {
+            var chosen = chosenIsSquad ? squad : leader;
+            var partner = chosenIsSquad ? leader : squad;
+            bool chosenUsesSquadSlot = AIPolicy.ChosenUsesSquadSlot(chosen.Role, vehicleMode: false);
+            var pair = (Squad: chosenUsesSquadSlot ? chosen : partner,
+                Leader: chosenUsesSquadSlot ? partner : chosen);
+            check(pair.Squad == squad && pair.Leader == leader,
+                "AI pair preserves distinct squad/leader weapons regardless of chosen role");
+            var aiDecision = Rules.Evaluate(actor with { IsPlayerControlled = false },
+                pair.Squad, pair.Leader, allowAI: true);
+            check(aiDecision.Allowed && aiDecision.Plan?.Cost == 30,
+                "either native AI weapon choice yields an eligible pair at one maximum fee");
+            check(aiDecision.Plan?.First.SkillKey != aiDecision.Plan?.Second.SkillKey,
+                "AI child attacks never duplicate the chosen weapon");
+            check(!Rules.Evaluate(actor with { IsPlayerControlled = false },
+                pair.Squad, pair.Leader).Allowed, "AI permission gate remains required");
+            check(AIPolicy.ChosenUsesSquadSlot(chosen.Role, vehicleMode: true),
+                "vehicle pair preserves chosen/partner order regardless of item role");
+        }
+
+        var diagnostics = new AIDiagnosticCapture();
+        diagnostics.Record(AIDiagnosticCounter.HookCalls);
+        check(!diagnostics.IsCapturing && diagnostics.GetCount(AIDiagnosticCounter.HookCalls) == 0,
+            "AI diagnostic counters are off until explicitly started");
+        diagnostics.Start();
+        diagnostics.Record(AIDiagnosticCounter.HookCalls);
+        check(diagnostics.IsCapturing && diagnostics.GetCount(AIDiagnosticCounter.HookCalls) == 1,
+            "AI diagnostic capture records explicitly requested events");
+        for (int i = 0; i < AIDiagnosticCapture.MaxCount + 5; i++)
+            diagnostics.Record(AIDiagnosticCounter.CallsOnAITurn);
+        check(diagnostics.GetCount(AIDiagnosticCounter.CallsOnAITurn) == AIDiagnosticCapture.MaxCount,
+            "AI diagnostic counters saturate at their fixed bound");
+        string captureReport = diagnostics.StopAndFormat();
+        diagnostics.Record(AIDiagnosticCounter.HookCalls);
+        check(!diagnostics.IsCapturing && diagnostics.GetCount(AIDiagnosticCounter.HookCalls) == 1,
+            "writing the AI diagnostic snapshot stops collection");
+        check(captureReport.Contains("CallsOnAITurn=9999") && captureReport.Contains("captureWasActive=True"),
+            "AI diagnostic snapshot includes bounded, interpretable counters");
+        diagnostics.Start();
+        check(diagnostics.GetCount(AIDiagnosticCounter.HookCalls) == 0 && diagnostics.IsCapturing,
+            "starting another AI capture resets the previous sample");
+        diagnostics.StopAndFormat();
     }
 }

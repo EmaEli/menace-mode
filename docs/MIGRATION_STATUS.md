@@ -41,7 +41,7 @@ KDL counts below are **source files**, not patch-operation counts.
 | MenaceModSettings | 0.8.2 | Jiangyu settings/UI; indexed stock-read fix (#65), canonical Windows BuildOnly/install verified 2026-10-21; 0.8.2 gameplay pending; stable assembly identity 1.0.0.0 |
 | BuildingCombatRules | 0.3.0 | Shared SuiteSystem host, Harmony/runtime; tree protection candidate #48 |
 | BuildingsBlockLineOfSight | 0.2.3 | Shared SuiteSystem host, Harmony/runtime |
-| CoordinatedFire | 1.6.11 | Shared SuiteSystem host, native attacks/HUD |
+| CoordinatedFire | 1.6.12 | Shared SuiteSystem host, native attacks/HUD; #82 corrects AI squad/leader pair selection after the 3 November log showed nine role-check rejections; optional bounded capture retained, gameplay acceptance pending |
 | CoverDestructionRebalance | 0.4.1 | KDL tiers + runtime light/medium mortar impact guard; #58 gameplay verification pending |
 | CustomSupplySliders | 0.2.1 | Shared SuiteSystem host; difficulty-menu slider ranges |
 | FieldLogistics | 1.0.11 | Shared SuiteSystem host + 4 KDL files; ammo support |

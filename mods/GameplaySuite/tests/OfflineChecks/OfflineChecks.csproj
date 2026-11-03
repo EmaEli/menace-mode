@@ -15,6 +15,7 @@
     <Compile Include="../../../jiangyu/MenaceModSettings/code/LegacySettings.cs" Link="LegacySettings.cs" />
     <Compile Include="../../../jiangyu/StrongerCover/code/CoverSettings.cs" Link="CoverSettings.cs" />
     <Compile Include="../../src/CoordinatedFire/Core/Rules.cs" Link="CoordinatedFireRules.cs" />
+    <Compile Include="../../src/CoordinatedFire/Core/AIDiagnostics.cs" Link="CoordinatedFireAIDiagnostics.cs" />
     <Compile Include="../../src/SmokeOverhaul/SmokeAiRules.cs" Link="SmokeAiRules.cs" />
     <Compile Include="../../src/InfantryAssault/AssaultDefenseRules.cs" Link="AssaultDefenseRules.cs" />
     <Compile Include="../../src/WeaponMechanicsRebalanced/MortarScatterRules.cs" Link="MortarScatterRules.cs" />

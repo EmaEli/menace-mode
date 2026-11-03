@@ -131,6 +131,11 @@ public static class Fee
 
 public static class AIPolicy
 {
+    // Normalize either chosen infantry role without duplicating a weapon. Vehicle
+    // pairs have no squad/leader roles, so retain chosen/partner order instead.
+    public static bool ChosenUsesSquadSlot(WeaponRole chosenRole, bool vehicleMode)
+        => vehicleMode || chosenRole == WeaponRole.Squad;
+
     // Replacing an AI attack with an asynchronous two-shot transaction is safe only
     // while MENACE still has AP left for the acting AI unit afterwards. Live logs
     // showed that consuming the AI actor's final AP inside the replacement bypasses

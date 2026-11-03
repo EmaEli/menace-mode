@@ -8,9 +8,9 @@ using MenaceModSuite.Shared;
 using UnityEngine;
 using Path = global::System.IO.Path;
 
-[assembly: AssemblyVersion("1.6.11.0")]
-[assembly: AssemblyFileVersion("1.6.11.0")]
-[assembly: AssemblyInformationalVersion("1.6.11")]
+[assembly: AssemblyVersion("1.6.12.0")]
+[assembly: AssemblyFileVersion("1.6.12.0")]
+[assembly: AssemblyInformationalVersion("1.6.12")]
 
 namespace CoordinatedFire;
 
@@ -18,7 +18,7 @@ namespace CoordinatedFire;
 public sealed partial class Plugin : IHostedPlugin
 {
     private const string SettingsGroup = "Coordinated Fire";
-    private const string Version = "1.6.11";
+    private const string Version = "1.6.12";
     private ModLog? _logger;
     private global::HarmonyLib.Harmony? _harmony;
     private Runtime? _runtime;
@@ -236,7 +236,11 @@ public sealed partial class Plugin : IHostedPlugin
         Line("AI combined fire: " + (Setting("EnableAICombinedFire", true) ? "enabled" : "disabled"));
         Line("Vehicle combined fire: " + (Setting("EnableVehicleCombinedFire", false) ? "enabled" : "disabled"));
         Line("Synchronized player volley: " + (Setting("SynchronizedPlayerFire", false) ? "enabled" : "disabled"));
+        Line("AI test capture: " + (_runtime?.AIDiagnosticCaptureActive == true ? "recording" : "off"));
         Line("Alpha Strike detected: " + (AlphaStrikeLoaded() ? "yes" : "no"));
+        if (GUI.Button(new Rect(area.x, y + 4, 180, 26), "Start / reset AI capture"))
+            _runtime?.StartAIDiagnosticCapture();
+        y += 30;
         if (GUI.Button(new Rect(area.x, y + 4, 180, 26), "Write diagnostic file")) WriteReport();
     }
 
@@ -288,6 +292,10 @@ public sealed partial class Plugin : IHostedPlugin
             text.AppendLine("Vehicle combined fire: " + (_runtime?.VehicleEnabled == true ? "enabled" : "disabled"));
             text.AppendLine("Synchronized player volley: " + (_runtime?.SynchronizedFireEnabled == true ? "enabled (0.10s experimental stagger)" : "disabled"));
             text.AppendLine("Alpha Strike detected: " + AlphaStrikeLoaded());
+            text.AppendLine("Skill.Use Harmony patch registered: " + (_runtime?.SkillUseHookInstalled == true));
+            text.AppendLine("AI transaction active: " + (_runtime?.AITransactionActive == true));
+            text.AppendLine("AI capture is explicit, in-memory-only and bounded (issue #82).");
+            text.AppendLine(_runtime?.StopAIDiagnosticCapture() ?? "AI_CAPTURE unavailable");
             bool vehicleMode = _runtime?.IsVehicleMode == true;
             text.AppendLine((vehicleMode ? "Selected vehicle weapon A: " : "Selected squad mode: ") + (_runtime?.SquadName ?? "-"));
             text.AppendLine((vehicleMode ? "Selected vehicle weapon B: " : "Selected leader mode: ") + (_runtime?.LeaderName ?? "-"));
