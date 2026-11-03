@@ -37,6 +37,7 @@ internal sealed class Runtime : IDisposable
         public int CostPerReaction;
         public int RemainingReactions;
         public int InitialReactions;
+        public long ContainerKey;
         public readonly Dictionary<long, long> LastReactedTileByTarget = new();
     }
 
@@ -101,6 +102,7 @@ internal sealed class Runtime : IDisposable
         public int Reactions;
         public bool PlayerSide;
         public bool HighContrast;
+        public bool Passenger;
     }
 
     private readonly Action<string> _debugLog;
@@ -115,7 +117,9 @@ internal sealed class Runtime : IDisposable
     private readonly Dictionary<long, NativeHudMarker> _nativeHudMarkers = new();
     private readonly Dictionary<string, Sprite> _markerSprites = new();
     private readonly HashSet<long> _aiFinalizedActors = new();
+    private readonly Dictionary<long, (Actor Passenger, int AP)> _aiPassengerTurnEndSnapshots = new();
     private Actor? _selected;
+    private long _passengerSelectionHostKey;
     private Skill? _squad;
     private Skill? _leader;
     private Skill? _vehicle;
@@ -133,6 +137,7 @@ internal sealed class Runtime : IDisposable
     private bool _debugLogging;
     private bool _debugBonusAIOverwatch;
     private bool _debugMovementVisibility;
+    private int _aiChanceMultiplier;
     private int _playerThreshold;
     private int _aiThreshold;
     private int _aimPenalty;
@@ -162,7 +167,7 @@ internal sealed class Runtime : IDisposable
     private bool _reactionActionSawBusy;
     private float _reactionActionActivatedAt;
 
-    internal Runtime(global::HarmonyLib.Harmony harmony, Action<string> debugLog, Action<string> warningLog, Action<string> errorLog, bool debugLogging, bool debugBonusAIOverwatch, bool debugMovementVisibility, bool aiEnabled,
+    internal Runtime(global::HarmonyLib.Harmony harmony, Action<string> debugLog, Action<string> warningLog, Action<string> errorLog, bool debugLogging, bool debugBonusAIOverwatch, bool debugMovementVisibility, int aiChanceMultiplier, bool aiEnabled,
         bool actionTriggersEnabled, bool vehicleEnabled, bool aiVehicleEnabled, bool showWorldMarkers, bool highContrastIndicators,
         int playerThreshold, int aiThreshold,
         int aimPenalty, bool coordinatedFireInstalled, bool alphaStrikeInstalled)
@@ -174,6 +179,7 @@ internal sealed class Runtime : IDisposable
         _debugLogging = debugLogging;
         _debugBonusAIOverwatch = debugBonusAIOverwatch;
         _debugMovementVisibility = debugMovementVisibility;
+        _aiChanceMultiplier = Math.Clamp(aiChanceMultiplier, 1, 4);
         _aiEnabled = aiEnabled;
         _actionTriggersEnabled = actionTriggersEnabled;
         _vehicleEnabled = vehicleEnabled;
@@ -267,6 +273,21 @@ internal sealed class Runtime : IDisposable
     public bool HasAlphaStrike => Native.Valid(_alphaStrike);
     public bool BothAvailable => _coordinatedFireInstalled && HasSquad && HasLeader;
     public bool IsSelectedVehicle => Native.Valid(_selected) && Native.IsVehicleActor(_selected!);
+    public bool SelectingPassenger => _passengerSelectionHostKey != 0;
+    public bool HasPassengerChoice
+    {
+        get
+        {
+            try
+            {
+                var active = TacticalManager.Get()?.GetActiveActor();
+                var passenger = Native.Valid(active) ? PassengerOverwatch.GetPassenger(active!) : null;
+                return Native.Valid(active) && Native.IsPlayerControlled(active!)
+                    && Native.Valid(passenger) && Native.IsPlayerControlled(passenger!);
+            }
+            catch { return false; }
+        }
+    }
     public bool AlphaStrikeAvailable => IsSelectedVehicle && HasAlphaStrike;
     public bool HasSelectedPlayerActor
     {
@@ -285,12 +306,13 @@ internal sealed class Runtime : IDisposable
     }
 
     public void Configure(bool aiEnabled, bool actionTriggersEnabled, bool vehicleEnabled, bool aiVehicleEnabled,
-        bool showWorldMarkers, bool highContrastIndicators, int playerThreshold, int aiThreshold, int aimPenalty, bool coordinatedFireInstalled, bool alphaStrikeInstalled, bool debugLogging, bool debugBonusAIOverwatch, bool debugMovementVisibility)
+        bool showWorldMarkers, bool highContrastIndicators, int playerThreshold, int aiThreshold, int aimPenalty, bool coordinatedFireInstalled, bool alphaStrikeInstalled, bool debugLogging, bool debugBonusAIOverwatch, bool debugMovementVisibility, int aiChanceMultiplier)
     {
         if (_debugMovementVisibility && !debugMovementVisibility) _movementVisibilityProbes.Clear();
         _debugLogging = debugLogging;
         _debugBonusAIOverwatch = debugBonusAIOverwatch;
         _debugMovementVisibility = debugMovementVisibility;
+        _aiChanceMultiplier = Math.Clamp(aiChanceMultiplier, 1, 4);
         _aiEnabled = aiEnabled;
         _actionTriggersEnabled = actionTriggersEnabled;
         if (!_actionTriggersEnabled) _pendingActionTriggers.Clear();
@@ -400,7 +422,9 @@ internal sealed class Runtime : IDisposable
     private bool TryRefreshNativeHudMarker(Watch w, int reactions)
     {
         long shooterKey = Native.Key(w.Shooter);
-        var actorHud = FindActorUnitHud(w.Shooter);
+        bool passenger = PassengerOverwatch.TryGetTransport(w.Shooter, out var transport);
+        if (passenger && !w.PlayerSide && !Native.IsVisibleToPlayer(transport!)) return false;
+        var actorHud = FindActorUnitHud(passenger ? transport! : w.Shooter);
         if (!Native.Valid(actorHud)) return false;
 
         try
@@ -409,13 +433,15 @@ internal sealed class Runtime : IDisposable
             // correctly through camera pans/zoom.  Put our tiny reaction row directly beside
             // that native bar instead of approximating screen coordinates ourselves.
             var hitpointsBar = actorHud!.m_HitpointsBar;
-            var host = hitpointsBar?.parent;
+            VisualElement? anchor = passenger ? actorHud.m_ContainedBadgeIcon : hitpointsBar;
+            var host = anchor?.parent;
             if (host == null) return false;
 
             long hudKey = Native.Key(actorHud);
             NativeHudMarker? marker = null;
             if (_nativeHudMarkers.TryGetValue(shooterKey, out var existing)
-                && existing.HudKey == hudKey)
+                && existing.HudKey == hudKey && existing.Passenger == passenger
+                && Native.Same(existing.Strip.parent, host))
             {
                 marker = existing;
             }
@@ -424,11 +450,12 @@ internal sealed class Runtime : IDisposable
                 RemoveNativeHudMarker(shooterKey);
 
                 // Reuse a row if this pooled HUD already contains one from an earlier bind.
+                string stripName = passenger ? "OverwatchPassengerReticles" : "OverwatchReticles";
                 VisualElement? strip = null;
                 for (int i = 0; i < host.childCount; i++)
                 {
                     var child = host.ElementAt(i);
-                    if (child != null && child.name == "OverwatchReticles")
+                    if (child != null && child.name == stripName)
                     {
                         strip = child;
                         break;
@@ -438,15 +465,16 @@ internal sealed class Runtime : IDisposable
                 if (strip == null)
                 {
                     strip = new VisualElement();
-                    strip.name = "OverwatchReticles";
+                    strip.name = stripName;
                     strip.pickingMode = PickingMode.Ignore;
                     strip.style.flexDirection = new StyleEnum<FlexDirection>(FlexDirection.Row);
                     strip.style.justifyContent = new StyleEnum<Justify>(Justify.FlexStart);
-                    strip.style.alignSelf = new StyleEnum<Align>(Align.FlexStart);
+                    strip.style.alignSelf = new StyleEnum<Align>(passenger ? Align.Center : Align.FlexStart);
                     strip.style.flexShrink = 0f;
                     strip.style.marginTop = new StyleLength(1f);
+                    if (passenger) strip.style.marginLeft = new StyleLength(2f);
 
-                    int insertAt = host.IndexOf(hitpointsBar);
+                    int insertAt = host.IndexOf(anchor);
                     if (insertAt >= 0) host.Insert(insertAt + 1, strip);
                     else host.Add(strip);
                 }
@@ -457,7 +485,8 @@ internal sealed class Runtime : IDisposable
                     HudKey = hudKey,
                     Reactions = -1,
                     PlayerSide = w.PlayerSide,
-                    HighContrast = _highContrastIndicators
+                    HighContrast = _highContrastIndicators,
+                    Passenger = passenger
                 };
                 _nativeHudMarkers[shooterKey] = marker;
                 if (_debugLogging) _debugLog($"Overwatch native HUD reticle row shown: shooter={shooterKey} side={(w.PlayerSide ? "player" : "enemy")} hud={hudKey}.");
@@ -465,7 +494,7 @@ internal sealed class Runtime : IDisposable
 
             if (marker.Reactions != reactions || marker.PlayerSide != w.PlayerSide || marker.HighContrast != _highContrastIndicators)
             {
-                RebuildNativeHudReticles(marker.Strip, w.PlayerSide, reactions);
+                RebuildNativeHudReticles(marker.Strip, w.PlayerSide, reactions, marker.Passenger);
                 marker.Reactions = reactions;
                 marker.PlayerSide = w.PlayerSide;
                 marker.HighContrast = _highContrastIndicators;
@@ -481,11 +510,11 @@ internal sealed class Runtime : IDisposable
         }
     }
 
-    private void RebuildNativeHudReticles(VisualElement strip, bool playerSide, int reactions)
+    private void RebuildNativeHudReticles(VisualElement strip, bool playerSide, int reactions, bool passenger)
     {
         strip.Clear();
         int displayCount = Math.Clamp(reactions, 1, 8);
-        const int nativeSize = 11;
+        int nativeSize = passenger ? 8 : 11;
         const int gap = 1;
         var sprite = GetSingleReticleSprite(playerSide, _highContrastIndicators);
         if (sprite == null) return;
@@ -661,10 +690,40 @@ internal sealed class Runtime : IDisposable
                 texture.SetPixel(x, y, color);
     }
 
+    private Actor? ResolvePlayerActor(TacticalManager manager)
+    {
+        var active = manager.GetActiveActor();
+        if (_passengerSelectionHostKey != 0 && Native.Key(active) == _passengerSelectionHostKey
+            && Native.Valid(active) && Native.IsPlayerControlled(active!))
+        {
+            var passenger = PassengerOverwatch.GetPassenger(active!);
+            if (Native.Valid(passenger) && Native.IsPlayerControlled(passenger!)) return passenger;
+        }
+        _passengerSelectionHostKey = 0;
+        return active;
+    }
+
+    public void TogglePassengerSelection()
+    {
+        var manager = TacticalManager.Get();
+        if (!Native.Valid(manager) || !manager.IsPlayerTurn() || TacticalManager.IsSkillBusy()
+            || !HasPassengerChoice) return;
+        _passengerSelectionHostKey = SelectingPassenger ? 0 : Native.Key(manager.GetActiveActor());
+        RefreshSelection(manager);
+    }
+
+    private bool IsCurrentPlayerSelection()
+    {
+        var manager = TacticalManager.Get();
+        return Native.Valid(manager) && manager.IsPlayerTurn() && !manager.IsFinished()
+            && !TacticalManager.IsSkillBusy() && Native.Valid(_selected)
+            && Native.IsPlayerControlled(_selected!) && Native.Same(_selected, ResolvePlayerActor(manager));
+    }
+
     private void RefreshSelection(TacticalManager manager)
     {
         if (!manager.IsPlayerTurn()) { _reason = "Available during your turn."; return; }
-        var actor = manager.GetActiveActor();
+        var actor = ResolvePlayerActor(manager);
         if (!Native.Same(actor, _selected))
         {
             RememberSelection();
@@ -672,10 +731,10 @@ internal sealed class Runtime : IDisposable
             _squad = _leader = _vehicle = _alphaStrike = null;
             LoadSelection(actor);
         }
-        if (!Native.Valid(actor) || !Native.IsPlayerControlled(actor))
+        if (!Native.Valid(actor) || !Native.IsPlayerControlled(actor!))
         { _reason = "Select a player infantry squad or vehicle."; return; }
 
-        bool infantry = Native.IsInfantryActor(actor);
+        bool infantry = Native.IsInfantryActor(actor!);
         bool vehicle = Native.IsVehicleActor(actor);
         if (!infantry && !vehicle) { _reason = "Selected actor does not support Overwatch."; return; }
         if (vehicle && !_vehicleEnabled) { _reason = "Vehicle Overwatch is disabled in Mod Settings."; return; }
@@ -814,6 +873,7 @@ internal sealed class Runtime : IDisposable
         get
         {
             if (!Native.Valid(_selected)) return false;
+            if (!IsCurrentPlayerSelection()) return false;
             if (Armed && !CarriedIntoFreshActivation) return false;
             return BuildPlan(_selected!, out _, out _, out _, out _, out _);
         }
@@ -893,7 +953,7 @@ internal sealed class Runtime : IDisposable
 
     public void TogglePlayer()
     {
-        if (!Native.Valid(_selected)) return;
+        if (!IsCurrentPlayerSelection()) return;
         long key = Native.Key(_selected);
 
         if (_watches.TryGetValue(key, out var existingWatch))
@@ -1016,7 +1076,8 @@ internal sealed class Runtime : IDisposable
             PlayerSide = playerSide,
             CostPerReaction = cost,
             RemainingReactions = reactions,
-            InitialReactions = reactions
+            InitialReactions = reactions,
+            ContainerKey = PassengerOverwatch.ContainerKey(actor)
         };
 
         // Player Overwatch commits all remaining AP immediately. AI reservation uses AP captured
@@ -1034,7 +1095,10 @@ internal sealed class Runtime : IDisposable
         string apState = aiReservation ? $"{apBefore} native-after-end (budget logged separately)" : $"{apBefore}->0";
         if (_debugLogging) _debugLog($"Overwatch armed: shooter={Native.Key(actor)} actorType={actorType} mode={mode} primary={primary.GetID()} secondary={(Native.Valid(secondary) ? secondary!.GetID() : "-")} alphaStrike={Native.IsAlphaStrikeSkill(primary)} AP={apState} costPerReaction={cost} reactions={reactions} threshold={Math.Clamp(threshold, 1, 100)}% aimPenalty={Math.Max(0, aimPenalty)} playerSide={playerSide}.");
 
-        if (playerSide)
+        // EndTurn acts on MENACE's active actor, not necessarily the passenger whose
+        // AP we just reserved. UpdateActorState handles the off-active passenger;
+        // never end its vehicle's activation as a side effect.
+        if (playerSide && Native.Same(TacticalManager.Get()?.GetActiveActor(), actor))
         {
             try
             {
@@ -1048,7 +1112,13 @@ internal sealed class Runtime : IDisposable
 
     private void OnActorTurnStarted(Actor actor)
     {
-        if (Native.Valid(actor)) _aiFinalizedActors.Remove(Native.Key(actor));
+        if (!Native.Valid(actor)) return;
+        long key = Native.Key(actor);
+        _aiFinalizedActors.Remove(key);
+        _aiPassengerTurnEndSnapshots.Remove(key);
+        if (!Native.IsVehicleActor(actor)) return;
+        var passenger = PassengerOverwatch.GetPassenger(actor);
+        if (Native.Valid(passenger)) _aiFinalizedActors.Remove(Native.Key(passenger!));
     }
 
     private int CaptureAITurnEndAP(Actor actor)
@@ -1057,15 +1127,50 @@ internal sealed class Runtime : IDisposable
             || Native.IsPlayerControlled(actor)) return -1;
         // Mark even zero-budget/failed rolls as finalized. Only a native fresh activation may
         // permit another roll, never frame polling, actor selection or a repeated end callback.
-        if (!_aiFinalizedActors.Add(Native.Key(actor))) return -1;
-        return Math.Max(0, actor.GetActionPoints());
+        long actorKey = Native.Key(actor);
+        if (!_aiFinalizedActors.Add(actorKey)) return -1;
+        int remainingAp = Math.Max(0, actor.GetActionPoints());
+        _aiPassengerTurnEndSnapshots.Remove(actorKey);
+
+        // Some AI transports end their activation without a separate passenger turn-end.
+        // Snapshot the rider's own AP before native turn-end processing can reset it; the
+        // reservation remains an ordinary passenger budget, independent of vehicle AP/settings.
+        if (Native.IsVehicleActor(actor))
+        {
+            try
+            {
+                var passenger = PassengerOverwatch.GetPassenger(actor);
+                if (Native.Valid(passenger) && !Native.IsPlayerControlled(passenger!))
+                {
+                    long passengerKey = Native.Key(passenger!);
+                    if (!_aiFinalizedActors.Contains(passengerKey))
+                    {
+                        int passengerAp = Math.Max(0, passenger!.GetActionPoints());
+                        if (_aiFinalizedActors.Add(passengerKey))
+                            _aiPassengerTurnEndSnapshots[actorKey] = (passenger!, passengerAp);
+                    }
+                }
+            }
+            catch { /* A passenger snapshot must never prevent the transport's own reservation. */ }
+        }
+        return remainingAp;
     }
 
     private void OnActorTurnEnded(Actor actor, int remainingAp)
     {
+        (Actor Passenger, int AP) passengerSnapshot = default;
+        bool hasPassengerSnapshot = false;
+        if (Native.Valid(actor))
+        {
+            long actorKey = Native.Key(actor);
+            hasPassengerSnapshot = _aiPassengerTurnEndSnapshots.TryGetValue(actorKey, out passengerSnapshot);
+            _aiPassengerTurnEndSnapshots.Remove(actorKey);
+        }
         if (_disposed || !_aiEnabled || remainingAp < 0 || !TacticalManager.IsMissionRunning()) return;
         // __state belongs to this native call, not an earlier frame. OnTurnEnd clears AP at
         // offset 0x148 in MENACE 0.7.17; weapon/ammo/readiness checks run after it completes.
+        if (hasPassengerSnapshot && Native.Valid(passengerSnapshot.Passenger))
+            TryArmAI(passengerSnapshot.Passenger!, "native transport actor turn-end (pre-reset passenger AP)", passengerSnapshot.AP);
         TryArmAI(actor, "native actor turn-end (pre-reset AP)", remainingAp);
     }
 
@@ -1109,14 +1214,6 @@ internal sealed class Runtime : IDisposable
             .ThenBy(s => s.GetActionPointCost())
             .ToList();
 
-        // Preserve the existing choice among attacks the unit can pay for. Only fall back to
-        // under-budget weapons when none are affordable; their leftover AP then sets the chance.
-        if (!diagnosticBonus)
-        {
-            var affordable = attacks.Where(s => s.GetActionPointCost() <= ap).ToList();
-            if (affordable.Count > 0) attacks = affordable;
-        }
-
         if (attacks.Count == 0)
         {
             string why = pool.Count == 0 ? "no supported ranged attacks" : "no attack passed combat/setup/weapon/ammo checks";
@@ -1129,28 +1226,55 @@ internal sealed class Runtime : IDisposable
             return;
         }
 
-        var skill = attacks[0];
-        int cost = skill.GetActionPointCost();
-        int ammoBound = Native.AmmoBound(skill);
+        var selection = AIOverwatchWeaponPlanner.Select(attacks,
+            skill => Native.Role(skill) == WeaponRole.Squad,
+            skill => Native.Role(skill) == WeaponRole.Leader,
+            skill => skill.GetActionPointCost(),
+            allowPair: infantry && _coordinatedFireInstalled);
+
+        // Paired infantry weapons use their combined-fire fee even when it exceeds the
+        // remaining AP; that budget still produces the existing fractional reaction chance.
+        // Keep the old affordable-weapon preference for single-weapon reservations.
+        if (selection is { Secondary: null } && !diagnosticBonus)
+        {
+            var affordable = attacks.Where(s => s.GetActionPointCost() <= ap).ToList();
+            if (affordable.Count > 0)
+                selection = AIOverwatchWeaponPlanner.Select(affordable,
+                    skill => Native.Role(skill) == WeaponRole.Squad,
+                    skill => Native.Role(skill) == WeaponRole.Leader,
+                    skill => skill.GetActionPointCost(), allowPair: false);
+        }
+
+        if (selection == null) return;
+        var selected = selection.Value;
+        var skill = selected.Primary;
+        var secondary = selected.Secondary;
+        int cost = selected.Cost;
+        int ammoBound = secondary == null
+            ? Native.AmmoBound(skill)
+            : Math.Max(Native.AmmoBound(skill), Native.AmmoBound(secondary));
         int guaranteed = ap / cost;
         int apRemainder = ap % cost;
-        int randomDraw = apRemainder > 0 && guaranteed < ammoBound
+        int fractionalThreshold = AIReactionBudget.FractionalDrawThreshold(apRemainder, cost, _aiChanceMultiplier);
+        int randomDraw = fractionalThreshold > 0 && fractionalThreshold < cost && guaranteed < ammoBound
             ? global::System.Random.Shared.Next(0, cost)
             : -1;
-        int reactions = AIReactionBudget.Calculate(ap, cost, ammoBound, randomDraw);
+        int reactions = AIReactionBudget.Calculate(ap, cost, ammoBound, randomDraw, _aiChanceMultiplier);
         if (diagnosticBonus && reactions < ammoBound) reactions++;
         if (reactions <= 0)
         {
-            if (_debugLogging) _debugLog($"AI Overwatch skipped: actor={key} trigger={trigger} AP={ap} skill={skill.GetID()} cost={cost} whole={guaranteed} fractionalAP={apRemainder}/{cost} draw={randomDraw} reason=no reaction allocated.");
+            if (_debugLogging) _debugLog($"AI Overwatch skipped: actor={key} trigger={trigger} AP={ap} skill={skill.GetID()} cost={cost} whole={guaranteed} fractionalAP={apRemainder}/{cost} fractionalChance={fractionalThreshold}/{cost} chanceMultiplier={_aiChanceMultiplier} draw={randomDraw} reason=no reaction allocated.");
             return;
         }
 
         OverwatchMode mode = vehicle
             ? (Native.IsAlphaStrikeSkill(skill) ? OverwatchMode.AlphaStrike : OverwatchMode.Vehicle)
-            : (Native.Role(skill) == WeaponRole.Leader ? OverwatchMode.Leader : OverwatchMode.Squad);
+            : secondary != null
+                ? OverwatchMode.Both
+                : (Native.Role(skill) == WeaponRole.Leader ? OverwatchMode.Leader : OverwatchMode.Squad);
 
-        if (Arm(actor, skill, null, mode, _aiThreshold, _aimPenalty, false, cost, reactions, aiReservation: true))
-            if (_debugLogging) _debugLog($"AI Overwatch armed: actor={key} trigger={trigger} actorType={(vehicle ? "vehicle" : "infantry")} skill={skill.GetID()} alphaStrike={Native.IsAlphaStrikeSkill(skill)} AP={ap} cost={cost} whole={guaranteed} fractionalAP={apRemainder}/{cost} draw={randomDraw} reactions={reactions} ammoBound={ammoBound} diagnosticBonus={(diagnosticBonus ? 1 : 0)} threshold={_aiThreshold}%.");
+        if (Arm(actor, skill, secondary, mode, _aiThreshold, _aimPenalty, false, cost, reactions, aiReservation: true))
+            if (_debugLogging) _debugLog($"AI Overwatch armed: actor={key} trigger={trigger} actorType={(vehicle ? "vehicle" : "infantry")} mode={mode} primary={skill.GetID()} secondary={(Native.Valid(secondary) ? secondary!.GetID() : "-")} alphaStrike={Native.IsAlphaStrikeSkill(skill)} AP={ap} cost={cost} whole={guaranteed} fractionalAP={apRemainder}/{cost} fractionalChance={fractionalThreshold}/{cost} chanceMultiplier={_aiChanceMultiplier} draw={randomDraw} reactions={reactions} ammoBound={ammoBound} diagnosticBonus={(diagnosticBonus ? 1 : 0)} threshold={_aiThreshold}%.");
         else
             if (_debugLogging) _debugLog($"AI Overwatch failed to arm: actor={key} trigger={trigger} AP={ap} skill={skill.GetID()} reason={_reason}.");
     }
@@ -1171,7 +1295,8 @@ internal sealed class Runtime : IDisposable
         foreach (var kv in _watches)
         {
             var w = kv.Value;
-            if (!Native.Valid(w.Shooter) || !Native.IsCombatReady(w.Shooter) || w.RemainingReactions <= 0)
+            if (!Native.Valid(w.Shooter) || !Native.IsCombatReady(w.Shooter) || w.RemainingReactions <= 0
+                || !PassengerOverwatch.SamePositionContext(w.Shooter, w.ContainerKey))
                 remove.Add(kv.Key);
         }
         foreach (long key in remove) RemoveWatch(key);
@@ -1199,6 +1324,8 @@ internal sealed class Runtime : IDisposable
     {
         if (_disposed || !InMission || !Native.Valid(actor)) return;
         ExpireWatchOnCommit(actor, "movement committed");
+        var passenger = PassengerOverwatch.GetPassenger(actor);
+        if (Native.Valid(passenger)) ExpireWatchOnCommit(passenger!, "transport movement committed");
     }
 
     internal void OnMovementFinished(Actor mover, Tile destination)
@@ -1555,6 +1682,12 @@ internal sealed class Runtime : IDisposable
         var w = r.Watch;
         if (!Native.Valid(w.Shooter) || !Native.Valid(r.Target) || !Native.Valid(r.Tile))
         { if (_debugLogging) _debugLog("Queued Overwatch reaction dropped: actor/target/final tile disappeared."); FinishReaction(r, false); return; }
+        if (!_watches.TryGetValue(Native.Key(w.Shooter), out var current) || !ReferenceEquals(current, w)
+            || !PassengerOverwatch.SamePositionContext(w.Shooter, w.ContainerKey))
+        { FinishReaction(r, false); return; }
+        if (PassengerOverwatch.TryGetTransport(w.Shooter, out var transport)
+            && (transport!.IsMoving() || w.ExpireAfterPending))
+        { FinishReaction(r, false); return; }
         if (w.RemainingReactions <= 0)
         { FinishReaction(r, false); return; }
 
@@ -1638,7 +1771,8 @@ internal sealed class Runtime : IDisposable
         {
             long key = Native.Key(r.Watch.Shooter);
             int remaining = r.Watch.RemainingReactions;
-            RemoveWatch(key);
+            if (_watches.TryGetValue(key, out var current) && ReferenceEquals(current, r.Watch))
+                RemoveWatch(key);
             if (_debugLogging) _debugLog($"Overwatch expired after pending reaction because the shooter committed another action: shooter={key} remaining={remaining}/{r.Watch.InitialReactions}.");
             return;
         }
@@ -1712,8 +1846,10 @@ internal sealed class Runtime : IDisposable
         _movementVisibilityProbes.Clear();
         _playerSelections.Clear();
         _selected = null;
+        _passengerSelectionHostKey = 0;
         _squad = _leader = _vehicle = _alphaStrike = null;
         _aiFinalizedActors.Clear();
+        _aiPassengerTurnEndSnapshots.Clear();
         _squadIndex = _leaderIndex = _vehicleIndex = 0;
         _mode = OverwatchMode.Squad;
         ClearPenaltyContext();

@@ -15,11 +15,15 @@ HARNESS = r'''
 using System;
 using System.Collections.Generic;
 using MenaceOverwatch;
-class Actor { public long Key; public int AP; public bool Player, Valid = true; }
+class Actor { public long Key; public int AP; public bool Player, Valid = true, Vehicle, OpenTop; public Actor? Passenger; }
 static class Native {
     public static bool Valid(Actor actor) => actor != null && actor.Valid;
     public static bool IsPlayerControlled(Actor actor) => actor.Player;
+    public static bool IsVehicleActor(Actor actor) => actor != null && actor.Valid && actor.Vehicle;
     public static long Key(Actor actor) => actor.Key;
+}
+static class PassengerOverwatch {
+    public static Actor? GetPassenger(Actor vehicle) => vehicle.Vehicle && vehicle.OpenTop ? vehicle.Passenger : null;
 }
 static class TacticalManager {
     public static bool Running = true;
@@ -28,11 +32,15 @@ static class TacticalManager {
 partial class Runtime {
     bool _disposed, _aiEnabled = true;
     readonly HashSet<long> _aiFinalizedActors = new();
+    readonly Dictionary<long, (Actor Passenger, int AP)> _aiPassengerTurnEndSnapshots = new();
     readonly Action<string> _errorLog = message => throw new Exception(message);
     int calls, budget, reactions;
+    long lastActor;
+    readonly Dictionary<long, int> allocationBudgets = new();
     void TryArmAI(Actor actor, string trigger, int remainingAp) {
-        if (actor.AP != 0) throw new Exception("Allocation must wait for native finalization");
-        calls++; budget = remainingAp;
+        if (trigger == "native actor turn-end (pre-reset AP)" && actor.AP != 0)
+            throw new Exception("Transport reservation must wait for native finalization");
+        calls++; lastActor = actor.Key; budget = remainingAp; allocationBudgets[actor.Key] = remainingAp;
         reactions = AIReactionBudget.Calculate(remainingAp, 20, 5, 0);
     }
     static int checks;
@@ -40,6 +48,7 @@ partial class Runtime {
     static void End(Actor actor) {
         Hooks.ActorTurnEnding(actor, out int state);
         actor.AP = 0; // Native OnTurnEnd clears remaining AP directly.
+        if (actor.Passenger != null) actor.Passenger.AP = 0;
         Hooks.ActorTurnEnded(actor, state);
     }
     public static void Main() {
@@ -78,6 +87,29 @@ partial class Runtime {
         Hooks.ActorTurnEnding(actor, out state); actor.AP = 0; runtime._aiEnabled = false;
         Hooks.ActorTurnEnded(actor, state);
         Check(runtime.calls == 4, "Recheck enabled state after native end");
+
+        runtime._aiEnabled = true;
+        var rider = new Actor { Key = 8, AP = 30 };
+        var transport = new Actor { Key = 7, AP = 40, Vehicle = true, OpenTop = true, Passenger = rider };
+        Hooks.ActorTurnStarted(transport);
+        End(transport);
+        Check(runtime.calls == 6 && runtime.allocationBudgets[rider.Key] == 30 && rider.AP == 0,
+            "Open-top AI passenger reserves from its own AP captured before the transport resets it");
+        End(rider);
+        Check(runtime.calls == 6, "Passenger turn-end callback cannot duplicate the transport reservation");
+        Hooks.ActorTurnStarted(transport); transport.AP = 40; rider.AP = 30;
+        End(transport);
+        Check(runtime.calls == 8 && runtime.allocationBudgets[rider.Key] == 30,
+            "Passenger may reserve again on the next transport activation");
+        End(transport);
+        Check(runtime.calls == 8, "Repeated transport end cannot reroll its passenger");
+
+        var closedRider = new Actor { Key = 10, AP = 30 };
+        var closedTransport = new Actor { Key = 9, AP = 40, Vehicle = true, OpenTop = false, Passenger = closedRider };
+        Hooks.ActorTurnStarted(closedTransport);
+        End(closedTransport);
+        Check(runtime.calls == 9 && runtime.lastActor == closedTransport.Key,
+            "Closed transports do not create passenger Overwatch reservations");
         Console.WriteLine($"Overwatch turn-end checks: {checks} passed");
     }
 }
@@ -90,7 +122,15 @@ class OverwatchAITurnEndTests(unittest.TestCase):
         self.assertIn("prefix: new HarmonyMethod(typeof(Hooks), nameof(Hooks.ActorTurnEnding))", SOURCE)
         self.assertIn("postfix: new HarmonyMethod(typeof(Hooks), nameof(Hooks.ActorTurnEnded))", SOURCE)
         self.assertIn("_aiFinalizedActors.Clear();", SOURCE)
+        self.assertIn("_aiPassengerTurnEndSnapshots.Clear();", SOURCE)
         self.assertNotIn("ObserveAI(", SOURCE)
+        turn_end = SOURCE.split("    private void OnActorTurnEnded", 1)[1].split("    private void TryArmAI", 1)[0]
+        self.assertIn("TryArmAI(passengerSnapshot.Passenger!", turn_end)
+        self.assertLess(turn_end.index("TryArmAI(passengerSnapshot.Passenger!"), turn_end.index("TryArmAI(actor"))
+        self.assertIn('"native transport actor turn-end (pre-reset passenger AP)"', turn_end)
+        capture = SOURCE.split("    private int CaptureAITurnEndAP", 1)[1].split("    private void OnActorTurnEnded", 1)[0]
+        self.assertIn("PassengerOverwatch.GetPassenger(actor)", capture)
+        self.assertIn("passenger!.GetActionPoints()", capture)
         reserve = SOURCE.split("    private void TryArmAI", 1)[1].split("    private bool RemoveWatch", 1)[0]
         self.assertIn("int ap = Math.Max(0, remainingAp);", reserve)
         self.assertNotIn("actor.GetActionPoints()", reserve)
@@ -112,7 +152,7 @@ class OverwatchAITurnEndTests(unittest.TestCase):
                 [DOTNET, "run", "--project", str(root / "Checks.csproj"), "-c", "Release", "--nologo", "-v", "quiet"],
                 capture_output=True, text=True, timeout=60)
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-            self.assertIn("Overwatch turn-end checks: 13 passed", result.stdout)
+            self.assertIn("Overwatch turn-end checks: 18 passed", result.stdout)
 
 
 if __name__ == "__main__":

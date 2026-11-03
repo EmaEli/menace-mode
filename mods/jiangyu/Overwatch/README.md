@@ -1,4 +1,39 @@
-# Overwatch 0.33.1.0
+# Overwatch 0.35.1.0
+
+## 0.35.1.0 — #25 open-top passenger detection fix (candidate)
+
+- Fix the native visibility veto that rejected every observer inside an actor, preventing armed open-top passengers from queuing a reaction.
+- Only verified open-top passenger Overwatch uses the equivalent native detection calculation: the passenger's own vision/detection, target concealment/cover, smoke, revealed status and tile line of sight. No vehicle vision borrowing, global visibility patch or containment mutation.
+- Ordinary infantry/buildings and all existing range, ammo, AP, hit-chance and transport eligibility checks remain unchanged. Managed checks, clean-source build and canonical Windows BuildOnly/install passed on 3 November; native passenger firing still needs a new game test.
+
+## 0.35.0.0 — automatic hostile AI passenger Overwatch (candidate)
+
+- At an eligible hostile AI transport's turn-end, automatically consider its infantry passenger for Overwatch using the passenger's own AP snapshot, captured before native turn-end processing can reset it. This does not depend on AI vehicle Overwatch being enabled and does not spend the transport's AP.
+- Use the existing AI AP budget, fractional chance, weapon/ammo/readiness, range, visibility, line-of-sight and hit-threshold rules; this does not grant a free or guaranteed reaction when the normal reservation rules produce none.
+- Deduplicate against a separate passenger turn-end callback and reset for the next transport activation. Offline regressions pass; Windows installation and in-game acceptance are pending.
+
+## 0.34.0.0 — #25 explicitly armed open-top passengers (candidate)
+
+- Select an open-top transport, choose **PASSENGERS** in the Overwatch panel, then choose INF, SPECIAL or BOTH and arm normally. **VEHICLE** switches back to the independent vehicle plan; the native active actor is not changed by this panel choice.
+- Passengers reserve only their own remaining AP/reaction budget. Arming passengers does not spend vehicle AP or end the vehicle activation. There is no automatic/free defensive volley when the transport is attacked.
+- A passenger watch uses the existing movement-completion/completed-attack triggers and normal ammo, setup, native handler, range, line-of-sight and hit-chance checks. `Never`-while-contained attacks and attacks with a different AP payer are rejected. No shared skill template is changed.
+- Embarked reticles are smaller (8px instead of 11px) and sit beside MENACE's native passenger badge on the vehicle HUD. Vehicle reticles remain separate. Hidden hostile passengers do not reveal their watch through the marker.
+- Transport movement, ejection/embarkation, a changed transport or loss of its valid open-top container invalidates the reservation. Utility/transport actions still do not provoke reactions.
+- Support is limited to native single-squad containers with the exact `cover_inside_vehicle_open` profile. Unknown/custom profiles and closed transports fail closed. Offline tests cannot establish native passenger execution, AP refresh or visible HUD layout; Windows/in-game checks are pending.
+
+## 0.33.4.0 — coordinated AI infantry Overwatch
+
+- When Coordinated Fire is installed and hostile AI has eligible squad and leader weapons, its Overwatch reservation pairs them as one reaction using the higher weapon AP cost.
+- Each weapon still has to pass its own Overwatch range, visibility, line-of-sight, hit-chance, setup, and ammo checks. If only one weapon qualifies, only that weapon fires; player settings and vehicle Overwatch are unchanged.
+
+## 0.33.3.0 — configurable AI fractional AP reservation chance
+
+- Add a Gameplay dropdown with Normal (1x), Double (2x), Triple (3x), and Quadruple (4x); default remains Normal. The multiplier affects only the leftover-AP fractional reaction, caps its chance at 100%, and does not grant AP or alter the number of whole reactions.
+- Range, line-of-sight, visibility, hit-chance, ammo, combat-readiness, and vehicle-sector firing checks are unchanged. Player Overwatch is unaffected.
+
+## 0.33.2.0 — capture leftover AI AP before turn-end reset
+
+- Capture AP at native `Actor.OnTurnEnd` entry and allocate after native finalization, before its AP reset can hide the remaining budget. Each activation is processed once; AI AP is not modified.
 
 ## 0.33.1.0 — opt-in movement visibility timing diagnostic
 
@@ -125,6 +160,8 @@ Composite native child skill events are coalesced so one Alpha Strike action doe
 ## AI Overwatch
 
 AI Overwatch is reserved at the end of a hostile AI actor's activation using its leftover AP. For a selected weapon costing `C` AP and `A` AP left, the AI gets `floor(A/C)` reactions for sure, then one additional reaction with probability `(A mod C)/C`. For example, a 40-AP weapon gets one reaction at 40 AP, and a 30-AP remainder gives a 30/40 chance of one reaction. The fractional roll is made once per activation; an all-zero-AP unit still gets no normal reservation.
+
+Eligible hostile AI infantry passengers in native open-top transports are also considered when the transport ends its activation. The passenger's AP is captured and reserved independently of the transport's own AI Overwatch setting; a separate passenger turn-end cannot duplicate that reservation.
 
 AI Overwatch can react to player movement completion **and**, when attack triggers are enabled, completed native player attack skills such as weapon fire. Non-attack utility/transport skills do not provoke it. The same range, line-of-sight, ammo and hit-threshold validation applies.
 

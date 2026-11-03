@@ -1,3 +1,26 @@
+## Overwatch 0.35.1.0 — #25 open-top passenger detection fix (candidate)
+
+- The 0.35.0.0 game log confirmed passenger reservations but no queued shots. Native Actor.HasLineOfSightTo unconditionally rejects actor-contained observers before its detection calculation.
+- Reproduce that calculation only for verified open-top passenger Overwatch, preserving passenger vision/detection, target concealment/cover, smoke, revealed state and tile LOS. Do not change global visibility, actor containment, AP/ammo or ordinary infantry.
+- Add managed full-reaction eligibility and detection boundary regressions. 176 Python tests (97 passenger checks), 17,885 offline C# checks, clean-source build and canonical Windows BuildOnly/install passed on 3 November. Installed manifest/assembly/file 0.35.1.0 verified; 1,348 protected unrelated Mods/UserData files unchanged. In-game firing acceptance remains pending.
+
+## Overwatch 0.35.0.0 — automatic hostile AI passenger Overwatch (candidate)
+
+- Automatically reserve eligible hostile AI infantry passengers at native open-top transport turn-end using the passenger's own pre-reset AP, independently of the AI vehicle setting. Preserve normal AI AP/chance/weapon eligibility rules and deduplicate separate passenger turn-end callbacks.
+- Managed regression checks pass; Windows installation and in-game acceptance remain pending.
+
+## Overwatch 0.34.0.0 — #25 explicitly armed open-top passenger Overwatch (candidate)
+
+- Add a separate PASSENGERS plan to the selected native open-top transport's panel. Reserve only passenger AP; never end/spend the active vehicle's turn when arming its passenger.
+- Attach smaller reticles next to the native passenger badge, separate from the vehicle healthbar row. Preserve hidden-enemy safety and native HUD opacity.
+- Preserve normal trigger/budget/ammo/setup/LOS rules; extend AllowInsideStructures only for supported open-top passenger Overwatch without changing shared templates. Reject Never-contained skills, different AP payers, invalid container links and movement. Invalidate watches when the container context changes or the vehicle moves.
+- Managed regression checks and native-reference builds are not in-game acceptance. Windows deployment/gameplay remain pending.
+
+## Overwatch 0.33.3.0 — configurable AI Overwatch reservation chance
+
+- Add a Gameplay dropdown for Normal (1x), Double (2x), Triple (3x), or Quadruple (4x) AI fractional AP reservation chance; default remains Normal. Scaling is capped at 100% and affects only the extra fractional reaction, not whole-AP guarantees or firing eligibility.
+- No reaction is granted with zero AP; ammo, range, line-of-sight, visibility, hit-chance and vehicle-sector gates are unchanged. Debug bonus remains OFF.
+
 ## Overwatch 0.33.2.0 — #55 capture leftover AI AP before turn-end reset
 
 - Capture AP in the native Actor.OnTurnEnd prefix and allocate after native finalization, rather than polling an already inactive actor with zero AP. No earlier-frame AP snapshot or native AP mutation.

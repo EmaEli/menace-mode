@@ -57,6 +57,7 @@ AssaultDefenseChecks.Run(Check);
 MortarScatterChecks.Run(Check);
 GrenadeRangeChecks.Run(Check);
 OverwatchSourceSkillChecks.Run(Check);
+OverwatchAIWeaponPlannerChecks.Run(Check);
 LargerMaps.Plugin.RunPlanningChecks(Check);
 if (args.Length > 0 && args[0] == "--mortar-proxies")
     MortarProxyChecks.Run(Check, args[1], args[2]);

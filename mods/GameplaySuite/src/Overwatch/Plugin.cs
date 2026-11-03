@@ -5,9 +5,9 @@ using MenaceModSuite.Shared;
 using UnityEngine;
 using Path = global::System.IO.Path;
 
-[assembly: AssemblyVersion("0.33.2.0")]
-[assembly: AssemblyFileVersion("0.33.2.0")]
-[assembly: AssemblyInformationalVersion("0.33.2.0")]
+[assembly: AssemblyVersion("0.35.1.0")]
+[assembly: AssemblyFileVersion("0.35.1.0")]
+[assembly: AssemblyInformationalVersion("0.35.1.0")]
 
 namespace MenaceOverwatch;
 
@@ -15,7 +15,7 @@ namespace MenaceOverwatch;
 public sealed partial class Plugin : IHostedPlugin
 {
     private const string SettingsGroup = "Overwatch";
-    private const string Version = "0.33.2.0";
+    private const string Version = "0.35.1.0";
     private Runtime? _runtime;
     private global::HarmonyLib.Harmony? _harmony;
     private ModLog? _logger;
@@ -41,6 +41,8 @@ public sealed partial class Plugin : IHostedPlugin
             s.AddToggle("EnableVehicleOverwatch", "Enable vehicle Overwatch", true);
             s.AddToggle("EnableAIOverwatch", "AI uses Overwatch", true);
             s.AddToggle("EnableAIVehicleOverwatch", "AI vehicles use Overwatch", false);
+            s.AddDropdown("AIOverwatchChanceMultiplier", "AI fractional Overwatch chance",
+                new[] { "Normal (1x)", "Double (2x)", "Triple (3x)", "Quadruple (4x)" }, "Normal (1x)");
             s.AddSlider("AIHitChance", "AI minimum hit chance", 20f, 95f, 55f);
             s.AddHeader("Interface");
             s.AddToggle("ShowHUD", "Show tactical button", true);
@@ -82,7 +84,7 @@ public sealed partial class Plugin : IHostedPlugin
             try
             {
                 if (_harmony == null) throw new InvalidOperationException("Harmony unavailable.");
-                _runtime = new Runtime(_harmony, DebugLog, WarningLog, ErrorLog, Setting("DebugLogging", false), Setting("DebugBonusAIOverwatch", false), Setting("DebugMovementVisibility", false), Setting("EnableAIOverwatch", true),
+                _runtime = new Runtime(_harmony, DebugLog, WarningLog, ErrorLog, Setting("DebugLogging", false), Setting("DebugBonusAIOverwatch", false), Setting("DebugMovementVisibility", false), AIChanceMultiplier(), Setting("EnableAIOverwatch", true),
                     Setting("TriggerOnEnemyActions", true), Setting("EnableVehicleOverwatch", true), Setting("EnableAIVehicleOverwatch", false),
                     Setting("ShowWorldMarkers", true), Setting("HighContrastIndicators", true),
                     Threshold("PlayerHitChance", 60), Threshold("AIHitChance", 55),
@@ -93,7 +95,7 @@ public sealed partial class Plugin : IHostedPlugin
         _runtime?.Configure(Setting("EnableAIOverwatch", true), Setting("TriggerOnEnemyActions", true), Setting("EnableVehicleOverwatch", true),
             Setting("EnableAIVehicleOverwatch", false), Setting("ShowWorldMarkers", true), Setting("HighContrastIndicators", true),
             Threshold("PlayerHitChance", 60), Threshold("AIHitChance", 55), Penalty(), cf, alphaStrike,
-            Setting("DebugLogging", false), Setting("DebugBonusAIOverwatch", false), Setting("DebugMovementVisibility", false));
+            Setting("DebugLogging", false), Setting("DebugBonusAIOverwatch", false), Setting("DebugMovementVisibility", false), AIChanceMultiplier());
         try { _runtime?.Update(); }
         catch (Exception e)
         {
@@ -128,10 +130,10 @@ public sealed partial class Plugin : IHostedPlugin
         // Hide it unconditionally; "Show button when unavailable" only applies to a
         // currently selected unit that cannot arm Overwatch for some other reason.
         if (!_runtime.HasSelectedPlayerActor) return null;
-        if (!_runtime.CanArmCurrent && !_runtime.Armed && !Setting("ShowUnavailableHUD", true)) return null;
+        if (!_runtime.CanArmCurrent && !_runtime.Armed && !_runtime.HasPassengerChoice && !Setting("ShowUnavailableHUD", true)) return null;
 
         float scale = Math.Clamp(Setting("HUDScale", 1.0f), 0.75f, 1.5f);
-        float width = 390f * scale, height = 78f * scale;
+        float width = 390f * scale, height = (_runtime.HasPassengerChoice ? 104f : 78f) * scale;
         string pos = Setting("HUDPosition", "Bottom Center");
         float x, y;
         switch (pos)
@@ -161,6 +163,16 @@ public sealed partial class Plugin : IHostedPlugin
 
         float pad = 6f * scale, chipH = 22f * scale, gap = 4f * scale;
         bool old = GUI.enabled;
+        float contentY = _hudRect.y + pad;
+        if (_runtime!.HasPassengerChoice)
+        {
+            float choiceW = (width - 2 * pad - gap) / 2;
+            if (ModeButton(new Rect(_hudRect.x + pad, contentY, choiceW, chipH), "VEHICLE", !_runtime.SelectingPassenger)
+                && _runtime.SelectingPassenger) _runtime.TogglePassengerSelection();
+            if (ModeButton(new Rect(_hudRect.x + pad + choiceW + gap, contentY, choiceW, chipH), "PASSENGERS", _runtime.SelectingPassenger)
+                && !_runtime.SelectingPassenger) _runtime.TogglePassengerSelection();
+            contentY += chipH + gap;
+        }
         GUI.enabled = _runtime.CanEditCurrentPlan;
 
         if (_runtime.IsSelectedVehicle)
@@ -169,14 +181,14 @@ public sealed partial class Plugin : IHostedPlugin
             float chipW = (width - 2 * pad - gap * (columns - 1)) / columns;
             float cx = _hudRect.x + pad;
             string vehicleText = "VEH: " + Trim(_runtime.VehicleName, 25);
-            var vehicleRect = new Rect(cx, _hudRect.y + pad, chipW, chipH);
+            var vehicleRect = new Rect(cx, contentY, chipW, chipH);
             if (ModeButton(vehicleRect, vehicleText, _runtime.Mode == OverwatchMode.Vehicle)) _runtime.SelectVehicle();
 
             if (_runtime.AlphaStrikeAvailable)
             {
                 cx += chipW + gap;
                 string alphaText = "ALPHA: " + Trim(_runtime.AlphaStrikeName, 19);
-                var alphaRect = new Rect(cx, _hudRect.y + pad, chipW, chipH);
+                var alphaRect = new Rect(cx, contentY, chipW, chipH);
                 if (ModeButton(alphaRect, alphaText, _runtime.Mode == OverwatchMode.AlphaStrike)) _runtime.SelectAlphaStrike();
             }
         }
@@ -188,20 +200,20 @@ public sealed partial class Plugin : IHostedPlugin
 
             string squadText = "INF: " + Trim(_runtime.SquadName, 20);
             string leaderText = "SPECIAL: " + Trim(_runtime.LeaderName, 20);
-            var squadRect = new Rect(cx, _hudRect.y + pad, chipW, chipH);
+            var squadRect = new Rect(cx, contentY, chipW, chipH);
             if (ModeButton(squadRect, squadText, _runtime.Mode == OverwatchMode.Squad)) _runtime.SelectSquad();
             cx += chipW + gap;
-            var leaderRect = new Rect(cx, _hudRect.y + pad, chipW, chipH);
+            var leaderRect = new Rect(cx, contentY, chipW, chipH);
             if (ModeButton(leaderRect, leaderText, _runtime.Mode == OverwatchMode.Leader)) _runtime.SelectLeader();
             if (_runtime.BothAvailable)
             {
                 cx += chipW + gap;
-                var bothRect = new Rect(cx, _hudRect.y + pad, chipW, chipH);
+                var bothRect = new Rect(cx, contentY, chipW, chipH);
                 if (ModeButton(bothRect, "BOTH", _runtime.Mode == OverwatchMode.Both)) _runtime.SelectBoth();
             }
         }
 
-        var button = new Rect(_hudRect.x + pad, _hudRect.y + pad + chipH + 4f * scale, width - 2 * pad, 29f * scale);
+        var button = new Rect(_hudRect.x + pad, contentY + chipH + 4f * scale, width - 2 * pad, 29f * scale);
         string text;
         if (_runtime.Armed && _runtime.CarriedIntoFreshActivation)
         {
@@ -246,6 +258,13 @@ public sealed partial class Plugin : IHostedPlugin
         => ModPresence.IsLoadedOrInstalled("AlphaStrike", "AlphaStrike");
 
     private int Threshold(string key, int fallback) => Math.Clamp((int)Math.Round(Setting(key, (float)fallback)), 1, 100);
+    private int AIChanceMultiplier() => Setting("AIOverwatchChanceMultiplier", "Normal (1x)") switch
+    {
+        "Double (2x)" => 2,
+        "Triple (3x)" => 3,
+        "Quadruple (4x)" => 4,
+        _ => 1
+    };
     private int Penalty() => Math.Clamp((int)Math.Round(Setting("OverwatchAimPenalty", 10f)), 0, 40);
     private T Setting<T>(string key, T fallback)
     { try { return ModSettings.Get<T>(SettingsGroup, key); } catch { return fallback; } }
@@ -274,6 +293,7 @@ public sealed partial class Plugin : IHostedPlugin
         Line("Player threshold: " + Threshold("PlayerHitChance", 60) + "%");
         Line("Aim penalty: -" + Penalty() + " points");
         Line("AI threshold: " + Threshold("AIHitChance", 55) + "%");
+        Line("AI fractional chance: " + Setting("AIOverwatchChanceMultiplier", "Normal (1x)"));
         Line("Coordinated Fire detected: " + (IsCoordinatedFireInstalled() ? "yes" : "no"));
         Line("Alpha Strike detected: " + (IsAlphaStrikeInstalled() ? "yes" : "no"));
     }

@@ -46,6 +46,7 @@ class OverwatchVehicleSectorTests(unittest.TestCase):
         self.assertIn('s.AddToggle("DebugLogging", "Debug logging", false)', source)
         self.assertIn('s.AddToggle("DebugBonusAIOverwatch", "DEBUG: give hostile AI one extra Overwatch reaction", false)', source)
         self.assertIn('s.AddToggle("DebugMovementVisibility", "DEBUG: trace movement visibility timing", false)', source)
+        self.assertIn('s.AddDropdown("AIOverwatchChanceMultiplier", "AI fractional Overwatch chance",', source)
         compiled = json.loads((package / "compiled/jiangyu.json").read_text())
         self.assertEqual(compiled["version"], version)
 
@@ -61,13 +62,14 @@ class OverwatchVehicleSectorTests(unittest.TestCase):
         self.assertIn("bool diagnosticBonus = _debugBonusAIOverwatch", reserve)
         self.assertIn("Native.CanReserveAIWeapon(actor, s, out _)", reserve)
         self.assertIn("global::System.Random.Shared.Next(0, cost)", reserve)
-        self.assertIn("AIReactionBudget.Calculate(ap, cost, ammoBound, randomDraw)", reserve)
+        self.assertIn("AIReactionBudget.Calculate(ap, cost, ammoBound, randomDraw, _aiChanceMultiplier)", reserve)
+        self.assertIn("AIReactionBudget.FractionalDrawThreshold(apRemainder, cost, _aiChanceMultiplier)", reserve)
         self.assertIn("if (diagnosticBonus && reactions < ammoBound) reactions++;", reserve)
         self.assertIn("Native.AmmoBound(skill)", reserve)
         self.assertIn("aiReservation: true", reserve)
         self.assertNotIn("Native.CanReserveAI(actor, s, ap", reserve)
         self.assertNotIn("ObserveAI(", RUNTIME)
-        self.assertIn("_aiFinalizedActors.Add(Native.Key(actor))", RUNTIME)
+        self.assertIn("if (!_aiFinalizedActors.Add(actorKey)) return -1;", RUNTIME)
         self.assertIn("DebugBonusAIOverwatch", (ROOT / "src/Overwatch/Plugin.cs").read_text())
 
 

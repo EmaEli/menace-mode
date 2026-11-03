@@ -26,21 +26,31 @@ internal static class Program
             if (AIReactionBudget.Calculate(30, 40, 5, draw) == 1) successes++;
         Check(successes == 30, "30/40 AP must allocate exactly 30 of 40 draws");
 
-        successes = 0;
-        for (int draw = 0; draw < 40; draw++)
-            if (AIReactionBudget.Calculate(10, 40, 5, draw) == 1) successes++;
-        Check(successes == 10, "10/40 AP must allocate exactly 10 of 40 draws");
+        for (int multiplier = 1; multiplier <= 4; multiplier++)
+        {
+            successes = 0;
+            for (int draw = 0; draw < 40; draw++)
+                if (AIReactionBudget.Calculate(10, 40, 5, draw, multiplier) == 1) successes++;
+            Check(successes == 10 * multiplier, $"10/40 AP at {multiplier}x must use the exact scaled probability");
+        }
 
-        successes = 0;
-        for (int draw = 0; draw < 40; draw++)
-            if (AIReactionBudget.Calculate(50, 40, 5, draw) == 2) successes++;
-        Check(successes == 10, "50 AP must guarantee one and allocate the second 10/40 times");
+        for (int multiplier = 1; multiplier <= 4; multiplier++)
+        {
+            successes = 0;
+            for (int draw = 0; draw < 40; draw++)
+                if (AIReactionBudget.Calculate(50, 40, 5, draw, multiplier) == 2) successes++;
+            Check(successes == 10 * multiplier, $"50 AP at {multiplier}x must preserve its guaranteed reaction and scale only the remainder");
+        }
 
         Check(AIReactionBudget.Calculate(80, 40, 5, -1) == 2, "whole AP costs are guaranteed without a random draw");
         Check(AIReactionBudget.Calculate(90, 40, 2, 0) == 2, "ammo caps guaranteed and fractional reactions");
+        Check(AIReactionBudget.Calculate(90, 40, 2, -1, 4) == 2, "ammo cap still applies when the scaled fractional chance reaches 100%");
         Check(AIReactionBudget.Calculate(90, 40, 3, 9) == 3, "fractional draw can add a third reaction");
+        Check(AIReactionBudget.Calculate(10, 40, 5, -1, 4) == 1, "quadrupled 10/40 chance reaches 100% without a draw");
         Check(AIReactionBudget.Calculate(30, 20, 5, 9) == 2, "fraction uses the selected weapon cost");
         Check(AIReactionBudget.Calculate(30, 40, 5, -1) == 0, "missing draw does not grant a fractional reaction");
+        Check(AIReactionBudget.Calculate(10, 40, 5, 11, 0) == 0, "invalid low multiplier clamps to normal");
+        Check(AIReactionBudget.Calculate(10, 40, 5, -1, 5) == 1, "invalid high multiplier clamps to quadruple");
         Check(AIReactionBudget.Calculate(0, 40, 5, 0) == 0, "zero AP gets no normal reaction");
         Check(AIReactionBudget.Calculate(-1, 40, 5, 0) == 0, "negative AP is rejected");
         Check(AIReactionBudget.Calculate(40, 0, 5, 0) == 0, "zero-cost skills are rejected");
@@ -65,7 +75,7 @@ class OverwatchAIReactionBudgetTests(unittest.TestCase):
                 [DOTNET, "run", "--project", str(root / "Checks.csproj"), "-c", "Release", "--nologo", "-v", "quiet"],
                 capture_output=True, text=True, timeout=60)
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-            self.assertIn("Overwatch AP budget checks: 12 passed", result.stdout)
+            self.assertIn("Overwatch AP budget checks: 22 passed", result.stdout)
 
 
 if __name__ == "__main__":

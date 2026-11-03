@@ -84,6 +84,10 @@ internal static class Native
 
     public static bool HasActorLineOfSight(Actor shooter, Entity target, Tile fromTile, Tile atTile, out string detail)
     {
+        // Native HasLineOfSightTo unconditionally rejects observers inside an Actor.
+        // Only verified open-top passenger Overwatch uses the equivalent detection rules.
+        if (PassengerOverwatch.IsEmbarked(shooter))
+            return PassengerOverwatch.HasLineOfSight(shooter, target, fromTile, atTile, out detail);
         detail = "native actor line-of-sight method is unavailable";
         try
         {
@@ -333,7 +337,9 @@ internal static class Native
         if (!SupportedForActor(actor, skill)) { reason = "Select a supported ranged attack."; return false; }
         if (!RequirementsSatisfied(skill, actor)) { reason = "Weapon deployment/setup requirements are not satisfied."; return false; }
         if (!skill.IsEnabled() || skill.IsHidden() || !skill.HasExecutingElements()) { reason = "Attack is unavailable."; return false; }
-        if (!skill.IsUsable(TargetUsageParams.Player)) { reason = "Attack is not currently usable."; return false; }
+        if (!PassengerOverwatch.CanUseAttack(actor, skill, out reason)) return false;
+        if (!PassengerOverwatch.IsEmbarked(actor) && !skill.IsUsable(TargetUsageParams.Player))
+        { reason = "Attack is not currently usable."; return false; }
         if (skill.HasLimitedUses() && (skill.IsOutOfUses() || skill.GetUses() <= 0)) { reason = "No ammunition/uses remaining."; return false; }
         int cost = skill.GetActionPointCost();
         if (cost <= 0) { reason = "Zero-cost attacks are not used for Overwatch."; return false; }
@@ -354,6 +360,7 @@ internal static class Native
         // Hidden is a UI property for several native enemy/vehicle attacks. AI reservation may
         // use such a skill as long as the underlying attack is enabled and executable.
         if (!skill.IsEnabled() || !skill.HasExecutingElements()) { reason = "attack is disabled/unexecutable"; return false; }
+        if (!PassengerOverwatch.CanUseAttack(actor, skill, out reason)) return false;
         if (skill.HasLimitedUses() && (skill.IsOutOfUses() || skill.GetUses() <= 0)) { reason = "no ammunition/uses remaining"; return false; }
         int cost = skill.GetActionPointCost();
         if (cost <= 0) { reason = "zero-cost attacks are not used for Overwatch"; return false; }
@@ -383,6 +390,9 @@ internal static class Native
         // Enemy vehicle weapons can be hidden from player-facing UI while remaining valid native
         // attacks. Permit hidden skills for non-player shooters; player reactions stay strict.
         if (!skill.IsEnabled() || (IsPlayerControlled(shooter) && skill.IsHidden()) || !skill.HasExecutingElements()) { reason = "skill is disabled/hidden"; return false; }
+        if (!PassengerOverwatch.CanUseAttack(shooter, skill, out reason)) return false;
+        if (PassengerOverwatch.IsEmbarked(shooter) && shooter.IsAlliedWith(target))
+        { reason = "passengers cannot react against an allied actor"; return false; }
         if (skill.HasLimitedUses() && (skill.IsOutOfUses() || skill.GetUses() <= 0)) { reason = "weapon has no uses/ammo"; return false; }
 
         int distance = shooter.GetDistanceTo(tile);
@@ -426,7 +436,7 @@ internal static class Native
     // despite assembly pre-JIT. Keep the IL2CPP virtual property calls out of optimizing
     // compilation, including in callers; do not replace native virtual dispatch.
     [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)]
-    private static EntityProperties? CurrentProperties(Actor actor, out string concreteType)
+    internal static EntityProperties? CurrentProperties(Actor actor, out string concreteType)
     {
         concreteType = "unknown";
         if (!Valid(actor)) return null;
