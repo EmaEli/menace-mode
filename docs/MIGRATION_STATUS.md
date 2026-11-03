@@ -46,7 +46,8 @@ SDK 10.0.113; installed manifest/assembly/file 0.1.0/0.1.0.0/0.1.0.0, DLL SHA256
 `dbeba3bbfa17fc38990065923f823836cbfe04e9b26e75a9567b35429cdcc0e3`. The empty
 originals backup/journal is `_MENACE_Backups/20261103-191717-c9e52ec720fd47d898ff8363564d88e3`;
 537 unrelated Mods and 817 UserData files were hash-verified unchanged. Startup/gameplay
-acceptance pending. Evidence is recorded separately in #83.
+smoke test captured rounds 1 and 2 (44/59 actors, `CanResume=false`); no probe-disable
+warning. Full restore remains unimplemented. Evidence is recorded separately in #83.
 
 | Package | Version | Runtime / data authoring |
 | --- | --- | --- |

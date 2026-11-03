@@ -98,5 +98,13 @@ https://github.com/EmaEli/menace-mode/issues/83.
   the originals directory is empty because this was a new package install. All 537
   unrelated Mods files and 817 UserData files were hash-identical before/after.
   Installed settings and loader were validated/reused; campaign saves were untouched.
-- **Startup and in-game round-boundary acceptance still NOT run.** MENACE remains
-  closed after installation. Do not call this a gameplay-verified autosave or resume.
+- Fresh Windows `Latest.log` (3 November 2026, 19:46 local) contains the probe's
+  capture-only initialization banner and no probe-disable, game-hash, hook-binding,
+  thread, or busy-boundary warning. The error-like log text is not attributed to
+  this probe; a `ReportException` marker has no nearby stack frames.
+- Read-only inspection of the new diagnostics found two readable observations:
+  rounds 1 and 2, 44 and 59 actors, each with eight declared missing-state groups
+  and `CanResume=false`; zero pending files. This confirms the hook captured those
+  two observed boundaries, **not** that it can restore either one.
+- Full tactical persistence/resume remains unimplemented. These are limited
+  startup and two-boundary gameplay observations, not an autosave or recovery test.
