@@ -199,6 +199,18 @@ class DistributionTests(unittest.TestCase):
         launcher = payload["INSTALL-SquaddieVeterancy.cmd"].decode()
         self.assertIn("-Product Standalone -Modules SquaddieVeterancy -UseInstalledSettings", launcher)
 
+    def test_coordinated_candidate_preserves_installed_companions(self):
+        payload, versions = BUILDER.collect(ROOT, "CoordinatedFire", True)
+        manifest = json.loads((ROOT / "mods/jiangyu/CoordinatedFire/jiangyu.json").read_text())
+        self.assertEqual(versions, {"CoordinatedFire": manifest["version"]})
+        self.assertFalse(any("/MenaceModSettings/" in path for path in payload))
+        launcher = payload["INSTALL-CoordinatedFire.cmd"].decode()
+        self.assertIn("-Product Standalone -Modules CoordinatedFire -UseInstalledSettings", launcher)
+        project = (ROOT / "mods/jiangyu/CoordinatedFire/code/CoordinatedFire.csproj").read_text()
+        self.assertIn("<HintPath>$(MenaceModSettingsPath)</HintPath>", project)
+        installer = (TOOLS / "Install-IntegratedSuite.ps1").read_text()
+        self.assertIn("'TacticalRoundCheckpoint', 'CoordinatedFire'", installer)
+
     def test_clean_verifier_uses_an_external_settings_reference_for_veterancy(self):
         payload, _ = BUILDER.collect(ROOT, "SquaddieVeterancy", True)
         settings_dll = ROOT / "mods/jiangyu/MenaceModSettings/compiled/code/MenaceModSettings.dll"

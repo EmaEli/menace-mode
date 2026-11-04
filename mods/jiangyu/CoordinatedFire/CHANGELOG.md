@@ -1,3 +1,8 @@
+## 1.6.13
+
+- Added `NoInlining | NoOptimization` to `Runtime.InterceptActionPointWrite` after the mounted undeploy crash dump identified this helper in the .NET JIT compilation path (#44). Existing whole-assembly main-thread precompilation remains enabled.
+- No AP accounting, ammo, targeting or AI behavior changes. Candidate mitigation, not a proven runtime fix; mounted deploy/get-up replay remains pending.
+
 ## 1.6.11
 
 - Restores the optional camera-state bridge from MEN-006, omitted from the Jiangyu source lineage. Hides the HUD during both automatic and F6 cinematic views.

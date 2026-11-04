@@ -68,7 +68,7 @@ def compile_clean(files, game, sdk, dotnet):
             build_args = [dotnet, "build", str(project), "-c", "Release", "--nologo", "-v", "quiet",
                           f"-p:GameDir={game}", f"-p:GameAssembliesDir={refs}", f"-p:MelonLoaderDir={runtime}",
                           f"-p:JiangyuSdkDir={sdk}", "-p:JiangyuDev=false"]
-            if module in {"SquaddieFieldPromotions", "SquaddieVeterancy"} and "MenaceModSettings" not in modules:
+            if module in {"SquaddieFieldPromotions", "SquaddieVeterancy", "CoordinatedFire"} and "MenaceModSettings" not in modules:
                 settings_dll = game / "Mods/MenaceModSettings/code/MenaceModSettings.dll"
                 if not settings_dll.is_file():
                     settings_dll = ROOT / "mods/jiangyu/MenaceModSettings/compiled/code/MenaceModSettings.dll"

@@ -141,7 +141,7 @@ failure recovery, Windows builds and gameplay remain explicit acceptance gates.
 Experimental modules are listed separately in `distribution.json.experimentalModules`;
 they must not silently enter the default Suite. Build their kit using the canonical
 `build_kit.py --module <name>` path, which derives its single launcher from `INSTALL-SUITE.cmd`.
-For SFP's opt-in preview and a standalone SquaddieVeterancy compatibility update,
+For SFP's opt-in preview, standalone SquaddieVeterancy and CoordinatedFire updates,
 `--use-installed-settings` / `-UseInstalledSettings` explicitly
 requires and validates the installed companion's manifest, DLL versions and the pinned
 Jiangyu loader. Only the selected module is built/staged/replaced. Neither installed dependency is

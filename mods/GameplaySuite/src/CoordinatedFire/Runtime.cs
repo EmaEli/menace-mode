@@ -1,4 +1,5 @@
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using CoordinatedFire.Core;
 using HarmonyLib;
 using Il2CppMenace.States;
@@ -563,6 +564,9 @@ internal sealed class Runtime : IVolleyPort, IDisposable
             : _volley.CurrentSkill == _transaction.Second.SkillKey ? _transaction.Second.ActionPointCost : 0;
     }
 
+    // #44: coreclr crashed devirtualizing this helper while compiling through MonoMod's
+    // JIT hook. Keep it unoptimized and out of optimized callers; retain PrepareJit too.
+    [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)]
     private void InterceptActionPointWrite(Actor actor, ref int requested, bool nativeClamps)
     {
         if (!IsActive || _settling || !Native.Same(actor, _firingActor)) return;

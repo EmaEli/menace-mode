@@ -15,6 +15,9 @@ From the repository root:
 - The same runner executes production Coordinated Fire fee/rule helpers across 2,072
   positive-grant/cap scenarios, plus weapon-eligibility guards. This tests the actual
   arithmetic, not native AP hooks, overlap timing or live Berserk events.
+- `test_coordinated_fire_jit_guard.py` executes the guarded AP helper with managed doubles:
+  emitted method flags, inactive/settling/other-actor guards, exact debits and clipped gains.
+  It does not reproduce MonoMod's native JIT crash or prove the mitigation in MENACE (#44).
 - BuildKit ZIP/clean-source checks: see [INSTALLING.md](../docs/INSTALLING.md). The Python
   distribution tests exercise actual ZIP generation/integrity and inspect PowerShell wiring;
   they do **not** execute PowerShell, installer filesystem transactions or Windows rollback.

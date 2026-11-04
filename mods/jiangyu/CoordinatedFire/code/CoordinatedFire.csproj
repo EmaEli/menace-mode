@@ -9,10 +9,11 @@
   -->
   <PropertyGroup>
     <!-- Keep in step with jiangyu.json so the DLL metadata identifies the shipped build. -->
-    <Version>1.6.12</Version>
+    <Version>1.6.13</Version>
     <AssemblyName>CoordinatedFire</AssemblyName>
     <RootNamespace>CoordinatedFire</RootNamespace>
     <Nullable>enable</Nullable>
+    <MenaceModSettingsPath Condition="'$(MenaceModSettingsPath)' == ''">../../MenaceModSettings/compiled/code/MenaceModSettings.dll</MenaceModSettingsPath>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <SuiteSourceDir>$(MSBuildThisFileDirectory)../../../GameplaySuite/src</SuiteSourceDir>
   </PropertyGroup>
@@ -50,7 +51,7 @@
       so the loader has already loaded it into the default context when this DLL binds.
     -->
     <Reference Include="MenaceModSettings">
-      <HintPath>../../MenaceModSettings/compiled/code/MenaceModSettings.dll</HintPath>
+      <HintPath>$(MenaceModSettingsPath)</HintPath>
       <Private>false</Private>
     </Reference>
   </ItemGroup>

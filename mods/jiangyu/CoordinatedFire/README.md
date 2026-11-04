@@ -1,6 +1,8 @@
 # Coordinated Fire
 
-**Version 1.6.12** for MENACE.
+**Version 1.6.13** for MENACE.
+
+Version 1.6.13 adds a targeted compiler safeguard to the AP interception helper (#44): no inlining or JIT optimization, alongside the existing main-thread precompilation. AP accounting and gameplay rules are unchanged. This is a candidate mitigation for the runtime crash; in-game replay is still required.
 
 Version 1.6.12 fixes AI infantry pair selection (#82): either native weapon choice now supplies distinct squad and leader attacks instead of duplicating one weapon into both slots. AP, ammo, targeting, usage-flag and final-AP hand-off safeguards are unchanged. Optional bounded AI capture is available in the developer panel; normal logging remains OFF by default. In-game acceptance is pending.
 
