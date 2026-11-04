@@ -122,7 +122,7 @@ def collect(root, module=None, use_installed_settings=False):
         + ("Requires existing MenaceModSettings; does NOT replace it or Jiangyu.Loader.\r\n" if use_installed_settings else "") +
         "Requires the pinned MENACE build and existing MelonLoader/proxies.\r\n"
         "Downloads a hash-verified pinned .NET 10 SDK privately under tools/dotnet.\r\n"
-        "Jiangyu 1.4.8 SDK/loader are downloaded with SHA256 checks; no Unity Editor needed.\r\n"
+        "Jiangyu 1.4.10 SDK/loader are downloaded with SHA256 checks; no Unity Editor needed.\r\n"
         "Known conflicting copies are backed up outside Mods; unrelated mods, loaders,\r\n"
         "UserData and saves are not removed. Failure triggers rollback.\r\n"
         "Persistent log: %TEMP%\\MENACE-install.log. See source installer documentation.\r\n"

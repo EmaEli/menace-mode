@@ -30,6 +30,7 @@ internal static class ArtifactChecks
         {
             ["Jiangyu"] = Version.Parse(catalog.RootElement.GetProperty("jiangyuVersion").GetString()!)
         };
+        string compiledForJiangyu = catalog.RootElement.GetProperty("compiledForJiangyuVersion").GetString()!;
         foreach (string name in modulesToCheck)
         {
             using var info = JsonDocument.Parse(File.ReadAllText(Path.Combine(packages, name, "jiangyu.json")));
@@ -54,7 +55,7 @@ internal static class ArtifactChecks
                 check(available.TryGetValue(parts[0], out var supplied) && supplied >= Version.Parse(parts[2]),
                     module + " dependency unavailable/too old: " + requirement);
             }
-            check(compiled.RootElement.GetProperty("compiledForJiangyu").GetString() == available["Jiangyu"].ToString(),
+            check(compiled.RootElement.GetProperty("compiledForJiangyu").GetString() == compiledForJiangyu,
                 module + " payload compiled for a different SDK");
             string projectPath = Path.Combine(root, "code", module + ".csproj");
             if (!File.Exists(projectPath))
