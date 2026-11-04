@@ -1,4 +1,4 @@
-# Smoke Overhaul 0.8.0 — test candidate
+# Smoke Overhaul 0.8.0 — test build
 
 Smoke Overhaul makes smoke fully obstruct line of sight when it lies between units, while a unit standing in smoke receives half-tile aim exposure. It also extends smoke duration and gives smoke-delivery systems distinct tactical footprints.
 
@@ -9,8 +9,9 @@ acceptance gates. The earlier migration ZIP remains an unchanged historical cand
 
 **0.8.0 (#85):** intervening smoke fully blocks LOS by default; the existing setting can opt
 back into soft LOS. Smoke on the shooter's or target's tile contributes 0.5 of one configured
-aim-penalty tile, while each intervening smoke tile contributes one. Windows build/install and
-in-game acceptance are pending.
+aim-penalty tile, while each intervening smoke tile contributes one. Existing saved LOS choices
+are preserved; OFF is the default when no saved preference exists. Canonical MENACE 0.7.17
+BuildOnly/install passed 2026-11-04; in-game acceptance is pending.
 
 **0.5.2 AI performance fix:** MENACE's native `CreateLOSBlocker.Collect` was spending excessive time evaluating hypothetical positions for smoke on 80x80 maps. By default, `FastAISmokeSelection` changes only the existing AI profile flag `InfluencesPositioning` to false for smoke grenades and mortar smoke shells. The AI can still choose valid smoke targets from its current position; it no longer looks for better positions *specifically to use smoke*. Full native smoke decision making, smoke footprints, AI smoke use, and the two-round mortar AI cooldown remain in place. A single log line verifies activation, with no per-turn logging. Turn this setting OFF to restore vanilla speculative smoke positioning.
 

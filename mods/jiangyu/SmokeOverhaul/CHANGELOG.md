@@ -2,7 +2,7 @@
 
 - Smoke fully blocks LOS by default when it lies between units; the existing soft-LOS setting remains available as an opt-in.
 - Smoke on the shooter or target tile contributes half a tile to the configurable hitchance penalty; intervening smoke tiles still count as full tiles and the configured cap is unchanged.
-- Offline regression checks cover fractional exposure, shared endpoints, the accuracy cap and the default LOS setting. Windows build/install and in-game acceptance are pending.
+- 181 Python tests and 17,894 offline C# checks passed. Canonical MENACE 0.7.17 BuildOnly/install passed 2026-11-04; in-game acceptance remains pending. Saved settings were left untouched.
 
 ## 0.7.0
 
