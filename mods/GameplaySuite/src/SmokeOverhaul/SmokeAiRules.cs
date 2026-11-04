@@ -1,6 +1,6 @@
 namespace SmokeOverhaul;
 
-// Pure geometry/probability from PR #12 (0426b448): no game calls or state.
+// Pure smoke geometry, exposure and probability rules: no game calls or state.
 internal static class SmokeAiRules
 {
     internal const int PinnedChance = 60;
@@ -31,5 +31,24 @@ internal static class SmokeAiRules
         z = stepZ * reach;
         int remainingX = dx - x, remainingZ = dz - z;
         return remainingX * remainingX + remainingZ * remainingZ < dx * dx + dz * dz;
+    }
+}
+
+internal static class SmokeCoverRules
+{
+    internal static float ExposureTiles(int interveningSmokeTiles, bool shooterInSmoke,
+        bool targetInSmoke, bool sameEndpointTile = false)
+    {
+        int intervening = global::System.Math.Max(0, interveningSmokeTiles);
+        float endpoints = (shooterInSmoke ? 0.5f : 0f)
+            + (targetInSmoke && !sameEndpointTile ? 0.5f : 0f);
+        return intervening + endpoints;
+    }
+
+    internal static float AccuracyPenalty(float exposureTiles, int penaltyPerTile, int maximumPenalty)
+    {
+        if (exposureTiles <= 0f || penaltyPerTile <= 0 || maximumPenalty <= 0)
+            return 0f;
+        return global::System.Math.Min(exposureTiles * penaltyPerTile, maximumPenalty);
     }
 }

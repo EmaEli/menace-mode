@@ -14,8 +14,8 @@ using MenaceModSettings;
 using MenaceModSuite.Shared;
 using UnityEngine;
 
-[assembly: AssemblyVersion("0.7.0.0")]
-[assembly: AssemblyFileVersion("0.7.0.0")]
+[assembly: AssemblyVersion("0.8.0.0")]
+[assembly: AssemblyFileVersion("0.8.0.0")]
 
 namespace SmokeOverhaul;
 
@@ -23,7 +23,7 @@ namespace SmokeOverhaul;
 public sealed partial class Plugin : IHostedPlugin
 {
     internal const string ModName = "Smoke Overhaul";
-    internal const string Version = "0.7.0";
+    internal const string Version = "0.8.0";
 
     private static ModLog? _log;
     private static readonly Dictionary<string, PatchedTemplate> PatchedTemplates = new(StringComparer.OrdinalIgnoreCase);
@@ -289,10 +289,10 @@ public sealed partial class Plugin : IHostedPlugin
             s.AddToggle("EnableGameplay", "Enable Smoke Overhaul", true);
 
             s.AddHeader("Line of sight");
-            s.AddToggle("AllowLineOfSightThroughSmoke", "Smoke no longer fully blocks line of sight", true);
+            s.AddToggle("AllowLineOfSightThroughSmoke", "Allow line of sight through smoke", false);
 
             s.AddHeader("Fire through smoke");
-            s.AddSlider("AccuracyPenaltyPerTile", "Accuracy penalty per intervening smoke tile (%)", 0f, 50f, 20f);
+            s.AddSlider("AccuracyPenaltyPerTile", "Accuracy penalty per full smoke tile (%)", 0f, 50f, 20f);
             s.AddSlider("MaximumAccuracyPenalty", "Maximum smoke accuracy penalty (%)", 0f, 100f, 60f);
 
             s.AddHeader("Smoke duration");
@@ -333,7 +333,7 @@ public sealed partial class Plugin : IHostedPlugin
         bool previousPinnedSmoke = RuntimeSettings.AllowSmokeWhilePinnedDown;
 
         bool enabled = Setting("EnableGameplay", true);
-        bool losThroughSmoke = Setting("AllowLineOfSightThroughSmoke", true);
+        bool losThroughSmoke = Setting("AllowLineOfSightThroughSmoke", false);
         int perTile = SliderInt("AccuracyPenaltyPerTile", 20, 0, 50);
         int maximum = SliderInt("MaximumAccuracyPenalty", 60, 0, 100);
         int durationMultiplier = SliderInt("SmokeDurationMultiplier", 2, 1, 4);
@@ -436,7 +436,7 @@ public sealed partial class Plugin : IHostedPlugin
         Line($"{ModName} {Version}");
         Line("Enabled: " + (RuntimeSettings.Enabled ? "yes" : "no"));
         Line("LOS through smoke: " + (RuntimeSettings.AllowLineOfSightThroughSmoke ? "yes" : "no"));
-        Line($"Intervening smoke penalty: -{RuntimeSettings.AccuracyPenaltyPerTile}%/tile, cap -{RuntimeSettings.MaximumAccuracyPenalty}%");
+        Line($"Smoke aim penalty: -{RuntimeSettings.AccuracyPenaltyPerTile}%/full tile, cap -{RuntimeSettings.MaximumAccuracyPenalty}%");
         Line($"Smoke duration: x{RuntimeSettings.SmokeDurationMultiplier}");
         Line($"Thrown grenade AP cost: {RuntimeSettings.ThrownGrenadeApCost}");
         Line("Thrown grenade templates patched: " + PatchedGrenadeSkills.Count);
@@ -454,8 +454,8 @@ public sealed partial class Plugin : IHostedPlugin
         Line("80mm mortar smoke granted: " + (_mediumMortarSmokeGrantedByUs ? "yes" : "no/already present"));
         Line("Smoke templates patched: " + PatchedTemplates.Count);
         Line("Hit-chance queries adjusted: " + Patches.AdjustedHitChanceQueries);
-        Line("Last smoke tiles crossed: " + Patches.LastSmokeTilesCrossed);
-        Line("Last applied penalty: -" + Patches.LastAppliedPenalty + "%");
+        Line($"Last smoke exposure: {Patches.LastSmokeExposureTiles:0.0} tile(s)");
+        Line($"Last applied penalty: -{Patches.LastAppliedPenalty:0.#}%");
         if (_restoreOnSafeScene)
             Line("Template restore pending next non-tactical scene.");
     }
@@ -1481,15 +1481,24 @@ public sealed partial class Plugin : IHostedPlugin
         if (from == null || target == null || result.AlwaysHits)
             return;
 
-        int smokeTiles = CountInterveningSmokeTiles(from, target);
-        Patches.LastSmokeTilesCrossed = smokeTiles;
-        if (smokeTiles <= 0)
+        int interveningSmokeTiles = CountInterveningSmokeTiles(from, target);
+        bool sameTile = from.GetX() == target.GetX() && from.GetZ() == target.GetZ();
+        float smokeExposureTiles = SmokeCoverRules.ExposureTiles(
+            interveningSmokeTiles,
+            TileHasSmoke(from),
+            TileHasSmoke(target),
+            sameTile);
+        Patches.LastSmokeExposureTiles = smokeExposureTiles;
+        float penalty = SmokeCoverRules.AccuracyPenalty(
+            smokeExposureTiles,
+            RuntimeSettings.AccuracyPenaltyPerTile,
+            RuntimeSettings.MaximumAccuracyPenalty);
+        if (penalty <= 0f)
         {
             Patches.LastAppliedPenalty = 0;
             return;
         }
 
-        int penalty = global::System.Math.Min(smokeTiles * RuntimeSettings.AccuracyPenaltyPerTile, RuntimeSettings.MaximumAccuracyPenalty);
         float before = result.FinalValue;
         result.FinalValue = global::System.Math.Max(0f, before - penalty);
         Patches.AdjustedHitChanceQueries++;
@@ -1517,9 +1526,8 @@ public sealed partial class Plugin : IHostedPlugin
 
         while (true)
         {
-            // Deliberately exclude attacker and defender tiles. Units actually standing in
-            // smoke already receive vanilla effect.smoke modifiers; this penalty represents
-            // only smoke lying between shooter and target.
+            // Endpoint smoke is counted separately as half exposure. This scan represents
+            // only full smoke tiles lying between shooter and target.
             if (!(x0 == from.GetX() && z0 == from.GetZ()) && !(x0 == x1 && z0 == z1))
             {
                 if (map.IsInBounds(x0, z0))
@@ -1628,8 +1636,8 @@ internal static partial class Patches
 {
     internal static int SmokeTemplatesChanged;
     internal static int AdjustedHitChanceQueries;
-    internal static int LastSmokeTilesCrossed;
-    internal static int LastAppliedPenalty;
+    internal static float LastSmokeExposureTiles;
+    internal static float LastAppliedPenalty;
 
     public static void TileEffectHandler_AssignToTile_Prefix(TileEffectHandler __instance)
     {
@@ -1711,7 +1719,7 @@ internal static partial class Patches
     internal static void ResetCounters()
     {
         AdjustedHitChanceQueries = 0;
-        LastSmokeTilesCrossed = 0;
+        LastSmokeExposureTiles = 0;
         LastAppliedPenalty = 0;
     }
 }
@@ -1719,7 +1727,7 @@ internal static partial class Patches
 internal static class RuntimeSettings
 {
     public static bool Enabled { get; private set; } = true;
-    public static bool AllowLineOfSightThroughSmoke { get; private set; } = true;
+    public static bool AllowLineOfSightThroughSmoke { get; private set; } = false;
     public static int AccuracyPenaltyPerTile { get; private set; } = 20;
     public static int MaximumAccuracyPenalty { get; private set; } = 60;
     public static int SmokeDurationMultiplier { get; private set; } = 2;

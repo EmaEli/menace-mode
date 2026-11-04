@@ -14,6 +14,7 @@ PACKAGE = ROOT.parent / "jiangyu/SmokeOverhaul"
 PLUGIN = (ROOT / "src/SmokeOverhaul/Plugin.cs").read_text()
 CONFIG = (PACKAGE / "code/SmokeOverhaul.csproj").read_text()
 SMOKE_MANIFEST = json.loads((PACKAGE / "jiangyu.json").read_text())
+SMOKE_COMPILED_MANIFEST = json.loads((PACKAGE / "compiled/jiangyu.json").read_text())
 
 
 def block(start: str, end: str) -> str:
@@ -26,6 +27,21 @@ class FastSmokeSelectionTests(unittest.TestCase):
         version = SMOKE_MANIFEST['version']
         self.assertIn(f'internal const string Version = "{version}"', PLUGIN)
         self.assertIn(f'<Version>{version}</Version>', CONFIG)
+        self.assertEqual(SMOKE_COMPILED_MANIFEST['version'], version)
+
+    def test_intervening_smoke_blocks_los_by_default(self):
+        settings = block('private static void RegisterSettings()', 'private void RefreshSettings(bool force)')
+        self.assertIn('s.AddToggle("AllowLineOfSightThroughSmoke", "Allow line of sight through smoke", false)', settings)
+        self.assertIn('bool losThroughSmoke = Setting("AllowLineOfSightThroughSmoke", false)', PLUGIN)
+        self.assertIn('AllowLineOfSightThroughSmoke { get; private set; } = false;', PLUGIN)
+        self.assertIn('if (RuntimeSettings.AllowLineOfSightThroughSmoke && template.BlockLineOfSight)', PLUGIN)
+
+    def test_shooter_and_target_smoke_are_half_aim_exposure(self):
+        aim = block('internal static void ApplySmokeAccuracyPenalty', 'private static int CountInterveningSmokeTiles')
+        self.assertIn('SmokeCoverRules.ExposureTiles(', aim)
+        self.assertIn('TileHasSmoke(from)', aim)
+        self.assertIn('TileHasSmoke(target)', aim)
+        self.assertIn('SmokeCoverRules.AccuracyPenalty(', aim)
 
     def test_disabled_performance_search_by_default(self):
         self.assertIn('s.AddToggle("FastAISmokeSelection"', PLUGIN)

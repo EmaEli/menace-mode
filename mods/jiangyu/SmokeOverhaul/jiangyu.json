@@ -1,8 +1,8 @@
 {
   "name": "SmokeOverhaul",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "author": "Luca",
-  "description": "Smoke rework: configurable LOS blocking, duration, optional infantry smoke/frag grenade grants, mortar smoke delivery and faster AI smoke use. Jiangyu port of the legacy GameplaySuite module; options live in the MenaceModSettings window (F9).",
+  "description": "Smoke rework: full LOS blocking by default for intervening smoke, half-tile aim exposure for smoke on shooter/target tiles, configurable duration, mortar delivery and AI smoke use. Options live in MenaceModSettings (F9).",
   "depends": [
     "Jiangyu >= 1.4.8",
     "MenaceModSettings >= 0.4.0"

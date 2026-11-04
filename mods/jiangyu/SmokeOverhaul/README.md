@@ -1,11 +1,16 @@
-# Smoke Overhaul 0.7.0 — offline Jiangyu candidate
+# Smoke Overhaul 0.8.0 — test candidate
 
-Smoke Overhaul changes MENACE smoke from a hard line-of-sight wall into a longer-lasting soft obstruction and gives smoke-delivery systems distinct tactical footprints.
+Smoke Overhaul makes smoke fully obstruct line of sight when it lies between units, while a unit standing in smoke receives half-tile aim exposure. It also extends smoke duration and gives smoke-delivery systems distinct tactical footprints.
 
 **0.7.0:** free infantry smoke and Tier 2 frag grants are now OFF by default; their settings
 remain independently configurable. Existing AI smoke-use probabilities are unchanged. Not
 verified in game: native execution, ammo/AP/cooldown, AI coexistence and 64/96-map timing remain
 acceptance gates. The earlier migration ZIP remains an unchanged historical candidate.
+
+**0.8.0 (#85):** intervening smoke fully blocks LOS by default; the existing setting can opt
+back into soft LOS. Smoke on the shooter's or target's tile contributes 0.5 of one configured
+aim-penalty tile, while each intervening smoke tile contributes one. Windows build/install and
+in-game acceptance are pending.
 
 **0.5.2 AI performance fix:** MENACE's native `CreateLOSBlocker.Collect` was spending excessive time evaluating hypothetical positions for smoke on 80x80 maps. By default, `FastAISmokeSelection` changes only the existing AI profile flag `InfluencesPositioning` to false for smoke grenades and mortar smoke shells. The AI can still choose valid smoke targets from its current position; it no longer looks for better positions *specifically to use smoke*. Full native smoke decision making, smoke footprints, AI smoke use, and the two-round mortar AI cooldown remain in place. A single log line verifies activation, with no per-turn logging. Turn this setting OFF to restore vanilla speculative smoke positioning.
 
@@ -13,9 +18,9 @@ acceptance gates. The earlier migration ZIP remains an unchanged historical cand
 
 ## Default behavior
 
-- Smoke tile effects no longer fully block line of sight.
-- Shooting through smoke applies **-20 percentage points of hit chance per intervening smoke tile**, capped at **-60 percentage points**.
-- Shooter and target tiles are excluded from this extra line penalty; vanilla `effect.smoke` modifiers on units standing inside smoke remain authoritative.
+- Smoke tile effects fully block line of sight when smoke is between units by default. Enable **Allow line of sight through smoke** to restore soft LOS.
+- The configurable aim penalty counts each intervening smoke tile as **1.0 tile** and smoke on the shooter or target tile as **0.5 tile each**. Defaults are **-20 percentage points per full tile**, capped at **-60 percentage points**.
+- This weighted exposure applies to Smoke Overhaul's hitchance penalty; other native smoke effects are unchanged.
 - Timed smoke lasts **2x vanilla duration** by default (configurable 1x-4x).
 - All hand-thrown `active.throw_*` grenade/bomb skills cost **20 AP** by default. Grenade launchers, mortars, off-map bombs and deployable charges keep their own AP economy.
 - Free infantry smoke and Tier 2 frag grenade grants are **off by default**; enable either grant in Mod Settings to give normal humanoid infantry the vanilla three-use grenade. Existing equivalent skills/equipment are detected to avoid duplicate buttons.
@@ -56,8 +61,8 @@ cooldown and target checks remain in force. Disabling restores owned permissions
 Open MENACE Mod Settings and select **Smoke Overhaul**. You can configure:
 
 - Enable Smoke Overhaul.
-- Whether smoke fully blocks line of sight.
-- Accuracy penalty per intervening smoke tile and maximum accumulated penalty.
+- Whether line of sight is allowed through intervening smoke (OFF by default).
+- Accuracy penalty per full smoke tile, including half-weight shooter/target tiles, and maximum accumulated penalty.
 - Smoke duration multiplier.
 - AP cost for hand-thrown grenades.
 - Free infantry smoke/frag grants.
@@ -72,4 +77,4 @@ Debug logging is OFF by default and hot paths do not write routine logs.
 
 ### Runtime setting note
 
-The line-of-sight setting is safest when changed outside a tactical battle. If disabled while smoke already exists, the original LOS template state is restored on the next non-tactical scene so MENACE's LOS bookkeeping cannot be unbalanced by an already-active effect.
+The line-of-sight setting is safest when changed outside a tactical battle. If changed while smoke already exists, the original LOS template state is restored on the next non-tactical scene so MENACE's LOS bookkeeping cannot be unbalanced by an already-active effect.

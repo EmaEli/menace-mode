@@ -41,5 +41,19 @@ internal static class SmokeAiChecks
             check(!SmokeAiRules.TryGetLocalOffset(7, 0, false, bad, 0, out _, out _), "invalid reach index fails closed");
         foreach (int bad in new[] { -1, 3, 4 })
             check(!SmokeAiRules.TryGetLocalOffset(7, 0, false, 0, bad, out _, out _), "invalid candidate index fails closed");
+
+        check(SmokeCoverRules.ExposureTiles(0, false, false) == 0f, "clear endpoints add no smoke exposure");
+        check(SmokeCoverRules.ExposureTiles(0, true, false) == 0.5f, "one smoke endpoint counts as half a tile");
+        check(SmokeCoverRules.ExposureTiles(0, true, true) == 1f, "two smoke endpoints count as one tile total");
+        check(SmokeCoverRules.ExposureTiles(0, true, true, sameEndpointTile: true) == 0.5f,
+            "one shared endpoint tile is not counted twice");
+        check(SmokeCoverRules.ExposureTiles(1, false, true) == 1.5f,
+            "one intervening tile plus one smoke endpoint counts as one and a half tiles");
+        check(SmokeCoverRules.ExposureTiles(-1, false, false) == 0f, "negative intervening count is clamped to zero");
+        check(SmokeCoverRules.AccuracyPenalty(0.5f, 20, 60) == 10f, "half endpoint exposure applies half the configured penalty");
+        check(SmokeCoverRules.AccuracyPenalty(2.5f, 20, 60) == 50f, "fractional exposure preserves fractional tile weight");
+        check(SmokeCoverRules.AccuracyPenalty(4f, 20, 60) == 60f, "smoke accuracy penalty still respects its cap");
+        check(SmokeCoverRules.AccuracyPenalty(1f, 0, 60) == 0f && SmokeCoverRules.AccuracyPenalty(1f, 20, 0) == 0f,
+            "zero per-tile or maximum setting disables the smoke penalty");
     }
 }

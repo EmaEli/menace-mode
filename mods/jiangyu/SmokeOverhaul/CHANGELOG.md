@@ -1,3 +1,9 @@
+## 0.8.0
+
+- Smoke fully blocks LOS by default when it lies between units; the existing soft-LOS setting remains available as an opt-in.
+- Smoke on the shooter or target tile contributes half a tile to the configurable hitchance penalty; intervening smoke tiles still count as full tiles and the configured cap is unchanged.
+- Offline regression checks cover fractional exposure, shared endpoints, the accuracy cap and the default LOS setting. Windows build/install and in-game acceptance are pending.
+
 ## 0.7.0
 
 - Free smoke and Tier 2 frag grenade grants for infantry are now opt-in and OFF by default; both settings remain independently configurable.
