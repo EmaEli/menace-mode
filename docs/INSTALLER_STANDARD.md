@@ -111,6 +111,11 @@ The assembly check must separately verify real compiled DLL metadata, not projec
 bundled, SHA256-inventoried sources. All products use the same installer and independently
 versioned packages; no floating Git download or second camera installer is needed.
 `distribution.json` centralizes the supported native game hash and Jiangyu 1.4.8 asset pins.
+Additional `standaloneGameBuilds` entries may allow an exact native hash only for their
+explicit module allowlist (including MenaceModSettings). The shared `Assert-GameBuild`
+gate must reject Suite/Camera, empty or mixed unsupported selections on those hashes;
+do not replace the whole-suite pin to unblock one verified code-only test. The production
+helper is exercised by `tests/Test-GameCompatibility.ps1` with non-game fixture files.
 The Jiangyu SDK comes from the hash-verified CLI archive; code is built directly with .NET against
 installed game proxies. Authored templates/bundles are precompiled for the pinned game,
 so the player does **not** need Unity Editor or a global Jiangyu configuration change.

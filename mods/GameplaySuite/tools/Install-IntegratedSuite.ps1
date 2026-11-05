@@ -55,7 +55,7 @@ try {
     if ($BuildOnly -and -not $RollbackPath) { $lockRoot = $BundleRoot }
     $lock = [IO.File]::Open((Join-Path $lockRoot '_MENACE-install.lock'), 'OpenOrCreate', 'ReadWrite', 'None')
     if ($RollbackPath) { Restore-ModBackup $GamePath $RollbackPath -CheckCurrent; return }
-    Assert-Hash (Join-Path $GamePath 'GameAssembly.dll') $catalog.gameAssemblySha256
+    Assert-GameBuild (Join-Path $GamePath 'GameAssembly.dll') $catalog $Product $Modules
     $refs = Join-Path $GamePath 'MelonLoader\Il2CppAssemblies'
     $runtime = Join-Path $GamePath 'MelonLoader\net6'
     foreach ($name in @('Assembly-CSharp.dll', 'Il2Cppmscorlib.dll', 'UnityEngine.CoreModule.dll')) { Assert-Leaf (Join-Path $refs $name) }

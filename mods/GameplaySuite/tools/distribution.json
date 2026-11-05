@@ -2,6 +2,13 @@
   "format": 1,
   "gameVersion": "0.7.17+22362",
   "gameAssemblySha256": "871b4c3468c68dae3d75e7b5e29fcc9b0a8a253fcebf64045af348f0aec75111",
+  "standaloneGameBuilds": [
+    {
+      "gameVersion": "0.7.18+22828",
+      "gameAssemblySha256": "494c9e212d411d898b3abafb4ad233f7a39a22648d713a86b9641d698b2d12e9",
+      "modules": ["MenaceModSettings", "GarrisonableBuildings"]
+    }
+  ],
   "jiangyuVersion": "1.4.10",
   "compiledForJiangyuVersion": "1.4.8",
   "cliUrl": "https://github.com/antistrategie/jiangyu/releases/download/v1.4.10/jiangyu-cli-win-x64.zip",

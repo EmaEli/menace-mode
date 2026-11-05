@@ -35,6 +35,15 @@ build/validate every selected project and stage all outputs before changing `Mod
 Source `.csproj` versions are parsed as XML. Real DLL AssemblyVersion and FileVersion are
 checked separately; MenaceModSettings retains assembly identity 1.0.0.0.
 
+### Scoped v0.7.18 test candidate (#86 / #62)
+
+The catalog additionally permits **only** standalone GarrisonableBuildings (with its
+MenaceModSettings companion) on **0.7.18+22828**, native SHA256 `494c9e21…`.
+Fresh MelonLoader proxies and the native metadata contracts were checked for this
+code-only candidate; neither package contains game-indexed templates or asset bundles.
+The exact hash remains mandatory. Suite/Camera and other standalone modules remain
+blocked on that build; this is not whole-suite or gameplay compatibility acceptance.
+
 The console stays open on success/failure. Diagnostic log: `%TEMP%\MENACE-install.log`.
 Failures open the log in Notepad. Backups and the rollback journal live under the game's
 `_MENACE_Backups`, **outside Mods**. Rejected/partial new files are moved there, not deleted.

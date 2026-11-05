@@ -23,6 +23,28 @@ function Assert-Hash([string]$Path, [string]$Expected) {
         throw "SHA256 mismatch: $Path"
     }
 }
+function Assert-GameBuild([string]$Path, $Catalog, [string]$Product, [string[]]$Modules) {
+    Assert-Leaf $Path
+    $actual = (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash
+    if ($actual -eq $Catalog.gameAssemblySha256) {
+        Write-Host "Verified native game build: $($Catalog.gameVersion)"
+        return
+    }
+    # A scoped code-only test must not implicitly authorize the full Suite or other modules.
+    if ($Product -eq 'Standalone' -and $Modules.Count -gt 0 -and
+        $Catalog.PSObject.Properties.Name -contains 'standaloneGameBuilds') {
+        $selected = @('MenaceModSettings') + @($Modules)
+        foreach ($build in $Catalog.standaloneGameBuilds) {
+            if ($actual -ne $build.gameAssemblySha256) { continue }
+            $unsupported = @($selected | Where-Object { $build.modules -notcontains $_ })
+            if ($unsupported.Count -eq 0) {
+                Write-Host "Verified scoped native game build: $($build.gameVersion) ($($selected -join ', '))"
+                return
+            }
+        }
+    }
+    throw "Unsupported native game hash/module selection: $Path. Compatibility verification is required."
+}
 function Get-TreeInventory([string]$Path) {
     Assert-NotLink $Path
     if (Test-Path -LiteralPath $Path -PathType Leaf) {
