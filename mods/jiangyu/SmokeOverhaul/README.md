@@ -13,7 +13,9 @@ read-only, bounded and cleared on scene changes/unload; they do not repair or re
 **Windows test install:** canonical BuildOnly/install passed on MENACE 0.7.18+22828
 on 5 November 2026. Installed manifest/assembly/file versions verified as 0.8.4 / 0.8.4.0 /
 0.8.4.0; all 1,394 protected unrelated Mods/UserData files unchanged. Backup retained
-outside Mods. No post-install game launch or runtime smoke acceptance has occurred yet.
+outside Mods. The user subsequently reports the smoke test “seems to have worked.” The
+fresh log records six neutralized native smoke stat modifiers and active visual objects
+eight seconds after assignment. This is diagnostic corroboration, not direct pixel proof.
 
 **0.7.0:** free infantry smoke and Tier 2 frag grants are now OFF by default; their settings
 remain independently configurable. Existing AI smoke-use probabilities are unchanged. Not

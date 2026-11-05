@@ -5,7 +5,8 @@
 - Adds bounded, debug-only observations of smoke assignment, early removal, tile membership and visual-object presence/activity after the native spawn delay. Does not create, remove or replace clouds. Debug remains OFF by default.
 - Fresh pre-install 0.8.2 log confirms smoke assignment and duration 2 -> 4 rounds, not successful rendering. Cloud disappearance remains under investigation; this is not a confirmed visual fix.
 - Validated 2026-11-05: 185 Python tests, 19 executed lifecycle assertions, 17,913 candidate offline checks, clean-source build, 49 current native contracts and 24 Windows compatibility checks. Canonical Windows BuildOnly/install passed; installed manifest/assembly/file versions are 0.8.4/0.8.4.0/0.8.4.0. Smoke build: zero warnings; settings companion: existing JIA005 warning.
-- Backup outside Mods: `20261105-105607-e7e25cf7ec6d4b8986680d36c55ba00a`. All 1,394 protected unrelated Mods/UserData files unchanged; MenaceModSettings remains 0.8.2. Game not launched; runtime stat/VFX acceptance pending.
+- Backup outside Mods: `20261105-105607-e7e25cf7ec6d4b8986680d36c55ba00a`. All 1,394 protected unrelated Mods/UserData files unchanged; MenaceModSettings remains 0.8.2.
+- Gameplay follow-up: user reports “seems to have worked.” Fresh 0.7.18 log confirms six native `effect.smoke` modifiers neutralized and 12 observed smoke handlers remained attached with active world objects at the +8-second sample. This diagnostic proves object activity, not pixel visibility; user feedback is the acceptance. No failure reported.
 
 ## 0.8.3
 
