@@ -53,6 +53,9 @@ CinematicActionCamera 1.2.3 is a scoped standalone code-only candidate for the c
 namespace move (#88). Its bundled checks validate autofocus behavior, native event
 signatures and runtime binary type references before staging. Select
 `-Product Standalone -Modules CinematicActionCamera` for this test.
+Its 5 November Windows BuildOnly/install passed, with runtime and companion 1.2.3
+metadata/hashes verified and all 1,397 protected Mods/UserData files unchanged.
+Startup/gameplay acceptance remains pending; prior camera evidence is not a 1.2.3 test.
 The exact hash remains mandatory. Suite/Camera products and other unlisted standalone
 modules remain blocked; this is not whole-suite or gameplay compatibility acceptance.
 
