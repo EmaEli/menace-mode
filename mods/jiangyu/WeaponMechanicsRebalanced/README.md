@@ -1,4 +1,8 @@
-# Weapon Mechanics Rebalanced 0.4.15
+# Weapon Mechanics Rebalanced 0.4.17
+
+**0.4.17 corrected enemy ranging (#59; gameplay check pending):** enemies now use the player's size-based starting scatter, -1 per prior shot at the same target down to 2, and Scatter 1 after a lucky exact hit on that target. Enemy histories, including lucky-hit zeroing, reset every turn at `Actor.OnTurnStart`. The enemy-only medium skill restores the player's ScatterChance 80%; the previous 0.4.16 widening rule was a mistaken interpretation, not the intended design. Its 33-AP repeated-action allowance is retained.
+
+**0.4.16 enemy mortar fire cadence and turn dispersion (#59):** the enemy-only medium mortar can take up to three separate firing actions in a 100-AP activation (33 AP per action, `MarkAsActed=false`). Each later shot widens Scatter by one, from 4 to 5 to 6; additional shots remain at 6. The counter resets on `Actor.OnTurnStart`, so later turns begin at Scatter 4 again. Native repetitions remain 1; player mortar behavior and native ammo uses are unchanged. The PC gameplay test must confirm AI action selection and turn reset.
 
 **0.4.15 suppression-first enemy mortar correction (#59; gameplay retest pending):** the enemy-only medium mortar now receives the intended 50% HP/armor-durability damage and broader suppression profile, while retaining its native AP/ammunition. Its ScatterChance is 100% (always roll dispersion, not always miss). Hostile ranging retains at least Scatter 3 for HE and no longer turns a lucky hit into Scatter 1 against every target. Native Attack template casts also fix payload adjustments being skipped when handlers arrive as base wrappers. Player tuning/ranging is unchanged; the cast fix restores the intended damage/suppression tuning for all covered HE profiles.
 
@@ -28,7 +32,7 @@ Weapon Mechanics Rebalanced (WMR) contains non-range weapon gameplay changes sep
 
 WMR changes mortar behavior while leaving range ownership to WRR or vanilla:
 
-The economy adjustments below apply only to regular player/vehicle skill profiles. The separate enemy-only medium skill now receives **Scatter 4 / ScatterChance 100%, half HP/armor-durability damage and the medium suppression profile**; its native AP cost, ammunition and repetitions are retained.
+The economy adjustments below apply to regular player/vehicle skill profiles. The separate enemy-only medium skill receives **Scatter 4 / ScatterChance 80%, half HP/armor-durability damage and the medium suppression profile**. Its 33 AP cost and `MarkAsActed=false` allow up to three independent actions in a 100-AP activation; native ammo uses and single repetition are retained.
 
 - HE and smoke mortar firing AP cost is 50% of the captured native value;
 - limited HE and smoke mortar uses are doubled;
@@ -41,15 +45,16 @@ The economy adjustments below apply only to regular player/vehicle skill profile
 
 ### Cumulative ranging fire
 
-Player mortars remember intended target tiles while their firing position remains established. Hostile AI mortars instead track shots per physical weapon and actor activation, independent of target tile. Ranging tightens the **size of the dispersion area**; it does not increase exact-hit probability by reducing ScatterChance.
+Both sides remember intended target tiles independently for each physical mortar. Player histories remain while the firing position is established; hostile histories additionally reset every turn.
 
-- for players, each prior shot at the same tile reduces effective `Scatter` by 1 for the next shot;
-- for hostile mortars, each later firing action in the same activation reduces `Scatter` by 1, even when aimed at a different tile;
-- player misses can reduce Scatter only to **2**; an exact impact on the intended tile solves that player's target tile to **Scatter 1**;
-- hostile HE retains at least **Scatter 3**, even after an exact hit; lucky hits never grant pinpoint fire against another target; naturally smaller smoke dispersion is preserved;
-- the hostile-mortar counter resets at the next actor activation; HE and smoke from the same physical weapon share it;
+- the first shot at a target uses the size-specific baseline: light 3, medium 4, heavy 5;
+- each prior shot at the same tile reduces effective `Scatter` by 1 for the next shot;
+- misses can reduce Scatter only to **2**; a lucky exact impact solves that target tile to **Scatter 1**;
+- the lucky-hit chance uses native shot dispersion, as for players, not an additional custom roll;
+- a different target starts at base scatter: neither corrections nor lucky-hit zeroing transfer;
+- all hostile target histories, including solved Scatter 1, reset at `Actor.OnTurnStart`;
 - ScatterChance is unchanged at every ranging stage;
-- player firing solutions remain independent per tile;
+- firing solutions remain independent per tile for players and enemies;
 - HE and smoke from the same physical mortar share the same solution;
 - infantry mortar solutions are retained only while the crew remains deployed;
 - vehicle-mounted mortar solutions are retained while stationary and clear when the platform moves.

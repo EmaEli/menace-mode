@@ -1,14 +1,13 @@
 using MelonLoader;
 using Il2CppInterop.Runtime.InteropTypes;
-using Il2CppMenace.Tactical.AI;
 using MenaceModSettings;
 using Menace.SDK;
 using MenaceModSuite.Shared;
 using UnityEngine;
 
-[assembly: AssemblyVersion("0.4.15.0")]
-[assembly: AssemblyFileVersion("0.4.15.0")]
-[assembly: AssemblyInformationalVersion("0.4.15")]
+[assembly: AssemblyVersion("0.4.17.0")]
+[assembly: AssemblyFileVersion("0.4.17.0")]
+[assembly: AssemblyInformationalVersion("0.4.17")]
 
 namespace MenaceWeaponMechanicsRebalanced;
 
@@ -16,7 +15,7 @@ namespace MenaceWeaponMechanicsRebalanced;
 public sealed partial class Plugin : IHostedPlugin
 {
     private const string SettingsGroup = "Weapon Mechanics Rebalanced";
-    private const string Version = "0.4.15";
+    private const string Version = "0.4.17";
 
     private sealed class MortarSkillSpec
     {
@@ -49,9 +48,9 @@ public sealed partial class Plugin : IHostedPlugin
         },
         ["active.enemy_only_launch_medium_mortar_frag"] = new()
         {
-            // Same suppression-first payload as the regular medium mortar, but no
-            // extra enemy firing actions/ammunition and no unscattered-shot bypass.
-            Scatter = 4, ScatterChance = 100, SuppressionDropoffAOE = -3f,
+            // Enable distinct enemy firing actions without changing native ammunition.
+            // The absolute AP cost and acted flag are applied in the scoped policy below.
+            Scatter = 4, ScatterChance = 80, SuppressionDropoffAOE = -3f,
             ActionPointCostMult = 1f, UsesMult = 1f
         },
         ["active.mod.fire_120mm_mortar_autoloader"] = new()
@@ -73,11 +72,10 @@ public sealed partial class Plugin : IHostedPlugin
         "active.mod.twinfire.launch_mortar_smoke_autoloader",
     };
 
-    // Player mortar fire keeps per-target firing solutions. Hostile AI instead accumulates
-    // aim per physical mortar during its current activation, independent of target tile:
-    // each prior shot reduces Scatter by one, but HE stays at least Scatter 3.
-    // Lucky hits never solve hostile fire, especially not against a different target.
-    // The AI state resets at Agent.OnTurnStart; ranging never changes ScatterChance.
+    // Both sides range each target tile independently for each physical mortar.
+    // Each prior shot reduces Scatter by one to 2; a lucky exact hit solves it to 1.
+    // Only hostile histories reset at Actor.OnTurnStart, including lucky-hit solutions.
+    // Ranging never changes ScatterChance.
     private static readonly HashSet<string> MortarRangingSkillIds = new(StringComparer.OrdinalIgnoreCase)
     {
         "active.launch_light_mortar_frag",
@@ -125,8 +123,8 @@ public sealed partial class Plugin : IHostedPlugin
     private static readonly Dictionary<string, object> OriginalMortarHandlerValues = new(StringComparer.OrdinalIgnoreCase);
     private static readonly Dictionary<(long Actor, long Weapon), Dictionary<(int X, int Z), MortarRangingState>> MortarRangingSolutions = new();
     private static readonly Dictionary<long, Queue<MortarApplyState>> PendingMortarImpacts = new();
-    private static readonly Dictionary<(long Actor, long Weapon), MortarTurnScatterState> EnemyMortarTurnRanging = new();
-    private static bool _mortarAgentTurnStartPatchInstalled;
+    private static readonly Dictionary<(long Actor, long Weapon, (int X, int Z) Target), MortarTurnScatterState> EnemyMortarTurnRanging = new();
+    private static bool _mortarActorTurnStartPatchInstalled;
     private static bool _mortarImpactPatchInstalled;
 
     private static readonly Dictionary<string, object> OriginalFireModeTemplateValues = new(StringComparer.OrdinalIgnoreCase);
@@ -306,7 +304,7 @@ public sealed partial class Plugin : IHostedPlugin
             ReloadSettings();
             ApplyMortarBallisticsPolicy();
             ApplyFireModeEconomyPolicy();
-            DebugLog($"Applied mechanics pass ({reason}), enabled={_enabled}, playerMortarRanging=per-target, enemyMortarRanging=-1 Scatter per prior shot within activation (HE floor 3; no exact-hit solution), ranging ScatterChance unchanged.");
+            DebugLog($"Applied mechanics pass ({reason}), enabled={_enabled}, mortarRanging=per-target, -1 Scatter per prior shot (floor 2; lucky exact hit solves to 1), enemy histories reset each turn, ranging ScatterChance unchanged.");
         }
         catch (Exception ex)
         {
@@ -338,7 +336,7 @@ public sealed partial class Plugin : IHostedPlugin
             MortarRangingSolutions.Clear();
             PendingMortarImpacts.Clear();
             EnemyMortarTurnRanging.Clear();
-            _mortarAgentTurnStartPatchInstalled = false;
+            _mortarActorTurnStartPatchInstalled = false;
             _mortarImpactPatchInstalled = false;
             _activeMortarApplyState = null;
             ApplyMortarBallisticsPolicy();
@@ -864,8 +862,8 @@ public sealed partial class Plugin : IHostedPlugin
                     postfix: new global::HarmonyLib.HarmonyMethod(typeof(Plugin), nameof(MortarRangingMovePostfix)));
             }
 
-            InstallMortarAgentTurnStartPatch(harmony);
-            DebugLog($"Mortar ranging patches installed: player histories are per-target and UI waits for impact={_mortarImpactPatchInstalled}; hostile AI ranging is per activation (HE floor 3, no exact-hit solution); ranging ScatterChance is unchanged.");
+            InstallMortarActorTurnStartPatch(harmony);
+            DebugLog($"Mortar ranging patches installed: per-target histories and player UI waits for impact={_mortarImpactPatchInstalled}; hostile Scatter tightens to 2, lucky exact hits solve that target to 1, and all hostile histories reset on Actor.OnTurnStart; ScatterChance is unchanged.");
         }
         catch (Exception ex)
         {
@@ -873,27 +871,27 @@ public sealed partial class Plugin : IHostedPlugin
         }
     }
 
-    private static void InstallMortarAgentTurnStartPatch(global::HarmonyLib.Harmony harmony)
+    private static void InstallMortarActorTurnStartPatch(global::HarmonyLib.Harmony harmony)
     {
-        _mortarAgentTurnStartPatchInstalled = false;
+        _mortarActorTurnStartPatchInstalled = false;
         try
         {
             MethodInfo? turnStart = global::HarmonyLib.AccessTools.Method(
-                typeof(Agent), nameof(Agent.OnTurnStart), Type.EmptyTypes);
+                typeof(Il2CppMenace.Tactical.Actor), nameof(Il2CppMenace.Tactical.Actor.OnTurnStart), Type.EmptyTypes);
             if (turnStart == null)
             {
-                Warn("Enemy mortar activation reset unavailable: Agent.OnTurnStart() was not found; hostile mortar ranging remains at base Scatter.");
+                Warn("Enemy mortar turn reset unavailable: Actor.OnTurnStart() was not found; hostile mortar scatter will remain at base Scatter.");
                 return;
             }
 
             harmony.Patch(
                 turnStart,
-                postfix: new global::HarmonyLib.HarmonyMethod(typeof(Plugin), nameof(MortarRangingAgentTurnStartPostfix)));
-            _mortarAgentTurnStartPatchInstalled = true;
+                postfix: new global::HarmonyLib.HarmonyMethod(typeof(Plugin), nameof(MortarRangingActorTurnStartPostfix)));
+            _mortarActorTurnStartPatchInstalled = true;
         }
         catch (Exception ex)
         {
-            Warn($"Enemy mortar activation reset unavailable: {ex.GetType().Name}: {ex.Message}; hostile mortar ranging remains at base Scatter.");
+            Warn($"Enemy mortar turn reset unavailable: {ex.GetType().Name}: {ex.Message}; hostile mortar scatter will remain at base Scatter.");
         }
     }
 
@@ -929,8 +927,8 @@ public sealed partial class Plugin : IHostedPlugin
             int originalScatterChance = template.ScatterChance;
             bool isHostileMortar = IsHostileMortarActor(actor);
             int effectiveScatter = isHostileMortar
-                ? _mortarAgentTurnStartPatchInstalled
-                    ? GetEnemyMortarTurnState(key).EffectiveScatter(originalScatter)
+                ? _mortarActorTurnStartPatchInstalled
+                    ? GetEnemyMortarTurnState(key, tileKey).EffectiveScatter(originalScatter)
                     : originalScatter
                 : GetMortarTargetScatter(__instance, actor, __0, originalScatter, useDisplayedState: false);
 
@@ -1007,15 +1005,15 @@ public sealed partial class Plugin : IHostedPlugin
 
             if (__state.IsHostileMortar)
             {
-                if (_mortarAgentTurnStartPatchInstalled)
+                if (_mortarActorTurnStartPatchInstalled)
                 {
-                    MortarTurnScatterState turnState = GetEnemyMortarTurnState(__state.RangingKey);
-                    turnState.RecordShot();
+                    MortarTurnScatterState turnState = GetEnemyMortarTurnState(__state.RangingKey, __state.TileKey);
+                    turnState.RecordShot(__state.DirectHit);
                     int nextScatter = turnState.EffectiveScatter(Math.Max(0, __state.OriginalScatter));
                     string enemyImpact = __state.ImpactX == int.MinValue
                         ? "unknown"
                         : $"({__state.ImpactX},{__state.ImpactZ})";
-                    DebugLog($"ENEMY MORTAR RESULT actor=0x{__state.RangingKey.Actor:X} weapon=0x{__state.RangingKey.Weapon:X} target=({__state.TileKey.X},{__state.TileKey.Z}) impact={enemyImpact} directHit={__state.DirectHit} shotScatter={__state.EffectiveScatter} nextScatter={nextScatter} scatterChance={__state.OriginalScatterChance}% shots={turnState.Shots}.");
+                    DebugLog($"ENEMY MORTAR RESULT actor=0x{__state.RangingKey.Actor:X} weapon=0x{__state.RangingKey.Weapon:X} target=({__state.TileKey.X},{__state.TileKey.Z}) impact={enemyImpact} directHit={__state.DirectHit} shotScatter={__state.EffectiveScatter} nextScatter={nextScatter} scatterChance={__state.OriginalScatterChance}% shots={turnState.Shots} solution={turnState.SolutionFound}.");
                 }
                 return;
             }
@@ -1152,12 +1150,13 @@ public sealed partial class Plugin : IHostedPlugin
         }
     }
 
-    private static MortarTurnScatterState GetEnemyMortarTurnState((long Actor, long Weapon) key)
+    private static MortarTurnScatterState GetEnemyMortarTurnState((long Actor, long Weapon) key, (int X, int Z) target)
     {
-        if (!EnemyMortarTurnRanging.TryGetValue(key, out MortarTurnScatterState? state) || state == null)
+        var targetKey = (key.Actor, key.Weapon, target);
+        if (!EnemyMortarTurnRanging.TryGetValue(targetKey, out MortarTurnScatterState? state) || state == null)
         {
             state = new MortarTurnScatterState();
-            EnemyMortarTurnRanging[key] = state;
+            EnemyMortarTurnRanging[targetKey] = state;
         }
         return state;
     }
@@ -1238,14 +1237,13 @@ public sealed partial class Plugin : IHostedPlugin
         ClearMortarRangingForActor(__instance);
     }
 
-    private static void MortarRangingAgentTurnStartPostfix(Agent __instance)
+    private static void MortarRangingActorTurnStartPostfix(Il2CppMenace.Tactical.Actor __instance)
     {
         if (__instance == null) return;
 
         try
         {
-            Il2CppMenace.Tactical.Actor actor = __instance.GetActor();
-            long actorKey = NativeKey(actor);
+            long actorKey = NativeKey(__instance);
             if (actorKey == 0) return;
 
             int resetCount = 0;
@@ -1256,12 +1254,12 @@ public sealed partial class Plugin : IHostedPlugin
                 resetCount++;
             }
             if (resetCount > 0)
-                DebugLog($"MORTAR TURN RESET actor=0x{actorKey:X} weapons={resetCount}.");
+                DebugLog($"MORTAR TURN RESET actor=0x{actorKey:X} targets={resetCount} source=Actor.OnTurnStart.");
         }
         catch (Exception ex)
         {
             if (_debugLogging)
-                Warn($"Enemy mortar activation reset failed: {ex.GetType().Name}: {ex.Message}");
+                Warn($"Enemy mortar turn reset failed: {ex.GetType().Name}: {ex.Message}");
         }
     }
 
@@ -1284,6 +1282,12 @@ public sealed partial class Plugin : IHostedPlugin
         {
             for (int i = 0; i < remove.Count; i++)
                 MortarRangingSolutions.Remove(remove[i]);
+        }
+
+        foreach (var key in EnemyMortarTurnRanging.Keys.ToArray())
+        {
+            if (key.Actor == actorKey)
+                EnemyMortarTurnRanging.Remove(key);
         }
 
         foreach (long skillKey in PendingMortarImpacts.Keys.ToArray())
@@ -1919,7 +1923,7 @@ public sealed partial class Plugin : IHostedPlugin
 
     private static void ApplyMortarBallisticsPolicy()
     {
-        ApplyEnemyMortarBallisticsPolicy();
+        const string enemyOnlySkillId = "active.enemy_only_launch_medium_mortar_frag";
         foreach (var pair in MortarSkillSpecs)
         {
             GameObj template = Templates.Find("SkillTemplate", pair.Key);
@@ -1930,7 +1934,8 @@ public sealed partial class Plugin : IHostedPlugin
             {
                 ApplyMortarTemplateValue(template, pair.Key, "Scatter", spec.Scatter);
                 ApplyMortarTemplateValue(template, pair.Key, "ScatterChance", spec.ScatterChance);
-                ApplyMortarTemplateScaledValue(template, pair.Key, "ActionPointCost", spec.ActionPointCostMult);
+                if (!string.Equals(pair.Key, enemyOnlySkillId, StringComparison.OrdinalIgnoreCase))
+                    ApplyMortarTemplateScaledValue(template, pair.Key, "ActionPointCost", spec.ActionPointCostMult);
                 ApplyMortarTemplateScaledValue(template, pair.Key, "Uses", spec.UsesMult);
 
                 object? handlers = Templates.ReadField(template, "EventHandlers");
@@ -1982,14 +1987,19 @@ public sealed partial class Plugin : IHostedPlugin
                     Warn($"Could not update smoke-mortar action economy for {skillId}: {ex.GetType().Name}: {ex.Message}");
             }
         }
+
+        // Apply enemy-only action flags after the common profile so its native AP
+        // multiplier cannot overwrite the scoped multi-action cost.
+        ApplyEnemyMortarBallisticsPolicy();
     }
 
     private static void ApplyEnemyMortarBallisticsPolicy()
     {
         // The enemy uses a separate skill, not active.launch_medium_mortar_frag.
-        // Read back the enemy-only dispersion baseline independently for diagnostics.
-        // Its spec above now also covers damage and suppression, but retains native
-        // AP/ammo. ScatterChance 100 means roll dispersion, not a guaranteed miss.
+        // Read back the enemy-only baseline independently. MarkAsActed=false and
+        // 33 AP permit up to three separate firing actions in a 100-AP turn; ammo
+        // uses and native repetitions are unchanged. Match the player's medium
+        // ScatterChance so native lucky on-target shots can solve that target.
         const string skillId = "active.enemy_only_launch_medium_mortar_frag";
         GameObj template = Templates.Find("SkillTemplate", skillId);
         if (template.IsNull)
@@ -1999,8 +2009,10 @@ public sealed partial class Plugin : IHostedPlugin
         }
 
         ApplyMortarTemplateValue(template, skillId, "Scatter", 4);
-        ApplyMortarTemplateValue(template, skillId, "ScatterChance", 100);
-        DebugLog($"MORTAR BASELINE skill={skillId} scatter={Templates.ReadField(template, "Scatter")} scatterChance={Templates.ReadField(template, "ScatterChance")}% enabled={_enabled}.");
+        ApplyMortarTemplateValue(template, skillId, "ScatterChance", 80);
+        ApplyMortarTemplateValue(template, skillId, "ActionPointCost", 33);
+        ApplyMortarTemplateValue(template, skillId, "MarkAsActed", false);
+        DebugLog($"MORTAR BASELINE skill={skillId} scatter={Templates.ReadField(template, "Scatter")} scatterChance={Templates.ReadField(template, "ScatterChance")}% actionPointCost={Templates.ReadField(template, "ActionPointCost")} markAsActed={Templates.ReadField(template, "MarkAsActed")} enabled={_enabled}.");
     }
 
     private static void ApplyMortarTemplateValue(GameObj template, string skillId, string fieldName, object enabledValue)

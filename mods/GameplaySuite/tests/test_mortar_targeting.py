@@ -18,14 +18,15 @@ class MortarTargetingTests(unittest.TestCase):
         self.assertIn("GetMortarDisplayedEffectiveScatter(ranging, baseScatter)", OVERLAY)
         self.assertIn("MortarScatterRules.EffectiveScatter", PLUGIN)
 
-    def test_hostile_mortars_range_per_activation_independent_of_target(self):
-        self.assertIn("Dictionary<(long Actor, long Weapon), MortarTurnScatterState> EnemyMortarTurnRanging", PLUGIN)
-        self.assertIn("GetEnemyMortarTurnState(key).EffectiveScatter(originalScatter)", PLUGIN)
+    def test_hostile_mortars_range_per_target_and_reset_each_turn(self):
+        self.assertIn("Dictionary<(long Actor, long Weapon, (int X, int Z) Target), MortarTurnScatterState> EnemyMortarTurnRanging", PLUGIN)
+        self.assertIn("GetEnemyMortarTurnState(key, tileKey).EffectiveScatter(originalScatter)", PLUGIN)
         self.assertIn("IsHostileMortarActor(actor)", PLUGIN)
-        self.assertIn("MortarRangingAgentTurnStartPostfix", PLUGIN)
+        self.assertIn("MortarRangingActorTurnStartPostfix", PLUGIN)
+        self.assertIn("typeof(Il2CppMenace.Tactical.Actor)", PLUGIN)
         self.assertIn("pair.Value.Reset()", PLUGIN)
-        self.assertIn("turnState.RecordShot()", PLUGIN)
-        self.assertNotIn("turnState.RecordShot(__state.DirectHit)", PLUGIN)
+        self.assertIn("turnState.RecordShot(__state.DirectHit)", PLUGIN)
+        self.assertIn("GetEnemyMortarTurnState(__state.RangingKey, __state.TileKey)", PLUGIN)
         self.assertIn("if (__state.IsHostileMortar)", PLUGIN)
         self.assertIn("GetMortarTargetScatter(__instance, actor, __0, originalScatter, useDisplayedState: false)", PLUGIN)
 
@@ -64,10 +65,13 @@ class MortarTargetingTests(unittest.TestCase):
         baseline = baseline.split("private static void ", 1)[0]
         self.assertIn('const string skillId = "' + fixture["id"] + '";', baseline)
         for field, value in fixture["wmr_overrides"].items():
-            self.assertIn(f'ApplyMortarTemplateValue(template, skillId, "{field}", {value});', baseline)
+            source_value = str(value).lower() if isinstance(value, bool) else str(value)
+            self.assertIn(f'ApplyMortarTemplateValue(template, skillId, "{field}", {source_value});', baseline)
         self.assertNotIn("ApplyMortarTemplateScaledValue", baseline)
         self.assertNotIn("ApplyMortarHandler", baseline)
-        for field in ("ActionPointCost", "Uses", "Repetitions", "DamageMult"):
+        self.assertEqual(fixture["cached_native"]["Repetitions"], 1)
+        self.assertFalse(fixture["wmr_overrides"]["MarkAsActed"])
+        for field in ("Uses", "Repetitions", "DamageMult"):
             self.assertNotIn('"' + field + '"', baseline)
 
     def test_enemy_only_baseline_uses_existing_enable_and_restore_path(self):

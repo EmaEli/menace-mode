@@ -1,3 +1,16 @@
+## 0.4.17 — player-style enemy ranging, reset each turn (#59; gameplay check pending)
+
+- Replace the mistaken widening rule with the player's size-based scatter and -1 per shot at the same target, stopping at 2 unless a lucky exact hit solves that target to 1.
+- Keep independent histories per enemy actor, physical weapon and target tile. Reset both corrections and lucky-hit zeroing every `Actor.OnTurnStart`; movement/undeployment also clears enemy history.
+- Restore enemy-only medium ScatterChance 80%, matching the player's medium mortar. Keep 33 AP, `MarkAsActed=false`, native ammo/repetitions and the suppression-first payload unchanged.
+- Add executable production lookup/reset/isolation checks and size/floor/lucky-hit regressions. Native gameplay acceptance remains separate from automated validation.
+
+## 0.4.16 — repeat enemy mortar actions with widening scatter (#59; gameplay check pending)
+
+- Corrected the hostile-mortar rule: the first action uses base Scatter, then each later action in that actor turn widens Scatter by one, capped at base +2. The per-weapon counter resets on `Actor.OnTurnStart`; player per-target ranging is unchanged.
+- Enemy-only medium mortar now has 33 AP and `MarkAsActed=false`, allowing up to three independent firing actions during a 100-AP activation. Kept native ammunition uses and `Repetitions=1`; repetition-based salvos were not reintroduced.
+- Managed regression checks cover widening, saturation, reset, scoped template writes and restore. Native AI shot selection and turn-boundary behavior still require a PC gameplay test.
+
 ## 0.4.15 — suppression-first enemy mortar correction (#59; retest pending)
 
 - Enemy-only medium HE now receives half HP/armor-durability damage, broader suppression falloff and a suppression-only outer ring. Preserve native enemy AP, ammunition, repetitions, blast radius and core suppression output.

@@ -9,12 +9,13 @@
   -->
   <PropertyGroup>
     <!-- Keep in step with jiangyu.json so the DLL metadata identifies the shipped build. -->
-    <Version>0.4.15</Version>
+    <Version>0.4.17</Version>
     <AssemblyName>WeaponMechanicsRebalanced</AssemblyName>
     <RootNamespace>MenaceWeaponMechanicsRebalanced</RootNamespace>
     <Nullable>enable</Nullable>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <SuiteSourceDir>$(MSBuildThisFileDirectory)../../../GameplaySuite/src</SuiteSourceDir>
+    <MenaceModSettingsPath Condition="'$(MenaceModSettingsPath)' == ''">../../MenaceModSettings/compiled/code/MenaceModSettings.dll</MenaceModSettingsPath>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="$(SuiteSourceDir)/WeaponMechanicsRebalanced/**/*.cs" Exclude="$(SuiteSourceDir)/WeaponMechanicsRebalanced/bin/**;$(SuiteSourceDir)/WeaponMechanicsRebalanced/obj/**" LinkBase="Module" />
@@ -45,7 +46,7 @@
       so the loader has already loaded it into the default context when this DLL binds.
     -->
     <Reference Include="MenaceModSettings">
-      <HintPath>../../MenaceModSettings/compiled/code/MenaceModSettings.dll</HintPath>
+      <HintPath>$(MenaceModSettingsPath)</HintPath>
       <Private>false</Private>
     </Reference>
   </ItemGroup>

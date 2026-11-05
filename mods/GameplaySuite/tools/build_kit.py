@@ -36,8 +36,16 @@ def collect(root, module=None, use_installed_settings=False):
         raise ValueError("Distribution catalog does not cover the current modules exactly")
     if module is not None and module not in available:
         raise ValueError("Unknown requested module")
-    if use_installed_settings and module not in {"SquaddieFieldPromotions", "SquaddieVeterancy", "TacticalRoundCheckpoint", "CoordinatedFire"}:
-        raise ValueError("Installed-settings mode is supported only by SquaddieFieldPromotions, SquaddieVeterancy, TacticalRoundCheckpoint and CoordinatedFire")
+    installed_settings_modules = {
+        "SquaddieFieldPromotions", "SquaddieVeterancy", "TacticalRoundCheckpoint",
+        "CoordinatedFire", "WeaponMechanicsRebalanced",
+    }
+    if use_installed_settings and module not in installed_settings_modules:
+        raise ValueError(
+            "Installed-settings mode is supported only by SquaddieFieldPromotions, "
+            "SquaddieVeterancy, TacticalRoundCheckpoint, CoordinatedFire and "
+            "WeaponMechanicsRebalanced"
+        )
     if module == "SquaddieFieldPromotions" and not use_installed_settings:
         raise ValueError("Experimental preview requires --use-installed-settings; do not replace an existing companion")
     modules = catalog["modules"] if module is None else list(dict.fromkeys(

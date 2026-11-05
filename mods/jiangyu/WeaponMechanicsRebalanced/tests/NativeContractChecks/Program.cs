@@ -49,11 +49,12 @@ Method(skill, "ApplyToTile", "Void", "Tile", "UsageParameter");
 Method(skill, "Scatter", "Tile", "Tile");
 Method(skill, "ApplySuppression", "Void", "Tile", "Tile", "Single", "Boolean", "List<Tile>");
 Method(skill, "GetAffectedTiles", "List<Tile>", "Tile", "Tile");
-Method("Il2CppMenace.Tactical.AI.Agent", "OnTurnStart", "Void");
+Method("Il2CppMenace.Tactical.Actor", "OnTurnStart", "Void");
 Method("Il2CppMenace.Tactical.Skills.Effects.AttackHandler", "OnTileHit", "Void", "Skill", "Tile", "Tile", "Vector3");
 Method("Il2CppMenace.Tactical.Entity", "ApplySuppression", "Void", "Single", "Boolean", "Entity", "Skill");
 foreach (string name in new[] { "Scatter", "ScatterChance", "ActionPointCost", "Uses" })
     Member(template, name, "Int32", true);
+Member(template, "MarkAsActed", "Boolean", true);
 Member(template, "Repetitions", "UInt16", true);
 Member(template, "EventHandlers", "List<SkillEventHandlerTemplate>", false);
 foreach (string name in new[] { "DamageMult", "DamageToArmorDurabilityMult", "SuppressionDropoffAOE", "AccuracyBonus", "AccuracyMult" })

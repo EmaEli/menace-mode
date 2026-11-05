@@ -79,6 +79,7 @@ class Plugin {
             var attack = new Il2CppMenace.Tactical.Skills.Effects.Attack(); attacks[id] = attack;
             Templates.All[id] = new() { Fields = new() {
                 ["Scatter"] = 2, ["ScatterChance"] = 50, ["ActionPointCost"] = 50, ["Uses"] = 10, ["Repetitions"] = 1,
+                ["MarkAsActed"] = true,
                 ["EventHandlers"] = new object[] { new Il2CppObjectBase(), new Il2CppObjectBase { Native = attack } }
             } };
         }
@@ -89,10 +90,11 @@ class Plugin {
             Check(Math.Abs(attack.DamageToArmorDurabilityMult - 0.4f) < 0.0001f);
             Check(attack.Suppression == 20f && attack.SuppressionDealtMult == 1.2f);
             Check(attack.SuppressionDropoffAOE == MortarSkillSpecs[id].SuppressionDropoffAOE);
-            Check((int)fields["ActionPointCost"] == (id == enemy ? 50 : 25));
+            Check((int)fields["ActionPointCost"] == (id == enemy ? 33 : 25));
+            Check((bool)fields["MarkAsActed"] == (id != enemy));
             Check((int)fields["Uses"] == (id == enemy ? 10 : 20) && (int)fields["Repetitions"] == 1);
         }
-        Check((int)Templates.All[enemy].Fields["ScatterChance"] == 100);
+        Check((int)Templates.All[enemy].Fields["ScatterChance"] == 80);
         int writes = Templates.Writes;
         ApplyMortarBallisticsPolicy(); Check(writes == Templates.Writes);
         Check(Math.Abs(attacks[enemy].DamageMult - 0.7f) < 0.0001f);
@@ -118,6 +120,7 @@ class Plugin {
             var f = Templates.All[id].Fields;
             Check((int)f["Scatter"] == 2 && (int)f["ScatterChance"] == 50);
             Check((int)f["ActionPointCost"] == 50 && (int)f["Uses"] == 10);
+            Check((bool)f["MarkAsActed"]);
         }
         _enabled = true; ApplyMortarBallisticsPolicy();
         Check(Math.Abs(attacks[enemy].DamageMult - 0.7f) < 0.0001f);
@@ -130,7 +133,7 @@ class Plugin {
 class MortarPayloadTests(unittest.TestCase):
     @unittest.skipUnless(Path(DOTNET).is_file(), ".NET SDK not available")
     def test_native_base_wrappers_damage_suppression_economy_restore(self):
-        spec = SOURCE[SOURCE.index("    private sealed class MortarSkillSpec"):SOURCE.index("    // Player mortar fire")]
+        spec = SOURCE[SOURCE.index("    private sealed class MortarSkillSpec"):SOURCE.index("    private static readonly HashSet<string> MortarRangingSkillIds")]
         methods = []
         for name in ("ApplyMortarBallisticsPolicy", "ApplyEnemyMortarBallisticsPolicy", "ApplyMortarTemplateValue",
                      "ApplyMortarTemplateScaledValue", "ApplyMortarHandlerScaledValue", "ApplyMortarHandlerValue",

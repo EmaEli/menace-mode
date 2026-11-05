@@ -51,18 +51,24 @@ class Plugin {
             Check((int)fields["Scatter"] == scatter && (int)fields["ScatterChance"] == chance);
         }
         void Untouched() {
-            Check((int)fields["ActionPointCost"] == 50 && (int)fields["Uses"] == 10);
+            Check((int)fields["Uses"] == 10);
             Check((int)fields["Repetitions"] == 1 && (float)fields["DamageMult"] == 1f);
             Check((float)fields["SuppressionDropoffAOE"] == -5f);
         }
-        ApplyEnemyMortarBallisticsPolicy(); Ballistics(4, 100); Untouched();
-        Check(Templates.Writes == 2 && diagnostics == 0 && warnings == 0);
-        ApplyEnemyMortarBallisticsPolicy(); Ballistics(4, 100); Untouched();
-        Check(Templates.Writes == 2 && OriginalMortarTemplateValues.Count == 2);
+        void ActionPolicy() {
+            Check((int)fields["ActionPointCost"] == 33 && (bool)fields["MarkAsActed"] == false);
+        }
+        void NativeActionPolicy() {
+            Check((int)fields["ActionPointCost"] == 50 && (bool)fields["MarkAsActed"]);
+        }
+        ApplyEnemyMortarBallisticsPolicy(); Ballistics(4, 80); ActionPolicy(); Untouched();
+        Check(Templates.Writes == 4 && diagnostics == 0 && warnings == 0);
+        ApplyEnemyMortarBallisticsPolicy(); Ballistics(4, 80); ActionPolicy(); Untouched();
+        Check(Templates.Writes == 4 && OriginalMortarTemplateValues.Count == 4);
         _enabled = false;
-        ApplyEnemyMortarBallisticsPolicy(); Ballistics(2, 50); Untouched();
+        ApplyEnemyMortarBallisticsPolicy(); Ballistics(2, 50); NativeActionPolicy(); Untouched();
         _enabled = true; _debugLogging = true;
-        ApplyEnemyMortarBallisticsPolicy(); Ballistics(4, 100); Untouched();
+        ApplyEnemyMortarBallisticsPolicy(); Ballistics(4, 80); ActionPolicy(); Untouched();
         Check(diagnostics == 1 && warnings == 0);
         Templates.Current.IsNull = true;
         int writes = Templates.Writes;
@@ -70,7 +76,7 @@ class Plugin {
         Check(Templates.Writes == writes && diagnostics == 2 && warnings == 0);
         Templates.Current.IsNull = false; _enabled = false; Templates.RejectWrite = true;
         ApplyEnemyMortarBallisticsPolicy();
-        Check(warnings == 2); Ballistics(4, 100); Untouched();
+        Check(warnings == 4); Ballistics(4, 80); ActionPolicy(); Untouched();
         Console.WriteLine($"Enemy mortar baseline managed checks: {checks} passed");
     }
 }
@@ -87,7 +93,7 @@ class EnemyMortarBaselineTests(unittest.TestCase):
             end = SOURCE.index("\n    private static ", start + 1)
             methods.append(SOURCE[start:end])
         fixture = json.loads((ROOT / "tests/fixtures/enemy_medium_mortar.json").read_text())
-        native = "\n".join(f'            ["{key}"] = {value},'
+        native = "\n".join(f'            ["{key}"] = {str(value).lower() if isinstance(value, bool) else value},'
                            for key, value in fixture["cached_native"].items())
         program = HARNESS.replace("// PRODUCTION_METHODS", "\n".join(methods))
         program = program.replace("// NATIVE_FIELDS", native)

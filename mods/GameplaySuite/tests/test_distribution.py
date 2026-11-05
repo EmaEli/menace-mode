@@ -227,6 +227,24 @@ class DistributionTests(unittest.TestCase):
         installer = (TOOLS / "Install-IntegratedSuite.ps1").read_text()
         self.assertIn("'TacticalRoundCheckpoint', 'CoordinatedFire'", installer)
 
+    def test_wmr_candidate_reuses_installed_settings_without_bundling_them(self):
+        payload, versions = BUILDER.collect(ROOT, "WeaponMechanicsRebalanced", True)
+        manifest = json.loads((ROOT / "mods/jiangyu/WeaponMechanicsRebalanced/jiangyu.json").read_text())
+        self.assertEqual(versions, {"WeaponMechanicsRebalanced": manifest["version"]})
+        self.assertFalse(any("/MenaceModSettings/" in path for path in payload))
+        launcher = payload["INSTALL-WeaponMechanicsRebalanced.cmd"].decode()
+        self.assertIn(
+            "-Product Standalone -Modules WeaponMechanicsRebalanced -UseInstalledSettings",
+            launcher,
+        )
+        project = (
+            ROOT / "mods/jiangyu/WeaponMechanicsRebalanced/code/WeaponMechanicsRebalanced.csproj"
+        ).read_text()
+        self.assertIn("<MenaceModSettingsPath Condition=", project)
+        self.assertIn("<HintPath>$(MenaceModSettingsPath)</HintPath>", project)
+        installer = (TOOLS / "Install-IntegratedSuite.ps1").read_text()
+        self.assertIn("'TacticalRoundCheckpoint', 'CoordinatedFire', 'WeaponMechanicsRebalanced'", installer)
+
     def test_clean_verifier_uses_an_external_settings_reference_for_veterancy(self):
         payload, _ = BUILDER.collect(ROOT, "SquaddieVeterancy", True)
         settings_dll = ROOT / "mods/jiangyu/MenaceModSettings/compiled/code/MenaceModSettings.dll"
@@ -260,10 +278,46 @@ class DistributionTests(unittest.TestCase):
         offline = next(arguments for arguments in commands if arguments[1] == "run")
         self.assertEqual(offline[-1], "MenaceModSettings,SquaddieVeterancy")
 
+    def test_clean_verifier_uses_an_external_settings_reference_for_wmr(self):
+        payload, _ = BUILDER.collect(ROOT, "WeaponMechanicsRebalanced", True)
+        settings_dll = ROOT / "mods/jiangyu/MenaceModSettings/compiled/code/MenaceModSettings.dll"
+        with tempfile.TemporaryDirectory() as directory:
+            folder = Path(directory)
+            game = folder / "game"
+            sdk = folder / "sdk"
+            game.mkdir()
+            sdk.mkdir()
+            commands = []
+
+            def fake_run(arguments, **kwargs):
+                commands.append(arguments)
+                if len(arguments) > 2 and arguments[1] == "build":
+                    project = Path(arguments[2])
+                    output = project.parent / "bin/Release/WeaponMechanicsRebalanced.dll"
+                    output.parent.mkdir(parents=True, exist_ok=True)
+                    output.write_bytes(b"mock built DLL")
+                elif arguments[1] == "run" and "NativeContractChecks.csproj" not in arguments[3]:
+                    extracted = Path(arguments[arguments.index("--") + 1])
+                    self.assertTrue(
+                        (extracted / "mods/jiangyu/MenaceModSettings/code/MenaceModSettings.csproj").is_file()
+                    )
+
+            with patch.object(VERIFIER.subprocess, "run", side_effect=fake_run), redirect_stdout(io.StringIO()):
+                VERIFIER.compile_clean(payload, game, sdk, "dotnet")
+
+        build = next(arguments for arguments in commands if arguments[1] == "build")
+        self.assertIn(f"-p:MenaceModSettingsPath={settings_dll}", build)
+        self.assertEqual(sum(arguments[1] == "build" for arguments in commands), 1)
+        runs = [arguments for arguments in commands if arguments[1] == "run"]
+        self.assertEqual(len(runs), 2)
+        self.assertIn("NativeContractChecks.csproj", runs[0][3])
+        self.assertEqual(runs[1][-1], "MenaceModSettings,WeaponMechanicsRebalanced")
+
     def test_installed_settings_are_validated_without_being_staged(self):
         source = (TOOLS / "Install-IntegratedSuite.ps1").read_text()
         helper = (TOOLS / "Install.Common.ps1").read_text()
         self.assertIn("'SquaddieFieldPromotions', 'SquaddieVeterancy'", source)
+        self.assertIn("'CoordinatedFire', 'WeaponMechanicsRebalanced'", source)
         self.assertIn("$selected = @($Modules[0])", source)
         self.assertIn("Get-Content -LiteralPath (Join-Path $BundleRoot ('source\\mods\\jiangyu\\' + $Modules[0]", source)
         self.assertIn("Get-InstalledSettingsReference $GamePath $minimum", source)

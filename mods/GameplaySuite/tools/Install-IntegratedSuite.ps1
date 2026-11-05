@@ -77,7 +77,7 @@ try {
         $selected = @('MenaceModSettings') + @($Modules | Where-Object { $_ -ne 'MenaceModSettings' } | Select-Object -Unique)
     }
     if ($UseInstalledSettings) {
-        $supportedSettingsModules = @('SquaddieFieldPromotions', 'SquaddieVeterancy', 'TacticalRoundCheckpoint', 'CoordinatedFire')
+        $supportedSettingsModules = @('SquaddieFieldPromotions', 'SquaddieVeterancy', 'TacticalRoundCheckpoint', 'CoordinatedFire', 'WeaponMechanicsRebalanced')
         if ($Product -ne 'Standalone' -or $Modules.Count -ne 1 -or $supportedSettingsModules -notcontains $Modules[0]) {
             throw 'UseInstalledSettings is unsupported for this product/module selection.'
         }

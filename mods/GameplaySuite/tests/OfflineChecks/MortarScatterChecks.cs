@@ -34,27 +34,25 @@ internal static class MortarScatterChecks
         check(MortarScatterRules.ColorProgress(5, 8, false) == 0f,
             "scatter color progress is clamped at the starting value");
 
-        var turn = new MortarTurnScatterState();
-        check(turn.EffectiveScatter(5) == 5, "enemy mortar starts an activation at maximum scatter");
-        turn.RecordShot();
-        check(turn.EffectiveScatter(5) == 4, "second enemy mortar shot tightens regardless of target");
-        turn.RecordShot();
-        check(turn.EffectiveScatter(5) == 3, "each later enemy mortar shot tightens by one");
-        turn.RecordShot();
-        check(turn.EffectiveScatter(5) == 3, "enemy mortar retains suppression-area dispersion");
-        turn.RecordShot();
-        check(turn.EffectiveScatter(5) == 3, "later hostile shots never acquire a pinpoint solution");
-        turn.Reset();
-        check(turn.EffectiveScatter(5) == 5, "the next activation restores maximum scatter");
-        for (int i = 0; i < 8; i++) turn.RecordShot();
-        check(turn.EffectiveScatter(5) == 3, "enemy mortar cannot tighten below three");
         foreach (int scatter in new[] { -1, 0, 1, 2, 3, 4, 5, int.MaxValue })
         {
-            turn.Reset();
+            var turn = new MortarTurnScatterState();
             check(turn.EffectiveScatter(scatter) == Math.Max(0, scatter), "hostile first-shot baseline preserved");
-            for (int i = 0; i < 20; i++) turn.RecordShot();
-            check(turn.EffectiveScatter(scatter) == Math.Max(Math.Min(Math.Max(0, scatter), 3), (long)scatter - 20),
-                "hostile floor preserves small native smoke scatter and cannot overflow");
+            for (int shots = 1; shots <= 20; shots++)
+            {
+                turn.RecordShot(false);
+                check(turn.EffectiveScatter(scatter) == MortarScatterRules.EffectiveScatter(scatter, shots, false),
+                    "enemy misses use the exact player progression and floor for every mortar size");
+            }
+            turn.RecordShot(true);
+            check(turn.EffectiveScatter(scatter) == Math.Min(Math.Max(0, scatter), 1) && turn.SolutionFound,
+                "lucky hit solves this target to one without widening naturally smaller scatter");
+            turn.RecordShot(false);
+            check(turn.SolutionFound && turn.EffectiveScatter(scatter) <= 1,
+                "a later miss cannot erase the lucky-hit solution");
+            turn.Reset();
+            check(turn.Shots == 0 && !turn.SolutionFound && turn.EffectiveScatter(scatter) == Math.Max(0, scatter),
+                "next turn resets both accumulated corrections and lucky-hit zeroing");
         }
 
         for (int radius = 0; radius <= 5; radius++)
