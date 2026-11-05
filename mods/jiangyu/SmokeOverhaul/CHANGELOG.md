@@ -1,3 +1,10 @@
+## 0.8.4
+
+- Carries forward 0.8.3's all-stat neutralization for a scoped MENACE 0.7.18 test candidate; no whole-suite compatibility claim.
+- Fixes native casts for mortar smoke spawn templates and AI-only cooldown discovery; non-smoke tile-effect templates are excluded.
+- Adds bounded, debug-only observations of smoke assignment, early removal, tile membership and visual-object presence/activity after the native spawn delay. Does not create, remove or replace clouds. Debug remains OFF by default.
+- Fresh pre-install 0.8.2 log confirms smoke assignment and duration 2 -> 4 rounds, not successful rendering. Cloud disappearance remains under investigation; this is not a confirmed visual fix.
+
 ## 0.8.3
 
 - Disables every native `effect.smoke` stat change, including concealment, accuracy, defense, damage, suppression and vision; retains the custom 20-point/10-point shot-chance rule.

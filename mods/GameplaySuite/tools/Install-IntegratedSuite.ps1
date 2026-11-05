@@ -136,6 +136,9 @@ try {
             Assert-Dll $dll $manifest.version $identity
             Copy-Item -LiteralPath $dll -Destination (Join-Path $compiled "code\$assembly.dll") -Force
         }
+        if ($name -eq 'SmokeOverhaul') {
+            Invoke-Dotnet @('run', '--project', (Join-Path $root 'tests\NativeContractChecks\NativeContractChecks.csproj'), '-c', 'Release', '--', (Join-Path $refs 'Assembly-CSharp.dll'), (Join-Path $source 'mods\GameplaySuite\src\SmokeOverhaul\Plugin.cs'))
+        }
         if ($name -eq 'SquaddieFieldPromotions') {
             Invoke-Dotnet @('run', '--project', (Join-Path $root 'tests\NativeContractChecks\NativeContractChecks.csproj'), '-c', 'Release', '--', (Join-Path $refs 'Assembly-CSharp.dll'), (Join-Path $root 'code'))
             Invoke-Dotnet @('run', '--project', (Join-Path $root 'tests\OfflineChecks\OfflineChecks.csproj'), '-c', 'Release', '--', $source)

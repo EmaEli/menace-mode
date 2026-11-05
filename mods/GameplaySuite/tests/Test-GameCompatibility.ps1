@@ -22,7 +22,7 @@ $catalog = [pscustomobject]@{
     standaloneGameBuilds = @([pscustomobject]@{
         gameVersion = 'scoped'
         gameAssemblySha256 = (Get-FileHash -LiteralPath $scoped -Algorithm SHA256).Hash
-        modules = @('MenaceModSettings', 'GarrisonableBuildings', 'SquaddieFieldPromotions')
+        modules = @('MenaceModSettings', 'GarrisonableBuildings', 'SquaddieFieldPromotions', 'SmokeOverhaul')
     })
 }
 $checks = 0
@@ -40,6 +40,12 @@ Verify $scoped 'Standalone' @('GarrisonableBuildings') $true
 Verify $scoped 'Standalone' @('MenaceModSettings', 'GarrisonableBuildings') $true
 Verify $scoped 'Standalone' @('SquaddieFieldPromotions') $true
 Verify $scoped 'Standalone' @('MenaceModSettings', 'SquaddieFieldPromotions') $true
+Verify $scoped 'Standalone' @('SmokeOverhaul') $true
+Verify $scoped 'Standalone' @('MenaceModSettings', 'SmokeOverhaul') $true
+Verify $scoped 'Standalone' @('SmokeOverhaul', 'OtherMod') $false
+Verify $scoped 'Suite' @('SmokeOverhaul') $false
+Verify $scoped 'Camera' @('SmokeOverhaul') $false
+Verify $unknown 'Standalone' @('SmokeOverhaul') $false
 Verify $scoped 'Standalone' @('SquaddieFieldPromotions', 'OtherMod') $false
 Verify $scoped 'Suite' @('SquaddieFieldPromotions') $false
 Verify $scoped 'Suite' @('GarrisonableBuildings') $false

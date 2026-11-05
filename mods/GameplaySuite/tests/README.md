@@ -7,6 +7,11 @@ From the repository root:
   scalar and 0.7.18 array fixtures: all stat types, providers, exact restoration, partial
   setter failures, failed rollback retry, ignored setters and fresh native-pointer wrappers.
   They do not execute IL2CPP setters or prove smoke persistence in MENACE (#85).
+- Smoke lifecycle checks (`test_smoke_lifecycle.py`) execute the production read-only
+  observations against managed stand-ins: optional logging, thread guards, native-pointer
+  deduplication, delay, early removal, missing/inactive visuals, budgets and scene cleanup.
+  SmokeOverhaul's bundled metadata checker validates all 12 production hook signatures
+  and scalar/array stat contracts on installed proxies; it does not execute native rendering.
 - Execute actual HUD pointer-capture, leader-name resolver and settings/cover-contract C# sources:
   `dotnet run --project mods/GameplaySuite/tests/OfflineChecks/OfflineChecks.csproj -c Release`.
 - The runner also executes the production optional cinematic-camera bridge with a fake clock

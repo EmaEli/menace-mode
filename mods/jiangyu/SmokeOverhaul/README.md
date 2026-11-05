@@ -1,8 +1,14 @@
-# Smoke Overhaul 0.8.3 — test build
+# Smoke Overhaul 0.8.4 — test build
 
 Smoke Overhaul makes smoke fully obstruct line of sight when it lies between units, while a unit standing in smoke receives half-tile aim exposure. It also extends smoke duration and gives smoke-delivery systems distinct tactical footprints.
 
-**0.8.3:** disables all native `effect.smoke` stat changes, not only Accuracy: no concealment, accuracy, defense, damage, suppression or vision buffs/debuffs. Uses native casts and supports the legacy scalar and 0.7.18 property-array layouts. Smoke tile effects, VFX, spawning and lifetime are preserved. Only the configured shot-chance rule remains: -20 percentage points per intervening smoke tile and -10 per smoke-occupied shooter/target tile by default. Windows deployment and gameplay verification are pending; the 0.7.18 installer support gate remains unchanged.
+**0.8.4:** carries forward the fix disabling all native `effect.smoke` stat changes, not only Accuracy: no concealment, accuracy, defense, damage, suppression or vision buffs/debuffs. Uses native casts and supports the legacy scalar and 0.7.18 property-array layouts. Smoke tile effects and VFX are preserved. Only the configured shot-chance rule remains: -20 percentage points per intervening smoke tile and -10 per smoke-occupied shooter/target tile by default. Mortar spawn/cooldown discovery now also uses native casts. This is a scoped 0.7.18 test candidate, not whole-suite or gameplay acceptance.
+
+The disappearing-cloud report is **not yet confirmed fixed**. With Debug logging enabled,
+the first 12 smoke assignments per scene report their native lifetime and prefab presence,
+then tile membership and visual-object presence/activity 2 and 8 seconds after the native
+spawn delay. Early removal is reported within that observation window. These checks are
+read-only, bounded and cleared on scene changes/unload; they do not repair or replace VFX.
 
 **0.7.0:** free infantry smoke and Tier 2 frag grants are now OFF by default; their settings
 remain independently configurable. Existing AI smoke-use probabilities are unchanged. Not

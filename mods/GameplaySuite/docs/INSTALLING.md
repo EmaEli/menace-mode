@@ -44,6 +44,11 @@ its installed settings companion and pinned loader are verified, not replaced.
 Fresh MelonLoader proxies and native metadata contracts were checked. SFP's B Team
 templates were recompiled with pinned Jiangyu 1.4.10 for the new property array;
 its canonical build also runs metadata-only native contract checks before staging.
+SmokeOverhaul 0.8.4 is also allowed as a standalone code/locales-only candidate (#85).
+All 121 proxy hashes match the PC, and its 12 hook signatures and smoke property contracts
+are checked by a metadata-only test in the canonical build before staging. This permits
+testing the native-stat fix and bounded lifecycle observations, not a claim that cloud
+disappearance is fixed. No game-indexed templates/bundles need recompilation for this mod.
 The exact hash remains mandatory. Suite/Camera and other standalone modules remain
 blocked on that build; this is not whole-suite or gameplay compatibility acceptance.
 

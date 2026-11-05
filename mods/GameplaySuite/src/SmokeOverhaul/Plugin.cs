@@ -14,8 +14,8 @@ using MenaceModSettings;
 using MenaceModSuite.Shared;
 using UnityEngine;
 
-[assembly: AssemblyVersion("0.8.3.0")]
-[assembly: AssemblyFileVersion("0.8.3.0")]
+[assembly: AssemblyVersion("0.8.4.0")]
+[assembly: AssemblyFileVersion("0.8.4.0")]
 
 namespace SmokeOverhaul;
 
@@ -23,7 +23,7 @@ namespace SmokeOverhaul;
 public sealed partial class Plugin : IHostedPlugin
 {
     internal const string ModName = "Smoke Overhaul";
-    internal const string Version = "0.8.3";
+    internal const string Version = "0.8.4";
 
     private static ModLog? _log;
     private const string SmokeAccuracyEffectTemplateId = "effect.smoke";
@@ -104,8 +104,15 @@ public sealed partial class Plugin : IHostedPlugin
             harmony,
             AccessTools.Method(typeof(TileEffectHandler), nameof(TileEffectHandler.AssignToTile), new[] { typeof(Tile) }),
             prefix: nameof(Patches.TileEffectHandler_AssignToTile_Prefix),
-            postfix: null,
+            postfix: nameof(Patches.TileEffectHandler_AssignToTile_Postfix),
             label: "TileEffectHandler.AssignToTile");
+
+        hooks += TryPatch(
+            harmony,
+            AccessTools.Method(typeof(TileEffectHandler), nameof(TileEffectHandler.RemoveFromTile), Type.EmptyTypes),
+            prefix: nameof(Patches.TileEffectHandler_RemoveFromTile_Prefix),
+            postfix: null,
+            label: "TileEffectHandler.RemoveFromTile");
 
         hooks += TryPatch(
             harmony,
@@ -202,11 +209,12 @@ public sealed partial class Plugin : IHostedPlugin
         ApplySmokeDeliveryProfiles();
 
         DevConsole.RegisterPanel(ModName, DrawDebug);
-        DebugMsg($"{ModName} {Version}: initialized with {hooks}/11 hooks.");
+        DebugMsg($"{ModName} {Version}: initialized with {hooks}/12 hooks.");
     }
 
     public void OnSceneLoaded(int buildIndex, string sceneName)
     {
+        ResetSmokeLifecycleDiagnostics();
         Patches.ResetCounters();
         AiSmokeSceneChanged(sceneName);
 
@@ -276,12 +284,14 @@ public sealed partial class Plugin : IHostedPlugin
         // change. Re-resolving/re-touching mortar SkillTemplates every 0.5 seconds during a
         // tactical scene is unnecessary and can disturb other mortar runtime systems.
         RefreshSettings(force: false);
+        UpdateSmokeLifecycleDiagnostics(now);
     }
 
     public void OnGUI() { }
 
     public void OnUnload()
     {
+        ResetSmokeLifecycleDiagnostics();
         RestoreThrownGrenadeActionPointCosts();
         RestoreNativeSmokeAccuracyModifier();
         RestoreSmokeDurations();
@@ -1064,8 +1074,8 @@ public sealed partial class Plugin : IHostedPlugin
         {
             for (int i = 0; i < _sharedMortarSmokeSkill.EventHandlers.Count; i++)
             {
-                SpawnTileEffect? spawn = _sharedMortarSmokeSkill.EventHandlers[i] as SpawnTileEffect;
-                if (spawn == null)
+                SpawnTileEffect? spawn = _sharedMortarSmokeSkill.EventHandlers[i]?.TryCast<SpawnTileEffect>();
+                if (spawn == null || spawn.EffectToSpawn == null || !IsSmoke(spawn.EffectToSpawn))
                     continue;
                 _sharedMortarSmokeSpawnEffect = spawn;
                 _originalSharedMortarSmokeChancePerTile ??= spawn.ChancePerTileFromCenter;
@@ -1177,7 +1187,8 @@ public sealed partial class Plugin : IHostedPlugin
         {
             for (int i = 0; i < infantrySmoke.EventHandlers.Count; i++)
             {
-                if (infantrySmoke.EventHandlers[i] is Cooldown cooldown && cooldown.AIOnly)
+                Cooldown? cooldown = infantrySmoke.EventHandlers[i]?.TryCast<Cooldown>();
+                if (cooldown != null && cooldown.AIOnly)
                 {
                     _nativeSmokeAiCooldown = cooldown;
                     break;
@@ -1211,7 +1222,8 @@ public sealed partial class Plugin : IHostedPlugin
                 bool hasAiCooldown = false;
                 for (int handlerIndex = 0; handlerIndex < mortarSmoke.EventHandlers.Count; handlerIndex++)
                 {
-                    if (mortarSmoke.EventHandlers[handlerIndex] is Cooldown existingCooldown && existingCooldown.AIOnly)
+                    Cooldown? existingCooldown = mortarSmoke.EventHandlers[handlerIndex]?.TryCast<Cooldown>();
+                    if (existingCooldown != null && existingCooldown.AIOnly)
                     {
                         hasAiCooldown = true;
                         break;

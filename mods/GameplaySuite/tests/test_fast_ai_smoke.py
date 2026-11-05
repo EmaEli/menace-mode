@@ -119,7 +119,7 @@ class FastSmokeSelectionTests(unittest.TestCase):
 
     def test_only_bounded_action_hooks_not_worker_evaluation(self):
         init = block('public void Initialize(', 'public void OnSceneLoaded(')
-        self.assertEqual(init.count('hooks += TryPatch('), 11)
+        self.assertEqual(init.count('hooks += TryPatch('), 12)
         self.assertNotIn('Agent.Evaluate', init)
         self.assertNotIn('CreateLOSBlocker', init)
 

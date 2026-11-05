@@ -116,6 +116,10 @@ explicit module allowlist (including MenaceModSettings). The shared `Assert-Game
 gate must reject Suite/Camera, empty or mixed unsupported selections on those hashes;
 do not replace the whole-suite pin to unblock one verified code-only test. The production
 helper is exercised by `tests/Test-GameCompatibility.ps1` with non-game fixture files.
+SmokeOverhaul's scoped 0.7.18 candidate (#85) also runs its bundled metadata-only
+`tests/NativeContractChecks` against the installed proxies before staging. Keep this
+check in the canonical installer; neither a hash allowlist nor compilation alone proves
+runtime hook signatures or cloud rendering. The whole-suite pin stays unchanged.
 The Jiangyu SDK comes from the hash-verified CLI archive; code is built directly with .NET against
 installed game proxies. Authored templates/bundles are precompiled for the pinned game,
 so the player does **not** need Unity Editor or a global Jiangyu configuration change.
