@@ -39,23 +39,24 @@ internal static class MortarScatterRules
 internal sealed class MortarTurnScatterState
 {
     private int _shots;
-    private bool _solutionFound;
 
     internal int Shots => _shots;
-    internal bool SolutionFound => _solutionFound;
 
     internal int EffectiveScatter(int baseScatter)
-        => MortarScatterRules.EffectiveScatter(baseScatter, _shots, _solutionFound);
+    {
+        baseScatter = Math.Max(0, baseScatter);
+        // Keep naturally small smoke dispersion, but never range HE down to a
+        // pinpoint solution. A lucky impact is not transferable to other targets.
+        return (int)Math.Max(Math.Min(baseScatter, 3), (long)baseScatter - _shots);
+    }
 
-    internal void RecordShot(bool directHit)
+    internal void RecordShot()
     {
         if (_shots < 1000000) _shots++;
-        if (directHit) _solutionFound = true;
     }
 
     internal void Reset()
     {
         _shots = 0;
-        _solutionFound = false;
     }
 }

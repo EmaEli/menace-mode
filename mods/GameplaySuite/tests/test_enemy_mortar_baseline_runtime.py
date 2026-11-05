@@ -55,14 +55,14 @@ class Plugin {
             Check((int)fields["Repetitions"] == 1 && (float)fields["DamageMult"] == 1f);
             Check((float)fields["SuppressionDropoffAOE"] == -5f);
         }
-        ApplyEnemyMortarBallisticsPolicy(); Ballistics(4, 80); Untouched();
+        ApplyEnemyMortarBallisticsPolicy(); Ballistics(4, 100); Untouched();
         Check(Templates.Writes == 2 && diagnostics == 0 && warnings == 0);
-        ApplyEnemyMortarBallisticsPolicy(); Ballistics(4, 80); Untouched();
+        ApplyEnemyMortarBallisticsPolicy(); Ballistics(4, 100); Untouched();
         Check(Templates.Writes == 2 && OriginalMortarTemplateValues.Count == 2);
         _enabled = false;
         ApplyEnemyMortarBallisticsPolicy(); Ballistics(2, 50); Untouched();
         _enabled = true; _debugLogging = true;
-        ApplyEnemyMortarBallisticsPolicy(); Ballistics(4, 80); Untouched();
+        ApplyEnemyMortarBallisticsPolicy(); Ballistics(4, 100); Untouched();
         Check(diagnostics == 1 && warnings == 0);
         Templates.Current.IsNull = true;
         int writes = Templates.Writes;
@@ -70,7 +70,7 @@ class Plugin {
         Check(Templates.Writes == writes && diagnostics == 2 && warnings == 0);
         Templates.Current.IsNull = false; _enabled = false; Templates.RejectWrite = true;
         ApplyEnemyMortarBallisticsPolicy();
-        Check(warnings == 2); Ballistics(4, 80); Untouched();
+        Check(warnings == 2); Ballistics(4, 100); Untouched();
         Console.WriteLine($"Enemy mortar baseline managed checks: {checks} passed");
     }
 }

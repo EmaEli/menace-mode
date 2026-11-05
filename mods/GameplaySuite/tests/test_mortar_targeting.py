@@ -24,7 +24,8 @@ class MortarTargetingTests(unittest.TestCase):
         self.assertIn("IsHostileMortarActor(actor)", PLUGIN)
         self.assertIn("MortarRangingAgentTurnStartPostfix", PLUGIN)
         self.assertIn("pair.Value.Reset()", PLUGIN)
-        self.assertIn("turnState.RecordShot(__state.DirectHit)", PLUGIN)
+        self.assertIn("turnState.RecordShot()", PLUGIN)
+        self.assertNotIn("turnState.RecordShot(__state.DirectHit)", PLUGIN)
         self.assertIn("if (__state.IsHostileMortar)", PLUGIN)
         self.assertIn("GetMortarTargetScatter(__instance, actor, __0, originalScatter, useDisplayedState: false)", PLUGIN)
 

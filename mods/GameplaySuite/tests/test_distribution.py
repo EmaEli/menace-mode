@@ -304,6 +304,14 @@ class DistributionTests(unittest.TestCase):
         self.assertIn('tree(folder / "tests",', builder)
         self.assertIn('CinematicActionCamera/tests/NativeContractChecks/NativeContractChecks.csproj', (TOOLS / "verify_kit.py").read_text())
 
+    def test_mortar_native_contract_gate_precedes_staging(self):
+        source = (TOOLS / "Install-IntegratedSuite.ps1").read_text()
+        gate = source.index("if ($name -eq 'WeaponMechanicsRebalanced')")
+        self.assertLess(gate, source.index('Copy-Item -LiteralPath $compiled -Destination (Join-Path $stage $name)'))
+        self.assertIn('module == "WeaponMechanicsRebalanced"', (TOOLS / "verify_kit.py").read_text())
+        catalog = json.loads((TOOLS / "distribution.json").read_text())
+        self.assertIn("WeaponMechanicsRebalanced", catalog["standaloneGameBuilds"][0]["modules"])
+
     def test_module_candidate_scopes_artifact_checks_to_selected_packages(self):
         builder = (TOOLS / "build_kit.py").read_text()
         program = (ROOT / "mods/GameplaySuite/tests/OfflineChecks/Program.cs").read_text()

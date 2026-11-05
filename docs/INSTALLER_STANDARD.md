@@ -120,6 +120,11 @@ SmokeOverhaul's scoped 0.7.18 candidate (#85) also runs its bundled metadata-onl
 `tests/NativeContractChecks` against the installed proxies before staging. Keep this
 check in the canonical installer; neither a hash allowlist nor compilation alone proves
 runtime hook signatures or cloud rendering. The whole-suite pin stays unchanged.
+WeaponMechanicsRebalanced 0.4.15 (#59) is a scoped standalone code-only candidate on
+the same exact 0.7.18 hash. Its bundled metadata checker validates mortar hooks,
+payload properties and runtime binary native-type references before staging in both
+the canonical installer and clean-source verifier. This does not prove native dispatch
+or balance; Suite/Camera products remain blocked on that scoped hash.
 The Jiangyu SDK comes from the hash-verified CLI archive; code is built directly with .NET against
 installed game proxies. Authored templates/bundles are precompiled for the pinned game,
 so the player does **not** need Unity Editor or a global Jiangyu configuration change.

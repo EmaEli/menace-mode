@@ -3,6 +3,12 @@
 From the repository root:
 
 - Python source-wiring and data-model checks: `python3 -m unittest discover -s mods/GameplaySuite/tests -v`.
+- Mortar payload checks execute production balance/restore and suppression-ring methods
+  with base native-wrapper stand-ins: derived Attack casts, half damage, unchanged core
+  suppression, ring deduplication, enemy AP/ammo preservation, player economy and restore.
+  Hostile floor/reset and unchanged player ranging run in OfflineChecks. WMR's bundled
+  metadata-only checker validates mortar hooks/properties/binary references; none of these
+  execute IL2CPP or establish actual casualties/balance (#59).
 - Smoke stat checks execute production snapshot/neutralization code against managed legacy
   scalar and 0.7.18 array fixtures: all stat types, providers, exact restoration, partial
   setter failures, failed rollback retry, ignored setters and fresh native-pointer wrappers.

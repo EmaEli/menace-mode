@@ -56,6 +56,9 @@ signatures and runtime binary type references before staging. Select
 Its 5 November Windows BuildOnly/install passed, with runtime and companion 1.2.3
 metadata/hashes verified and all 1,397 protected Mods/UserData files unchanged.
 Startup/gameplay acceptance remains pending; prior camera evidence is not a 1.2.3 test.
+WeaponMechanicsRebalanced 0.4.15 is a scoped standalone code-only mortar correction (#59).
+Its canonical build and clean-source verifier inspect native mortar hook/property contracts
+and WMR binary type references before staging. No indexed templates/bundles are shipped.
 The exact hash remains mandatory. Suite/Camera products and other unlisted standalone
 modules remain blocked; this is not whole-suite or gameplay compatibility acceptance.
 

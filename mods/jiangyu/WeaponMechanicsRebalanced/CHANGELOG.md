@@ -1,3 +1,11 @@
+## 0.4.15 — suppression-first enemy mortar correction (#59; retest pending)
+
+- Enemy-only medium HE now receives half HP/armor-durability damage, broader suppression falloff and a suppression-only outer ring. Preserve native enemy AP, ammunition, repetitions, blast radius and core suppression output.
+- Always roll enemy-only dispersion (ScatterChance 100%, not a guaranteed miss). Hostile HE ranging stops at Scatter 3, with no lucky-hit solution transferable across targets. Player ranging/tuning remains unchanged.
+- Cast native base handler wrappers to Attack before inspecting payload fields, restoring the intended HE balance where reflection previously skipped the derived fields.
+- Managed regression checks execute production payload/restore/ring code with base-wrapper stand-ins. The canonical installer and clean-source verifier run bundled metadata-only hook/property/binary-reference checks; 0.7.18 compatibility is scoped to this standalone code-only candidate, not the whole Suite.
+- Automated checks do not establish actual IL2CPP dispatch, casualties or gameplay balance. Keep #59 open for user retest.
+
 ## 0.4.14 — muted mortar feedback, defer display update until impact (#61; live check pending)
 
 - Ranging markers now use a muted dark-red-to-green palette based on effective Scatter, with a brighter green for a solved shot.

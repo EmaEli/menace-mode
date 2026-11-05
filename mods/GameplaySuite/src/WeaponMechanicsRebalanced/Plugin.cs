@@ -6,9 +6,9 @@ using Menace.SDK;
 using MenaceModSuite.Shared;
 using UnityEngine;
 
-[assembly: AssemblyVersion("0.4.14.0")]
-[assembly: AssemblyFileVersion("0.4.14.0")]
-[assembly: AssemblyInformationalVersion("0.4.14")]
+[assembly: AssemblyVersion("0.4.15.0")]
+[assembly: AssemblyFileVersion("0.4.15.0")]
+[assembly: AssemblyInformationalVersion("0.4.15")]
 
 namespace MenaceWeaponMechanicsRebalanced;
 
@@ -16,7 +16,7 @@ namespace MenaceWeaponMechanicsRebalanced;
 public sealed partial class Plugin : IHostedPlugin
 {
     private const string SettingsGroup = "Weapon Mechanics Rebalanced";
-    private const string Version = "0.4.14";
+    private const string Version = "0.4.15";
 
     private sealed class MortarSkillSpec
     {
@@ -47,6 +47,13 @@ public sealed partial class Plugin : IHostedPlugin
         {
             Scatter = 4, ScatterChance = 80, SuppressionDropoffAOE = -3f
         },
+        ["active.enemy_only_launch_medium_mortar_frag"] = new()
+        {
+            // Same suppression-first payload as the regular medium mortar, but no
+            // extra enemy firing actions/ammunition and no unscattered-shot bypass.
+            Scatter = 4, ScatterChance = 100, SuppressionDropoffAOE = -3f,
+            ActionPointCostMult = 1f, UsesMult = 1f
+        },
         ["active.mod.fire_120mm_mortar_autoloader"] = new()
         {
             Scatter = 5, ScatterChance = 85, SuppressionDropoffAOE = -12f, AccuracyBonus = 0f, AccuracyMult = 0.80f
@@ -68,8 +75,9 @@ public sealed partial class Plugin : IHostedPlugin
 
     // Player mortar fire keeps per-target firing solutions. Hostile AI instead accumulates
     // aim per physical mortar during its current activation, independent of target tile:
-    // each prior shot reduces Scatter by one to 2, and an exact impact solves to Scatter=1.
-    // The AI state resets at Agent.OnTurnStart; ScatterChance is never changed.
+    // each prior shot reduces Scatter by one, but HE stays at least Scatter 3.
+    // Lucky hits never solve hostile fire, especially not against a different target.
+    // The AI state resets at Agent.OnTurnStart; ranging never changes ScatterChance.
     private static readonly HashSet<string> MortarRangingSkillIds = new(StringComparer.OrdinalIgnoreCase)
     {
         "active.launch_light_mortar_frag",
@@ -298,7 +306,7 @@ public sealed partial class Plugin : IHostedPlugin
             ReloadSettings();
             ApplyMortarBallisticsPolicy();
             ApplyFireModeEconomyPolicy();
-            DebugLog($"Applied mechanics pass ({reason}), enabled={_enabled}, playerMortarRanging=per-target, enemyMortarRanging=-1 Scatter per prior shot within activation (floor 2; exact hit solves to 1), ScatterChance unchanged.");
+            DebugLog($"Applied mechanics pass ({reason}), enabled={_enabled}, playerMortarRanging=per-target, enemyMortarRanging=-1 Scatter per prior shot within activation (HE floor 3; no exact-hit solution), ranging ScatterChance unchanged.");
         }
         catch (Exception ex)
         {
@@ -311,7 +319,7 @@ public sealed partial class Plugin : IHostedPlugin
         GUILayout.BeginArea(area);
         GUILayout.Label($"Weapon Mechanics Rebalanced {Version}");
         GUILayout.Label("Enabled: " + _enabled);
-        GUILayout.Label("Mortar ranging: player per target; hostile AI per activation (-1 Scatter per shot, floor 2; exact hit -> 1)");
+        GUILayout.Label("Mortar ranging: player per target; hostile AI per activation (-1 Scatter per shot, HE floor 3; no exact-hit solution)");
         GUILayout.Label("Remembered mortar firing positions: " + MortarRangingSolutions.Count);
         GUILayout.Label("Remembered target tiles: " + MortarRangingSolutions.Values.Sum(tiles => tiles.Count));
         GUILayout.Label($"World borders: {MortarWorldHighlightTiles.Count}; overlay error: {_mortarOverlayErrorLogged}; preview error: {_mortarPreviewErrorLogged}");
@@ -857,7 +865,7 @@ public sealed partial class Plugin : IHostedPlugin
             }
 
             InstallMortarAgentTurnStartPatch(harmony);
-            DebugLog($"Mortar ranging patches installed: player histories are per-target and UI waits for impact={_mortarImpactPatchInstalled}; hostile AI ranging is per activation (miss floor 2, exact impact Scatter=1); ScatterChance is unchanged.");
+            DebugLog($"Mortar ranging patches installed: player histories are per-target and UI waits for impact={_mortarImpactPatchInstalled}; hostile AI ranging is per activation (HE floor 3, no exact-hit solution); ranging ScatterChance is unchanged.");
         }
         catch (Exception ex)
         {
@@ -1002,12 +1010,12 @@ public sealed partial class Plugin : IHostedPlugin
                 if (_mortarAgentTurnStartPatchInstalled)
                 {
                     MortarTurnScatterState turnState = GetEnemyMortarTurnState(__state.RangingKey);
-                    turnState.RecordShot(__state.DirectHit);
+                    turnState.RecordShot();
                     int nextScatter = turnState.EffectiveScatter(Math.Max(0, __state.OriginalScatter));
                     string enemyImpact = __state.ImpactX == int.MinValue
                         ? "unknown"
                         : $"({__state.ImpactX},{__state.ImpactZ})";
-                    DebugLog($"ENEMY MORTAR RESULT actor=0x{__state.RangingKey.Actor:X} weapon=0x{__state.RangingKey.Weapon:X} target=({__state.TileKey.X},{__state.TileKey.Z}) impact={enemyImpact} directHit={__state.DirectHit} shotScatter={__state.EffectiveScatter} nextScatter={nextScatter} scatterChance={__state.OriginalScatterChance}% shots={turnState.Shots} solution={turnState.SolutionFound}.");
+                    DebugLog($"ENEMY MORTAR RESULT actor=0x{__state.RangingKey.Actor:X} weapon=0x{__state.RangingKey.Weapon:X} target=({__state.TileKey.X},{__state.TileKey.Z}) impact={enemyImpact} directHit={__state.DirectHit} shotScatter={__state.EffectiveScatter} nextScatter={nextScatter} scatterChance={__state.OriginalScatterChance}% shots={turnState.Shots}.");
                 }
                 return;
             }
@@ -1927,10 +1935,15 @@ public sealed partial class Plugin : IHostedPlugin
 
                 object? handlers = Templates.ReadField(template, "EventHandlers");
                 int index = 0;
-                foreach (object handler in EnumerateInteropItems(handlers))
+                foreach (object rawHandler in EnumerateInteropItems(handlers))
                 {
-                    // Attack handlers expose these members; unrelated handlers are skipped.
-                    if (FindMemberRecursive(handler.GetType(), "SuppressionDropoffAOE") == null)
+                    // Native lists expose base SkillEventHandlerTemplate wrappers.
+                    // Resolve the native Attack class before reflecting its fields;
+                    // GetType() on the base wrapper silently skipped the entire payload.
+                    object? handler = rawHandler is Il2CppObjectBase native
+                        ? native.TryCast<Il2CppMenace.Tactical.Skills.Effects.Attack>()
+                        : rawHandler;
+                    if (handler == null || FindMemberRecursive(handler.GetType(), "SuppressionDropoffAOE") == null)
                     {
                         index++;
                         continue;
@@ -1974,8 +1987,9 @@ public sealed partial class Plugin : IHostedPlugin
     private static void ApplyEnemyMortarBallisticsPolicy()
     {
         // The enemy uses a separate skill, not active.launch_medium_mortar_frag.
-        // Share the medium dispersion profile only: do not halve enemy AP costs,
-        // double ammunition, alter repetitions or apply player damage/suppression changes.
+        // Read back the enemy-only dispersion baseline independently for diagnostics.
+        // Its spec above now also covers damage and suppression, but retains native
+        // AP/ammo. ScatterChance 100 means roll dispersion, not a guaranteed miss.
         const string skillId = "active.enemy_only_launch_medium_mortar_frag";
         GameObj template = Templates.Find("SkillTemplate", skillId);
         if (template.IsNull)
@@ -1985,7 +1999,7 @@ public sealed partial class Plugin : IHostedPlugin
         }
 
         ApplyMortarTemplateValue(template, skillId, "Scatter", 4);
-        ApplyMortarTemplateValue(template, skillId, "ScatterChance", 80);
+        ApplyMortarTemplateValue(template, skillId, "ScatterChance", 100);
         DebugLog($"MORTAR BASELINE skill={skillId} scatter={Templates.ReadField(template, "Scatter")} scatterChance={Templates.ReadField(template, "ScatterChance")}% enabled={_enabled}.");
     }
 

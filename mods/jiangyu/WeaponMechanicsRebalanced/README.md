@@ -1,4 +1,6 @@
-# Weapon Mechanics Rebalanced 0.4.14
+# Weapon Mechanics Rebalanced 0.4.15
+
+**0.4.15 suppression-first enemy mortar correction (#59; gameplay retest pending):** the enemy-only medium mortar now receives the intended 50% HP/armor-durability damage and broader suppression profile, while retaining its native AP/ammunition. Its ScatterChance is 100% (always roll dispersion, not always miss). Hostile ranging retains at least Scatter 3 for HE and no longer turns a lucky hit into Scatter 1 against every target. Native Attack template casts also fix payload adjustments being skipped when handlers arrive as base wrappers. Player tuning/ranging is unchanged; the cast fix restores the intended damage/suppression tuning for all covered HE profiles.
 
 **0.4.14 mortar feedback (#61; live check pending):** ranging markers use a muted dark-red-to-green palette based on effective Scatter, with brighter green reserved for a solved shot. The displayed scatter value and marker color stay at their previous state while a shell is in flight and update only after the impact callback is observed. This is presentation-only; mortar ballistics and action economy are unchanged.
 
@@ -26,7 +28,7 @@ Weapon Mechanics Rebalanced (WMR) contains non-range weapon gameplay changes sep
 
 WMR changes mortar behavior while leaving range ownership to WRR or vanilla:
 
-The economy/damage/suppression adjustments below apply to the regular player/vehicle skill profiles. The separate enemy-only medium skill receives **only** Scatter 4 / ScatterChance 80% and activation ranging; all its other native values are retained.
+The economy adjustments below apply only to regular player/vehicle skill profiles. The separate enemy-only medium skill now receives **Scatter 4 / ScatterChance 100%, half HP/armor-durability damage and the medium suppression profile**; its native AP cost, ammunition and repetitions are retained.
 
 - HE and smoke mortar firing AP cost is 50% of the captured native value;
 - limited HE and smoke mortar uses are doubled;
@@ -43,7 +45,8 @@ Player mortars remember intended target tiles while their firing position remain
 
 - for players, each prior shot at the same tile reduces effective `Scatter` by 1 for the next shot;
 - for hostile mortars, each later firing action in the same activation reduces `Scatter` by 1, even when aimed at a different tile;
-- misses can reduce Scatter only to **2**; an exact impact on the intended tile makes subsequent shots by that mortar use **Scatter 1** until its next activation;
+- player misses can reduce Scatter only to **2**; an exact impact on the intended tile solves that player's target tile to **Scatter 1**;
+- hostile HE retains at least **Scatter 3**, even after an exact hit; lucky hits never grant pinpoint fire against another target; naturally smaller smoke dispersion is preserved;
 - the hostile-mortar counter resets at the next actor activation; HE and smoke from the same physical weapon share it;
 - ScatterChance is unchanged at every ranging stage;
 - player firing solutions remain independent per tile;

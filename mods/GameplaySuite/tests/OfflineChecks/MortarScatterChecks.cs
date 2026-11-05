@@ -36,18 +36,26 @@ internal static class MortarScatterChecks
 
         var turn = new MortarTurnScatterState();
         check(turn.EffectiveScatter(5) == 5, "enemy mortar starts an activation at maximum scatter");
-        turn.RecordShot(false);
+        turn.RecordShot();
         check(turn.EffectiveScatter(5) == 4, "second enemy mortar shot tightens regardless of target");
-        turn.RecordShot(false);
+        turn.RecordShot();
         check(turn.EffectiveScatter(5) == 3, "each later enemy mortar shot tightens by one");
-        turn.RecordShot(true);
-        check(turn.EffectiveScatter(5) == 1, "an exact impact solves enemy mortar scatter");
-        turn.RecordShot(false);
-        check(turn.EffectiveScatter(5) == 1, "solved scatter stays at one for the activation");
+        turn.RecordShot();
+        check(turn.EffectiveScatter(5) == 3, "enemy mortar retains suppression-area dispersion");
+        turn.RecordShot();
+        check(turn.EffectiveScatter(5) == 3, "later hostile shots never acquire a pinpoint solution");
         turn.Reset();
         check(turn.EffectiveScatter(5) == 5, "the next activation restores maximum scatter");
-        for (int i = 0; i < 8; i++) turn.RecordShot(false);
-        check(turn.EffectiveScatter(5) == 2, "enemy mortar misses cannot tighten below two");
+        for (int i = 0; i < 8; i++) turn.RecordShot();
+        check(turn.EffectiveScatter(5) == 3, "enemy mortar cannot tighten below three");
+        foreach (int scatter in new[] { -1, 0, 1, 2, 3, 4, 5, int.MaxValue })
+        {
+            turn.Reset();
+            check(turn.EffectiveScatter(scatter) == Math.Max(0, scatter), "hostile first-shot baseline preserved");
+            for (int i = 0; i < 20; i++) turn.RecordShot();
+            check(turn.EffectiveScatter(scatter) == Math.Max(Math.Min(Math.Max(0, scatter), 3), (long)scatter - 20),
+                "hostile floor preserves small native smoke scatter and cannot overflow");
+        }
 
         for (int radius = 0; radius <= 5; radius++)
         {

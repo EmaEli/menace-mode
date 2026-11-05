@@ -8,5 +8,5 @@
     "Uses": 10,
     "Repetitions": 1
   },
-  "wmr_overrides": {"Scatter": 4, "ScatterChance": 80}
+  "wmr_overrides": {"Scatter": 4, "ScatterChance": 100}
 }
