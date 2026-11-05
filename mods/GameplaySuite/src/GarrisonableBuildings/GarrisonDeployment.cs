@@ -13,7 +13,11 @@ public sealed partial class Plugin
     private static readonly ConcurrentDictionary<IntPtr, byte> GarrisonDeploymentActors = new();
     [ThreadStatic] private static bool _syncingGarrisonDeployment;
 
-    private static void ClearGarrisonDeployment() => GarrisonDeploymentActors.Clear();
+    private static void ClearGarrisonDeployment()
+    {
+        GarrisonDeploymentActors.Clear();
+        GarrisonMovementActors.Clear();
+    }
 
     private static void InstallGarrisonDeploymentHooks(HarmonyLib.Harmony harmony)
     {
@@ -34,6 +38,7 @@ public sealed partial class Plugin
                 postfix: new HarmonyMethod(typeof(DeploymentHooks), nameof(DeploymentHooks.AfterEjection)));
             harmony.Patch(update, prefix: new HarmonyMethod(typeof(DeploymentHooks), nameof(DeploymentHooks.BeforeUpdate)));
             harmony.Patch(moved, postfix: new HarmonyMethod(typeof(DeploymentHooks), nameof(DeploymentHooks.MovementFinished)));
+            InstallGarrisonMovementHooks(harmony);
             DebugMsg($"{ModName}: native garrison deployment hooks installed; no separate accuracy modifier.");
         }
         catch (Exception e) { DebugError($"{ModName}: native garrison deployment hooks failed: {Short(e)}"); }
@@ -53,7 +58,7 @@ public sealed partial class Plugin
 
     private static void SyncGarrisonDeployment(Actor? actor, bool scheduleRefresh)
     {
-        if (_syncingGarrisonDeployment || !Valid(actor)) return;
+        if (_syncingGarrisonDeployment || !Valid(actor) || GarrisonMovementActors.ContainsKey(actor!.Pointer)) return;
         _syncingGarrisonDeployment = true;
         try
         {

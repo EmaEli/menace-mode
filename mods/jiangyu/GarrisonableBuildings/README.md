@@ -57,7 +57,9 @@ All four values are configurable in the **Garrisonable Buildings** Mod Settings 
 
 Infantry automatically enters MENACE's native **Deployed** stance after settling inside a supported garrison. The game supplies its normal deployed effects through the native property system, so the unit's current stats and shot previews use the same effects. There is no separate accuracy modifier, hard-coded bonus or extra deploy AP charge.
 
-Leaving or being ejected clears the garrison deployment. Pinned-down and moving units are not forcibly deployed; normal native deployment resumes after recovery/settling inside. Existing occupants are reconciled when MENACE rebuilds their properties. Vanilla bunkers, towers and vehicle passengers are not changed. Incoming cover and existing enter/leave AP costs are unchanged. In-game stats-panel/exit acceptance of 1.3.0 is pending (#62).
+Leaving or being ejected clears the garrison deployment. Since 1.3.1, exit path previews ignore only this automatic deployment without changing combat stats or animating; an actual exit releases the stance before MENACE's movement/undeploy-skill checks. Failed exits restore deployment. Native path checks and the existing building leave AP cost still apply, without a separate undeploy-skill fee.
+
+Pinned-down, independently rooted/stunned and moving units are not forcibly released/deployed; normal native deployment resumes after recovery/settling inside. Existing occupants are reconciled when MENACE rebuilds their properties. Vanilla bunkers, towers and vehicle passengers are not changed. Incoming cover is unchanged. In-game stats-panel/exit acceptance of 1.3.1 is pending (#62); the user reported 1.3.0's exit deadlock.
 
 ## StrongerCover compatibility
 

@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.3.1
+
+- Fixed 1.3.0 auto-deployment trapping infantry inside supported garrisons (#62): movement previews temporarily ignore only garrison deployment, and an actual exit releases the native stance before movement/undeploy-skill checks.
+- Previews preserve combat stats and do not animate or spend AP. Exit execution keeps native path/AP checks and the existing building leave surcharge, without a separate undeploy-skill fee. Rejected/cancelled movement restores deployment.
+- Independent root/stun, pinning, unsupported buildings and vehicle occupants retain native restrictions. Nested preview/execution cleanup is exception-safe. Live gameplay acceptance pending.
+
 ## 1.3.0
 
 - Replaced the temporary attack-only accuracy override with native automatic deployed stance for infantry settled inside enabled garrisons (#62).

@@ -9,7 +9,7 @@ void Check(bool condition, string message)
     checks++;
 }
 Plugin.Install();
-Check(HarmonyLib.Harmony.Hooks.Count == 4, "exact native containment, ejection, refresh and movement hooks registered");
+Check(HarmonyLib.Harmony.Hooks.Count == 9, "native containment, refresh, exit preview and execution hooks registered");
 var shelter = new Entity("SHELTER");
 var actor = new Actor();
 shelter.ContainEntity(actor);
@@ -111,4 +111,5 @@ Check(throws.Stance == ActorStance.Deployed && Plugin.Warnings.Count == 2, "fail
 throws.ThrowStance = false;
 throws.Skills.Update();
 Check(throws.Stance == ActorStance.Default, "next property refresh retries failed exit cleanup");
+GarrisonMovementChecks.Run(Check);
 Console.WriteLine($"Garrison deployment checks passed: {checks}");

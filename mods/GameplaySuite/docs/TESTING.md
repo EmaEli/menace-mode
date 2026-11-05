@@ -137,25 +137,27 @@ existing hover-after-casualties, 40 AP, defensive-fire, garrison and AI regressi
 - Repeat with vehicle module absent/present, default vehicle resupply ON/OFF, loaded save,
   actor spawn, mission exit and next mission. Debug/test-loadout options remain OFF.
 
-### Garrisonable Buildings 1.2.0 — #62 (live comparison pending)
+### Garrisonable Buildings 1.3.1 — #62 (exit regression retest pending)
 
-- Use one Garrisonable Buildings copy. Compare outgoing hit chance for the same attacker,
-  weapon, target and range in ordinary stance, native deployed stance, and inside a supported
-  garrison. The garrisoned attack should match the native deployed accuracy contribution.
-- Exit and re-enter a supported building; the bonus must disappear outside and must not stack
-  across repeated hit-chance calculations. An occupant already in deployed stance must not
-  receive the contribution twice.
-- Check attack skills only. Non-attack hit-chance queries, unsupported buildings and attacks
-  made outside enabled garrisons must remain unchanged.
-- Verify incoming hit chance still uses the configured building/StrongerCover protection;
-  the new offense behavior must not change cover, AP, concealment or suppression settings.
-- Keep Debug logging OFF normally. If the native effect does not match, enable it temporarily
-  and capture the one-time `resolved native deployed accuracy effect` diagnostic plus the
-  complete `MelonLoader/Latest.log`; turn Debug OFF after diagnosis.
+- 1.3.0 loaded and auto-deployed in the fresh log, but the user reported the occupant
+  could not leave because it was deployed. This is not accepted gameplay behavior.
+- Reopen that mission with one mod copy. Compare the same infantry unit's Aim outside,
+  settled inside a supported civilian garrison, and after leaving. Native deployment
+  should apply only inside; hovering exit tiles must not remove combat stats or animate.
+- Click a valid outside tile with enough AP. The unit must automatically release deployment
+  and exit, paying the existing size-based leave cost with no separate undeploy-skill fee.
+- A blocked destination or insufficient AP must leave the unit deployed inside without
+  spending AP. Re-entry must deploy once, not stack bonuses. Existing loaded occupants
+  must follow the same rules. Test with either native movement-while-deployed option.
+- Pinning, independent root/stun, vanilla bunkers/towers and vehicle passengers must keep
+  native restrictions. Incoming cover and safe-collapse behavior remain unchanged.
+- Keep Debug OFF normally. Retrieve Latest.log after a specific failed retest; any enabled
+  garrison stance diagnostics are investigation evidence, not proof the rendered UI works.
 
-Offline tests exercise the eligibility and Accuracy/AccuracyMult arithmetic. They do not
-prove native template enumeration, Harmony registration, or live hit-chance behavior; keep
-issue #62 open until the Windows gameplay comparison passes.
+The managed harness executes production deployment/movement hooks with native API stand-ins,
+including deployed movement refusal, unusable undeploy skills, nested query/execute scopes,
+failed/throwing paths, AP and status guards. It does not run IL2CPP/Harmony or game input/UI.
+Keep #62 open until the user's gameplay retest.
 
 ### StrongerCover / Garrisonable Buildings / WRR (#38)
 

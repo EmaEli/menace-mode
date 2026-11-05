@@ -12,13 +12,27 @@ namespace HarmonyLib
     }
     public sealed class Harmony
     {
-        internal static readonly Dictionary<MethodBase, (HarmonyMethod? Prefix, HarmonyMethod? Postfix)> Hooks = new();
-        public void Patch(MethodBase method, HarmonyMethod? prefix = null, HarmonyMethod? postfix = null)
-            => Hooks.Add(method, (prefix, postfix));
+        internal static readonly Dictionary<MethodBase, (HarmonyMethod? Prefix, HarmonyMethod? Postfix, HarmonyMethod? Finalizer)> Hooks = new();
+        public void Patch(MethodBase method, HarmonyMethod? prefix = null, HarmonyMethod? postfix = null, HarmonyMethod? finalizer = null)
+            => Hooks.Add(method, (prefix, postfix, finalizer));
         internal static void Call(MethodBase method, bool after, object?[] args)
         {
             if (Hooks.TryGetValue(method, out var hooks))
                 (after ? hooks.Postfix : hooks.Prefix)?.Method.Invoke(null, args);
+        }
+        internal static T Movement<T>(MethodBase method, object actor, Func<T> native)
+        {
+            Hooks.TryGetValue(method, out var hooks);
+            object?[] before = { actor, null };
+            hooks.Prefix?.Method.Invoke(null, before);
+            Exception? failure = null;
+            T result = default!;
+            try { result = native(); }
+            catch (Exception e) { failure = e; }
+            if (hooks.Finalizer != null)
+                failure = (Exception?)hooks.Finalizer.Method.Invoke(null, new object?[] { failure, before[1] });
+            if (failure != null) System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(failure).Throw();
+            return result;
         }
     }
 }
@@ -37,7 +51,18 @@ namespace Il2CppMenace.Tactical
     using Skills;
     public enum ActorStance { Default, Deployed, PinnedDown }
     public enum SuppressionState { None, Suppressed, PinnedDown }
-    public sealed class Tile { }
+    [Flags] public enum EntityFlags { None = 0, Stunned = 1, Rooted = 4, HeavyWeaponsAllowed = 8, RootedByStance = 16384 }
+    [Flags] public enum MovementAction { None, Enter, Leave }
+    public enum MovementFlags { None }
+    public enum MoveBackwardsMode { None }
+    public enum MovementFailedReason { None, Deployed, Rooted }
+    public sealed class EntityProperties : Il2CppObjectBase
+    {
+        public EntityFlags Flags;
+        public int APLeaveCost = 40;
+        public bool IsRooted() => (Flags & (EntityFlags.Rooted | EntityFlags.RootedByStance)) != 0;
+    }
+    public sealed class Tile { public bool Walkable = true; }
     public sealed class EntityTemplate(string id)
     {
         public string GetID() => id;
@@ -75,8 +100,10 @@ namespace Il2CppMenace.Tactical
     public sealed class Actor : Entity
     {
         public readonly SkillContainer Skills;
+        public readonly EntityProperties Properties = new();
         public Actor() => Skills = new(this);
         public ActorStance Stance;
+        public ActorStance m_Stance { get => Stance; set => Stance = value; }
         public SuppressionState Suppression;
         public bool Infantry = true, Moving, Dying, ThrowStance;
         public int StanceChanges, AP = 100;
@@ -86,10 +113,26 @@ namespace Il2CppMenace.Tactical
         public ActorStance GetStance() => Stance;
         public SuppressionState GetSuppressionState() => Suppression;
         public SkillContainer GetSkills() => Skills;
+        public EntityProperties GetCurrentProperties() => Properties;
         public void SetStance(ActorStance stance, bool force = false)
         {
             if (ThrowStance) throw new Exception("invalid native actor");
             Stance = stance; StanceChanges++;
+        }
+        public bool FailMove, ThrowMove;
+        public bool MoveTo(Tile tile, ref MovementAction action, MovementFlags flags = MovementFlags.None)
+        {
+            return HarmonyLib.Harmony.Movement(MethodBase.GetCurrentMethod()!, this, () =>
+            {
+                if (ThrowMove) throw new InvalidOperationException("native movement failure");
+                var path = Il2CppTactical.MovementSystem.GetPath(this, tile, MoveBackwardsMode.None, flags);
+                if (FailMove || !path.Success || AP < path.Cost) return false;
+                Skills.Update(); // Synchronous property rebuild while the old container pointer is still set.
+                if (Stance == ActorStance.Deployed) return false;
+                AP -= path.Cost;
+                Moving = true;
+                return true;
+            });
         }
     }
 }
@@ -108,6 +151,11 @@ namespace Il2CppMenace.Tactical.Skills
             HarmonyLib.Harmony.Call(MethodBase.GetCurrentMethod()!, false, new object?[] { this });
             // Stand-in for MENACE's property rebuild, NOT production bonus logic.
             DisplayedAim = owner is Actor { Stance: ActorStance.Deployed } ? 46 : 40;
+            if (owner is Actor actor)
+            {
+                actor.Properties.Flags &= ~EntityFlags.RootedByStance;
+                if (actor.Stance == ActorStance.Deployed) actor.Properties.Flags |= EntityFlags.RootedByStance;
+            }
         }
         public void OnMovementFinished(Tile tile)
             => HarmonyLib.Harmony.Call(MethodBase.GetCurrentMethod()!, true, new object?[] { this });
