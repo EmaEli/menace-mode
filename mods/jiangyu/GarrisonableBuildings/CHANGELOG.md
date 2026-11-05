@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.3.0
+
+- Replaced the temporary attack-only accuracy override with native automatic deployed stance for infantry settled inside enabled garrisons (#62).
+- Native deployed effects now feed the game's normal current-stat and attack-property pipeline; no separate artificial accuracy bonus is applied.
+- Leaving/ejection clears garrison deployment. Existing occupants are reconciled on property refresh; moving, dying, pinned-down and unsupported occupants are not forcibly deployed.
+- Incoming cover, StrongerCover integration, AP surcharges and safe collapse are unchanged. In-game acceptance pending.
+
+## 1.2.1
+
+- Fixed outgoing accuracy lookup for MENACE's IL2CPP-backed `EventHandlers` and `Properties` lists, which do not implement the standard CLR `IEnumerable` interface.
+- Added regression coverage for both managed collections and IL2CPP-style enumerators; native deployed accuracy now resolves through the existing `special.stance.deployed` template lookup.
+
 ## 1.2.0
 
 - Supported garrison occupants receive the exact outgoing Accuracy or AccuracyMult effect configured by MENACE's native `special.stance.deployed` template; the property type and amount are read from the loaded template instead of guessed or hard-coded.

@@ -1,4 +1,4 @@
-# Garrisonable Buildings 1.2.0
+# Garrisonable Buildings 1.3.0
 
 MENACE mod that reuses the game's native `Building` container system so infantry can garrison selected small map structures.
 
@@ -55,9 +55,9 @@ All four values are configurable in the **Garrisonable Buildings** Mod Settings 
 
 ## Garrisoned occupant offense
 
-While a unit is inside a supported garrison, its outgoing attacks receive the same native accuracy property and amount as MENACE's `special.stance.deployed` effect. The value is read from the loaded game template rather than hard-coded, and is applied only for hit-chance calculations by attack skills while the unit is inside a building enabled by this mod and is not already in the deployed stance.
+Infantry automatically enters MENACE's native **Deployed** stance after settling inside a supported garrison. The game supplies its normal deployed effects through the native property system, so the unit's current stats and shot previews use the same effects. There is no separate accuracy modifier, hard-coded bonus or extra deploy AP charge.
 
-The change is temporary: the original accuracy property is restored after hit-chance calculation, including when the calculation throws. It does not change incoming cover, building cover settings, AP costs or attacks made outside supported garrisons. There is no separate accuracy slider.
+Leaving or being ejected clears the garrison deployment. Pinned-down and moving units are not forcibly deployed; normal native deployment resumes after recovery/settling inside. Existing occupants are reconciled when MENACE rebuilds their properties. Vanilla bunkers, towers and vehicle passengers are not changed. Incoming cover and existing enter/leave AP costs are unchanged. In-game stats-panel/exit acceptance of 1.3.0 is pending (#62).
 
 ## StrongerCover compatibility
 
@@ -102,6 +102,13 @@ The 3x3 military large bunker is still excluded; current 3x3 support is limited 
 
 From `mods/jiangyu/GarrisonableBuildings/`, run `jiangyu compile --release --clean`. The clean flag is required after editing shared GameplaySuite sources. This builds the package without deploying it to the game; the compiled package is written under `compiled/`.
 
+## Validation (#62)
+
+`python3 -m unittest mods/GameplaySuite/tests/test_garrison_deployment.py -v` runs the production deployment hooks with managed native API stand-ins. It covers enter/leave, failed transitions, repeated entry, loaded occupants, suppression/recovery, collapse ejection and unsupported actors/containers. It does not execute native Harmony detours or render the stats panel.
+
+Live check: compare infantry Aim and attack preview outside, after settling inside an enabled civilian building, then after leaving. Repeat entry to check no stacking, verify exit movement still works, and confirm pinned-down/recovery behavior. Existing inside-cover settings and entry/exit AP surcharges should remain unchanged.
+
+Deployment is currently blocked: on 5 November 2026 the PC's GameAssembly SHA256 was `494c9e212d411d898b3abafb4ad233f7a39a22648d713a86b9641d698b2d12e9`, different from the canonical 0.7.17 pin (`871b4c3468c68dae3d75e7b5e29fcc9b0a8a253fcebf64045af348f0aec75111`). Cached 0.7.17 compilation is not verification of the changed native DLL. Revalidate the installed game/proxies and shared compatibility baseline before building/installing a PC candidate; do not bypass the installer hash guard.
 
 ## Diagnostics
 
