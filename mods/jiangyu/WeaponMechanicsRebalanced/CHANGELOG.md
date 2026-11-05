@@ -4,6 +4,7 @@
 - Keep independent histories per enemy actor, physical weapon and target tile. Reset both corrections and lucky-hit zeroing every `Actor.OnTurnStart`; movement/undeployment also clears enemy history.
 - Restore enemy-only medium ScatterChance 80%, matching the player's medium mortar. Keep 33 AP, `MarkAsActed=false`, native ammo/repetitions and the suppression-first payload unchanged.
 - Add executable production lookup/reset/isolation checks and size/floor/lucky-hit regressions. Native gameplay acceptance remains separate from automated validation.
+- Validation: 191 Python tests, 18,098 scoped offline/artifact assertions, clean-source build, 69 native metadata checks and 30 native binary references passed. Canonical Windows BuildOnly/install passed on 0.7.18+22828; installed manifest/assembly/file 0.4.17/0.4.17.0/0.4.17.0 and 1,405 unchanged unrelated Mods/UserData files verified. Startup/gameplay remains untested.
 
 ## 0.4.16 — repeat enemy mortar actions with widening scatter (#59; gameplay check pending)
 
