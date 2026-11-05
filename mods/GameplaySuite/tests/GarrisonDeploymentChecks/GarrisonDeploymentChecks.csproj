@@ -5,6 +5,6 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="../../src/GarrisonableBuildings/GarrisonDeployment.cs" Link="Production/GarrisonDeployment.cs" />
-    <Compile Include="../../src/GarrisonableBuildings/GarrisonMovement.cs" Link="Production/GarrisonMovement.cs" />
+    <Compile Include="../../src/GarrisonableBuildings/GarrisonBonus.cs" Link="Production/GarrisonBonus.cs" />
   </ItemGroup>
 </Project>

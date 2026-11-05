@@ -9,9 +9,13 @@ internal static class GarrisonMovementChecks
     internal static void Run(Action<bool, string> check)
     {
         const MethodImplAttributes safeguard = MethodImplAttributes.NoInlining | MethodImplAttributes.NoOptimization;
-        var preparation = typeof(Plugin).GetMethod("BeginGarrisonMovement", BindingFlags.Static | BindingFlags.NonPublic)!;
-        check((preparation.GetMethodImplementationFlags() & safeguard) == safeguard,
-            "the crash-attributed helper carries the #44 optimizer/inlining safeguard");
+        check(typeof(Plugin).GetMethod("BeginGarrisonMovement", BindingFlags.Static | BindingFlags.NonPublic) == null,
+            "the crash-attributed movement helper is removed, not worked around");
+        foreach (string name in new[] { "RecoverLegacyGarrisonStance", "TryResolveGarrisonAccuracy", "ApplyGarrisonAccuracy" })
+        {
+            var method = typeof(Plugin).GetMethod(name, BindingFlags.Static | BindingFlags.NonPublic)!;
+            check((method.GetMethodImplementationFlags() & safeguard) == safeguard, "native interop helper retains #44 safeguard: " + name);
+        }
         (Entity shelter, Actor unit) Occupant()
         {
             Plugin.Clear();
@@ -32,13 +36,13 @@ internal static class GarrisonMovementChecks
             var ui = new TacticalState();
             ui.ComputeActorPath(unit);
             check(ui.PreviewCost == 40, "UI preview also excludes the native undeploy-skill AP fee");
-            check(unit.Stance == ActorStance.Deployed && unit.StanceChanges == changes && unit.AP == 100,
-                "hover previews preserve native deployed stance, physical animation and AP");
-            check(unit.Properties.Flags == EntityFlags.RootedByStance && unit.Skills.DisplayedAim == 46,
-                "nested preview scopes restore the stance root and do not rebuild combat stats");
+            check(unit.Stance == ActorStance.Default && unit.StanceChanges == changes && unit.AP == 100,
+                "hover previews require no stance spoofing, animation or AP");
+            check(unit.Properties.Flags == EntityFlags.None && unit.Skills.DisplayedAim == 46,
+                "native preview keeps bonus-aware stats without any stance root");
             ui.ExecuteActorTravel(unit);
             check(ui.Started && unit.Moving && unit.Stance == ActorStance.Default, "click releases deployment before unusable undeploy-skill gate");
-            check(unit.AP == 60 && unit.Skills.DisplayedAim == 40, "execution charges only native leave AP and removes deployed properties");
+            check(unit.AP == 60 && unit.StanceChanges == 0, "execution charges only native leave AP without deploying/undeploying");
             unit.Skills.Update();
             check(unit.Stance == ActorStance.Default, "old container pointer does not redeploy an actor already moving out");
             shelter.EjectEntity(new());
@@ -55,7 +59,7 @@ internal static class GarrisonMovementChecks
             unit.Properties.Flags |= flags;
             check(!MovementSystem.IsMovementPossible(unit, new(), false, out _), "independent root/stun still blocks preview");
             var ui = new TacticalState(); ui.ExecuteActorTravel(unit);
-            check(!ui.Started && unit.Stance == ActorStance.Deployed && unit.AP == 100, "independent root/stun is not bypassed on execution");
+            check(!ui.Started && unit.Stance == ActorStance.Default && unit.AP == 100, "independent root/stun is not bypassed on execution");
         }
         foreach (string reason in new[] { "AP", "blocked tile", "native rejection", "native exception" })
         {
@@ -71,8 +75,8 @@ internal static class GarrisonMovementChecks
             catch (InvalidOperationException e) { threw = e.Message == "native movement failure"; }
             unit.Skills.Update();
             check(threw == (reason == "native exception"), "native exceptions are not swallowed");
-            check(!unit.Moving && unit.Stance == ActorStance.Deployed && unit.AP == ap && unit.Skills.DisplayedAim == 46,
-                "failed movement restores native deployment and stats: " + reason);
+            check(!unit.Moving && unit.Stance == ActorStance.Default && unit.AP == ap && unit.Skills.DisplayedAim == 46,
+                "failed movement retains garrison accuracy without deployment: " + reason);
         }
         {
             var (_, unit) = Occupant();
@@ -80,12 +84,12 @@ internal static class GarrisonMovementChecks
             try { new TacticalState().ComputeActorPath(unit); throw new Exception("query should throw"); }
             catch (InvalidOperationException e) { check(e.Message == "native query failure", "query exception survives nested finalizers"); }
             finally { MovementSystem.DuringQuery = null; }
-            check(unit.Stance == ActorStance.Deployed && unit.Properties.Flags == EntityFlags.RootedByStance,
-                "exceptional query restores both temporary native fields");
+            check(unit.Stance == ActorStance.Default && unit.Properties.Flags == EntityFlags.None,
+                "exceptional query leaves native stance and properties untouched");
             MovementSystem.DuringQuery = () => unit.Properties.Flags |= EntityFlags.HeavyWeaponsAllowed;
             MovementSystem.IsMovementPossible(unit, new(), false, out _);
             MovementSystem.DuringQuery = null;
-            check(unit.Properties.Flags == (EntityFlags.RootedByStance | EntityFlags.HeavyWeaponsAllowed), "preview restoration preserves unrelated flag changes");
+            check(unit.Properties.Flags == EntityFlags.HeavyWeaponsAllowed, "preview preserves unrelated flag changes");
         }
         foreach (string id in new[] { "vanilla_bunker", "vanilla_tower", "vehicle", "disabled_3x3" })
         {
@@ -95,14 +99,12 @@ internal static class GarrisonMovementChecks
             check(!MovementSystem.GetPath(unit, new(), MoveBackwardsMode.None).Success && unit.StanceChanges == 0,
                 "unsupported building retains native deployed movement restrictions: " + id);
         }
-        foreach (bool pinned in new[] { true, false })
         {
             var (_, unit) = Occupant();
-            if (pinned) { unit.Suppression = SuppressionState.PinnedDown; unit.Stance = ActorStance.PinnedDown; }
-            else unit.Infantry = false;
+            unit.Suppression = SuppressionState.PinnedDown; unit.Stance = ActorStance.PinnedDown;
             var stance = unit.Stance;
             var action = MovementAction.Leave;
-            check(!unit.MoveTo(new(), ref action) && unit.Stance == stance && unit.AP == 100, "pinned/non-infantry actor does not get movement release");
+            check(!unit.MoveTo(new(), ref action) && unit.Stance == stance && unit.AP == 100, "native pinning still blocks movement");
         }
         {
             var (_, unit) = Occupant();

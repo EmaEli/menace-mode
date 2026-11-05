@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.3.3
+
+- Replaced forced deployment with the native deployed template's accuracy changes during the normal property rebuild. Aim/current stats and attack properties receive the same benefit without changing stance, adding stance root, using an undeploy skill or charging deployment AP (#62).
+- Removed the preview/execution movement overrides and the crash-attributed `BeginGarrisonMovement` helper. Native path, AP, pin/root/stun and movement-while-deployed rules remain intact.
+- One-time reconciliation releases already-deployed infantry loaded inside supported buildings from 1.3.x. Later deliberate deployment is preserved and does not stack with the bonus. A loaded deliberate deployment cannot be distinguished from the old forced stance and is also released once in supported buildings only.
+- Incoming cover, StrongerCover, building AP surcharges and collapse handling are unchanged. Windows deployment and gameplay retest must be recorded separately; no in-game success is implied by managed checks.
+
 ## 1.3.2
 
 - Added the narrow `NoInlining | NoOptimization` safeguard to `BeginGarrisonMovement` after the user's 1.3.1 exit crash. The matching minidump attributes the known #44 .NET/MonoMod optimizer failure to compilation of that exact helper (#62).

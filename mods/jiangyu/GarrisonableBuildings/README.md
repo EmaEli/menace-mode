@@ -1,4 +1,4 @@
-# Garrisonable Buildings 1.3.0
+# Garrisonable Buildings 1.3.3
 
 MENACE mod that reuses the game's native `Building` container system so infantry can garrison selected small map structures.
 
@@ -55,13 +55,13 @@ All four values are configurable in the **Garrisonable Buildings** Mod Settings 
 
 ## Garrisoned occupant offense
 
-Infantry automatically enters MENACE's native **Deployed** stance after settling inside a supported garrison. The game supplies its normal deployed effects through the native property system, so the unit's current stats and shot previews use the same effects. There is no separate accuracy modifier, hard-coded bonus or extra deploy AP charge.
+Infantry settled inside a supported garrison receives the accuracy changes from MENACE's native `special.stance.deployed` template **without entering Deployed stance**. These changes run through native property-update methods during the normal stats rebuild, so current Aim and attack properties share the bonus. The amount is read from the loaded template, not hard-coded or limited to hit-chance previews.
 
-Leaving or being ejected clears the garrison deployment. Since 1.3.1, exit path previews ignore only this automatic deployment without changing combat stats or animating; an actual exit releases the stance before MENACE's movement/undeploy-skill checks. Failed exits restore deployment. Native path checks and the existing building leave AP cost still apply, without a separate undeploy-skill fee.
+No stance root, deployment animation, deploy/undeploy AP fee or movement override is added. Leaving/ejection removes the bonus on the next normal property rebuild; failed movement retains it without deploying the unit. Native movement checks and building leave AP costs still apply, with either movement-while-deployed option.
 
-Pinned-down, independently rooted/stunned and moving units are not forcibly released/deployed; normal native deployment resumes after recovery/settling inside. Existing occupants are reconciled when MENACE rebuilds their properties. Vanilla bunkers, towers and vehicle passengers are not changed. Incoming cover is unchanged.
+Pinned-down, moving, dying, non-infantry and unknown-stance occupants do not gain the bonus. Later deliberate deployment uses native effects without a second bonus. Independent root/stun restrictions, vanilla bunkers/towers, vehicle passengers and incoming cover are unchanged.
 
-The user reported 1.3.0's exit deadlock and a 1.3.1 exit crash. The crash dump identifies the known .NET optimizer failure (#44) while compiling the new movement helper; 1.3.2 adds the narrow compilation safeguard without changing movement rules. In-game stats-panel/exit acceptance remains pending (#62).
+1.3.2 still refused exit despite a valid path preview; enabling movement while deployed removed the refusal sound but did not move the unit. 1.3.3 removes forced deployment and its movement helper entirely. On first property refresh, already-deployed infantry loaded inside supported buildings is released once to recover 1.3.x occupants. An old forced stance and a saved deliberate deployment cannot be distinguished, so either is released once there; subsequent manual deployment is preserved. Saves are never edited. Gameplay stats-panel/exit acceptance remains pending (#62/#44).
 
 ## StrongerCover compatibility
 
@@ -112,7 +112,7 @@ From `mods/jiangyu/GarrisonableBuildings/`, run `jiangyu compile --release --cle
 
 Live check: compare infantry Aim and attack preview outside, after settling inside an enabled civilian building, then after leaving. Repeat entry to check no stacking, verify exit movement still works, and confirm pinned-down/recovery behavior. Existing inside-cover settings and entry/exit AP surcharges should remain unchanged.
 
-Deployment is currently blocked: on 5 November 2026 the PC's GameAssembly SHA256 was `494c9e212d411d898b3abafb4ad233f7a39a22648d713a86b9641d698b2d12e9`, different from the canonical 0.7.17 pin (`871b4c3468c68dae3d75e7b5e29fcc9b0a8a253fcebf64045af348f0aec75111`). Cached 0.7.17 compilation is not verification of the changed native DLL. Revalidate the installed game/proxies and shared compatibility baseline before building/installing a PC candidate; do not bypass the installer hash guard.
+The canonical catalog permits this standalone module on the exact verified 0.7.18 native hash (`494c9e21…`) with fresh proxies (#86). Suite/Camera remain blocked on that hash; no whole-suite compatibility is implied. Canonical BuildOnly and install gates remain mandatory.
 
 ## Diagnostics
 

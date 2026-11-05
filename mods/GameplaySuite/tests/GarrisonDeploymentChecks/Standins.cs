@@ -56,10 +56,22 @@ namespace Il2CppMenace.Tactical
     public enum MovementFlags { None }
     public enum MoveBackwardsMode { None }
     public enum MovementFailedReason { None, Deployed, Rooted }
+    public enum EntityPropertyType { Accuracy = 3, AccuracyMult = 9, APLeaveCost = 51 }
     public sealed class EntityProperties : Il2CppObjectBase
     {
         public EntityFlags Flags;
+        public float Accuracy = 40, AccuracyMult = 1;
         public int APLeaveCost = 40;
+        public void UpdateProperty(EntityPropertyType type, int amount)
+        {
+            if (type == EntityPropertyType.Accuracy) Accuracy += amount;
+            else throw new Exception("Unexpected non-accuracy property");
+        }
+        public void UpdateMultProperty(EntityPropertyType type, float amount)
+        {
+            if (type == EntityPropertyType.AccuracyMult) AccuracyMult *= amount;
+            else throw new Exception("Unexpected non-accuracy multiplier");
+        }
         public bool IsRooted() => (Flags & (EntityFlags.Rooted | EntityFlags.RootedByStance)) != 0;
     }
     public sealed class Tile { public bool Walkable = true; }
@@ -139,26 +151,74 @@ namespace Il2CppMenace.Tactical
 namespace Il2CppMenace.Tactical.Skills
 {
     using Il2CppInterop.Runtime.InteropTypes;
+    public sealed class Skill(Actor? actor) : Il2CppObjectBase
+    {
+        public Actor? GetActor() => actor;
+        public void OnUpdate(EntityProperties properties)
+            => HarmonyLib.Harmony.Call(MethodBase.GetCurrentMethod()!, true, new object?[] { this, properties });
+    }
+    public class SkillEventHandlerTemplate : Il2CppObjectBase { }
+    public sealed class SkillTemplate : Il2CppObjectBase
+    {
+        public readonly List<SkillEventHandlerTemplate> EventHandlers = new();
+    }
     public sealed class SkillContainer(Il2CppObjectBase owner) : Il2CppObjectBase
     {
         public bool UiNeedsUpdate;
         public int Scheduled;
         public float DisplayedAim;
+        public Action? DuringRebuild;
+        public bool ThrowUpdate;
         public Il2CppObjectBase GetOwner() => owner;
         public void ScheduleUpdate() => Scheduled++;
         public void Update()
         {
-            HarmonyLib.Harmony.Call(MethodBase.GetCurrentMethod()!, false, new object?[] { this });
-            // Stand-in for MENACE's property rebuild, NOT production bonus logic.
-            DisplayedAim = owner is Actor { Stance: ActorStance.Deployed } ? 46 : 40;
-            if (owner is Actor actor)
+            HarmonyLib.Harmony.Movement(MethodBase.GetCurrentMethod()!, this, () =>
             {
+                if (ThrowUpdate) throw new InvalidOperationException("native property failure");
+                if (owner is not Actor actor) return true;
+                actor.Properties.Accuracy = 40; actor.Properties.AccuracyMult = 1;
                 actor.Properties.Flags &= ~EntityFlags.RootedByStance;
-                if (actor.Stance == ActorStance.Deployed) actor.Properties.Flags |= EntityFlags.RootedByStance;
-            }
+                if (actor.Stance == ActorStance.Deployed)
+                {
+                    actor.Properties.Flags |= EntityFlags.RootedByStance;
+                    actor.Properties.AccuracyMult *= 1.15f; // Stand-in native stance effect only.
+                }
+                var skill = new Skill(actor);
+                skill.OnUpdate(actor.Properties);
+                DuringRebuild?.Invoke();
+                skill.OnUpdate(actor.Properties); // Multiple skills must not stack the garrison effect.
+                DisplayedAim = actor.Properties.Accuracy * actor.Properties.AccuracyMult;
+                return true;
+            });
         }
         public void OnMovementFinished(Tile tile)
             => HarmonyLib.Harmony.Call(MethodBase.GetCurrentMethod()!, true, new object?[] { this });
+    }
+}
+namespace Il2CppMenace.Tactical.Skills.Effects
+{
+    public struct PropertyChange
+    {
+        public EntityPropertyType PropertyType;
+        public int Amount;
+        public float AmountMult;
+    }
+    public sealed class StanceDeployed : SkillEventHandlerTemplate
+    {
+        public PropertyChange[] Properties = Array.Empty<PropertyChange>();
+    }
+}
+namespace Il2CppMenace.Tools
+{
+    public static class DataTemplateLoader
+    {
+        public static Il2CppMenace.Tactical.Skills.SkillTemplate? Template;
+        public static T? Get<T>(string id, bool log = true) where T : class
+        {
+            if (id != "special.stance.deployed" || log) throw new Exception("Unexpected template lookup");
+            return Template as T;
+        }
     }
 }
 namespace GarrisonableBuildings
@@ -178,5 +238,12 @@ namespace GarrisonableBuildings
         private static void DebugError(string message) => throw new Exception(message);
         internal static void Install() => InstallGarrisonDeploymentHooks(new HarmonyLib.Harmony());
         internal static void Clear() => ClearGarrisonDeployment();
+        internal static void Resolve()
+        {
+            _garrisonAccuracyChanges = null;
+            TryResolveGarrisonAccuracy();
+        }
+        internal static bool Resolved => _garrisonAccuracyChanges != null;
+        internal static bool InRebuild => _garrisonPropertyFrame != null;
     }
 }

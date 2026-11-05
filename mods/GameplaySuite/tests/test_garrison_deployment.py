@@ -1,4 +1,4 @@
-"""Exercise production native-deployment hooks with managed native API stand-ins."""
+"""Exercise production property-only garrison hooks with managed native API stand-ins."""
 from pathlib import Path
 import shutil
 import subprocess
@@ -23,7 +23,8 @@ class GarrisonDeploymentTests(unittest.TestCase):
         source = (ROOT / "mods/GameplaySuite/src/GarrisonableBuildings/Plugin.cs").read_text()
         self.assertIn("InstallGarrisonDeploymentHooks(harmony)", source)
         self.assertNotIn("GetHitchance", source)
-        self.assertNotIn("GarrisonAccuracy", source)
+        self.assertIn("TryResolveGarrisonAccuracy()", source)
+        self.assertNotIn("GarrisonAccuracyOverrideState", source)
 
 
 if __name__ == "__main__":

@@ -18,9 +18,11 @@ namespace Il2CppTactical
             bool result = HarmonyLib.Harmony.Movement(MethodBase.GetCurrentMethod()!, actor, () =>
             {
                 DuringQuery?.Invoke();
+                if (actor.Suppression == SuppressionState.PinnedDown || actor.Stance == ActorStance.PinnedDown) return false;
                 if (actor.Stance == ActorStance.Deployed && BlockDeployed)
                 { nativeReason = MovementFailedReason.Deployed; return false; }
-                if ((actor.Properties.Flags & EntityFlags.Stunned) != 0 || actor.Properties.IsRooted())
+                var properties = actor.GetCurrentProperties();
+                if ((properties.Flags & EntityFlags.Stunned) != 0 || properties.IsRooted())
                 { nativeReason = MovementFailedReason.Rooted; return false; }
                 return tile.Walkable;
             });
@@ -31,7 +33,7 @@ namespace Il2CppTactical
             => HarmonyLib.Harmony.Movement(MethodBase.GetCurrentMethod()!, actor, () => new MovementResult
             {
                 Success = IsMovementPossible(actor, tile, false, out _),
-                Cost = actor.Properties.APLeaveCost + (actor.Stance == ActorStance.Deployed ? 20 : 0)
+                Cost = actor.GetCurrentProperties().APLeaveCost + (actor.Stance == ActorStance.Deployed ? 20 : 0)
             });
     }
 }

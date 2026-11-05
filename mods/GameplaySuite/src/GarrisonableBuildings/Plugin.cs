@@ -13,7 +13,7 @@ namespace GarrisonableBuildings;
 public sealed partial class Plugin : IHostedPlugin
 {
     private const string ModName = "Garrisonable Buildings";
-    private const string Version = "1.3.2";
+    private const string Version = "1.3.3";
     private const string BuildingCoverProfileName = "cover_inside_building";
     private const string StrongerCoverSettingsGroup = "StrongerCover";
     private const int VanillaContainerAP = 30;
@@ -225,6 +225,7 @@ public sealed partial class Plugin : IHostedPlugin
     {
         if (_finished) return;
         _attempts++;
+        TryResolveGarrisonAccuracy();
 
         if (_dataTemplateLoaderType == null || _entityTemplateType == null || _dataTemplateGetGeneric == null)
         {
@@ -333,10 +334,10 @@ public sealed partial class Plugin : IHostedPlugin
             DebugMsg($"{ModName}: ENABLED {id} ({candidate.Name}) footprint={width}x{height} ContainerType=Building cover={BuildingCoverProfileName}.{apNote}");
         }
 
-        if (_handled.Count == Candidates.Length)
+        if (_handled.Count == Candidates.Length && _garrisonAccuracyChanges != null)
         {
             _finished = true;
-            DebugMsg($"{ModName} {Version}: initialization complete. {_handled.Count}/{Candidates.Length} candidates resolved; native garrison deployment enabled; {_enabledExtraAP.Count} enabled building template(s) use size-based AP surcharges; 3x3 enabled={Enable3x3Buildings()}.");
+            DebugMsg($"{ModName} {Version}: initialization complete. {_handled.Count}/{Candidates.Length} candidates resolved; native-template accuracy without deployment; {_enabledExtraAP.Count} enabled building template(s) use size-based AP surcharges; 3x3 enabled={Enable3x3Buildings()}.");
             return;
         }
 
@@ -814,6 +815,8 @@ public sealed partial class Plugin : IHostedPlugin
                 DebugWarning($"{ModName}: unresolved after {MaxAttempts} attempts: {candidate.Id} ({candidate.Name}).");
         }
 
+        if (_garrisonAccuracyChanges == null)
+            DebugWarning($"{ModName}: native deployed accuracy template was not resolved; no garrison accuracy bonus is applied.");
         DebugWarning($"{ModName}: stopped retrying. Send Latest.log if any candidate stayed unresolved.");
     }
 
