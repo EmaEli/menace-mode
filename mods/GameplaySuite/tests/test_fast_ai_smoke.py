@@ -43,6 +43,19 @@ class FastSmokeSelectionTests(unittest.TestCase):
         self.assertIn('TileHasSmoke(target)', aim)
         self.assertIn('SmokeCoverRules.AccuracyPenalty(', aim)
 
+    def test_native_smoke_stat_modifiers_only_are_replaced(self):
+        apply = block('private static void ApplyNativeSmokeAccuracyModifier()', 'private static void RestoreNativeSmokeAccuracyModifier()')
+        restore = block('private static void RestoreNativeSmokeAccuracyModifier()', 'internal static void ApplySmokeAccuracyPenalty')
+        self.assertIn('DataTemplateLoader.Get<SkillTemplate>(SmokeAccuracyEffectTemplateId, false)', apply)
+        self.assertIn('template.EventHandlers[i]?.TryCast<ChangeProperty>()', apply)
+        self.assertIn('NativeSmokeStats.TryApply(handlers,', apply)
+        self.assertIn('Il2CppStructArray<PropertyChange>(0)', apply)
+        self.assertIn('if (!applied)', apply)
+        self.assertIn('NativeSmokeStats.Restore()', restore)
+        self.assertIn('RestoreNativeSmokeAccuracyModifier();', block('public void OnUnload()', 'private static void RegisterSettings()'))
+        for forbidden in ('RemoveFromTile', 'SpawnObjectOrEffect =', 'EventHandlers.Clear', 'EventHandlers.Remove'):
+            self.assertNotIn(forbidden, apply)
+
     def test_disabled_performance_search_by_default(self):
         self.assertIn('s.AddToggle("FastAISmokeSelection"', PLUGIN)
         self.assertIn('bool fastAiSmoke = Setting("FastAISmokeSelection", true)', PLUGIN)

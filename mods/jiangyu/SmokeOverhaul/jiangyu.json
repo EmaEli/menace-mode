@@ -1,8 +1,8 @@
 {
   "name": "SmokeOverhaul",
-  "version": "0.8.0",
+  "version": "0.8.3",
   "author": "Luca",
-  "description": "Smoke rework: full LOS blocking by default for intervening smoke, half-tile aim exposure for smoke on shooter/target tiles, configurable duration, mortar delivery and AI smoke use. Options live in MenaceModSettings (F9).",
+  "description": "Smoke rework: no native smoke stat buffs/debuffs; weighted shot-chance penalties only, with LOS, duration, mortar delivery and AI smoke options in MenaceModSettings (F9).",
   "depends": [
     "Jiangyu >= 1.4.8",
     "MenaceModSettings >= 0.4.0"

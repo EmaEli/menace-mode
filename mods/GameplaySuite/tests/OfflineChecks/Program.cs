@@ -53,6 +53,7 @@ SettingsChecks.Run(Check);
 CoverSettingsChecks.Run(Check);
 CoordinatedFireChecks.Run(Check);
 SmokeAiChecks.Run(Check);
+SmokeNativeAccuracyChecks.Run(Check);
 AssaultDefenseChecks.Run(Check);
 MortarScatterChecks.Run(Check);
 GrenadeRangeChecks.Run(Check);

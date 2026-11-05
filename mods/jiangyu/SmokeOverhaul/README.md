@@ -1,6 +1,8 @@
-# Smoke Overhaul 0.8.0 — test build
+# Smoke Overhaul 0.8.3 — test build
 
 Smoke Overhaul makes smoke fully obstruct line of sight when it lies between units, while a unit standing in smoke receives half-tile aim exposure. It also extends smoke duration and gives smoke-delivery systems distinct tactical footprints.
+
+**0.8.3:** disables all native `effect.smoke` stat changes, not only Accuracy: no concealment, accuracy, defense, damage, suppression or vision buffs/debuffs. Uses native casts and supports the legacy scalar and 0.7.18 property-array layouts. Smoke tile effects, VFX, spawning and lifetime are preserved. Only the configured shot-chance rule remains: -20 percentage points per intervening smoke tile and -10 per smoke-occupied shooter/target tile by default. Windows deployment and gameplay verification are pending; the 0.7.18 installer support gate remains unchanged.
 
 **0.7.0:** free infantry smoke and Tier 2 frag grants are now OFF by default; their settings
 remain independently configurable. Existing AI smoke-use probabilities are unchanged. Not
@@ -21,7 +23,7 @@ BuildOnly/install passed 2026-11-04; in-game acceptance is pending.
 
 - Smoke tile effects fully block line of sight when smoke is between units by default. Enable **Allow line of sight through smoke** to restore soft LOS.
 - The configurable aim penalty counts each intervening smoke tile as **1.0 tile** and smoke on the shooter or target tile as **0.5 tile each**. Defaults are **-20 percentage points per full tile**, capped at **-60 percentage points**.
-- This weighted exposure applies to Smoke Overhaul's hitchance penalty; other native smoke effects are unchanged.
+- All native `effect.smoke` stat changes are disabled while Smoke Overhaul is enabled; entering smoke must not change unit-panel stats. Weighted exposure affects calculated shot chance only. Disabling the mod restores the original stat changes.
 - Timed smoke lasts **2x vanilla duration** by default (configurable 1x-4x).
 - All hand-thrown `active.throw_*` grenade/bomb skills cost **20 AP** by default. Grenade launchers, mortars, off-map bombs and deployable charges keep their own AP economy.
 - Free infantry smoke and Tier 2 frag grenade grants are **off by default**; enable either grant in Mod Settings to give normal humanoid infantry the vanilla three-use grenade. Existing equivalent skills/equipment are detected to avoid duplicate buttons.

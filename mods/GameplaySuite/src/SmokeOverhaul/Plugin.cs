@@ -14,8 +14,8 @@ using MenaceModSettings;
 using MenaceModSuite.Shared;
 using UnityEngine;
 
-[assembly: AssemblyVersion("0.8.0.0")]
-[assembly: AssemblyFileVersion("0.8.0.0")]
+[assembly: AssemblyVersion("0.8.3.0")]
+[assembly: AssemblyFileVersion("0.8.3.0")]
 
 namespace SmokeOverhaul;
 
@@ -23,10 +23,14 @@ namespace SmokeOverhaul;
 public sealed partial class Plugin : IHostedPlugin
 {
     internal const string ModName = "Smoke Overhaul";
-    internal const string Version = "0.8.0";
+    internal const string Version = "0.8.3";
 
     private static ModLog? _log;
+    private const string SmokeAccuracyEffectTemplateId = "effect.smoke";
     private static readonly Dictionary<string, PatchedTemplate> PatchedTemplates = new(StringComparer.OrdinalIgnoreCase);
+    private static readonly SmokeNativeStatModifiers NativeSmokeStats = new();
+    private static bool _nativeSmokeAccuracyPatchApplied;
+    private static bool _nativeSmokeAccuracyErrorLogged;
     private static readonly Dictionary<string, EntityTemplate> FreeGrenadeTemplates = new(StringComparer.OrdinalIgnoreCase);
     private static readonly Dictionary<string, EntityTemplate> FreeFragGrenadeTemplates = new(StringComparer.OrdinalIgnoreCase);
     private static readonly Dictionary<string, PatchedGrenadeSkill> PatchedGrenadeSkills = new(StringComparer.OrdinalIgnoreCase);
@@ -84,6 +88,7 @@ public sealed partial class Plugin : IHostedPlugin
     private static bool _smokeDeliveryResolveErrorLogged;
 
     private float _nextSettingsRefresh;
+    private float _nextSmokeAccuracyPatchAttempt;
     private string _lastSettingsSummary = string.Empty;
     private bool _restoreOnSafeScene;
 
@@ -206,6 +211,11 @@ public sealed partial class Plugin : IHostedPlugin
         AiSmokeSceneChanged(sceneName);
 
         if (RuntimeSettings.Enabled)
+            ApplyNativeSmokeAccuracyModifier();
+        else
+            RestoreNativeSmokeAccuracyModifier();
+
+        if (RuntimeSettings.Enabled)
             ApplyThrownGrenadeActionPointCosts();
         else
             RestoreThrownGrenadeActionPointCosts();
@@ -273,6 +283,7 @@ public sealed partial class Plugin : IHostedPlugin
     public void OnUnload()
     {
         RestoreThrownGrenadeActionPointCosts();
+        RestoreNativeSmokeAccuracyModifier();
         RestoreSmokeDurations();
         RestoreSmokeDeliveryProfiles();
 
@@ -348,6 +359,17 @@ public sealed partial class Plugin : IHostedPlugin
         bool debug = Setting("DebugLogging", false);
 
         RuntimeSettings.Configure(enabled, losThroughSmoke, perTile, maximum, durationMultiplier, grenadeApCost, freeGrenade, freeFragGrenade, caliberFootprints, aiSmoke, fastAiSmoke, pinnedSmoke, simpleAiRules, debug);
+
+        if (enabled && (force || !previousEnabled ||
+                        (!_nativeSmokeAccuracyPatchApplied && Time.realtimeSinceStartup >= _nextSmokeAccuracyPatchAttempt)))
+        {
+            _nextSmokeAccuracyPatchAttempt = Time.realtimeSinceStartup + 1f;
+            ApplyNativeSmokeAccuracyModifier();
+        }
+        else if (!enabled && (_nativeSmokeAccuracyPatchApplied || NativeSmokeStats.HasSnapshots))
+        {
+            RestoreNativeSmokeAccuracyModifier();
+        }
 
         if ((previousEnabled && !enabled) || (previousLos && !losThroughSmoke))
             _restoreOnSafeScene = true;
@@ -453,6 +475,7 @@ public sealed partial class Plugin : IHostedPlugin
         Line("Optimized native smoke AI profiles: " + OriginalSmokeAiPositioning.Count);
         Line("80mm mortar smoke granted: " + (_mediumMortarSmokeGrantedByUs ? "yes" : "no/already present"));
         Line("Smoke templates patched: " + PatchedTemplates.Count);
+        Line("Vanilla effect.smoke accuracy modifier neutralized: " + (_nativeSmokeAccuracyPatchApplied ? "yes" : "pending"));
         Line("Hit-chance queries adjusted: " + Patches.AdjustedHitChanceQueries);
         Line($"Last smoke exposure: {Patches.LastSmokeExposureTiles:0.0} tile(s)");
         Line($"Last applied penalty: -{Patches.LastAppliedPenalty:0.#}%");
@@ -1472,6 +1495,64 @@ public sealed partial class Plugin : IHostedPlugin
         if (PatchedTemplates.Count > 0)
             DebugMsg($"Restored {PatchedTemplates.Count} smoke template(s) to their original LOS and duration settings.");
         PatchedTemplates.Clear();
+    }
+
+    private static void ApplyNativeSmokeAccuracyModifier()
+    {
+        if (!RuntimeSettings.Enabled || _nativeSmokeAccuracyPatchApplied)
+            return;
+
+        SkillTemplate? template;
+        try { template = DataTemplateLoader.Get<SkillTemplate>(SmokeAccuracyEffectTemplateId, false); }
+        catch { return; }
+        if (template?.EventHandlers == null || template.EventHandlers.Count == 0)
+            return;
+
+        var handlers = new List<object>();
+        bool applied = false;
+        int propertyCount = 0;
+        try
+        {
+            for (int i = 0; i < template.EventHandlers.Count; i++)
+            {
+                // IL2CPP collections expose base wrappers. A managed type-name
+                // check cannot identify the native ChangeProperty template.
+                ChangeProperty? handler = template.EventHandlers[i]?.TryCast<ChangeProperty>();
+                if (handler != null) handlers.Add(handler);
+            }
+            if (handlers.Count > 0)
+                applied = NativeSmokeStats.TryApply(handlers,
+                    new Il2CppInterop.Runtime.InteropTypes.Arrays.Il2CppStructArray<PropertyChange>(0),
+                    out propertyCount);
+        }
+        catch { NativeSmokeStats.Restore(); }
+
+        if (!applied)
+        {
+            if (!_nativeSmokeAccuracyErrorLogged)
+            {
+                _nativeSmokeAccuracyErrorLogged = true;
+                Error("Could not safely neutralize effect.smoke stat modifiers; native buffs/debuffs may remain. Smoke tile effects and VFX were not removed.");
+            }
+            return;
+        }
+
+        _nativeSmokeAccuracyPatchApplied = true;
+        DebugMsg($"effect.smoke: neutralized {propertyCount} native stat modifier(s); smoke tile effects and VFX preserved.");
+    }
+
+    private static void RestoreNativeSmokeAccuracyModifier()
+    {
+        if (NativeSmokeStats.Restore())
+        {
+            _nativeSmokeAccuracyPatchApplied = false;
+            DebugMsg("Restored the original effect.smoke stat modifiers.");
+        }
+        else if (!_nativeSmokeAccuracyErrorLogged)
+        {
+            _nativeSmokeAccuracyErrorLogged = true;
+            Error("Could not restore the original effect.smoke stat modifiers.");
+        }
     }
 
     internal static void ApplySmokeAccuracyPenalty(Tile? from, Tile? target, ref HitChance result)

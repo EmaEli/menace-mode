@@ -1,3 +1,22 @@
+## 0.8.3
+
+- Disables every native `effect.smoke` stat change, including concealment, accuracy, defense, damage, suppression and vision; retains the custom 20-point/10-point shot-chance rule.
+- Resolves concrete `ChangeProperty` templates through native casts instead of managed wrapper names. Handles both legacy scalar members and MENACE 0.7.18's `Properties` arrays; snapshots originals for transactional rollback and disable/unload restoration.
+- Does not remove smoke tile effects, event handlers or visual prefabs, or change spawning/lifetime. The reported disappearing cloud is still unconfirmed and is not claimed fixed.
+- Windows deployment/gameplay pending; the existing 0.7.18 support gate is not bypassed.
+- Local builds against both 0.7.17 and 0.7.18 proxies pass with zero warnings; manifest/assembly/file version is 0.8.3. Shared-worktree validation: 183 Python tests and 17,883 offline C# checks passed. This is not Windows/gameplay verification.
+
+## 0.8.2
+
+- Fixes native smoke AccuracyMult discovery: MENACE exposes the handler as `ChangePropertyHandler`, which 0.8.1's narrower type-name filter missed. The fresh 0.8.1 log confirmed the native -70% Accuracy modifier was not neutralized.
+- Other native smoke status properties remain unchanged; this fix only replaces the native accuracy multiplier with the configured weighted smoke penalty.
+
+## 0.8.1
+
+- Neutralizes MENACE's native `effect.smoke` AccuracyMult (0.3 / -70%) while Smoke Overhaul is enabled, leaving the configured weighted penalty as the only smoke accuracy modifier.
+- The custom penalty remains 20 percentage points per intervening smoke tile and 10 per smoke-occupied shooter/target tile by default; other native smoke status properties are unchanged.
+- Restores the original status handler when gameplay is disabled or the module unloads.
+
 ## 0.8.0
 
 - Smoke fully blocks LOS by default when it lies between units; the existing soft-LOS setting remains available as an opt-in.
