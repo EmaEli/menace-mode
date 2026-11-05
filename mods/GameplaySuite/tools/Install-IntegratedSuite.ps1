@@ -158,6 +158,7 @@ try {
         $dll = Join-Path $camera 'bin\Release\MenaceThirdPersonCamera.dll'
         $cameraVersion = (Get-Content -LiteralPath (Join-Path $stage 'CinematicActionCamera\jiangyu.json') -Raw | ConvertFrom-Json).version
         Assert-Dll $dll $cameraVersion
+        Invoke-Dotnet @('run', '--project', (Join-Path $source 'mods\jiangyu\CinematicActionCamera\tests\NativeContractChecks\NativeContractChecks.csproj'), '-c', 'Release', '--', (Join-Path $refs 'Assembly-CSharp.dll'), $dll)
         Copy-Item -LiteralPath $dll -Destination (Join-Path $stage 'MenaceThirdPersonCamera.dll')
         $names += 'MenaceThirdPersonCamera.dll'
     }

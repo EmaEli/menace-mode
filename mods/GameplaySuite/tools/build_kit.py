@@ -98,7 +98,7 @@ def collect(root, module=None, use_installed_settings=False):
         tree(folder / "runtime_assets")
     tree(root / "mods/GameplaySuite/src", {".cs"})
     tree(root / "mods/LargerMaps/src/LargerMaps", {".cs"})
-    for filename in ("ThirdPersonCamera.csproj", "src/ThirdPersonCameraMod.cs", "README.md"):
+    for filename in ("ThirdPersonCamera.csproj", "src/ThirdPersonCameraMod.cs", "src/CameraAutoFocus.cs", "README.md"):
         add(root / "mods/ThirdPersonCamera" / filename)
     for filename in ("Install-IntegratedSuite.ps1", "Install.Common.ps1", "Install.Deployment.ps1", "distribution.json"):
         add(root / TOOLS / filename)

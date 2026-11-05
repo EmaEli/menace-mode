@@ -22,7 +22,7 @@ $catalog = [pscustomobject]@{
     standaloneGameBuilds = @([pscustomobject]@{
         gameVersion = 'scoped'
         gameAssemblySha256 = (Get-FileHash -LiteralPath $scoped -Algorithm SHA256).Hash
-        modules = @('MenaceModSettings', 'GarrisonableBuildings', 'SquaddieFieldPromotions', 'SmokeOverhaul')
+        modules = @('MenaceModSettings', 'GarrisonableBuildings', 'SquaddieFieldPromotions', 'SmokeOverhaul', 'CinematicActionCamera')
     })
 }
 $checks = 0
@@ -42,6 +42,12 @@ Verify $scoped 'Standalone' @('SquaddieFieldPromotions') $true
 Verify $scoped 'Standalone' @('MenaceModSettings', 'SquaddieFieldPromotions') $true
 Verify $scoped 'Standalone' @('SmokeOverhaul') $true
 Verify $scoped 'Standalone' @('MenaceModSettings', 'SmokeOverhaul') $true
+Verify $scoped 'Standalone' @('CinematicActionCamera') $true
+Verify $scoped 'Standalone' @('MenaceModSettings', 'CinematicActionCamera') $true
+Verify $scoped 'Standalone' @('CinematicActionCamera', 'OtherMod') $false
+Verify $scoped 'Camera' @() $false
+Verify $scoped 'Suite' @('CinematicActionCamera') $false
+Verify $unknown 'Standalone' @('CinematicActionCamera') $false
 Verify $scoped 'Standalone' @('SmokeOverhaul', 'OtherMod') $false
 Verify $scoped 'Suite' @('SmokeOverhaul') $false
 Verify $scoped 'Camera' @('SmokeOverhaul') $false

@@ -83,6 +83,10 @@ def compile_clean(files, game, sdk, dotnet):
             subprocess.run([dotnet, "build", str(camera), "-c", "Release", "--nologo", "-v", "quiet",
                             f"-p:MenaceInteropDir={refs}", f"-p:MenaceRuntimeDir={runtime}",
                             "-p:DebugType=none", "-p:DebugSymbols=false"], check=True, cwd=source)
+            contracts = source / "mods/jiangyu/CinematicActionCamera/tests/NativeContractChecks/NativeContractChecks.csproj"
+            subprocess.run([dotnet, "run", "--project", str(contracts), "-c", "Release", "--",
+                            str(refs / "Assembly-CSharp.dll"),
+                            str(camera.parent / "bin/Release/MenaceThirdPersonCamera.dll")], check=True, cwd=source)
         check_modules = list(modules)
         if "MenaceModSettings" not in check_modules:
             depends_on_settings = any(

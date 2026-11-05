@@ -6,7 +6,7 @@
     {
       "gameVersion": "0.7.18+22828",
       "gameAssemblySha256": "494c9e212d411d898b3abafb4ad233f7a39a22648d713a86b9641d698b2d12e9",
-      "modules": ["MenaceModSettings", "GarrisonableBuildings", "SquaddieFieldPromotions", "SmokeOverhaul"]
+      "modules": ["MenaceModSettings", "GarrisonableBuildings", "SquaddieFieldPromotions", "SmokeOverhaul", "CinematicActionCamera"]
     }
   ],
   "jiangyuVersion": "1.4.10",

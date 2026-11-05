@@ -41,7 +41,7 @@ class DistributionTests(unittest.TestCase):
         write("mods/GameplaySuite/INSTALL-SUITE.cmd", "@echo off\n")
         write("mods/GameplaySuite/docs/INSTALLING.md", "Offline fixture")
         write("docs/MIGRATION_STATUS.md", "Offline migration fixture")
-        for file in ("ThirdPersonCamera.csproj", "src/ThirdPersonCameraMod.cs", "README.md"):
+        for file in ("ThirdPersonCamera.csproj", "src/ThirdPersonCameraMod.cs", "src/CameraAutoFocus.cs", "README.md"):
             write("mods/ThirdPersonCamera/" + file, "test fixture")
 
     def test_archive_is_reproducible_and_fully_inventoried(self):
@@ -294,6 +294,15 @@ class DistributionTests(unittest.TestCase):
         self.assertNotIn("Menace.ModpackLoader.dll", source)
         self.assertIn("if (-not $BuildOnly -or $RollbackPath) { Assert-GameClosed }", source)
         self.assertIn("if ($BuildOnly -and -not $RollbackPath) { $lockRoot = $BundleRoot }", source)
+
+    def test_camera_native_contract_gate_is_bundled_and_precedes_staging(self):
+        source = (TOOLS / "Install-IntegratedSuite.ps1").read_text()
+        gate = source.index("mods\\jiangyu\\CinematicActionCamera\\tests\\NativeContractChecks\\NativeContractChecks.csproj")
+        self.assertLess(gate, source.index("Copy-Item -LiteralPath $dll -Destination (Join-Path $stage 'MenaceThirdPersonCamera.dll')"))
+        builder = (TOOLS / "build_kit.py").read_text()
+        self.assertIn('"src/CameraAutoFocus.cs"', builder)
+        self.assertIn('tree(folder / "tests",', builder)
+        self.assertIn('CinematicActionCamera/tests/NativeContractChecks/NativeContractChecks.csproj', (TOOLS / "verify_kit.py").read_text())
 
     def test_module_candidate_scopes_artifact_checks_to_selected_packages(self):
         builder = (TOOLS / "build_kit.py").read_text()

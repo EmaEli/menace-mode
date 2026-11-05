@@ -49,8 +49,12 @@ All 121 proxy hashes match the PC, and its 12 hook signatures and smoke property
 are checked by a metadata-only test in the canonical build before staging. This permits
 testing the native-stat fix and bounded lifecycle observations, not a claim that cloud
 disappearance is fixed. No game-indexed templates/bundles need recompilation for this mod.
-The exact hash remains mandatory. Suite/Camera and other standalone modules remain
-blocked on that build; this is not whole-suite or gameplay compatibility acceptance.
+CinematicActionCamera 1.2.3 is a scoped standalone code-only candidate for the controller
+namespace move (#88). Its bundled checks validate autofocus behavior, native event
+signatures and runtime binary type references before staging. Select
+`-Product Standalone -Modules CinematicActionCamera` for this test.
+The exact hash remains mandatory. Suite/Camera products and other unlisted standalone
+modules remain blocked; this is not whole-suite or gameplay compatibility acceptance.
 
 The console stays open on success/failure. Diagnostic log: `%TEMP%\MENACE-install.log`.
 Failures open the log in Notepad. Backups and the rollback journal live under the game's

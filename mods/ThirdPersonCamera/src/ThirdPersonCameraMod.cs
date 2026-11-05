@@ -8,13 +8,12 @@ using Il2CppMenace.PlayerSettings;
 using Il2CppMenace.Tactical;
 using Il2CppMenace.Tactical.Skills;
 using Il2CppMenace.Tactical.Skills.Effects;
-using Il2CppMenace.States;
 using Il2CppMenace.UI;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
 [assembly: MelonInfo(typeof(MenaceThirdPersonCamera.ThirdPersonCameraMod),
-    "Cinematic Action Camera", "1.2.2", "MENACE Community")]
+    "Cinematic Action Camera", "1.2.3", "MENACE Community")]
 
 namespace MenaceThirdPersonCamera
 {
@@ -156,6 +155,7 @@ namespace MenaceThirdPersonCamera
         private bool _depthOfFieldOverridden;
         private bool _reportedDepthOfFieldError;
         private bool _savedSkipAutoFocus;
+        private CameraAutoFocus _cameraAutoFocus;
         private bool _uiHidden;
         private bool _reportedUiError;
         private float _nextUiRestoreAttempt;
@@ -731,6 +731,10 @@ namespace MenaceThirdPersonCamera
             Camera camera = tacticalCamera == null ? null : tacticalCamera.GetCamera();
             if (camera == null) return false;
 
+            // Validate the current/legacy proxy before changing any camera state.
+            if (_cameraAutoFocus == null)
+                _cameraAutoFocus = new CameraAutoFocus(typeof(TacticalManager).Assembly);
+            _savedSkipAutoFocus = _cameraAutoFocus.Value;
             _tacticalCamera = tacticalCamera;
             _unityCamera = camera;
             _trackedActor = actor;
@@ -743,7 +747,6 @@ namespace MenaceThirdPersonCamera
             _savedFov = camera.fieldOfView;
             _savedNear = camera.nearClipPlane;
             _savedFar = camera.farClipPlane;
-            _savedSkipAutoFocus = TacticalCameraController.SkipAutoFocus;
             _smoothedPosition = _savedPosition;
             _smoothedRotation = _savedRotation;
             _lastElementPosition = element.transform.position;
@@ -752,7 +755,7 @@ namespace MenaceThirdPersonCamera
             _orbitPitch = 0f;
 
             tacticalCamera.CancelAutoCamera();
-            TacticalCameraController.SkipAutoFocus = true;
+            _cameraAutoFocus.Value = true;
             _active = true;
             DisableDepthOfField();
             HideTacticalUi();
@@ -921,7 +924,7 @@ namespace MenaceThirdPersonCamera
             {
                 if (wasActive)
                 {
-                    TacticalCameraController.SkipAutoFocus = _savedSkipAutoFocus;
+                    _cameraAutoFocus.Value = _savedSkipAutoFocus;
                     if (_unityCamera != null)
                     {
                         _unityCamera.transform.SetPositionAndRotation(_savedPosition, _savedRotation);
@@ -1106,7 +1109,7 @@ namespace MenaceThirdPersonCamera
         private void FailOnce(Exception ex)
         {
             try { ExitThirdPerson(); }
-            catch { _active = false; TacticalCameraController.SkipAutoFocus = _savedSkipAutoFocus; }
+            catch { _active = false; }
             _autoFailed = true; // Avoid repeated failing transitions from game events.
             if (_reportedError) return;
             _reportedError = true;
