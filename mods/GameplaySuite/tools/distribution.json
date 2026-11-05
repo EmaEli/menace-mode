@@ -6,11 +6,12 @@
     {
       "gameVersion": "0.7.18+22828",
       "gameAssemblySha256": "494c9e212d411d898b3abafb4ad233f7a39a22648d713a86b9641d698b2d12e9",
-      "modules": ["MenaceModSettings", "GarrisonableBuildings"]
+      "modules": ["MenaceModSettings", "GarrisonableBuildings", "SquaddieFieldPromotions"]
     }
   ],
   "jiangyuVersion": "1.4.10",
   "compiledForJiangyuVersion": "1.4.8",
+  "compiledForJiangyuOverrides": { "SquaddieFieldPromotions": "1.4.10" },
   "cliUrl": "https://github.com/antistrategie/jiangyu/releases/download/v1.4.10/jiangyu-cli-win-x64.zip",
   "cliSha256": "54b4552dcd6850a2b796ba25f07107c8780af3ec025c517376d85dfb3d3990da",
   "loaderSha256": "d35b7ac7e97926392f10bfea60def143151006f4d4fd798754ee28b49efe0838",

@@ -1,5 +1,50 @@
 # Changelog
 
+## 0.22.6 — MENACE 0.7.18 compatibility (#87)
+
+- Match the new `Roster.AddHirableLeader(UnitLeaderTemplate, bool)` preflight signature,
+  restoring initialization and registration of the pre-load leader reconstruction hook.
+- Recompile infantry and vehicle B Team modifiers using the new nested `PropertyChange[]
+  Properties` array; preserve the 0.9 deployment/Discipline multipliers and loss-only morale rule.
+- Add metadata-only checks against fresh game proxies and run them in the canonical installer.
+  Saved promotion identities, portraits and runtime voice assets are unchanged from 0.22.5.
+- Local native contract and offline behavior checks passed; Windows installation and
+  post-install startup/gameplay acceptance are pending.
+
+## 0.22.5 — yellow-letter vehicle commander icons (#66)
+
+- Replace all six native pilot badge fields with generated yellow dynamic-letter shields from the
+  bundled gender-matched art, so deployment, tactical HUD and character-sheet views no longer show
+  the named source pilot's icon. The 0.22.4 test log showed `badge=A/0/6`: its source sprites could
+  not be rewritten, so all six fell back to Rewa's icon.
+- Keep the Zulu male and Xray female vehicle-commander portraits; infantry icons, crew transactions,
+  progression and equipment remain unchanged.
+- Add regression coverage for non-letter native pilot badge art and replacement of all six icon
+  variants using bundled yellow-letter sources. Local Release build, 29 authoring checks, 22 Python
+  tests, 11,703 C# checks and a clean 323-file BuildKit verification passed. Canonical Windows
+  BuildOnly and SFP-only installation passed on MENACE 0.7.17+22362 with SDK 10.0.113, zero
+  warnings/errors, 11,703 behavior checks and six installed-settings checks. Post-install audit
+  verified all 186 runtime assets against the stage, the outside-Mods backup of SFP 0.22.4, and
+  unchanged unrelated Mods, UserData, MenaceModSettings and Jiangyu.Loader. In-game acceptance pending.
+
+## 0.22.4 — gender-matched generic vehicle-pilot portraits (#66)
+
+- Male vehicle commanders use the Zulu portrait family; female vehicle commanders use the Xray female
+  vehicle-crew portrait family from Generic Low Level Squad Leaders 4.0.2. Each uses its matching family
+  across all six portrait views on first creation and reconstruction.
+- The initial implementation attempted to recolor native pilot badges; the subsequent in-game test
+  reported `badge=A/0/6` and showed the source pilot icon remained. Version 0.22.5 corrects this.
+- Add regression coverage for both portrait families, gender selection, creation/reconstruction and badges.
+- Local Release build, 29 authoring checks, 22 Python tests, 11,703 C# checks and BuildKit ZIP verification
+  passed. Canonical Windows Standalone/UseInstalledSettings BuildOnly and SFP-only installation passed on
+  MENACE 0.7.17+22362 with SDK 10.0.113, zero warnings/errors and six installed-settings checks.
+- Installed manifest/assembly/file versions are 0.22.4/0.22.4.0/0.22.4.0; all 186 runtime assets match
+  the installer stage. The previous 0.22.3 folder is backed up outside Mods at
+  `_MENACE_Backups/20261025-133446-5c04826c71374153b92828400ae368d1`; 345 unrelated Mods files and 798
+  UserData files are unchanged, and settings 0.8.2/Jiangyu.Loader were reused. Candidate ZIP SHA256:
+  `34d008c73151c31650b10fa0fdac7f5541c71b5480aadd6b30980ff5b8cc7970`; installed DLL SHA256:
+  `021144b18137bb04d8958053a67769cb89b3a7def5441824313982ac6feaddf8`. In-game visual acceptance remains pending.
+
 ## 0.22.3 — generic pilot portrait correction (#66)
 
 - Use the Zulu pilot portrait family from Generic Low Level Squad Leaders 4.0.2 as the temporary

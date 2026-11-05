@@ -825,6 +825,9 @@ var system = new PromotionSystem();
 StrategyState.Current = new();
 DataTemplateLoader.Template = preview;
 system.OnInit();
+Check(FakePatches.Current.Prefixes.ContainsKey("ExecLoad") &&
+    FakePatches.Current.Prefixes.ContainsKey("Redeem"),
+    "0.7.18 two-argument roster contract permits early save rehydration and guarded redemption hooks");
 float ApplyMoraleHook(UnitActor unit, MoraleEvent moraleEvent, float moraleChange)
 {
     var args = new object[] { moraleEvent, moraleChange };
@@ -912,19 +915,30 @@ Check(textClone.GetBadge() == textClone.Badge && textClone.GetBadgeWhite() == te
     "tactical getter callbacks expose SFP shield sprites instead of shared infantry badges");
 Check(DynamicBadgeFactory.LabelForIndex(25) == "Z" && DynamicBadgeFactory.LabelForIndex(26) == "AA" &&
     DynamicBadgeFactory.LabelForIndex(52) == "BA", "production promotion labels continue beyond Z");
-var pilotBadge = UnityEngine.Sprite.Create(badgeTexture, new(0, 0, 40, 40), new(.5f, .5f));
+var nativePilotPixels = new UnityEngine.Color32[40 * 40];
+for (int y = 4; y < 36; y++)
+    for (int x = 4; x < 36; x++) nativePilotPixels[y * 40 + x] = new(45, 82, 130, 255);
+var nativePilotTexture = new UnityEngine.Texture2D(40, 40, UnityEngine.TextureFormat.RGBA32, false);
+nativePilotTexture.SetPixels32(new Il2CppInterop.Runtime.InteropTypes.Arrays.Il2CppStructArray<UnityEngine.Color32>(nativePilotPixels));
+var nativePilotBadge = UnityEngine.Sprite.Create(nativePilotTexture, new(0, 0, 40, 40), new(.5f, .5f));
 var promotedPilot = new UnitLeaderTemplate
 {
-    Badge = pilotBadge, BadgeWhite = pilotBadge, BadgeMini = pilotBadge, BadgeDragged = pilotBadge,
-    BadgeUnitWindow = pilotBadge, SlotBadge = pilotBadge, BigBadge = pilotBadge,
+    Badge = nativePilotBadge, BadgeWhite = nativePilotBadge, BadgeMini = nativePilotBadge,
+    BadgeDragged = nativePilotBadge, BadgeUnitWindow = nativePilotBadge,
+    SlotBadge = nativePilotBadge, BigBadge = nativePilotBadge,
 };
 var pilotBadgePinned = new List<UnityEngine.Object>();
-Check(DynamicBadgeFactory.ApplyPilot(promotedPilot, "A", pilotBadgePinned) == "6/6" &&
+Check(DynamicBadgeFactory.ApplyPilot(promotedPilot, badgeArt, "A", pilotBadgePinned) == "6/6" &&
     promotedPilot.BadgeWhite == promotedPilot.Badge &&
-    promotedPilot.Badge.texture.GetPixels32().Any(pixel => pixel.r == 255 && pixel.g == 220 && pixel.b == 0 && pixel.a == 255) &&
-    !promotedPilot.Badge.texture.GetPixels32().Any(pixel => pixel.r == 240 && pixel.g == 26 && pixel.b == 32 && pixel.a == 255) &&
-    pilotBadge.texture.GetPixels32().SequenceEqual(badgePixels),
-    "vehicle squad icons use private native pilot badge copies with yellow lettering");
+    pilotBadgePinned.Count == 12 &&
+    new[] { promotedPilot.Badge, promotedPilot.BadgeMini, promotedPilot.BadgeDragged,
+        promotedPilot.BadgeUnitWindow, promotedPilot.SlotBadge, promotedPilot.BigBadge }
+        .All(sprite => sprite != nativePilotBadge &&
+            sprite.texture.GetPixels32().Any(pixel => pixel.r == 255 && pixel.g == 220 && pixel.b == 0 && pixel.a == 255) &&
+            !sprite.texture.GetPixels32().Any(pixel => pixel.r == 240 && pixel.g == 26 && pixel.b == 32 && pixel.a == 255)) &&
+    nativePilotTexture.GetPixels32().SequenceEqual(nativePilotPixels) &&
+    badgeTexture.GetPixels32().SequenceEqual(badgePixels),
+    "vehicle icons replace non-letter native pilot art with all six bundled yellow-letter shield variants");
 Check(textClone.GetUnitTitle() == textClone.UnitTitle &&
     textClone.GetUnitDescription() == textClone.UnitDescription,
     "SFP native getter postfixes expose generated infantry identity");
@@ -1361,8 +1375,10 @@ if (args.Length > 0)
     Check(portraitFiles.All(name => portraitSource.Contains('"' + name + '"')), "portrait file list mirrors production code");
     Check(new[] { "male", "female" }.All(gender => portraitFiles.All(name =>
         new FileInfo(Path.Combine(assets, gender, name)).Length > 0)), "bundled portrait assets complete for both genders");
-    Check(StandalonePortraitAssets.AreGenericPilotPresent(root),
-        "bundled generic-pilot portrait family contains all six runtime images");
+    Check(StandalonePortraitAssets.AreGenericPilotPresent(root, false),
+        "bundled male generic-pilot portrait family contains all six runtime images");
+    Check(StandalonePortraitAssets.AreGenericPilotPresent(root, true),
+        "bundled female generic-pilot portrait family contains all six runtime images");
     string voice = Path.Combine(assets, "voice");
     using var receipt = System.Text.Json.JsonDocument.Parse(File.ReadAllText(Path.Combine(voice, "sfp_john_jane_voice.build.json")));
     using var sha = System.Security.Cryptography.SHA256.Create();

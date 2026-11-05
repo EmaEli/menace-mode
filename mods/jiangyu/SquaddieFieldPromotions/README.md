@@ -1,6 +1,11 @@
-# Squaddie Field Promotions 0.22.3
+# Squaddie Field Promotions 0.22.6
 
-> **0.22.3 portrait correction (#66):** new and reconstructed vehicle commanders use the Zulu pilot portrait family from Generic Low Level Squad Leaders 4.0.2 as shared temporary artwork for both genders. Native pilot badge art and yellow squad letters remain; infantry portraits are unchanged. Local Release build, 29 authoring checks, 22 Python tests and 11,702 C# checks passed. On MENACE 0.7.17+22362, canonical Windows Standalone/UseInstalledSettings BuildOnly and SFP-only installation passed with SDK 10.0.113, zero warnings/errors and six installed-settings checks. Installed manifest/assembly/file versions are 0.22.3/0.22.3.0/0.22.3.0; all 180 runtime assets verified. Prior SFP 0.22.2 is backed up outside Mods; 345 unrelated Mods files and 798 UserData files are unchanged. In-game visual acceptance remains pending.
+> **0.22.6 compatibility candidate (#87):** restores the 0.7.18 native initialization contract
+> and updates infantry/vehicle B Team modifiers to the new property array. Templates were
+> rebuilt with Jiangyu 1.4.10. Local checks passed; Windows installation and gameplay are pending.
+> Existing promotion identities, portraits and voices are preserved.
+
+> **0.22.5 vehicle icon correction (#66), installed 2026-10-25:** regenerate all six vehicle commander badge sprites from bundled gender-matched shield art with the dynamic yellow squad letter, replacing unrecolorable named-pilot icons in deployment, tactical HUD and character-sheet views. This fixes 0.22.4's logged `badge=A/0/6` fallback. Zulu male/Xray female portraits remain. Local checks and canonical Windows BuildOnly/SFP-only install passed; in-game visual acceptance is pending.
 
 > **Previously installed 0.22.1 failure-recovery candidate (#79; superseded by 0.22.2):** new infantry trees exclude perks unavailable in the running game.
 > An uncommitted dossier redemption grants one High-Value Salvage commodity (base trade value 40),
@@ -9,9 +14,9 @@
 > cannot be reconstructed automatically: reload a pre-purchase save for those. Local/focused checks and
 > canonical Windows BuildOnly/SFP-only installation passed (25 October); gameplay validation pending.
 
-> **Historical 0.22.0 test candidate:** introduced native pilot portraits and yellow squad labels. Version 0.22.3 supersedes character-specific vehicle portraits with the shared Zulu pilot art while preserving native badges and yellow letters.
+> **Historical 0.22.0 test candidate:** introduced native pilot portraits and yellow squad labels. Version 0.22.3 tried the shared Zulu pilot art for both genders; 0.22.4 superseded it with Zulu male and Xray female artwork. Version 0.22.5 replaces source-pilot icons that lack a replaceable red glyph with bundled yellow-letter badge sprites.
 > Version 0.21.0 gives new vehicle commanders a distinct custom Vehicle B Team starting perk: 10% lower tactical deployment costs and Discipline, with doubled morale loss for squaddie casualties or destroyed allied units. Existing vehicle promotions retain their saved native starting perk. The selectable vehicle perk tree and crew transaction remain unchanged.
-> Vehicle commanders use `runtime_assets/generic_pilot/` for all six portrait views; infantry continues using the gendered defaults and saved profile images. Vehicle promotions still consume only the selected crew identity, install a separate vehicle commander with an XP-banded vehicle perk tree, and grant no vehicle. The transaction is saved before mutation and rolls back or reconciles on failure/load.
+> Vehicle commanders use `runtime_assets/generic_pilot/` for male and `runtime_assets/generic_pilot_female/` for female across all six portrait views; infantry continues using the gendered defaults and saved profile images. Vehicle promotions still consume only the selected crew identity, install a separate vehicle commander with an XP-banded vehicle perk tree, and grant no vehicle. The transaction is saved before mutation and rolls back or reconciles on failure/load.
 > The 24 October mission-start crash recorded VERSION.dll / 0xc0000602 / offset 0x7ddf6d, matching the MelonLoader failure tracked in #72 and previously reproduced with zero mods. This portrait fix does not fix that crash; in-game portrait acceptance and mission-start stability remain unverified.
 > Version 0.22.0 canonical Windows BuildOnly/install passed on 24 October with zero warnings/errors, 11,590 behavior checks and six installed-settings checks. Manifest/DLL/file versions verified; only SFP targets were backed up outside Mods and updated. Menace Mod Settings 0.8.2 and Jiangyu.Loader were reused; all 174 bundled runtime assets were verified. Saves, UserData and unrelated Mods were untouched. In-game visual acceptance remains pending.
 > Version 0.20.1 canonical Windows BuildOnly/install passed on 24 October: zero warnings/errors,
@@ -103,7 +108,7 @@ Squaddie Veterancy crew API. Infantry promotion remains available without Squadd
 
 ## Requirements
 
-- MENACE **0.7.17+22362**, MelonLoader and Jiangyu **1.4.8**.
+- MENACE **0.7.18+22828**, MelonLoader and the pinned Jiangyu **1.4.10** toolchain/loader.
 - **Menace Mod Settings >= 0.6.1** is the only additional required mod.
 - Squaddie Veterancy is optional for infantry and **required for vehicle crew promotions**.
   No Custom Leaders loader or legacy Modpack Loader.
@@ -121,9 +126,9 @@ Squaddie Veterancy crew API. Infantry promotion remains available without Squadd
 - The separate **Vehicle Crew Promotion Dossier** appears only when a compatible Squaddie
   Veterancy API is loaded and a healthy, non-deployed crew member is eligible. It selects the
   highest-XP eligible crew member (active slot wins equal-XP ties), then creates a new vehicle
-  commander from the matching native generic pilot template. The shared Zulu pilot portrait family
-  replaces the named source pilot's personal images for leader and speaker views for both genders;
-  native pilot badge artwork remains with yellow squad letters. The vehicle-leader actor type is retained. A saved XP-banded vehicle perk tree replaces the named
+  commander from the matching native generic pilot template. Gender-matched Zulu (male) and Xray
+  (female) pilot portrait families replace the named source pilot's personal images for leader and speaker views;
+  bundled shield art is lettered dynamically in yellow across all six badge variants. The vehicle-leader actor type is retained. A saved XP-banded vehicle perk tree replaces the named
   pilot's signature progression. Only the commander enters Hire (0 credits); **no vehicle is
   attached or granted**.
 - Vehicle crew transactions save the exact pilot/person/vehicle/role/active-slot identity and XP
@@ -218,7 +223,11 @@ The kit also ships the module's raw `runtime_assets/` (portraits, prebuilt John/
 voice bundle with its build receipt, voice routes); the installer stages them next to
 the compiled package because `jiangyu compile --clean` does not preserve them.
 
-## Acceptance test (0.22.3 test candidate; in-game checks pending)
+## Acceptance test (0.22.6 test candidate; in-game checks pending)
+
+First load a disposable copy of a campaign with existing promoted leaders. Confirm they
+remain present after load and SFP initializes without the native API or B Team field errors.
+Try an infantry promotion and check the B Team deployment/Discipline modifiers.
 
 On a disposable save, retry an infantry promotion with a high-XP soldier: a missing optional
 perk such as `perk.payback` must no longer abort generation when enough other perks are available.
@@ -229,8 +238,9 @@ save/reload to check the commodity persists. Do not use a valuable save or force
 
 Vehicle crew promotion: use a disposable non-Ironman save with Squaddie Veterancy loaded and
 at least one healthy, non-deployed crew member. Confirm the separate dossier appears, selects the
-  highest-XP eligible crew member, and creates a new commander with the shared Zulu pilot portraits
-  in Hire, large, inactive and bark views for either gender, plus the native pilot badge with a yellow squad letter, Vehicle B Team starting perk and vehicle perk tree. Confirm the custom perk reduces tactical
+  highest-XP eligible crew member, and creates a new commander with the Zulu pilot portraits for men
+  and Xray pilot portraits for women in Hire, large, inactive and bark views, plus the native pilot badge
+  with a yellow squad letter, Vehicle B Team starting perk and vehicle perk tree. Confirm the custom perk reduces tactical
 deployment costs and Discipline by 10%, and doubles morale loss on a squaddie casualty or allied-unit
 destruction. Verify the original pilot/vehicle/role and active-or-reserve slot
 remain intact, the replacement crew member has 0 XP, the commander costs 0 credits, and no vehicle
@@ -378,7 +388,7 @@ readability remain in-game acceptance gates.
 
 ## Remaining gates
 
-1. In-game acceptance of 0.22.3 generic pilot vehicle portraits and yellow squad labels, crew selection, identity/slot preservation, no-vehicle hire,
+1. In-game acceptance of 0.22.5 gender-matched generic pilot vehicle portraits and yellow-letter badges in deployment, tactical HUD and character sheet; crew selection, identity/slot preservation, no-vehicle hire,
    save/load recovery and dismissal rollback; plus 0.10.0 infantry source removal (assigned/unassigned), old preview-save cleanup,
    price changes, and save → restart → load with no returning source soldier.
 2. Without optional Veterancy, plus dismissal/death, divergent saves and mission transitions.
@@ -395,6 +405,8 @@ the bonus. These attribute values remain provisional and need in-game balance te
 
 Run the module's `tests/OfflineChecks` C# executable for production rules/callbacks
 against explicitly simulated native APIs; `tests/verify_authoring.py` checks source/template contracts.
+Run `tests/NativeContractChecks` with the current `Assembly-CSharp.dll` and SFP `code/`
+directory to validate every production preflight signature without executing native code.
 Use shared `build_kit.py --module SquaddieFieldPromotions --use-installed-settings --output <zip>`
 after a real code/template build. It inventories source/artifacts and derives the launcher
 from the shared Suite launcher. Never call an unbacked global CLI deploy for this test.

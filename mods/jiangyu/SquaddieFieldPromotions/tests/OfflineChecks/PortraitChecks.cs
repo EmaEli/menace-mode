@@ -15,10 +15,15 @@ internal static class PortraitChecks
     {
         Sprite Image() => Sprite.Create(new Texture2D(4, 4, TextureFormat.RGBA32, false),
             new Rect(0, 0, 4, 4), new Vector2(0.5f, 0.5f));
-        var pilotSprites = StandalonePortraitAssets.PortraitFileNames.ToDictionary(name => name, _ => Image());
-        var pilotArt = Assets(pilotSprites);
+        var malePilotSprites = StandalonePortraitAssets.PortraitFileNames.ToDictionary(name => name, _ => Image());
+        var femalePilotSprites = StandalonePortraitAssets.PortraitFileNames.ToDictionary(name => name, _ => Image());
+        var malePilotArt = Assets(malePilotSprites);
+        var femalePilotArt = Assets(femalePilotSprites);
         foreach (string gender in new[] { "male", "female" })
         {
+            bool female = gender == "female";
+            var pilotSprites = female ? femalePilotSprites : malePilotSprites;
+            var pilotArt = female ? femalePilotArt : malePilotArt;
             var genderSprites = StandalonePortraitAssets.PortraitFileNames.ToDictionary(name => name, _ => Image());
             var genderArt = Assets(genderSprites);
             var namedPilotSlot = Image();
@@ -38,15 +43,16 @@ internal static class PortraitChecks
                 pilotArt.ApplyTo(leader, speaker);
                 check(leader.Slot == pilotSprites["slot.png"] && leader.SlotInactive == pilotSprites["slot_inactive.png"] &&
                     leader.Slot != namedPilotSlot,
-                    gender + " vehicle commander uses shared generic-pilot slot art on assignment and reconstruction");
+                    gender + " vehicle commander uses gender-matched generic-pilot slot art on assignment and reconstruction");
                 check(speaker.StandLookRightImage == pilotSprites["stand_right.png"].texture &&
                     speaker.StandLookLeftImage == pilotSprites["stand_left.png"].texture &&
                     speaker.StandLookRightInactiveImage == pilotSprites["stand_right_inactive.png"].texture &&
                     speaker.OperationSelectImage == pilotSprites["slot.png"].texture &&
                     speaker.BarkImage == pilotSprites["bark.png"] &&
                     speaker.StandLookRightImage != namedPilotPortrait.texture,
-                    gender + " vehicle commander uses shared generic-pilot art in all speaker views");
-                check(leader.Badge == badge, gender + " generic-pilot portraits preserve native pilot badge art");
+                    gender + " vehicle commander uses gender-matched generic-pilot art in all speaker views");
+                check(leader.Badge == badge,
+                    gender + " portrait replacement leaves the badge for independent dynamic letter assignment");
             }
         }
     }

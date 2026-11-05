@@ -7,7 +7,7 @@ using UnityEngine;
 namespace SquaddieFieldPromotions;
 
 /// <summary>
-/// Experimental on-demand squad lettering for bundled infantry and native pilot badge sprites.
+/// Experimental on-demand squad lettering for bundled infantry and vehicle-commander badge sprites.
 /// Replaces source glyph pixels on private readable Unity sprite copies; pilot labels are yellow.
 /// No original Generic Leaders mod, external templates, or disk mutation.
 /// Tactical badge getters must also be overridden for promoted infantry.
@@ -66,22 +66,20 @@ internal static class DynamicBadgeFactory
     internal static string Apply(UnitLeaderTemplate target, StandalonePortraitAssets art,
         string label, List<UnityEngine.Object> pinned)
     {
-        return ApplySources(target, new[]
-        {
-            art.Get("badge.png"), art.Get("badge_mini.png"), art.Get("badge_dragged.png"),
-            art.Get("badge_unit.png"), art.Get("slot_badge.png"), art.Get("big_badge.png")
-        }, label, pinned, InfantryLabelColor);
+        return ApplySources(target, BadgeSources(art), label, pinned, InfantryLabelColor);
     }
 
-    internal static string ApplyPilot(UnitLeaderTemplate target, string label,
+    internal static string ApplyPilot(UnitLeaderTemplate target, StandalonePortraitAssets badgeArt, string label,
         List<UnityEngine.Object> pinned)
     {
-        return ApplySources(target, new[]
-        {
-            target.Badge, target.BadgeMini, target.BadgeDragged,
-            target.BadgeUnitWindow, target.SlotBadge, target.BigBadge
-        }, label, pinned, PilotLabelColor);
+        return ApplySources(target, BadgeSources(badgeArt), label, pinned, PilotLabelColor);
     }
+
+    private static Sprite[] BadgeSources(StandalonePortraitAssets art) => new[]
+    {
+        art.Get("badge.png"), art.Get("badge_mini.png"), art.Get("badge_dragged.png"),
+        art.Get("badge_unit.png"), art.Get("slot_badge.png"), art.Get("big_badge.png")
+    };
 
     private static string ApplySources(UnitLeaderTemplate target, Sprite[] sources, string label,
         List<UnityEngine.Object> pinned, Color32 labelColor)

@@ -137,6 +137,7 @@ try {
             Copy-Item -LiteralPath $dll -Destination (Join-Path $compiled "code\$assembly.dll") -Force
         }
         if ($name -eq 'SquaddieFieldPromotions') {
+            Invoke-Dotnet @('run', '--project', (Join-Path $root 'tests\NativeContractChecks\NativeContractChecks.csproj'), '-c', 'Release', '--', (Join-Path $refs 'Assembly-CSharp.dll'), (Join-Path $root 'code'))
             Invoke-Dotnet @('run', '--project', (Join-Path $root 'tests\OfflineChecks\OfflineChecks.csproj'), '-c', 'Release', '--', $source)
             & (Join-Path $root 'tests\Test-InstalledSettings.ps1') -Helpers (Join-Path $scriptRoot 'Install.Common.ps1') -GamePath $GamePath
         }

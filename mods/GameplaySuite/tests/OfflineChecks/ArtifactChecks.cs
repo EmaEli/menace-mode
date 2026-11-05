@@ -55,7 +55,9 @@ internal static class ArtifactChecks
                 check(available.TryGetValue(parts[0], out var supplied) && supplied >= Version.Parse(parts[2]),
                     module + " dependency unavailable/too old: " + requirement);
             }
-            check(compiled.RootElement.GetProperty("compiledForJiangyu").GetString() == compiledForJiangyu,
+            string expectedCompiler = catalog.RootElement.TryGetProperty("compiledForJiangyuOverrides", out var overrides)
+                && overrides.TryGetProperty(module, out var compiler) ? compiler.GetString()! : compiledForJiangyu;
+            check(compiled.RootElement.GetProperty("compiledForJiangyu").GetString() == expectedCompiler,
                 module + " payload compiled for a different SDK");
             string projectPath = Path.Combine(root, "code", module + ".csproj");
             if (!File.Exists(projectPath))

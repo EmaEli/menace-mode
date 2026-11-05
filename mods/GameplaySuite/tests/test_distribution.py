@@ -107,6 +107,7 @@ class DistributionTests(unittest.TestCase):
         catalog = json.loads((TOOLS / "distribution.json").read_text())
         self.assertEqual(catalog["jiangyuVersion"], "1.4.10")
         self.assertEqual(catalog["compiledForJiangyuVersion"], "1.4.8")
+        self.assertEqual(catalog["compiledForJiangyuOverrides"], {"SquaddieFieldPromotions": "1.4.10"})
         self.assertEqual(
             catalog["cliUrl"],
             "https://github.com/antistrategie/jiangyu/releases/download/v1.4.10/jiangyu-cli-win-x64.zip",
@@ -115,7 +116,8 @@ class DistributionTests(unittest.TestCase):
         self.assertEqual(catalog["loaderSha256"], "d35b7ac7e97926392f10bfea60def143151006f4d4fd798754ee28b49efe0838")
         for name in catalog["modules"] + catalog.get("experimentalModules", []):
             compiled = json.loads((ROOT / "mods/jiangyu" / name / "compiled/jiangyu.json").read_text())
-            self.assertEqual(compiled["compiledForJiangyu"], catalog["compiledForJiangyuVersion"], name)
+            expected = catalog.get("compiledForJiangyuOverrides", {}).get(name, catalog["compiledForJiangyuVersion"])
+            self.assertEqual(compiled["compiledForJiangyu"], expected, name)
 
     def test_light_personnel_carrier_utility_is_compiled_opt_in_data_package(self):
         payload, versions = BUILDER.collect(ROOT, "LightPersonnelCarrier")

@@ -4,17 +4,23 @@ clone "PerkTemplate" from="perk.power_in_numbers" id="mod.squaddiefieldpromotion
   set "Description" { set "m_DefaultTranslation" "The B team is often overlooked, but it knows how to make do with less. The team has 10% lower Discipline and 10% lower tactical deployment costs, but loses twice as much morale when a squaddie is lost or an allied unit is destroyed." }
   set "StatusDescription" { set "m_DefaultTranslation" "10% lower Discipline and tactical deployment costs; double morale loss from casualties." }
   set "EventHandlers" index=0 {
-    set "PropertyType" enum="EntityPropertyType" "DeployCostMult"
-    set "Amount" 0
-    set "AmountMult" 0.9
+    clear "Properties"
+    append "Properties" {
+      set "PropertyType" enum="EntityPropertyType" "DeployCostMult"
+      set "Amount" 0
+      set "AmountMult" 0.9
+    }
     set "ValueProvider" #null
     set "TooltipPlaceholderIndex" -1
     set "IncludePlusSign" #false
   }
   set "EventHandlers" index=1 {
-    set "PropertyType" enum="EntityPropertyType" "DisciplineMult"
-    set "Amount" 0
-    set "AmountMult" 0.9
+    clear "Properties"
+    append "Properties" {
+      set "PropertyType" enum="EntityPropertyType" "DisciplineMult"
+      set "Amount" 0
+      set "AmountMult" 0.9
+    }
     set "ValueProvider" #null
     set "TooltipPlaceholderIndex" -1
     set "IncludePlusSign" #false
@@ -27,17 +33,23 @@ clone "PerkTemplate" from="perk.power_in_numbers" id="mod.squaddiefieldpromotion
   set "Description" { set "m_DefaultTranslation" "Vehicle crews learn to keep old machines running with less. Their tactical deployment costs and Discipline are 10% lower, but they lose twice as much morale when a squaddie is lost or an allied unit is destroyed." }
   set "StatusDescription" { set "m_DefaultTranslation" "10% lower Discipline and tactical deployment costs; double morale loss from casualties." }
   set "EventHandlers" index=0 {
-    set "PropertyType" enum="EntityPropertyType" "DeployCostMult"
-    set "Amount" 0
-    set "AmountMult" 0.9
+    clear "Properties"
+    append "Properties" {
+      set "PropertyType" enum="EntityPropertyType" "DeployCostMult"
+      set "Amount" 0
+      set "AmountMult" 0.9
+    }
     set "ValueProvider" #null
     set "TooltipPlaceholderIndex" -1
     set "IncludePlusSign" #false
   }
   set "EventHandlers" index=1 {
-    set "PropertyType" enum="EntityPropertyType" "DisciplineMult"
-    set "Amount" 0
-    set "AmountMult" 0.9
+    clear "Properties"
+    append "Properties" {
+      set "PropertyType" enum="EntityPropertyType" "DisciplineMult"
+      set "Amount" 0
+      set "AmountMult" 0.9
+    }
     set "ValueProvider" #null
     set "TooltipPlaceholderIndex" -1
     set "IncludePlusSign" #false

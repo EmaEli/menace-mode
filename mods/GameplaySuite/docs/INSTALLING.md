@@ -37,10 +37,13 @@ checked separately; MenaceModSettings retains assembly identity 1.0.0.0.
 
 ### Scoped v0.7.18 test candidate (#86 / #62)
 
-The catalog additionally permits **only** standalone GarrisonableBuildings (with its
-MenaceModSettings companion) on **0.7.18+22828**, native SHA256 `494c9e21…`.
-Fresh MelonLoader proxies and the native metadata contracts were checked for this
-code-only candidate; neither package contains game-indexed templates or asset bundles.
+The catalog additionally permits standalone GarrisonableBuildings and the opt-in
+SquaddieFieldPromotions 0.22.6 candidate on **0.7.18+22828**, native SHA256 `494c9e21…`.
+SFP requires `-Product Standalone -Modules SquaddieFieldPromotions -UseInstalledSettings`:
+its installed settings companion and pinned loader are verified, not replaced.
+Fresh MelonLoader proxies and native metadata contracts were checked. SFP's B Team
+templates were recompiled with pinned Jiangyu 1.4.10 for the new property array;
+its canonical build also runs metadata-only native contract checks before staging.
 The exact hash remains mandatory. Suite/Camera and other standalone modules remain
 blocked on that build; this is not whole-suite or gameplay compatibility acceptance.
 

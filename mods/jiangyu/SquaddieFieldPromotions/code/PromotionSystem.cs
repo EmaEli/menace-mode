@@ -80,7 +80,7 @@ public sealed class PromotionSystem : JiangyuSystem
         Require(typeof(DossierItemTemplate), "GetTradeValue", Type.EmptyTypes, typeof(int));
         Require(typeof(BlackMarket), "Restock", new[] { typeof(bool), typeof(bool) }, typeof(void));
         Require(typeof(BlackMarketUIScreen), "OnOpened", new[] { typeof(IOpenScreenParams) }, typeof(void));
-        Require(typeof(Roster), "AddHirableLeader", new[] { typeof(UnitLeaderTemplate) }, typeof(void));
+        Require(typeof(Roster), "AddHirableLeader", new[] { typeof(UnitLeaderTemplate), typeof(bool) }, typeof(void));
         Require(typeof(OwnedItems), "AddItem", new[] { typeof(BaseItemTemplate), typeof(bool), typeof(bool) }, typeof(BaseItem));
         Require(typeof(OwnedItems), "GetInstanceCount", new[] { typeof(BaseItemTemplate) }, typeof(int));
         Require(typeof(UnitLeaderTemplate), "GetUnitTitle", Type.EmptyTypes, typeof(LocalizedLine));

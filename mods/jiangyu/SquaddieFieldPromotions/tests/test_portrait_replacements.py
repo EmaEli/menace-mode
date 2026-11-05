@@ -72,11 +72,12 @@ def rgba_png(path):
 
 
 class ReplacementPortraitTests(unittest.TestCase):
-    def test_generic_vehicle_pilot_portrait_family_is_valid_rgba8(self):
-        for filename, size in GENERIC_PILOT_SIZES.items():
-            with self.subTest(file=filename):
-                dimensions, _ = rgba_png(ROOT / 'runtime_assets' / 'generic_pilot' / filename)
-                self.assertEqual(dimensions, size)
+    def test_gender_matched_vehicle_pilot_portrait_families_are_valid_rgba8(self):
+        for family in ('generic_pilot', 'generic_pilot_female'):
+            for filename, size in GENERIC_PILOT_SIZES.items():
+                with self.subTest(family=family, file=filename):
+                    dimensions, _ = rgba_png(ROOT / 'runtime_assets' / family / filename)
+                    self.assertEqual(dimensions, size)
 
     def test_transparency_mirroring_and_inactive_alpha(self):
         for gender in ('male', 'female'):

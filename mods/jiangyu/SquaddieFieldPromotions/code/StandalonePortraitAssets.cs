@@ -13,7 +13,7 @@ namespace SquaddieFieldPromotions;
 /// <summary>
 /// Standalone portrait and badge sources, extracted from the author's Generic Low Level
 /// Squad Leaders 4.0.2. Male/female families remain the generic infantry defaults; vehicle
-/// commanders use its Zulu pilot portrait family as a shared temporary placeholder. Three optional
+/// commanders use its Zulu (male) and Xray (female) pilot portrait families. Three optional
 /// profiles can override the six portrait fields for the first matching record in each save.
 /// All artwork ships with THIS Jiangyu mod.
 ///
@@ -44,11 +44,14 @@ internal sealed class StandalonePortraitAssets
         return FileNames.All(name => File.Exists(Path.Combine(root, name)));
     }
 
-    internal static bool AreGenericPilotPresent(string modFolder)
+    internal static bool AreGenericPilotPresent(string modFolder, bool female)
     {
-        string root = Path.Combine(modFolder, "runtime_assets", "generic_pilot");
+        string root = Path.Combine(modFolder, "runtime_assets", GenericPilotFamily(female));
         return PortraitFileNames.All(name => File.Exists(Path.Combine(root, name)));
     }
+
+    private static string GenericPilotFamily(bool female) =>
+        female ? "generic_pilot_female" : "generic_pilot";
 
     internal static bool ArePortraitProfilePresent(string modFolder, string profile)
     {
@@ -74,15 +77,17 @@ internal sealed class StandalonePortraitAssets
         return LoadFiles(folder, gender, FileNames, pinned);
     }
 
-    internal static StandalonePortraitAssets LoadGenericPilot(string modFolder,
+    internal static StandalonePortraitAssets LoadGenericPilot(string modFolder, bool female,
         List<UnityEngine.Object> pinned)
     {
-        if (!AreGenericPilotPresent(modFolder))
-            throw new InvalidOperationException("Standalone generic-pilot portrait files missing from deployed mod. Use Build-and-Deploy.cmd; " +
+        string family = GenericPilotFamily(female);
+        string label = "generic-pilot-" + (female ? "female" : "male");
+        if (!AreGenericPilotPresent(modFolder, female))
+            throw new InvalidOperationException("Standalone " + label + " portrait files missing from deployed mod. Use Build-and-Deploy.cmd; " +
                 "the CLI deploy step alone does not preserve raw runtime_assets.");
 
-        string folder = Path.Combine(modFolder, "runtime_assets", "generic_pilot");
-        return LoadFiles(folder, "generic-pilot", PortraitFileNames, pinned);
+        string folder = Path.Combine(modFolder, "runtime_assets", family);
+        return LoadFiles(folder, label, PortraitFileNames, pinned);
     }
 
     internal static StandalonePortraitAssets LoadPortraitProfile(string modFolder, string profile,

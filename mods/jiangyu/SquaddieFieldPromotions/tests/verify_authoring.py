@@ -18,7 +18,7 @@ class AuthoringTests(unittest.TestCase):
 
     def test_jiangyu_not_old_modpack(self):
         self.assertEqual(MANIFEST['name'], 'SquaddieFieldPromotions')
-        self.assertEqual(MANIFEST['version'], '0.22.3')
+        self.assertEqual(MANIFEST['version'], '0.22.6')
         compiled_manifest = json.loads((ROOT / 'compiled/jiangyu.json').read_text(encoding='utf-8'))
         self.assertEqual(compiled_manifest['version'], MANIFEST['version'])
         self.assertTrue(any(dep.startswith('Jiangyu ') for dep in MANIFEST['depends']))
@@ -85,7 +85,8 @@ class AuthoringTests(unittest.TestCase):
         template_text = (ROOT / 'code/PromotionTemplateText.cs').read_text()
         self.assertIn('leader.SpeakerTemplate.Description = NewMultiLine', template_text)
         self.assertIn('leader.UnitDescription = NewMultiLine', template_text)
-        self.assertIn('Roster.AddHirableLeader(leader)', forge)
+        self.assertIn('Roster.AddHirableLeader(leader, true)', forge)
+        self.assertIn('Require(typeof(Roster), "AddHirableLeader", new[] { typeof(UnitLeaderTemplate), typeof(bool) }, typeof(void))', CS)
         self.assertIn('new JiangyuCloneBridge()', forge)
         for name in ('NativeCandidates.cs', 'PromotionRules.cs', 'PromotionRecord.cs'):
             self.assertNotIn('AddHirableLeader', (ROOT / 'code' / name).read_text())
@@ -98,7 +99,8 @@ class AuthoringTests(unittest.TestCase):
         assets = ROOT / 'runtime_assets'
         for gender in ('male', 'female'):
             self.assertTrue((assets / gender / 'stand_right.png').is_file())
-        self.assertTrue((assets / 'generic_pilot' / 'stand_right.png').is_file())
+        for family in ('generic_pilot', 'generic_pilot_female'):
+            self.assertTrue((assets / family / 'stand_right.png').is_file())
         self.assertTrue((assets / 'voice' / 'sfp_john_jane_voice.sfpbundle').is_file())
         self.assertTrue((assets / 'voice' / 'sfp_john_jane_voice.build.json').is_file())
         self.assertTrue((assets / 'voice' / 'voice_routes.json').is_file())
@@ -120,8 +122,9 @@ class AuthoringTests(unittest.TestCase):
         self.assertIn('internal const int FemaleGender = 1;', record)
         self.assertIn('skinColor == LegacyWhiteSkinColor', record)
         self.assertIn('ArePortraitProfilesPresent(_modFolder)', forge)
-        self.assertIn('AreGenericPilotPresent(_modFolder)', forge)
-        self.assertIn('LoadGenericPilot(_modFolder, _pinned)', forge)
+        self.assertIn('AreGenericPilotPresent(_modFolder, false)', forge)
+        self.assertIn('AreGenericPilotPresent(_modFolder, true)', forge)
+        self.assertIn('LoadGenericPilot(_modFolder, female, _pinned)', forge)
         self.assertIn('portrait.ApplyTo(leader, speaker)', forge)
         self.assertIn('DynamicBadgeFactory.Apply(leader, art', forge)
         self.assertIn('PromotionPortraitAssignment.AllProfiles.All(', assets)
@@ -268,21 +271,25 @@ class AuthoringTests(unittest.TestCase):
         }
         self.assertEqual(labels['Title'], 'Vehicle B Team')
         self.assertIn('10% lower deployment costs and Discipline', labels['ShortDescription'])
-        handler_values = {}
-        for item in patch['set']:
-            descent = item.get('descent', [])
-            if not descent or descent[0].get('field') != 'EventHandlers':
-                continue
-            index = descent[0]['index']
-            value = item['value']
-            if item['fieldPath'] == 'PropertyType':
-                handler_values.setdefault(index, {})['PropertyType'] = value['enumValue']
-            elif item['fieldPath'] == 'AmountMult':
-                handler_values.setdefault(index, {})['AmountMult'] = value['single']
-        self.assertEqual(handler_values, {
-            0: {'PropertyType': 'DeployCostMult', 'AmountMult': 0.9},
-            1: {'PropertyType': 'DisciplineMult', 'AmountMult': 0.9},
-        })
+        for perk_id in ('mod.squaddiefieldpromotions.b_team', perk):
+            patch = next(p for p in templates['templatePatches'] if p['templateId'] == perk_id)
+            # 0.7.18: modifiers belong to PropertyChange[] Properties, not ChangeProperty.
+            for index, property_type in enumerate(('DeployCostMult', 'DisciplineMult')):
+                descent = [{'field': 'EventHandlers', 'index': index}]
+                self.assertTrue(any(op['op'] == 'Clear' and op['fieldPath'] == 'Properties'
+                                    and op.get('descent') == descent for op in patch['set']))
+                operations = [op for op in patch['set'] if op['op'] == 'Append' and op['fieldPath'] == 'Properties'
+                              and op.get('descent') == descent]
+                self.assertEqual(len(operations), 1)
+                self.assertEqual(operations[0]['value']['kind'], 'Composite')
+                composite = operations[0]['value']['composite']
+                self.assertEqual(composite['typeName'], 'Il2CppMenace.Tactical.Skills.Effects.PropertyChange')
+                values = {op['fieldPath']: op['value'] for op in composite['operations']}
+                self.assertEqual(values['PropertyType']['enumValue'], property_type)
+                self.assertEqual(values['Amount']['int32'], 0)
+                self.assertEqual(values['AmountMult']['single'], 0.9)
+            self.assertFalse(any(op['fieldPath'] in ('PropertyType', 'Amount', 'AmountMult')
+                                 for op in patch['set']))
 
     def test_provenance_remains_save_compatible_but_badges_use_only_bundled_black_art(self):
         record = (ROOT / 'code/PromotionRecord.cs').read_text()
@@ -507,23 +514,26 @@ class AuthoringTests(unittest.TestCase):
         self.assertIn('LegacySchema = 2', perks)
         self.assertIn('internal const int Schema = 3;', perks)
         self.assertIn('int xp = record.SourceCrewXp;', perks)
-        self.assertIn('var art = record.IsVehicleCrewPromotion ? null : GenderArt(female);', forge)
-        self.assertIn('GenericPilotArt()', forge)
-        self.assertIn('visual = "generic-pilot"', forge)
+        self.assertIn('var art = GenderArt(female);', forge)
+        self.assertIn('GenericPilotArt(bool female)', forge)
+        self.assertIn('GenericPilotArt(femalePilot), GenderArt(femalePilot)', forge)
+        self.assertIn('GenericPilotArt(female), art)', forge)
+        self.assertIn('visual = "generic-pilot-" + gender', forge)
         self.assertNotIn('ApplyPilotArt', forge)
-        self.assertIn('DynamicBadgeFactory.ApplyPilot(leader', forge)
-        self.assertIn('visual = "generic-pilot"', forge)
+        self.assertIn('DynamicBadgeFactory.ApplyPilot(leader, badgeArt', forge)
+        self.assertIn('visual=generic-pilot-{pilotGender}', forge)
         visuals = forge.split('private string ApplyVehicleArtwork', 1)[1].split(
             'private void ApplyProgression', 1)[0]
         self.assertIn('StandalonePortraitAssets pilotArt', visuals)
+        self.assertIn('StandalonePortraitAssets badgeArt', visuals)
         self.assertIn('pilotArt.ApplyTo(leader, speaker)', visuals)
-        self.assertIn('DynamicBadgeFactory.ApplyPilot', visuals)
+        self.assertIn('DynamicBadgeFactory.ApplyPilot(leader, badgeArt', visuals)
         reuse = forge.split('if (existing != null)', 1)[1].split('UnitLeaderTemplate leader = null', 1)[0]
         self.assertIn('if (record.IsVehicleCrewPromotion)', reuse)
-        self.assertNotIn('GenderArt(record.Gender', reuse)
+        self.assertIn('GenderArt(femalePilot)', reuse)
         self.assertIn('ApplyVehicleArtwork(existing, existing.SpeakerTemplate, pilotDonor,', reuse)
-        self.assertIn('record.BadgeIndex, GenericPilotArt())', reuse)
-        self.assertIn('ApplyVehicleArtwork(leader, speaker, source, record.BadgeIndex, GenericPilotArt())', forge)
+        self.assertIn('record.BadgeIndex, GenericPilotArt(femalePilot), GenderArt(femalePilot))', reuse)
+        self.assertIn('GenericPilotArt(female), art)', forge)
         self.assertIn('PilotLabelColor = new(255, 220, 0, 255)',
                       (ROOT / 'code/DynamicBadgeFactory.cs').read_text())
         self.assertIn('sourceVehicle != null', forge)

@@ -179,7 +179,8 @@ namespace Il2CppMenace.Strategy
         public readonly Il2CppSystem.Collections.Generic.List<BaseUnitLeader> m_UnburiedLeaders = new();
         public readonly Il2CppSystem.Collections.Generic.List<BaseUnitLeader> m_BuriedLeaders = new();
         public Il2CppSystem.Collections.Generic.List<UnitLeaderTemplate> Hirable => m_HirableLeaders;
-        public void AddHirableLeader(UnitLeaderTemplate leader) => m_HirableLeaders.Add(leader);
+        // v0.7.18 added the optional warning flag; reflection must validate both parameters.
+        public void AddHirableLeader(UnitLeaderTemplate leader, bool printWarnings = true) => m_HirableLeaders.Add(leader);
         public void ProcessSaveState(SaveState save) { }
     }
     public class DeployedEntity
