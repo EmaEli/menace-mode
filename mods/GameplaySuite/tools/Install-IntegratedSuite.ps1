@@ -77,19 +77,27 @@ try {
         $selected = @('MenaceModSettings') + @($Modules | Where-Object { $_ -ne 'MenaceModSettings' } | Select-Object -Unique)
     }
     if ($UseInstalledSettings) {
-        $supportedSettingsModules = @('SquaddieFieldPromotions', 'SquaddieVeterancy', 'TacticalRoundCheckpoint', 'CoordinatedFire', 'WeaponMechanicsRebalanced')
-        if ($Product -ne 'Standalone' -or $Modules.Count -ne 1 -or $supportedSettingsModules -notcontains $Modules[0]) {
+        $supportedCompanionModules = @('SquaddieFieldPromotions', 'SquaddieVeterancy', 'TacticalRoundCheckpoint', 'CoordinatedFire', 'WeaponMechanicsRebalanced', 'InfantrySandbagCover')
+        if ($Product -ne 'Standalone' -or $Modules.Count -ne 1 -or $supportedCompanionModules -notcontains $Modules[0]) {
             throw 'UseInstalledSettings is unsupported for this product/module selection.'
         }
         $selected = @($Modules[0])
         $dependencyManifest = Get-Content -LiteralPath (Join-Path $BundleRoot ('source\mods\jiangyu\' + $Modules[0] + '\jiangyu.json')) -Raw | ConvertFrom-Json
+        $declaredSettings = @($dependencyManifest.depends | Where-Object { $_ -like 'MenaceModSettings*' })
         $requirements = @($dependencyManifest.depends | Where-Object { $_ -match '^MenaceModSettings >= ([0-9]+\.[0-9]+\.[0-9]+)$' })
-        if ($requirements.Count -ne 1) { throw 'Missing/ambiguous installed settings requirement.' }
-        $minimum = $requirements[0].Substring('MenaceModSettings >= '.Length)
-        $settingsDll = Get-InstalledSettingsReference $GamePath $minimum
-        $settingsHash = (Get-FileHash -LiteralPath $settingsDll -Algorithm SHA256).Hash
+        if ($requirements.Count -gt 1 -or $requirements.Count -ne $declaredSettings.Count) { throw 'Missing/ambiguous installed settings requirement.' }
+        if ($requirements.Count -eq 1) {
+            $minimum = $requirements[0].Substring('MenaceModSettings >= '.Length)
+            $settingsDll = Get-InstalledSettingsReference $GamePath $minimum
+            $settingsHash = (Get-FileHash -LiteralPath $settingsDll -Algorithm SHA256).Hash
+        }
         Assert-Hash (Join-Path $GamePath 'Mods\Jiangyu.Loader.dll') $catalog.loaderSha256
-        Write-Host "Reusing validated installed MenaceModSettings and Jiangyu.Loader for $($Modules[0]); neither will be replaced."
+        if ($settingsDll) {
+            Write-Host "Reusing validated installed MenaceModSettings and Jiangyu.Loader for $($Modules[0]); neither will be replaced."
+        }
+        else {
+            Write-Host "Reusing the validated installed Jiangyu.Loader for $($Modules[0]); MenaceModSettings is not a dependency."
+        }
     }
     elseif ($Modules -contains 'SquaddieFieldPromotions') { throw 'SFP preview requires -UseInstalledSettings.' }
     if ($Product -ne 'Suite' -and (Test-Path -LiteralPath (Join-Path $GamePath 'Mods\MenaceGameplaySuite'))) {
@@ -142,6 +150,10 @@ try {
         if ($name -eq 'WeaponMechanicsRebalanced') {
             Invoke-Dotnet @('run', '--project', (Join-Path $root 'tests\NativeContractChecks\NativeContractChecks.csproj'), '-c', 'Release', '--', (Join-Path $refs 'Assembly-CSharp.dll'), $dll)
         }
+        if ($name -eq 'InfantrySandbagCover') {
+            Invoke-Dotnet @('run', '--project', (Join-Path $root 'tests\NativeContractChecks\NativeContractChecks.csproj'), '-c', 'Release', '--', (Join-Path $refs 'Assembly-CSharp.dll'), $dll)
+            Invoke-Dotnet @('run', '--project', (Join-Path $root 'tests\OfflineChecks\OfflineChecks.csproj'), '-c', 'Release')
+        }
         if ($name -eq 'SquaddieFieldPromotions') {
             Invoke-Dotnet @('run', '--project', (Join-Path $root 'tests\NativeContractChecks\NativeContractChecks.csproj'), '-c', 'Release', '--', (Join-Path $refs 'Assembly-CSharp.dll'), (Join-Path $root 'code'))
             Invoke-Dotnet @('run', '--project', (Join-Path $root 'tests\OfflineChecks\OfflineChecks.csproj'), '-c', 'Release', '--', $source)
@@ -189,7 +201,10 @@ try {
     foreach ($name in $names) { $null = @(Get-TreeInventory (Join-Path $stage $name)) }
     Write-Host "All builds/versions passed. Staged distribution: $stage"
     if ($BuildOnly) { Write-Host 'BUILD-ONLY: no live mod changed.'; return }
-    if ($UseInstalledSettings) { Assert-Hash $settingsDll $settingsHash }
+    if ($UseInstalledSettings) {
+        if ($settingsDll) { Assert-Hash $settingsDll $settingsHash }
+        Assert-Hash (Join-Path $GamePath 'Mods\Jiangyu.Loader.dll') $catalog.loaderSha256
+    }
     Install-StagedMods $GamePath $stage $names $conflicts
     Write-Host 'SUCCESS: files installed and verified. In-game acceptance remains pending.'
 }

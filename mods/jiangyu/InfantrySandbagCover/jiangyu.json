@@ -1,0 +1,10 @@
+{
+  "name": "InfantrySandbagCover",
+  "version": "0.3.0",
+  "author": "Luca",
+  "description": "Player infantry construct native sandbag half cover while stationary: configurable work rounds (default 2), 80 AP per action, with tile progress markers.",
+  "depends": [
+    "Jiangyu >= 1.4.10",
+    "MenaceModSettings >= 0.4.1"
+  ]
+}

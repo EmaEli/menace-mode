@@ -36,15 +36,15 @@ def collect(root, module=None, use_installed_settings=False):
         raise ValueError("Distribution catalog does not cover the current modules exactly")
     if module is not None and module not in available:
         raise ValueError("Unknown requested module")
-    installed_settings_modules = {
+    installed_companion_modules = {
         "SquaddieFieldPromotions", "SquaddieVeterancy", "TacticalRoundCheckpoint",
-        "CoordinatedFire", "WeaponMechanicsRebalanced",
+        "CoordinatedFire", "WeaponMechanicsRebalanced", "InfantrySandbagCover",
     }
-    if use_installed_settings and module not in installed_settings_modules:
+    if use_installed_settings and module not in installed_companion_modules:
         raise ValueError(
-            "Installed-settings mode is supported only by SquaddieFieldPromotions, "
+            "Installed-companion mode is supported only by SquaddieFieldPromotions, "
             "SquaddieVeterancy, TacticalRoundCheckpoint, CoordinatedFire and "
-            "WeaponMechanicsRebalanced"
+            "WeaponMechanicsRebalanced and InfantrySandbagCover"
         )
     if module == "SquaddieFieldPromotions" and not use_installed_settings:
         raise ValueError("Experimental preview requires --use-installed-settings; do not replace an existing companion")
@@ -76,6 +76,7 @@ def collect(root, module=None, use_installed_settings=False):
             add(path)
 
     versions = {}
+    requires_installed_settings = False
     for current_module in modules:
         folder = root / "mods/jiangyu" / current_module
         manifest = json.loads((folder / "jiangyu.json").read_text())
@@ -83,6 +84,10 @@ def collect(root, module=None, use_installed_settings=False):
         if manifest["name"] != current_module or compiled["name"] != current_module or manifest["version"] != compiled["version"]:
             raise ValueError("Manifest mismatch: " + current_module)
         versions[current_module] = manifest["version"]
+        requires_installed_settings = requires_installed_settings or any(
+            isinstance(dependency, str) and dependency.split(" ", 1)[0] == "MenaceModSettings"
+            for dependency in manifest.get("depends", [])
+        )
         project = folder / "code" / (current_module + ".csproj")
         if project.exists():
             xml = ET.parse(project)
@@ -124,11 +129,20 @@ def collect(root, module=None, use_installed_settings=False):
         launcher = launcher.replace(marker, marker + extra.encode("ascii"))
         launcher_name = "INSTALL-" + module + ".cmd"
     payload[launcher_name] = launcher.replace(b"\n", b"\r\n")
+    installed_requirement = ""
+    if use_installed_settings and requires_installed_settings:
+        installed_requirement = (
+            "Requires existing MenaceModSettings and Jiangyu.Loader; does NOT replace either.\r\n"
+        )
+    elif use_installed_settings:
+        installed_requirement = (
+            "Requires existing Jiangyu.Loader; MenaceModSettings is neither required nor replaced.\r\n"
+        )
     payload["README.txt"] = (
         f"MENACE {module or 'Suite'} - CANDIDATE, not game-verified.\r\n"
         f"Double-click {launcher_name} to build, validate, back up and INSTALL.\r\n"
-        + ("Requires existing MenaceModSettings; does NOT replace it or Jiangyu.Loader.\r\n" if use_installed_settings else "") +
-        "Requires the pinned MENACE build and existing MelonLoader/proxies.\r\n"
+        + installed_requirement
+        + "Requires the pinned MENACE build and existing MelonLoader/proxies.\r\n"
         "Downloads a hash-verified pinned .NET 10 SDK privately under tools/dotnet.\r\n"
         "Jiangyu 1.4.10 SDK/loader are downloaded with SHA256 checks; no Unity Editor needed.\r\n"
         "Known conflicting copies are backed up outside Mods; unrelated mods, loaders,\r\n"
@@ -179,6 +193,9 @@ def main():
             selected_modules.insert(0, "MenaceModSettings")
         offline_args.extend(["--modules", ",".join(selected_modules)])
     subprocess.run(offline_args, cwd=ROOT, check=True)
+    if args.module == "InfantrySandbagCover":
+        subprocess.run([dotnet, "run", "--project", str(ROOT / "mods/jiangyu/InfantrySandbagCover/tests/OfflineChecks/OfflineChecks.csproj"),
+                        "-c", "Release"], cwd=ROOT, check=True)
     revision = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
     sdk = json.loads((ROOT / TOOLS / "distribution.json").read_text())["dotnetSdk"]
     archive, kit = make_archive(payload, versions, revision, sdk)

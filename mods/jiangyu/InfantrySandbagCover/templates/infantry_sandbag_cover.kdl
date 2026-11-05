@@ -1,0 +1,73 @@
+// Issue #89: keep MENACE's native placement effects and expose them to player infantry.
+clone "SkillTemplate" from="offmap.deploy_sandbag_cover" id="mod.infantry_sandbag_cover" {
+    set "Order" enum="SkillOrder" "Any"
+    set "Type" enum="SkillType" "Active"
+    set "ActionPointCost" 80
+    set "IsLimitedUses" #false
+    set "Uses" 1
+    set "IsActive" #true
+    set "IsTargeted" #false
+    set "TargetsAllowed" enum="SkillTarget" "Self"
+    set "SelectableTiles" 0
+    set "ProjectileData" #null
+    set "MarkAsActed" #true
+    set "Title" { set "m_DefaultTranslation" "Deploy Sandbags" }
+    set "Description" {
+        set "m_DefaultTranslation" "Work on sandbags on this squad's tile for 80 AP, once per round. Stay stationary and repeat the action until construction is complete (default: 2 work rounds; configurable in Infantry Sandbag Cover settings). Moving cancels unfinished work."
+    }
+}
+
+patch "EntityTemplate" "allied.player_local_forces_conscripts" {
+    append "Skills" ref="SkillTemplate" "mod.infantry_sandbag_cover"
+}
+patch "EntityTemplate" "allied.player_local_forces_regular_infantry" {
+    append "Skills" ref="SkillTemplate" "mod.infantry_sandbag_cover"
+}
+patch "EntityTemplate" "player_squad.carda" {
+    append "Skills" ref="SkillTemplate" "mod.infantry_sandbag_cover"
+}
+patch "EntityTemplate" "player_squad.corlain" {
+    append "Skills" ref="SkillTemplate" "mod.infantry_sandbag_cover"
+}
+patch "EntityTemplate" "player_squad.darby" {
+    append "Skills" ref="SkillTemplate" "mod.infantry_sandbag_cover"
+}
+patch "EntityTemplate" "player_squad.greifinger" {
+    append "Skills" ref="SkillTemplate" "mod.infantry_sandbag_cover"
+}
+patch "EntityTemplate" "player_squad.kubra" {
+    append "Skills" ref="SkillTemplate" "mod.infantry_sandbag_cover"
+}
+patch "EntityTemplate" "player_squad.lim" {
+    append "Skills" ref="SkillTemplate" "mod.infantry_sandbag_cover"
+}
+patch "EntityTemplate" "player_squad.pike" {
+    append "Skills" ref="SkillTemplate" "mod.infantry_sandbag_cover"
+}
+patch "EntityTemplate" "player_squad.pike_tutorial" {
+    append "Skills" ref="SkillTemplate" "mod.infantry_sandbag_cover"
+}
+patch "EntityTemplate" "player_squad.sachin" {
+    append "Skills" ref="SkillTemplate" "mod.infantry_sandbag_cover"
+}
+patch "EntityTemplate" "player_squad.sy" {
+    append "Skills" ref="SkillTemplate" "mod.infantry_sandbag_cover"
+}
+patch "EntityTemplate" "player_squad.tech" {
+    append "Skills" ref="SkillTemplate" "mod.infantry_sandbag_cover"
+}
+patch "EntityTemplate" "player_squad.test" {
+    append "Skills" ref="SkillTemplate" "mod.infantry_sandbag_cover"
+}
+patch "EntityTemplate" "player_squad.vamplew" {
+    append "Skills" ref="SkillTemplate" "mod.infantry_sandbag_cover"
+}
+patch "EntityTemplate" "player_squad.weiwu" {
+    append "Skills" ref="SkillTemplate" "mod.infantry_sandbag_cover"
+}
+patch "EntityTemplate" "player_squad.wetteroth" {
+    append "Skills" ref="SkillTemplate" "mod.infantry_sandbag_cover"
+}
+patch "EntityTemplate" "player_squad.yaz" {
+    append "Skills" ref="SkillTemplate" "mod.infantry_sandbag_cover"
+}

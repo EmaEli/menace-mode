@@ -107,7 +107,10 @@ class DistributionTests(unittest.TestCase):
         catalog = json.loads((TOOLS / "distribution.json").read_text())
         self.assertEqual(catalog["jiangyuVersion"], "1.4.10")
         self.assertEqual(catalog["compiledForJiangyuVersion"], "1.4.8")
-        self.assertEqual(catalog["compiledForJiangyuOverrides"], {"SquaddieFieldPromotions": "1.4.10"})
+        self.assertEqual(catalog["compiledForJiangyuOverrides"], {
+            "SquaddieFieldPromotions": "1.4.10",
+            "InfantrySandbagCover": "1.4.10",
+        })
         self.assertEqual(
             catalog["cliUrl"],
             "https://github.com/antistrategie/jiangyu/releases/download/v1.4.10/jiangyu-cli-win-x64.zip",
@@ -175,6 +178,79 @@ class DistributionTests(unittest.TestCase):
         for field, value in (("AccessorySlots", 0), ("Rarity", 0),
                              ("MinCampaignProgress", 0), ("BlackMarketMaxQuantity", 10)):
             assert_int("vehicle.chassis_light_personnel_carrier", field, value)
+
+    def test_infantry_sandbag_cover_is_scoped_to_player_infantry_and_reuses_companions(self):
+        payload, versions = BUILDER.collect(ROOT, "InfantrySandbagCover", True)
+        self.assertEqual(versions, {"InfantrySandbagCover": "0.3.0"})
+        compiled_path = "source/mods/jiangyu/InfantrySandbagCover/compiled/"
+        self.assertIn(compiled_path + "templates.json", payload)
+        self.assertNotIn("source/mods/jiangyu/MenaceModSettings/jiangyu.json", payload)
+        self.assertFalse(any("/MenaceModSettings/" in path for path in payload))
+        self.assertIn(compiled_path + "code/InfantrySandbagCover.dll", payload)
+
+        manifest = json.loads(payload["source/mods/jiangyu/InfantrySandbagCover/jiangyu.json"])
+        self.assertEqual(manifest["depends"], ["Jiangyu >= 1.4.10", "MenaceModSettings >= 0.4.1"])
+        compiled_manifest = json.loads(payload[compiled_path + "jiangyu.json"])
+        self.assertEqual(compiled_manifest["compiledForJiangyu"], "1.4.10")
+        templates = json.loads(payload[compiled_path + "templates.json"])
+        self.assertEqual(templates["templateClones"], [{
+            "templateType": "SkillTemplate",
+            "sourceId": "offmap.deploy_sandbag_cover",
+            "cloneId": "mod.infantry_sandbag_cover",
+        }])
+
+        patches = {patch["templateId"]: patch for patch in templates["templatePatches"]}
+        skill = patches["mod.infantry_sandbag_cover"]
+        operations = {operation["fieldPath"]: operation for operation in skill["set"]}
+        self.assertEqual(operations["Type"]["value"]["enumValue"], "Active")
+        self.assertEqual(operations["ActionPointCost"]["value"]["int32"], 80)
+        self.assertFalse(operations["IsLimitedUses"]["value"]["boolean"])
+        self.assertFalse(operations["IsTargeted"]["value"]["boolean"])
+        self.assertEqual(operations["TargetsAllowed"]["value"]["enumValue"], "Self")
+        self.assertEqual(operations["SelectableTiles"]["value"]["int32"], 0)
+        self.assertNotIn("EventHandlers", operations)
+        self.assertEqual(operations["ProjectileData"]["value"]["kind"], "Null")
+        native_skills = json.loads((ROOT / "game_files/extracted/ExtractedData/SkillTemplate.json").read_text())
+        donor = next(skill for skill in native_skills if skill["name"] == "offmap.deploy_sandbag_cover")
+        self.assertEqual(donor["TargetsAllowed"], 1)
+        self.assertEqual(donor["SelectableTiles"], 3)
+        self.assertEqual(donor["EventHandlers"], [
+            {"_type": "SpawnHalfCover", "CoverConfig": "military_half_cover_sandbags"},
+            {"_type": "DestroyEnvironmentFeatures"},
+        ])
+        self.assertEqual(donor["ProjectileData"]["Prefab"], "civilian_barricades_crate_2b")
+
+        player_entities = {
+            "allied.player_local_forces_conscripts",
+            "allied.player_local_forces_regular_infantry",
+            "player_squad.carda", "player_squad.corlain", "player_squad.darby",
+            "player_squad.greifinger", "player_squad.kubra", "player_squad.lim",
+            "player_squad.pike", "player_squad.pike_tutorial", "player_squad.sachin",
+            "player_squad.sy", "player_squad.tech", "player_squad.test",
+            "player_squad.vamplew", "player_squad.weiwu", "player_squad.wetteroth",
+            "player_squad.yaz",
+        }
+        native_entities = json.loads((ROOT / "game_files/extracted/ExtractedData/EntityTemplate.json").read_text())
+        self.assertTrue(player_entities <= {entity["name"] for entity in native_entities})
+        self.assertEqual(set(patches) - {"mod.infantry_sandbag_cover"}, player_entities)
+        for entity in player_entities:
+            append = patches[entity]["set"][0]
+            self.assertEqual(append["fieldPath"], "Skills")
+            self.assertEqual(append["value"]["reference"]["templateId"], "mod.infantry_sandbag_cover")
+
+        launcher = payload["INSTALL-InfantrySandbagCover.cmd"].decode()
+        self.assertIn("-Product Standalone -Modules InfantrySandbagCover -UseInstalledSettings", launcher)
+        catalog = json.loads((TOOLS / "distribution.json").read_text())
+        self.assertIn("InfantrySandbagCover", catalog["standaloneGameBuilds"][0]["modules"])
+        self.assertEqual(catalog["compiledForJiangyuOverrides"]["InfantrySandbagCover"], "1.4.10")
+        readme = payload["README.txt"].decode()
+        self.assertIn("Requires existing MenaceModSettings and Jiangyu.Loader; does NOT replace either.", readme)
+        installer = (TOOLS / "Install-IntegratedSuite.ps1").read_text()
+        self.assertIn("'InfantrySandbagCover'", installer)
+        self.assertIn("Assert-Hash (Join-Path $GamePath 'Mods\\Jiangyu.Loader.dll') $catalog.loaderSha256", installer)
+        gate = installer.index("if ($name -eq 'InfantrySandbagCover')")
+        self.assertLess(gate, installer.index("Copy-Item -LiteralPath $compiled -Destination (Join-Path $stage $name)"))
+        self.assertIn('"InfantrySandbagCover"}', (TOOLS / "verify_kit.py").read_text())
 
     def test_preview_uses_canonical_standalone_launcher_without_replacing_settings(self):
         with tempfile.TemporaryDirectory() as folder:
@@ -318,11 +394,14 @@ class DistributionTests(unittest.TestCase):
         helper = (TOOLS / "Install.Common.ps1").read_text()
         self.assertIn("'SquaddieFieldPromotions', 'SquaddieVeterancy'", source)
         self.assertIn("'CoordinatedFire', 'WeaponMechanicsRebalanced'", source)
+        self.assertIn("'InfantrySandbagCover'", source)
         self.assertIn("$selected = @($Modules[0])", source)
         self.assertIn("Get-Content -LiteralPath (Join-Path $BundleRoot ('source\\mods\\jiangyu\\' + $Modules[0]", source)
         self.assertIn("Get-InstalledSettingsReference $GamePath $minimum", source)
+        self.assertIn("$requirements.Count -ne $declaredSettings.Count", source)
         self.assertIn("if (-not $UseInstalledSettings)", source)
-        self.assertIn("if ($UseInstalledSettings) { Assert-Hash $settingsDll $settingsHash }", source)
+        self.assertIn("if ($settingsDll) { Assert-Hash $settingsDll $settingsHash }", source)
+        self.assertIn("Assert-Hash (Join-Path $GamePath 'Mods\\Jiangyu.Loader.dll') $catalog.loaderSha256", source)
         self.assertIn("-p:MenaceModSettingsPath=$settingsDll", source)
         self.assertIn("Assert-Dll $dll $manifest.version '1.0.0.0'", helper)
         self.assertIn("[version]$manifest.version -lt [version]$MinimumVersion", helper)
@@ -362,7 +441,7 @@ class DistributionTests(unittest.TestCase):
         source = (TOOLS / "Install-IntegratedSuite.ps1").read_text()
         gate = source.index("if ($name -eq 'WeaponMechanicsRebalanced')")
         self.assertLess(gate, source.index('Copy-Item -LiteralPath $compiled -Destination (Join-Path $stage $name)'))
-        self.assertIn('module == "WeaponMechanicsRebalanced"', (TOOLS / "verify_kit.py").read_text())
+        self.assertIn('module in {"WeaponMechanicsRebalanced", "InfantrySandbagCover"}', (TOOLS / "verify_kit.py").read_text())
         catalog = json.loads((TOOLS / "distribution.json").read_text())
         self.assertIn("WeaponMechanicsRebalanced", catalog["standaloneGameBuilds"][0]["modules"])
 

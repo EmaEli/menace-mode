@@ -3,6 +3,12 @@
 From the repository root:
 
 - Python source-wiring and data-model checks: `python3 -m unittest discover -s mods/GameplaySuite/tests -v`.
+- Sandbag construction (#89): `test_infantry_sandbag_cover.py` executes production hooks,
+  progress and overlay sources against managed native/Unity stand-ins: per-round work/AP,
+  movement resets, independent builders, settings snapshots, refunds, lifecycle cleanup,
+  separate renderer children and progress labels. Bundled native contracts inspect real
+  proxy signatures and runtime type references without executing native code. Both checks
+  run before canonical staging; neither establishes actual gameplay or visible rendering.
 - Mortar payload checks execute production balance/restore and suppression-ring methods
   with base native-wrapper stand-ins: derived Attack casts, half damage, unchanged core
   suppression, ring deduplication, enemy AP/ammo preservation, player economy and restore.

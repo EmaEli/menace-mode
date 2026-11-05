@@ -78,11 +78,14 @@ def compile_clean(files, game, sdk, dotnet):
             subprocess.run(build_args, check=True, cwd=source)
             assembly = ET.parse(project).findtext("PropertyGroup/AssemblyName", module)
             shutil.copy2(root / "code/bin/Release" / (assembly + ".dll"), root / "compiled/code" / (assembly + ".dll"))
-            if module == "WeaponMechanicsRebalanced":
+            if module in {"WeaponMechanicsRebalanced", "InfantrySandbagCover"}:
                 contracts = root / "tests/NativeContractChecks/NativeContractChecks.csproj"
                 subprocess.run([dotnet, "run", "--project", str(contracts), "-c", "Release", "--",
                                 str(refs / "Assembly-CSharp.dll"), str(root / "compiled/code" / (assembly + ".dll"))],
                                check=True, cwd=source)
+            if module == "InfantrySandbagCover":
+                subprocess.run([dotnet, "run", "--project", str(root / "tests/OfflineChecks/OfflineChecks.csproj"),
+                                "-c", "Release"], check=True, cwd=source)
         if "CinematicActionCamera" in modules:
             camera = source / "mods/ThirdPersonCamera/ThirdPersonCamera.csproj"
             subprocess.run([dotnet, "build", str(camera), "-c", "Release", "--nologo", "-v", "quiet",
