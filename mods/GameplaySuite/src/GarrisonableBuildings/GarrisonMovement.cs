@@ -1,6 +1,7 @@
 #nullable enable
 using System;
 using System.Collections.Concurrent;
+using System.Runtime.CompilerServices;
 using HarmonyLib;
 using Il2CppMenace.States;
 using Il2CppMenace.Tactical;
@@ -42,6 +43,9 @@ public sealed partial class Plugin
             prefix: new HarmonyMethod(typeof(GarrisonMovementHooks), nameof(GarrisonMovementHooks.Move)), finalizer: finish);
     }
 
+    // #44/#62: the 1.3.1 minidump attributes coreclr+0x3c129 to compilation of
+    // this exact helper (284 IL bytes). Keep PrepareJit, but disable this optimizer path.
+    [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)]
     private static GarrisonMovementState? BeginGarrisonMovement(Actor? actor, bool preview)
     {
         GarrisonMovementState? state = null;

@@ -13,7 +13,7 @@ namespace GarrisonableBuildings;
 public sealed partial class Plugin : IHostedPlugin
 {
     private const string ModName = "Garrisonable Buildings";
-    private const string Version = "1.3.1";
+    private const string Version = "1.3.2";
     private const string BuildingCoverProfileName = "cover_inside_building";
     private const string StrongerCoverSettingsGroup = "StrongerCover";
     private const int VanillaContainerAP = 30;

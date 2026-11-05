@@ -97,7 +97,7 @@ namespace Il2CppMenace.Tactical
             return result;
         }
     }
-    public sealed class Actor : Entity
+    public class Actor : Entity
     {
         public readonly SkillContainer Skills;
         public readonly EntityProperties Properties = new();
@@ -113,7 +113,7 @@ namespace Il2CppMenace.Tactical
         public ActorStance GetStance() => Stance;
         public SuppressionState GetSuppressionState() => Suppression;
         public SkillContainer GetSkills() => Skills;
-        public EntityProperties GetCurrentProperties() => Properties;
+        public virtual EntityProperties GetCurrentProperties() => Properties;
         public void SetStance(ActorStance stance, bool force = false)
         {
             if (ThrowStance) throw new Exception("invalid native actor");

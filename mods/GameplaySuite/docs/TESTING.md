@@ -137,10 +137,13 @@ existing hover-after-casualties, 40 AP, defensive-fire, garrison and AI regressi
 - Repeat with vehicle module absent/present, default vehicle resupply ON/OFF, loaded save,
   actor spawn, mission exit and next mission. Debug/test-loadout options remain OFF.
 
-### Garrisonable Buildings 1.3.1 — #62 (exit regression retest pending)
+### Garrisonable Buildings 1.3.2 — #62 / #44 (exit crash safeguard; retest pending)
 
 - 1.3.0 loaded and auto-deployed in the fresh log, but the user reported the occupant
   could not leave because it was deployed. This is not accepted gameplay behavior.
+- 1.3.1 crashed on exit. The matching minidump attributes the known #44 optimizer failure
+  to compilation of `BeginGarrisonMovement` (284 IL bytes, no implementation safeguard).
+  1.3.2 adds only NoInlining/NoOptimization to that helper; exit logic is unchanged.
 - Reopen that mission with one mod copy. Compare the same infantry unit's Aim outside,
   settled inside a supported civilian garrison, and after leaving. Native deployment
   should apply only inside; hovering exit tiles must not remove combat stats or animate.
@@ -157,7 +160,9 @@ existing hover-after-casualties, 40 AP, defensive-fire, garrison and AI regressi
 The managed harness executes production deployment/movement hooks with native API stand-ins,
 including deployed movement refusal, unusable undeploy skills, nested query/execute scopes,
 failed/throwing paths, AP and status guards. It does not run IL2CPP/Harmony or game input/UI.
-Keep #62 open until the user's gameplay retest.
+The safeguard/virtual-dispatch checks do not exercise the native .NET/MonoMod optimizer.
+See [the crash attribution](../../../docs/CRASH_2026-11-05_GARRISON_EXIT.md).
+Keep #62 and #44 open until the user's gameplay retest.
 
 ### StrongerCover / Garrisonable Buildings / WRR (#38)
 

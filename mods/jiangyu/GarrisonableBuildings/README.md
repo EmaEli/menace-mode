@@ -59,7 +59,9 @@ Infantry automatically enters MENACE's native **Deployed** stance after settling
 
 Leaving or being ejected clears the garrison deployment. Since 1.3.1, exit path previews ignore only this automatic deployment without changing combat stats or animating; an actual exit releases the stance before MENACE's movement/undeploy-skill checks. Failed exits restore deployment. Native path checks and the existing building leave AP cost still apply, without a separate undeploy-skill fee.
 
-Pinned-down, independently rooted/stunned and moving units are not forcibly released/deployed; normal native deployment resumes after recovery/settling inside. Existing occupants are reconciled when MENACE rebuilds their properties. Vanilla bunkers, towers and vehicle passengers are not changed. Incoming cover is unchanged. In-game stats-panel/exit acceptance of 1.3.1 is pending (#62); the user reported 1.3.0's exit deadlock.
+Pinned-down, independently rooted/stunned and moving units are not forcibly released/deployed; normal native deployment resumes after recovery/settling inside. Existing occupants are reconciled when MENACE rebuilds their properties. Vanilla bunkers, towers and vehicle passengers are not changed. Incoming cover is unchanged.
+
+The user reported 1.3.0's exit deadlock and a 1.3.1 exit crash. The crash dump identifies the known .NET optimizer failure (#44) while compiling the new movement helper; 1.3.2 adds the narrow compilation safeguard without changing movement rules. In-game stats-panel/exit acceptance remains pending (#62).
 
 ## StrongerCover compatibility
 

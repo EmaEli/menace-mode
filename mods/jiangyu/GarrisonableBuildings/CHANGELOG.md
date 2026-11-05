@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.3.2
+
+- Added the narrow `NoInlining | NoOptimization` safeguard to `BeginGarrisonMovement` after the user's 1.3.1 exit crash. The matching minidump attributes the known #44 .NET/MonoMod optimizer failure to compilation of that exact helper (#62).
+- Movement/deployment/AP logic and the shared main-thread precompilation remain unchanged. Tests cover the emitted safeguard and virtual property dispatch; a successful managed test/build does not reproduce or prove elimination of the native crash. Gameplay retest pending.
+
 ## 1.3.1
 
 - Fixed 1.3.0 auto-deployment trapping infantry inside supported garrisons (#62): movement previews temporarily ignore only garrison deployment, and an actual exit releases the native stance before movement/undeploy-skill checks.

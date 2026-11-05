@@ -1,3 +1,4 @@
+using System.Reflection;
 using GarrisonableBuildings;
 using Il2CppMenace.States;
 using Il2CppMenace.Tactical;
@@ -7,6 +8,10 @@ internal static class GarrisonMovementChecks
 {
     internal static void Run(Action<bool, string> check)
     {
+        const MethodImplAttributes safeguard = MethodImplAttributes.NoInlining | MethodImplAttributes.NoOptimization;
+        var preparation = typeof(Plugin).GetMethod("BeginGarrisonMovement", BindingFlags.Static | BindingFlags.NonPublic)!;
+        check((preparation.GetMethodImplementationFlags() & safeguard) == safeguard,
+            "the crash-attributed helper carries the #44 optimizer/inlining safeguard");
         (Entity shelter, Actor unit) Occupant()
         {
             Plugin.Clear();
@@ -104,6 +109,28 @@ internal static class GarrisonMovementChecks
             var action = MovementAction.Leave;
             check(unit.MoveTo(new(), ref action) && unit.Stance == ActorStance.Default && unit.AP == 60,
                 "direct native movement also releases without the player UI entry point");
+        }
+        {
+            Plugin.Clear();
+            var shelter = new Entity("shelter");
+            var unit = new DispatchActor();
+            shelter.ContainEntity(unit); unit.Skills.Update();
+            check(MovementSystem.GetPath(unit, new(), MoveBackwardsMode.None).Success && unit.PropertyCalls > 0,
+                "guarded preview helper preserves virtual current-property dispatch");
+            int before = unit.PropertyCalls;
+            var action = MovementAction.Leave;
+            check(unit.MoveTo(new(), ref action) && unit.PropertyCalls > before && unit.AP == 60,
+                "guarded execution preserves virtual property dispatch and native leave AP");
+        }
+    }
+
+    private sealed class DispatchActor : Actor
+    {
+        public int PropertyCalls;
+        public override EntityProperties GetCurrentProperties()
+        {
+            PropertyCalls++;
+            return base.GetCurrentProperties();
         }
     }
 }
