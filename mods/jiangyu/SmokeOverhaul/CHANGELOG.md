@@ -4,6 +4,8 @@
 - Fixes native casts for mortar smoke spawn templates and AI-only cooldown discovery; non-smoke tile-effect templates are excluded.
 - Adds bounded, debug-only observations of smoke assignment, early removal, tile membership and visual-object presence/activity after the native spawn delay. Does not create, remove or replace clouds. Debug remains OFF by default.
 - Fresh pre-install 0.8.2 log confirms smoke assignment and duration 2 -> 4 rounds, not successful rendering. Cloud disappearance remains under investigation; this is not a confirmed visual fix.
+- Validated 2026-11-05: 185 Python tests, 19 executed lifecycle assertions, 17,913 candidate offline checks, clean-source build, 49 current native contracts and 24 Windows compatibility checks. Canonical Windows BuildOnly/install passed; installed manifest/assembly/file versions are 0.8.4/0.8.4.0/0.8.4.0. Smoke build: zero warnings; settings companion: existing JIA005 warning.
+- Backup outside Mods: `20261105-105607-e7e25cf7ec6d4b8986680d36c55ba00a`. All 1,394 protected unrelated Mods/UserData files unchanged; MenaceModSettings remains 0.8.2. Game not launched; runtime stat/VFX acceptance pending.
 
 ## 0.8.3
 
