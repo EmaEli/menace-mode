@@ -102,4 +102,40 @@ policy/production-hook assertions, 27 planning/task checks, 79 proxy contracts a
 native order-contract tests on each original 0.7.17 and 0.7.18 binary pass. Python:
 146 LargerMaps tests (eight skipped without native fixture), 199 Suite tests pass.
 Selected-package C# regression/artifact checks: 18,016 pass. These do not execute IL2CPP.
-Windows BuildOnly, installation and post-install gameplay still pending at this point.
+Canonical BuildKit and clean extracted-source verification passed for each single-module
+kit (18,000 selected C# checks each). Native/binary contracts now total 81, including
+proof that AIPerformance.dll has no LargerMaps assembly reference and owns recovery.
+
+## Windows installation — 6 November, 16:46
+
+Source is local commit `c08101d` on dev, **not pushed**, as requested. BuildKit inventories
+pin the actual working-source snapshot; unrelated edits remain outside this commit.
+Both archives contain exactly one module and passed local/remote SHA256 and full inventory:
+- AIPerformance 1.1.0: 46 files, ZIP `1ab663753423275ada01af3adf9fdeb9b3f86e34bc9aa84d62c3487fe3d9fd4b`.
+- LargerMaps 2.6.2: 34 files, ZIP `0ad2934a684ec66408d6a3807381d082d857d30e6a1c1ca5bf1c0d6d13101d04`.
+
+Game closed and exact 0.7.18 native hash confirmed. Both canonical Windows BuildOnly
+gates passed before either installation. Canonical standalone installs then passed,
+preserving the other module's hashes during each operation and reusing settings/loader.
+AI has zero warnings; LargerMaps retains the existing unused-field CS0169 warning.
+
+Installed manifest / assembly / file versions: AI `1.1.0 / 1.1.0.0 / 1.1.0.0`,
+LargerMaps `2.6.2 / 2.6.2.0 / 2.6.2.0`. Installed DLL SHA256:
+- AI: `cd33ed4d11043f07bccdd05c358770768e71922f84e9c9db66be4cfe36000168`.
+- LargerMaps: `a25467631ea49580c6772665724f1f97c5f3dece531e97f89ff291484467d613`.
+
+Backup journals under the game's `_MENACE_Backups` contain only the affected module:
+- AI: `20261106-164600-3a0738a41a1748b1b412063b0f39cbbd`.
+- LargerMaps: `20261106-164610-f2105090e32c46229db4dd4e96540c69`.
+
+1,419 protected unrelated mod/UserData files and 177 runtime/proxy files retain their
+hashes; protected file count and native binary are unchanged. Neither installed manifest
+depends on the other. No saves/settings or unrelated mods were changed.
+Retained source/inventory/install evidence is at
+`E:\MENACE-Work\Builds\AI-recovery-1.1.0-LM-2.6.2-20261106c`; private local Windows logs are
+`.tmp/ai110-windows-buildonly.log` / `.tmp/ai110-windows-install.log`.
+
+**Startup and post-install gameplay remain untested.** Ask the user to restart and replay
+the affected second mission with fast planning ON and recovery ON under AI Performance,
+then retrieve the fresh Latest.log. Observe actual enemy advance, not just recovered scores.
+No Nexus/public release or remote source push was performed.
