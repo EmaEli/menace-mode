@@ -94,19 +94,21 @@ expecting these new smoke rules. Use only one Smoke Overhaul copy.
    with all deep AI profilers OFF. Record actual throws, repeated opportunities,
    native actions/AP/ammo and ~3 AI-turn times; do not infer improvement from builds.
 
-## Larger Maps 2.1.0 — #2 selective positioning, acceptance pending
+## Larger Maps 2.6.0 / AI Performance 1.0.0 — global skill positioning, acceptance pending
 
-- Keep `PreserveBasicInfantryFirePositioning` OFF normally. It preserves at most five
-  already-enabled native profiles, only above 64x64 with simplified planning ON.
-  Other attacks/buffs retain baseline simplification; no waking or new orders.
-- Same 2.1.0 binary, save/seed and mission: OFF/ON runs with restarts, local routing OFF,
-  all deep AI diagnostics OFF and Smoke/Assault settings identical. Prefer proactive
-  smoke OFF to isolate #2 after completing #1's separate acceptance.
-- Use 64x64 as an inert control, then 96x96. Separate offensive vs sleeping/defensive
-  missions. Record ~3 AI-turn times, actual shots/repositions, cover/objective retention
+- `SimplifyCombatAIPlanning` defaults ON from 64x64 and applies to every eligible shared
+  attack/buff skill profile, without a faction or infantry exception. The old
+  `PreserveBasicInfantryFirePositioning` option is removed; OFF disables simplification.
+  The change skips hypothetical skill-use positioning, not ordinary movement or attacks
+  from an actor's current tile; no wake-ups or new orders are issued.
+- Same save/seed, mission and mod set: compare simplified planning OFF/ON with restarts,
+  local routing OFF, all deep AI diagnostics OFF and Smoke/Assault settings identical.
+  Prefer proactive smoke OFF to isolate #57 after completing #1's separate acceptance.
+- Test 64x64 and larger maps, and offensive vs sleeping/defensive missions separately.
+  Record ~3 AI-turn times, actual shots/repositions, cover/objective retention
   and oscillation. Historical 1.9 observations on a different mission are not an A/B.
-- A separate setup-log run must show 0 preserved profiles when OFF, at most 5 when ON
-  above 64, and no activation at 64. Sharing may mean fewer than five distinct profiles.
+- A setup-log run should report the attack/buff templates changed. A zero changed count
+  or missing setup line is not evidence of successful coverage or gameplay performance.
 - Check lost/missing/disabled profiles, next mission and unload. In-memory doubles test
   production setup/restore paths, not IL2CPP validity, native shots or CPU performance.
   Leave OFF if timing/tactical behavior regresses. No new per-issue installer.

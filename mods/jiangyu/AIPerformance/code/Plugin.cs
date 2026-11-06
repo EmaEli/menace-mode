@@ -20,7 +20,6 @@ public sealed partial class Plugin
         {
             settings.AddHeader("AI performance (restart required)");
             settings.AddToggle("SimplifyCombatAIPlanning", "Simplified attack planning (includes 64x64 maps)", true);
-            settings.AddToggle("PreserveBasicInfantryFirePositioning", "Expensive infantry positioning experiment (OFF recommended)", false);
             settings.AddToggle("UseLocalTacticalRouting", "Local tactical routing (limit destination search)", false);
             settings.AddSlider("LocalNearTileLimit", "Nearby destinations inspected", 12f, 64f, 20f);
             settings.AddSlider("LocalCullTileDistance", "Cull distance (tiles)", 10f, 20f, 12f);

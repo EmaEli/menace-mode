@@ -64,17 +64,14 @@ Check(attack.AIConfig.InfluencesPositioning, "Strategy restores flags");
 
 DataTemplateLoader.EmptyCollection = false;
 var infantry = Add("active.fire_pirate_assault_rifle", true, 20);
-var shared = Add("active.shared_profile", true, 20);
-Setting("PreserveBasicInfantryFirePositioning", true);
+var alien = Add("active.alien_stab_attack", true, 21);
 plugin.OnSceneLoaded(0, "Tactical");
-Check(infantry.AIConfig.InfluencesPositioning && shared.AIConfig.InfluencesPositioning, "Opt-in shared native profiles preserved");
-Check(!attack.AIConfig.InfluencesPositioning, "Other attacks remain simplified");
+Check(!infantry.AIConfig.InfluencesPositioning && !alien.AIConfig.InfluencesPositioning,
+    "attack skills used by different factions receive the same global simplification");
+Check(!attack.AIConfig.InfluencesPositioning, "Other attack templates remain simplified");
 plugin.OnUnload();
-Setting("PreserveBasicInfantryFirePositioning", false);
-plugin.OnSceneLoaded(0, "Tactical");
-Check(!infantry.AIConfig.InfluencesPositioning && !shared.AIConfig.InfluencesPositioning, "Default does not retain expensive profiles");
-plugin.OnSceneLoaded(0, "Title");
-Check(infantry.AIConfig.InfluencesPositioning && shared.AIConfig.InfluencesPositioning, "Title restores all originals");
+Check(infantry.AIConfig.InfluencesPositioning && alien.AIConfig.InfluencesPositioning,
+    "scene exit restores every faction's original skill flags");
 attack.AIConfig.IgnoreWrites = true;
 plugin.OnSceneLoaded(0, "Tactical");
 Check(attack.AIConfig.InfluencesPositioning, "Ignored setter does not count as changed");

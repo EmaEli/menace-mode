@@ -1,6 +1,5 @@
-"""PR #18 Jiangyu port guards. No native execution or CPU benchmark is claimed."""
+"""Global positioning guards for the Jiangyu port; no native benchmark is claimed."""
 import json
-import re
 import unittest
 from pathlib import Path
 
@@ -10,31 +9,21 @@ PLUGIN = (ROOT / "../jiangyu/AIPerformance/code/Plugin.cs").read_text()
 PACKAGE = ROOT.parent / "jiangyu/LargerMaps"
 
 
-class SelectivePositioningTests(unittest.TestCase):
-    def test_off_default_above_64_only_and_existing_lifecycle(self):
+class GlobalPositioningTests(unittest.TestCase):
+    def test_default_global_scope_and_existing_lifecycle(self):
         self.assertIn('TargetSize >= ZoneReferenceSize && ReadBool("SimplifyCombatAIPlanning", true)', COMBAT)
-        self.assertIn('ReadBool("PreserveBasicInfantryFirePositioning", false)', COMBAT)
-        self.assertIn('OFF recommended)", false)', PLUGIN)
+        self.assertNotIn('PreserveBasicInfantryFirePositioning', COMBAT + PLUGIN)
+        self.assertIn('foreach (string id in KnownCombatSkillIds)', COMBAT)
+        self.assertIn('foreach (string id in KnownSupportSkillIds)', COMBAT)
         self.assertIn('ApplySimplifiedCombatPlanning();', PLUGIN)
         self.assertIn('OnUnload() { RestoreSimplifiedCombatPlanning();', PLUGIN)
 
-    def test_exact_five_ids_and_shared_native_profile_identity(self):
-        ids = re.findall(r'"(active\.[^"]+)"', COMBAT.split('CandidateInfantryFireSkills =', 1)[1].split('};', 1)[0])
-        self.assertEqual(ids, ["active.fire_pirate_assault_rifle", "active.fire_pirate_pdw",
-                              "active.fire_pirate_outcast_pipe_gun", "active.fire_assault_rifle_tier1_556",
-                              "active.fire_battle_rifle_tier_1"])
-        self.assertIn('GetMember(profile, "Pointer")', COMBAT)
-        self.assertIn('_preservedInfantryFireProfiles.Contains(NativeProfilePointer(config))', COMBAT)
-        self.assertLess(COMBAT.index('CollectPreservedInfantryFireProfiles(getById)'),
-                        COMBAT.index('foreach (object template in EnumerateSkillTemplates(templates))'))
-
-    def test_preservation_never_enables_disabled_or_nonattack_profiles(self):
-        selection = COMBAT.split('private static void CollectPreservedInfantryFireProfiles(', 1)[1].split('private static void TryModifyKnownId(', 1)[0]
-        for member in ('"IsAttack"', '"IsLineOfFireNeeded"', '"InfluencesPositioning"'):
-            self.assertIn(member, selection)
-        self.assertIn('pointer != IntPtr.Zero', selection)
-        self.assertNotIn('TrySetMember(', selection)
-        self.assertIn('_preservedInfantryFireProfiles.Clear();', COMBAT)
+    def test_every_eligible_template_is_modified_without_faction_filter(self):
+        self.assertIn('foreach (object template in EnumerateSkillTemplates(templates))', COMBAT)
+        self.assertIn('TryModifySkillPlanning(template, null, ref attacks, ref buffs)', COMBAT)
+        self.assertIn('if (!isAttack && !isBuff) return;', COMBAT)
+        self.assertNotIn('_preservedInfantryFireProfiles', COMBAT)
+        self.assertNotIn('CandidateInfantryFireSkills', COMBAT)
         self.assertIn('_combatPlanningRestores.Clear();', COMBAT)
 
     def test_no_hot_hooks_sleep_orders_or_custom_pathfinder(self):

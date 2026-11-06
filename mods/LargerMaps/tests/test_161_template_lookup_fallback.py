@@ -30,7 +30,8 @@ class TestKnownCombatFallback(unittest.TestCase):
 
     def test_only_opt_in_large_maps_and_no_global_hook(self):
         self.assertIn('TargetSize >= ZoneReferenceSize && ReadBool("SimplifyCombatAIPlanning", true)',COMBAT)
-        self.assertIn('attacks + buffs == 0',COMBAT)
+        self.assertIn('foreach (string id in KnownCombatSkillIds)',COMBAT)
+        self.assertIn('foreach (string id in KnownSupportSkillIds)',COMBAT)
         self.assertIn('if (!isAttack && !isBuff) return;',COMBAT)
         self.assertIn('RestoreSimplifiedCombatPlanning()',COMBAT)
         for forbidden in ('Harmony.Patch', 'Thread.Sleep', 'FindPath(', 'Task.Run'):
