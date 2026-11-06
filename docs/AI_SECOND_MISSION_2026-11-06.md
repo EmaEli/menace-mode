@@ -139,3 +139,52 @@ Retained source/inventory/install evidence is at
 the affected second mission with fast planning ON and recovery ON under AI Performance,
 then retrieve the fresh Latest.log. Observe actual enemy advance, not just recovered scores.
 No Nexus/public release or remote source push was performed.
+
+## Post-install gameplay — 17:02 to 17:12
+
+User feedback: "seems I did not see many enemies, but a few yes". This is not acceptance
+that stalled advance is fixed. Fresh immutable log capture, while game closed:
+`.tmp/Latest-ai110-feedback-20261106d.log`, 8,015,969 bytes / 22,698 lines,
+SHA256 `cb9c04e3041299ce5c4bdeef154ddd13834c7cf99be197b09c8a4a21f2962f12`.
+Upload/download probe and snapshot hashes matched. No raw log is published.
+
+Startup confirms game 0.7.18+22828, AIPerformance 1.1.0, LargerMaps 2.6.2 and 96x96.
+Startup reports recovery enabled; fast planning adjusts 226 attack / three buff profiles. No
+reported recovery disable/failure, timeout, concurrent-dictionary or null-reference
+exception appears. Recovery-stage diagnostics are OFF: no `ADVANCE-CHECK` or
+`ADVANCE-CHOICE`, so enabled hooks are not proof that score recovery applied.
+
+One tactical map, `21763E9D360`, covers rounds 1–27:
+- **18 Rogue Army teams/vehicles initially**, not a spawn failure. At round 27,
+  16 remain alive and two are dead. These counts are teams/vehicles, not individual soldiers.
+- Twelve teams change round-start position at least once. Accepted enemy skill calls:
+  two rifle attacks, six mortar attacks, seven officer whistles and six stance/deployment
+  actions (21 total). Calls are not proof of hits/kills or player visibility.
+- All six heavy teams retain their initial round-start tile through round 27:
+  three medium machinegun teams, two mortars and one autocannon. One mortar fires;
+  staying on its tile does not make that team entirely inactive.
+- Two surviving walkers move once, then remain stationary for 25 rounds. The third
+  moves toward the order area and disappears from live snapshots after round 6.
+- Several infantry also stop: a conscript team is stationary 23 rounds, another 17,
+  and one infantry team 18 by the final snapshot.
+- Example round 15 machinegun team at (59,88): awake, 100 AP at agent-start,
+  morale 1, suppression 0, one known opponent, AdvanceTowards order 33.2 tiles away.
+  It has 45 movement candidates but Move=0, Idle=1 and every other behavior score=0.
+  A walker at (88,21) similarly has 66 candidates, Move=0 and Idle=1.
+
+The stall is **not exclusively pre-contact**: known-opponent counts remain positive
+through rounds 11–23 and at round 27. Recovery stages, candidate state at its hook,
+and tile utility are not logged, so do not name an exact blocking guard from these
+traces. Candidate 1.1.0 did not eliminate the observed stalls; #2 remains open.
+134 route-limit records exist; the persistent positions are independently supported
+by round-start snapshots rather than inferred solely from missing action entries.
+
+The separate WMR mortar Structure-to-Actor InvalidCast warning occurs 35 times.
+This is already tracked separately; no causal connection to these movement stalls is proven.
+Private analysis `.tmp/analyze-ai-feedback-20261106d.py` and captured-log assertions
+verify the counts, six never-moving teams, two stationary walkers and enabled recovery.
+No game, settings, saves or mod files changed during this investigation.
+
+Next opt-in: targeted, bounded hostile recovery-stage diagnostics to identify whether
+history/actor/candidate/tile guards reject recovery or whether native Move still rejects
+recovered scores. Do not weaken combat/contact safeguards or change settings silently.
