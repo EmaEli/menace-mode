@@ -20,6 +20,8 @@ ModSettings.Values[("Larger Maps", "SimplifyCombatAIPlanning")] = false;
 plugin.Initialize(logs.Add, logs.Add, logs.Add, harmony);
 Check(harmony.Target.Name == "RunWithTimeout", "Correct task hook");
 Check(harmony.Target.GetParameters()[1].ParameterType == typeof(Il2CppMenace.Tactical.Actor), "Actor contract");
+Check(ModSettings.Values[("AI Performance", "RecoverStalledAdvance")] is true, "Recovery defaults ON independently");
+Check(ModSettings.Values[("AI Performance", "DiagnoseAdvanceRecovery")] is false, "Recovery diagnostics default OFF");
 var action = new Il2CppSystem.Action();
 object[] taskArgs = { action, null };
 Check(!(bool)harmony.Prefix.Invoke(null, taskArgs), "Skip detached wrapper");
@@ -54,13 +56,17 @@ plugin.OnUnload();
 Setting("SimplifyCombatAIPlanning", true);
 ModSettings.Values[("Larger Maps", "TacticalMapSize")] = 42;
 plugin.OnSceneLoaded(0, "Tactical");
-Check(attack.AIConfig.InfluencesPositioning, "Vanilla 42 not modified");
+Check(!attack.AIConfig.InfluencesPositioning, "Stale Larger Maps size cannot disable independent AI planning");
+plugin.OnUnload();
+ModSettings.Values.Remove(("Larger Maps", "TacticalMapSize"));
 ModSettings.Values[("Larger Maps", "TacticalMapSize")] = 96;
 DataTemplateLoader.EmptyCollection = true;
 plugin.OnSceneLoaded(0, "Tactical");
 Check(!attack.AIConfig.InfluencesPositioning, "96 and broken collection ID fallback");
 plugin.OnSceneLoaded(0, "Strategy");
 Check(attack.AIConfig.InfluencesPositioning, "Strategy restores flags");
+ModSettings.Values.Remove(("Larger Maps", "TacticalMapSize"));
+ModSettings.Values.Remove(("Larger Maps", "SimplifyCombatAIPlanning"));
 
 DataTemplateLoader.EmptyCollection = false;
 var infantry = Add("active.fire_pirate_assault_rifle", true, 20);
@@ -68,7 +74,7 @@ var alien = Add("active.alien_stab_attack", true, 21);
 plugin.OnSceneLoaded(0, "Tactical");
 Check(!infantry.AIConfig.InfluencesPositioning && !alien.AIConfig.InfluencesPositioning,
     "attack skills used by different factions receive the same global simplification");
-Check(!attack.AIConfig.InfluencesPositioning, "Other attack templates remain simplified");
+Check(!attack.AIConfig.InfluencesPositioning, "AI works with no Larger Maps settings registered");
 plugin.OnUnload();
 Check(infantry.AIConfig.InfluencesPositioning && alien.AIConfig.InfluencesPositioning,
     "scene exit restores every faction's original skill flags");

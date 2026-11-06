@@ -50,9 +50,6 @@ def collect(root, module=None, use_installed_settings=False):
         raise ValueError("Experimental preview requires --use-installed-settings; do not replace an existing companion")
     modules = catalog["modules"] if module is None else list(dict.fromkeys(
         ([] if use_installed_settings else ["MenaceModSettings"]) + [module]))
-    # One logical distribution: the AI companion is mandatory for Larger Maps.
-    if "LargerMaps" in modules and "AIPerformance" not in modules:
-        modules.insert(modules.index("LargerMaps"), "AIPerformance")
     payload = {}
 
     def add(path):
@@ -112,10 +109,17 @@ def collect(root, module=None, use_installed_settings=False):
         tree(folder / "tests", {".cs", ".csproj", ".py", ".ps1"})
         tree(folder / "compiled")
         tree(folder / "runtime_assets")
-    tree(root / "mods/GameplaySuite/src", {".cs"})
-    tree(root / "mods/LargerMaps/src/LargerMaps", {".cs"})
-    for filename in ("ThirdPersonCamera.csproj", "src/ThirdPersonCameraMod.cs", "src/CameraAutoFocus.cs", "README.md"):
-        add(root / "mods/ThirdPersonCamera" / filename)
+    if "AIPerformance" in modules:
+        tree(root / "mods/LargerMaps/tests/AdvanceRecoveryChecks", {".cs", ".csproj"})
+    if module in {"AIPerformance", "LargerMaps"}:
+        # These standalone DLLs link only this historical shared source directory.
+        # Do not bundle unrelated gameplay modules or the camera project.
+        tree(root / "mods/LargerMaps/src/LargerMaps", {".cs"})
+    else:
+        tree(root / "mods/GameplaySuite/src", {".cs"})
+        tree(root / "mods/LargerMaps/src/LargerMaps", {".cs"})
+        for filename in ("ThirdPersonCamera.csproj", "src/ThirdPersonCameraMod.cs", "src/CameraAutoFocus.cs", "README.md"):
+            add(root / "mods/ThirdPersonCamera" / filename)
     for filename in ("Install-IntegratedSuite.ps1", "Install.Common.ps1", "Install.Deployment.ps1", "distribution.json"):
         add(root / TOOLS / filename)
     add(root / "mods/GameplaySuite/docs/INSTALLING.md")
@@ -201,6 +205,8 @@ def main():
                         "-c", "Release"], cwd=ROOT, check=True)
     if "AIPerformance" in versions:
         subprocess.run([dotnet, "run", "--project", str(ROOT / "mods/jiangyu/AIPerformance/tests/OfflineChecks/OfflineChecks.csproj"),
+                        "-c", "Release"], cwd=ROOT, check=True)
+        subprocess.run([dotnet, "run", "--project", str(ROOT / "mods/LargerMaps/tests/AdvanceRecoveryChecks/AdvanceRecoveryChecks.csproj"),
                         "-c", "Release"], cwd=ROOT, check=True)
     revision = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
     sdk = json.loads((ROOT / TOOLS / "distribution.json").read_text())["dotnetSdk"]

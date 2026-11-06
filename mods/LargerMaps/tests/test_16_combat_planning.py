@@ -50,6 +50,6 @@ class TestCombatPlanning(unittest.TestCase):
 
     def test_package_version(self):
         self.assertNotIn('private const string Version', PLUGIN)
-        self.assertEqual(json.loads((ROOT/'../jiangyu/LargerMaps/jiangyu.json').read_text())['version'],'2.6.1')
+        self.assertEqual(json.loads((ROOT/'../jiangyu/LargerMaps/jiangyu.json').read_text())['version'],'2.6.2')
 
 if __name__=='__main__':unittest.main()

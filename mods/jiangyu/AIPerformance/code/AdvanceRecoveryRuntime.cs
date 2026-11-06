@@ -7,7 +7,7 @@ using Il2CppMenace.Tactical.AI.Data;
 using Il2CppMenace.Tools;
 using TileScores = Il2CppSystem.Collections.Generic.Dictionary<Il2CppMenace.Tactical.Tile, Il2CppMenace.Tactical.AI.Data.TileScore>;
 
-namespace LargerMaps;
+namespace AIPerformance;
 
 internal enum AdvanceRecoveryResult
 {
@@ -18,8 +18,8 @@ internal enum AdvanceRecoveryResult
 
 internal static class AdvanceRecoveryRuntime
 {
-    // Equivalent to the missing single-zone contributions reviewed in 0.7.17:
-    // ConsiderZones.Evaluate 0x7DBA63 and PostProcess 0x7DC01D. No contact override.
+    // Missing single-zone contributions reviewed on exact 0.7.17 and 0.7.18 binaries.
+    // 0.7.18: Evaluate 0x7E6603, PostProcess 0x7E6BBD. No contact override.
     internal static bool TryApply(Actor actor, TileScores tiles, AdvanceRecoveryState state, long map, int round)
         => TryApply(actor, tiles, state, map, round, out _);
 
@@ -62,7 +62,7 @@ internal static class AdvanceRecoveryRuntime
         int ap = actor.GetActionPoints();
         if (!float.IsFinite(morale) || morale < 1 || ap <= 0) return false;
 
-        // Attack candidates have already been collected; no skill/LoS/attack evaluation is called here.
+        // Attack candidates already collected; no skill/LoS/attack evaluation here.
         foreach (Behavior behavior in agent.GetBehaviors())
         {
             result = AdvanceRecoveryResult.ActionScore;
@@ -102,9 +102,7 @@ internal static class AdvanceRecoveryRuntime
             result = AdvanceRecoveryResult.Geometry;
             int distance = RectIntExtensions.GetDistanceTo(area, score.Tile);
             if (distance < 0) return false;
-            // APCost is still uncomputed here (native TileScore.Reset sets it to 0).
-            // Move.OnEvaluate finds/clips paths and assigns costs AFTER this hook.
-            // This proves geometric progress only; native Move owns reachability/AP.
+            // APCost is uncomputed here. Native Move later owns reachability and AP.
             progress |= distance < currentDistance;
             float nextDistance = score.DistanceScore + distance * weights.DistanceToZones * weights.DistanceToAdvanceZones * zoneWeight;
             float nextUtility = score.UtilityScore + (RectIntExtensions.IsInside(area, score.Tile) ? insideUtility : 0);
@@ -127,7 +125,6 @@ internal static class AdvanceRecoveryRuntime
             if (!committed)
                 foreach (var edit in edits) { edit.Score.DistanceScore = edit.Distance; edit.Score.UtilityScore = edit.Utility; }
         }
-        // Safety/AP/path fields, attack utility, Move state and behavior scores are never written.
         result = AdvanceRecoveryResult.Applied;
         return true;
     }

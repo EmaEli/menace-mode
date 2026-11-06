@@ -18,6 +18,7 @@ namespace Il2CppMenace.Tactical
     }
     public class Actor
     {
+        public Actor() { Agent.Actor = this; }
         public IntPtr Pointer = (IntPtr)10;
         public AI.Agent Agent = new();
         public Tile Tile = new(0, 0);
@@ -34,11 +35,28 @@ namespace Il2CppMenace.Tactical
         public float GetSuppressionPct() => Suppression;
         public float GetMoralePct() => Morale;
     }
+    public sealed class Map
+    {
+        public IntPtr Pointer = (IntPtr)1;
+        public int Width = 96, Height = 96;
+    }
+    public sealed class TacticalManager
+    {
+        public static TacticalManager Instance = new();
+        public static TacticalManager Get() => Instance;
+        public Map Map = new();
+        public int m_Round = 1;
+        public Map GetMap() => Map;
+        public void OnInit(object mission) { }
+    }
 }
 namespace Il2CppMenace.Tactical.AI
 {
     public class Agent
     {
+        public Tactical.Actor Actor;
+        public Tactical.Actor GetActor() => Actor;
+        private Behavior PickBehavior() => Behaviors[0];
         public IntPtr Pointer = (IntPtr)20;
         public AIFaction Faction = new();
         public Data.RoleData Role = new();
@@ -86,6 +104,13 @@ namespace Il2CppMenace.Tactical.AI.Behaviors
     {
         public List<object> m_Candidates = new();
         public Attack() { ID = "InflictDamage"; }
+    }
+}
+namespace Il2CppMenace.Tactical.AI.Behaviors.Criterions
+{
+    public sealed class ConsiderZones
+    {
+        public void PostProcess(Tactical.Actor actor, Il2CppSystem.Collections.Generic.Dictionary<Tactical.Tile, Data.TileScore> tiles) { }
     }
 }
 namespace Il2CppMenace.Tactical.AI.Data

@@ -88,8 +88,10 @@ def compile_clean(files, game, sdk, dotnet):
                                 "-c", "Release"], check=True, cwd=source)
             if module == "AIPerformance":
                 subprocess.run([dotnet, "run", "--project", str(root / "tests/NativeContractChecks/NativeContractChecks.csproj"),
-                                "-c", "Release", "--", str(refs / "Assembly-CSharp.dll")], check=True, cwd=source)
+                                "-c", "Release", "--", str(refs / "Assembly-CSharp.dll"), str(root / "compiled/code" / (assembly + ".dll"))], check=True, cwd=source)
                 subprocess.run([dotnet, "run", "--project", str(root / "tests/OfflineChecks/OfflineChecks.csproj"),
+                                "-c", "Release"], check=True, cwd=source)
+                subprocess.run([dotnet, "run", "--project", str(source / "mods/LargerMaps/tests/AdvanceRecoveryChecks/AdvanceRecoveryChecks.csproj"),
                                 "-c", "Release"], check=True, cwd=source)
         if "CinematicActionCamera" in modules:
             camera = source / "mods/ThirdPersonCamera/ThirdPersonCamera.csproj"

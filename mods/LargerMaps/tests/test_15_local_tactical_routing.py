@@ -23,7 +23,7 @@ class TestNativeAiCandidateLimits(unittest.TestCase):
         self.assertIn('RestoreLocalTacticalRouting()',ROUTER)
         self.assertIn('TrySetMember(_localTacticalWeights, "NearTileLimit", _localTacticalOriginalNear)',ROUTER)
         self.assertIn('TrySetMember(_localTacticalWeights, "CullTilesDistances", _localTacticalOriginalCull)',ROUTER)
-        self.assertIn('public void OnUnload() { RestoreSimplifiedCombatPlanning(); RestoreLocalTacticalRouting(); }',PLUGIN)
+        self.assertIn('public void OnUnload() { RestoreSimplifiedCombatPlanning(); RestoreLocalTacticalRouting(); AdvanceRecoveryReset(); }',PLUGIN)
     def test_runtime_hook_only_scene_callback(self):
         tactical = PLUGIN.split('if (string.Equals(sceneName, "Tactical", StringComparison.OrdinalIgnoreCase))', 1)[1].split('else if', 1)[0]
         self.assertIn('ApplySimplifiedCombatPlanning();', tactical)
@@ -38,6 +38,6 @@ class TestNativeAiCandidateLimits(unittest.TestCase):
         self.assertIn('new(NativeMethod.PathfindingProcessFindPath, 0x2FE, 2, "C1E106", 0x07, 0x07',NATIVE)
     def test_version(self):
         self.assertNotIn('private const string Version', PLUGIN)
-        self.assertEqual(json.loads((ROOT/'../jiangyu/LargerMaps/jiangyu.json').read_text())['version'],'2.6.1')
+        self.assertEqual(json.loads((ROOT/'../jiangyu/LargerMaps/jiangyu.json').read_text())['version'],'2.6.2')
 
 if __name__=='__main__': unittest.main()

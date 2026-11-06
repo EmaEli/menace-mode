@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace LargerMaps;
+namespace AIPerformance;
 
 internal readonly record struct AdvanceRecoveryOrder(int X, int Z, int Width, int Height, float Priority);
 
@@ -26,7 +26,6 @@ internal sealed class AdvanceRecoveryState
         lock (_sync) { _actors.Clear(); _map = 0; _round = -1; }
     }
 
-    // Opt-in diagnostics only; expose no native references and do not mutate evidence.
     internal string Describe(long actor)
     {
         lock (_sync)

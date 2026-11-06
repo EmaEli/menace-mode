@@ -56,9 +56,6 @@ try {
     $lock = [IO.File]::Open((Join-Path $lockRoot '_MENACE-install.lock'), 'OpenOrCreate', 'ReadWrite', 'None')
     if ($RollbackPath) { Restore-ModBackup $GamePath $RollbackPath -CheckCurrent; return }
     $compatibilityModules = @($Modules)
-    if ($compatibilityModules -contains 'LargerMaps' -and $compatibilityModules -notcontains 'AIPerformance') {
-        $compatibilityModules += 'AIPerformance'
-    }
     Assert-GameBuild (Join-Path $GamePath 'GameAssembly.dll') $catalog $Product $compatibilityModules
     $refs = Join-Path $GamePath 'MelonLoader\Il2CppAssemblies'
     $runtime = Join-Path $GamePath 'MelonLoader\net6'
@@ -104,10 +101,6 @@ try {
         }
     }
     elseif ($Modules -contains 'SquaddieFieldPromotions') { throw 'SFP preview requires -UseInstalledSettings.' }
-    # Keep Larger Maps and its AI DLL in the same build/stage/backup transaction.
-    if ($selected -contains 'LargerMaps' -and $selected -notcontains 'AIPerformance') {
-        $selected = @($selected | Where-Object { $_ -ne 'LargerMaps' }) + @('AIPerformance', 'LargerMaps')
-    }
     if ($Product -ne 'Suite' -and (Test-Path -LiteralPath (Join-Path $GamePath 'Mods\MenaceGameplaySuite'))) {
         throw 'Legacy monolithic Suite detected: use the Suite product for an atomic cutover, not a partial duplicate.'
     }
@@ -156,8 +149,9 @@ try {
             Invoke-Dotnet @('run', '--project', (Join-Path $root 'tests\NativeContractChecks\NativeContractChecks.csproj'), '-c', 'Release', '--', (Join-Path $refs 'Assembly-CSharp.dll'), (Join-Path $source 'mods\GameplaySuite\src\SmokeOverhaul\Plugin.cs'))
         }
         if ($name -eq 'AIPerformance') {
-            Invoke-Dotnet @('run', '--project', (Join-Path $root 'tests\NativeContractChecks\NativeContractChecks.csproj'), '-c', 'Release', '--', (Join-Path $refs 'Assembly-CSharp.dll'))
+            Invoke-Dotnet @('run', '--project', (Join-Path $root 'tests\NativeContractChecks\NativeContractChecks.csproj'), '-c', 'Release', '--', (Join-Path $refs 'Assembly-CSharp.dll'), $dll)
             Invoke-Dotnet @('run', '--project', (Join-Path $root 'tests\OfflineChecks\OfflineChecks.csproj'), '-c', 'Release')
+            Invoke-Dotnet @('run', '--project', (Join-Path $source 'mods\LargerMaps\tests\AdvanceRecoveryChecks\AdvanceRecoveryChecks.csproj'), '-c', 'Release')
         }
         if ($name -eq 'WeaponMechanicsRebalanced') {
             Invoke-Dotnet @('run', '--project', (Join-Path $root 'tests\NativeContractChecks\NativeContractChecks.csproj'), '-c', 'Release', '--', (Join-Path $refs 'Assembly-CSharp.dll'), $dll)

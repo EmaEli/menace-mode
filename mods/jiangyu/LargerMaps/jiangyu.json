@@ -1,11 +1,10 @@
 {
   "name": "LargerMaps",
-  "version": "2.6.1",
+  "version": "2.6.2",
   "author": "Luca",
-  "description": "Selectable 64/72/80/88/96 tactical maps with hash-locked native pathfinding, mission bounds and node-grid initialization for reviewed MENACE 0.7.15 through 0.7.18 builds. Unknown builds fall back to 64x64. Includes the AIPerformance companion. Terrain landmark stamps keep their vanilla world size; optional terrain stamp density on enlarged maps. Options live in the MenaceModSettings window (End key).",
+  "description": "Standalone selectable 64/72/80/88/96 tactical maps with hash-locked native pathfinding, mission bounds and node-grid initialization for reviewed MENACE 0.7.15 through 0.7.18 builds. Unknown builds fall back to 64x64. AI changes are separate in optional AIPerformance. Terrain landmark stamps keep their vanilla world size; optional terrain stamp density on enlarged maps. Options live in the MenaceModSettings window (End key).",
   "depends": [
     "Jiangyu >= 1.4.8",
-    "MenaceModSettings >= 0.2.0",
-    "AIPerformance >= 1.0.0"
+    "MenaceModSettings >= 0.2.0"
   ]
 }

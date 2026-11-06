@@ -235,8 +235,6 @@ public sealed partial class Plugin
             settings.AddToggle("PreserveTerrainStampFootprint", "Keep landmark stamps at vanilla world size (fixes raised lakes)", true);
             settings.AddToggle("IncreaseTerrainStampDensity", "More terrain stamps on maps above 64x64", false);
             settings.AddSlider("TerrainStampDensityMultiplier", "Stamp attempt multiplier at 96x96", 1f, 5f, 1.5f);
-            settings.AddHeader("AI on large maps (restart required)");
-            settings.AddToggle("RecoverStalledAdvance", "MEN-002 candidate: recover advance after two idle rounds (ON; restart required)", true);
             settings.AddHeader("Camera");
             settings.AddToggle("ExtendedZoomOut", "Extended zoom-out on enlarged maps", true);
             settings.AddSlider("ZoomOutMultiplier", "Maximum zoom-out multiplier", 1f, 4f, 2f);
@@ -268,7 +266,7 @@ public sealed partial class Plugin
 
         ResolveTypes();
         InstallHooks(harmony);
-        _log.Msg($"{ModName} {_version}: {TargetSize}x{TargetSize} tactical map; AI performance supplied by AIPerformance.dll; " +
+        _log.Msg($"{ModName} {_version}: {TargetSize}x{TargetSize} tactical map; " +
             (TargetSize <= ZoneReferenceSize ? "64x64 reference mission areas." : "conservative mission areas (no broad objective expansion)."));
     }
 
@@ -388,7 +386,6 @@ public sealed partial class Plugin
             PatchAiPerformance(harmony);
             PatchAiDiagnostics(harmony);
             PatchAIRouteInvestigation(harmony);
-            PatchAdvanceRecovery(harmony);
 
             // Diagnostic-only hooks stay completely out of gameplay hot paths in normal builds.
             // Debug() is source-controlled and OFF by default.

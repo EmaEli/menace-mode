@@ -5,17 +5,18 @@ import unittest
 import xml.etree.ElementTree as ET
 
 ROOT = Path(__file__).resolve().parents[1]
-PLUGIN = (ROOT / 'src/LargerMaps/Plugin.cs').read_text()
-HOOK = (ROOT / 'src/LargerMaps/AdvanceRecovery.cs').read_text()
-RUNTIME = (ROOT / 'src/LargerMaps/AdvanceRecoveryRuntime.cs').read_text()
+AI = ROOT.parent / 'jiangyu/AIPerformance'
+PLUGIN = (AI / 'code/Plugin.cs').read_text()
+HOOK = (AI / 'code/AdvanceRecovery.cs').read_text()
+RUNTIME = (AI / 'code/AdvanceRecoveryRuntime.cs').read_text()
 
 
 class AdvanceRecoveryWiringTests(unittest.TestCase):
     def test_candidate_is_on_by_default_version_locked_and_large_map_only(self):
         self.assertRegex(PLUGIN, r'AddToggle\("RecoverStalledAdvance",[^\n]*true\)')
         self.assertIn('!ReadBool("RecoverStalledAdvance", true)', HOOK)
-        self.assertIn('ExtendedPathfinding.MatchedGameVersion != "v0.7.17+22362"', HOOK)
-        self.assertIn('TargetSize <= ZoneReferenceSize', HOOK)
+        self.assertIn('!AdvanceRecoveryBuild.IsCurrentSupported()', HOOK)
+        self.assertNotIn('ExtendedPathfinding', HOOK)
         self.assertIn('map.Width <= ZoneReferenceSize || map.Height <= ZoneReferenceSize', HOOK)
 
     def test_native_postprocess_and_choice_observer_are_wired(self):
@@ -32,17 +33,20 @@ class AdvanceRecoveryWiringTests(unittest.TestCase):
                           'ref bool __result', 'ref Behavior __result', '.TTL =',
                           '.m_Score =', '.SafetyScore =', '.UtilityByAttacksScore ='):
             self.assertNotIn(forbidden, RUNTIME + HOOK)
-        self.assertIn('AIRouteWrite(__0, "ADVANCE-RECOVERY"', HOOK)
+        self.assertIn('if (!faction.HasKnownOpponent()) return false;', RUNTIME)
 
     def test_rejection_diagnostics_are_opt_in_bounded_and_do_not_disable_gameplay(self):
         self.assertIn('out AdvanceRecoveryResult result', RUNTIME)
-        self.assertIn('AIRouteWrite(__0, "ADVANCE-CHECK"', HOOK)
-        self.assertIn('"ADVANCE-CHOICE"', HOOK)
-        self.assertEqual(HOOK.count('if (_aiRouteEnabled)'), 2)
-        self.assertEqual(HOOK.count('catch (Exception ex) { AIRouteFailure(ex); }'), 2)
-        route = (ROOT / 'src/LargerMaps/AIRouteDiagnostics.cs').read_text()
-        self.assertIn('_aiRouteBudget.Observe(', route)
-        self.assertIn('!ReadBool("DiagnoseAIRoutes", false)', route)
+        self.assertIn('ADVANCE-CHECK round=', HOOK)
+        self.assertIn('ADVANCE-CHOICE round=', HOOK)
+        self.assertIn('ReadBool("DiagnoseAdvanceRecovery", false)', HOOK)
+        self.assertIn('Interlocked.Increment(ref _advanceRecoveryLogCount) <= 200', HOOK)
+        self.assertIn('catch { }', HOOK)
+
+    def test_larger_maps_no_longer_owns_recovery(self):
+        self.assertNotIn('PatchAdvanceRecovery', (ROOT / 'src/LargerMaps/Plugin.cs').read_text())
+        self.assertEqual(list((ROOT / 'src/LargerMaps').glob('AdvanceRecovery*.cs')), [])
+        self.assertNotIn('ModSettings.Get("Larger Maps"', PLUGIN)
 
     def test_pre_path_recovery_does_not_read_uncomputed_ap_costs(self):
         self.assertNotIn('score.APCost', RUNTIME)

@@ -22,18 +22,29 @@ VERIFY_SPEC.loader.exec_module(VERIFIER)
 
 
 class DistributionTests(unittest.TestCase):
-    def test_larger_maps_automatically_bundles_ai_companion(self):
+    def test_larger_maps_is_standalone_without_ai_companion(self):
         for reuse in (False, True):
             with self.subTest(use_installed_settings=reuse):
                 payload, versions = BUILDER.collect(ROOT, "LargerMaps", reuse)
-                self.assertEqual(set(versions), {"LargerMaps", "AIPerformance"} | (set() if reuse else {"MenaceModSettings"}))
-                self.assertLess(list(versions).index("AIPerformance"), list(versions).index("LargerMaps"))
-                self.assertIn("source/mods/jiangyu/AIPerformance/compiled/code/AIPerformance.dll", payload)
-                self.assertIn("source/mods/jiangyu/AIPerformance/tests/NativeContractChecks/Program.cs", payload)
+                self.assertEqual(set(versions), {"LargerMaps"} | (set() if reuse else {"MenaceModSettings"}))
+                self.assertFalse(any(p.startswith("source/mods/jiangyu/AIPerformance/") for p in payload))
+                manifest = json.loads(payload["source/mods/jiangyu/LargerMaps/jiangyu.json"])
+                self.assertFalse(any(d.startswith("AIPerformance") for d in manifest['depends']))
                 self.assertIn(b"-Modules LargerMaps", payload["INSTALL-LargerMaps.cmd"])
                 if reuse:
                     self.assertIn(b"-UseInstalledSettings", payload["INSTALL-LargerMaps.cmd"])
                     self.assertFalse(any(p.startswith("source/mods/jiangyu/MenaceModSettings/") for p in payload))
+
+    def test_ai_recovery_is_independent_and_bundles_its_behavior_checks(self):
+        payload, versions = BUILDER.collect(ROOT, "AIPerformance", True)
+        self.assertEqual(set(versions), {"AIPerformance"})
+        self.assertIn("source/mods/jiangyu/AIPerformance/code/AdvanceRecovery.cs", payload)
+        self.assertIn("source/mods/LargerMaps/tests/AdvanceRecoveryChecks/Program.cs", payload)
+        self.assertFalse(any(p.startswith("source/mods/jiangyu/LargerMaps/") for p in payload))
+        self.assertFalse(any(p.startswith("source/mods/GameplaySuite/src/") for p in payload))
+        installer = (TOOLS / 'Install-IntegratedSuite.ps1').read_text()
+        self.assertNotIn("$compatibilityModules += 'AIPerformance'", installer)
+        self.assertNotIn("+ @('AIPerformance', 'LargerMaps')", installer)
 
     def fixture(self, root):
         def write(name, content):

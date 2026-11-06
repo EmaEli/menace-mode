@@ -65,15 +65,16 @@ two), 80 AP per action, stationary progress and mortar-style tile markers. Its c
 runs managed production-hook/marker tests and metadata-only native contracts before staging.
 Use `-UseInstalledSettings` to validate/reuse both MenaceModSettings and Jiangyu.Loader without
 replacing either. Windows/gameplay acceptance remains separate from these automated checks.
-LargerMaps 2.6.0 automatically includes AIPerformance 1.0.0 (#93/#57), including when
-using `--use-installed-settings` / `-UseInstalledSettings`. Both are built, staged and
-backed up as one transaction; installed settings/loader are validated and preserved.
-The companion's managed behavior and native proxy metadata checks run before staging.
-Its simplified planning defaults ON, including 64x64; old Larger Maps AI settings are
-not migrated. Optional candidate limits remain OFF. The scoped 0.7.18 Larger Maps
-candidate retains the safe 64x64 fallback: native pathfinding above 64 is not authorized.
-The exact hash remains mandatory. Suite/Camera products and other unlisted standalone
-modules remain blocked; this is not whole-suite or gameplay compatibility acceptance.
+LargerMaps 2.6.2 and AIPerformance 1.1.0 are independent standalone selections (#2/#93).
+Neither requires or silently bundles the other; the default Suite explicitly selects both.
+Each supports `--use-installed-settings` / `-UseInstalledSettings` to preserve settings/loader.
+AIPerformance owns conditional recovery (reviewed 0.7.17/0.7.18, actual maps above 64x64)
+and runs managed recovery/planning and native proxy metadata checks before staging.
+Its simplified planning remains ON; old Larger Maps AI settings are not migrated.
+Optional candidate limits and recovery diagnostics remain OFF. The exact scoped 0.7.18 hash
+has a reviewed 28-site native pathfinding plan, including its inlined map-generator
+grid fill (#94). Unknown hashes/conflicting instructions still fall back to 64x64.
+Native gameplay acceptance remains pending; no whole-suite compatibility is implied.
 
 The console stays open on success/failure. Diagnostic log: `%TEMP%\MENACE-install.log`.
 Failures open the log in Notepad. Backups and the rollback journal live under the game's

@@ -1,5 +1,15 @@
 using System.Reflection;
 
+// Recovery policy is exercised separately by AdvanceRecoveryChecks with native stand-ins.
+namespace AIPerformance
+{
+    public sealed partial class Plugin
+    {
+        private static void PatchAdvanceRecovery(HarmonyLib.Harmony harmony) { }
+        private static void AdvanceRecoveryReset() { }
+    }
+}
+
 namespace MenaceModSettings
 {
     public static class ModSettings

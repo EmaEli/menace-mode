@@ -1,4 +1,4 @@
-# Larger Maps 2.6.1 — MENACE 0.7.18 native pathfinding
+# Larger Maps 2.6.2 — standalone maps and native pathfinding
 
 The current host compiles the shared `mods/LargerMaps/src/LargerMaps` sources.
 Use the canonical Suite installer in `mods/GameplaySuite`; do not revive the old
@@ -6,13 +6,13 @@ PR #18 one-click installer or install a second legacy Modpack Loader copy.
 
 ## AI companion (#93 / #57)
 
-The same installer automatically builds and installs **AIPerformance 1.0.0** together
-with Larger Maps. Worker lifetime safety, simplified attack/buff planning and optional
-candidate limits now live only in `AIPerformance.dll`, with settings under **AI Performance**.
-Simplified planning defaults ON and now includes 64x64; the old Larger Maps OFF setting
-does not disable the new companion. Optional local routing remains OFF. This avoids
-evaluating hypothetical future firing positions, so AI positioning can differ.
-Diagnostics and conditional advance recovery remain in Larger Maps.
+Larger Maps works without AIPerformance. Its manifest and standalone installer no longer
+require or automatically include that DLL. Jiangyu and MenaceModSettings remain required.
+Worker lifetime safety, simplified attack/buff planning, optional candidate limits and
+conditional advance recovery live only in the independent **AIPerformance 1.1.0** package.
+The Suite explicitly includes both; standalone updates replace only the selected module.
+Optional general AI diagnostics remain in Larger Maps. Native map/pathfinding behavior
+is unchanged from 2.6.1.
 
 ## MENACE 0.7.18 native support (#94)
 
@@ -22,7 +22,7 @@ both node-grid fill bounds in the map generator. All instructions are verified b
 any write; write verification and rollback cover the complete selected plan. Earlier
 builds retain their 26-site plans; unknown builds or conflicts still fall back to 64x64.
 No game file is patched on disk. 64x64 does not install native edits. Conditional advance
-recovery remains restricted to 0.7.17. Canonical Windows BuildOnly/install passed
+recovery has moved to AIPerformance 1.1.0. The earlier 2.6.1 Windows BuildOnly/install passed
 on 6 November; manifest/assembly/file 2.6.1/2.6.1.0/2.6.1.0 and protected-file hashes
 were verified. Gameplay/pathfinding acceptance is pending. See
 `docs/LARGERMAPS_0.7.18_2026-11-06.md` at the repository root for evidence.
@@ -49,11 +49,11 @@ deployment, spawn and objective AI zones keep vanilla size and follow the map ce
 so they stay on the city. Setpieces and all other missions are unchanged. OFF
 restores 2.3.2. Not yet gameplay-verified.
 
-## Conditional advance recovery (#2, on by default)
+## Conditional advance recovery (#2, moved to AIPerformance)
 
-`RecoverStalledAdvance` is **ON by default**, restart required; it can be switched
+In the optional AIPerformance package, `RecoverStalledAdvance` is **ON by default**, restart required; it can be switched
 off for comparison. It applies only
-to reviewed 0.7.17+22362 and actual maps above 64x64, independently of simplified
+to reviewed 0.7.17+22362 / 0.7.18+22828 and actual maps above 64x64, independently of simplified
 combat planning and local tactical routing. No PC settings are changed by building.
 
 - Requires two consecutive observed idle rounds at the same position/order, not
@@ -72,15 +72,15 @@ combat planning and local tactical routing. No PC settings are changed by buildi
   The pre-path recovery requires geometric progress, not a positive cached APCost:
   that field is still uncomputed here. Native Move subsequently validates actual
   reachability and AP; restoring scores does not prove an affordable path exists.
-- Detailed `ADVANCE-RECOVERY` entries require the separate `DiagnoseAIRoutes` toggle.
-  They prove only score recovery, not selection, movement, arrival or an attack.
-  2.3.1 also records bounded `ADVANCE-CHECK` rejection stages and `ADVANCE-CHOICE`
-  idle-history observations. Diagnostics do not relax gameplay eligibility guards.
+- AIPerformance's `DiagnoseAdvanceRecovery` toggle defaults OFF and caps output at
+  200 lines per mission. `ADVANCE-CHECK` reports rejection/applied scores and
+  `ADVANCE-CHOICE` reports idle history, not proven movement/arrival/attack.
+  Diagnostics do not relax gameplay eligibility guards.
 
 ### Recovery A/B acceptance (pending)
 
 Use the same save/seed on 96x96, restart between OFF/ON runs and hold all other
-settings fixed (current investigation: `SimplifyCombatAIPlanning=false`,
+settings fixed (current candidate: `SimplifyCombatAIPlanning=true`,
 `UseLocalTacticalRouting=false`). Observe through the first contact and at least
 three subsequent rounds. Compare actual tile/zone-distance changes, accepted
 attacks and visible turn durations; the two idle rounds must precede any recovery.

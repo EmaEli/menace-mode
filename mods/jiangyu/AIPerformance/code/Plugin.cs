@@ -4,7 +4,7 @@ using MenaceModSettings;
 
 namespace AIPerformance;
 
-// Owns AI performance only. No map generation, native byte edits or per-frame polling.
+// Owns AI planning/recovery. No map generation, native byte edits or per-frame polling.
 public sealed partial class Plugin
 {
     private const string ModName = "AI Performance";
@@ -23,18 +23,18 @@ public sealed partial class Plugin
             settings.AddToggle("UseLocalTacticalRouting", "Local tactical routing (limit destination search)", false);
             settings.AddSlider("LocalNearTileLimit", "Nearby destinations inspected", 12f, 64f, 20f);
             settings.AddSlider("LocalCullTileDistance", "Cull distance (tiles)", 10f, 20f, 12f);
+            settings.AddToggle("RecoverStalledAdvance", "Recover advance after two idle rounds (maps above 64x64)", true);
+            settings.AddToggle("DiagnoseAdvanceRecovery", "Log bounded advance recovery checks", false);
         });
         PatchAiTaskLifetime(harmony);
+        PatchAdvanceRecovery(harmony);
     }
 
     public void OnSceneLoaded(int buildIndex, string sceneName)
     {
         if (string.Equals(sceneName, "Tactical", StringComparison.OrdinalIgnoreCase))
         {
-            // Larger Maps may fall back to 64. Both requested and fallback sizes
-            // are now covered; do not depend on its native backend or assembly.
-            object requested = ModSettings.Get("Larger Maps", "TacticalMapSize");
-            TargetSize = ToInt(requested, 64);
+            // Planning covers native and enlarged maps; recovery checks the actual map.
             ApplySimplifiedCombatPlanning();
             ApplyLocalTacticalRouting();
         }
@@ -44,10 +44,11 @@ public sealed partial class Plugin
         {
             RestoreSimplifiedCombatPlanning();
             RestoreLocalTacticalRouting();
+            AdvanceRecoveryReset();
         }
     }
 
-    public void OnUnload() { RestoreSimplifiedCombatPlanning(); RestoreLocalTacticalRouting(); }
+    public void OnUnload() { RestoreSimplifiedCombatPlanning(); RestoreLocalTacticalRouting(); AdvanceRecoveryReset(); }
 
     private static bool ReadBool(string key, bool fallback)
     {

@@ -4,7 +4,7 @@ using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
 
 // Inspect proxy metadata without initializing or executing any IL2CPP type.
-if (args.Length != 1) throw new ArgumentException("Usage: <Assembly-CSharp.dll>");
+if (args.Length is < 1 or > 2) throw new ArgumentException("Usage: <Assembly-CSharp.dll> [AIPerformance.dll]");
 using var pe = new PEReader(File.OpenRead(args[0]));
 var reader = pe.GetMetadataReader();
 var names = new SignatureNames();
@@ -53,6 +53,56 @@ Property(config, "WEIGHTS", "AIWeightsTemplate");
 var weights = Type("Il2CppMenace.Tactical.AI.AIWeightsTemplate");
 Property(weights, "NearTileLimit", "Int32", true);
 Property(weights, "CullTilesDistances", "Int32", true);
+foreach (string member in new[] { "DistanceToZones", "DistanceToAdvanceZones", "UtilityThreshold" })
+    Property(weights, member, "Single");
+void Method(TypeDefinition type, string member, string result, params string[] parameters)
+{
+    Check(type.GetMethods().Count(h =>
+    {
+        var method = reader.GetMethodDefinition(h);
+        var signature = method.DecodeSignature(names, (object?)null);
+        return reader.GetString(method.Name) == member && signature.ReturnType == result &&
+            signature.ParameterTypes.SequenceEqual(parameters);
+    }) == 1, member + " signature");
+}
+var agent = Type("Il2CppMenace.Tactical.AI.Agent");
+Method(agent, "PickBehavior", "Behavior");
+Method(agent, "GetZones", "List<Zone>");
+Method(agent, "GetActor", "Actor");
+Method(agent, "GetRole", "RoleData");
+Method(agent, "GetFaction", "AIFaction");
+Method(agent, "GetBehaviors", "List<Behavior>");
+Method(agent, "IsSleeping", "Boolean");
+Method(agent, "IsDeploymentPhase", "Boolean");
+Method(faction, "HasKnownOpponent", "Boolean");
+var zones = Type("Il2CppMenace.Tactical.AI.Behaviors.Criterions.ConsiderZones");
+Method(zones, "PostProcess", "Void", "Actor", "Dictionary<Tile,TileScore>");
+var manager = Type("Il2CppMenace.Tactical.TacticalManager");
+Check(manager.GetMethods().Count(h =>
+{
+    var method = reader.GetMethodDefinition(h);
+    var signature = method.DecodeSignature(names, (object?)null);
+    return reader.GetString(method.Name) == "OnInit" && signature.ParameterTypes.Length == 1 && signature.ReturnType == "Void";
+}) == 1, "unique TacticalManager.OnInit/1");
+Property(manager, "m_Round", "Int32");
+var role = Type("Il2CppMenace.Tactical.AI.Data.RoleData");
+Property(role, "AvoidOpponents", "Boolean");
+foreach (string member in new[] { "ZoneImportanceWeight", "UtilityScale", "UtilityThresholdScale" })
+    Property(role, member, "Single");
+var zone = Type("Il2CppMenace.Tactical.AI.Zone");
+Property(zone, "Area", "RectInt");
+Property(zone, "Priority", "Single");
+Property(zone, "Order", "ZoneOrder");
+var score = Type("Il2CppMenace.Tactical.AI.Data.TileScore");
+Property(score, "Tile", "Tile");
+Property(score, "DistanceScore", "Single", true);
+Property(score, "UtilityScore", "Single", true);
+foreach (string member in new[] { "SafetyScore", "UtilityByAttacksScore", "UtilityByAttacksScoreCandidate" })
+    Property(score, member, "Single");
+Property(Type("Il2CppMenace.Tactical.AI.Behaviors.Attack"), "m_Candidates");
+var geometry = Type("Il2CppMenace.Tools.RectIntExtensions");
+Method(geometry, "GetDistanceTo", "Int32", "RectInt", "Tile");
+Method(geometry, "IsInside", "Boolean", "RectInt", "Tile");
 var loader = Type("Il2CppMenace.Tools.DataTemplateLoader");
 Check(loader.GetMethods().Any(h =>
 {
@@ -62,6 +112,15 @@ Check(loader.GetMethods().Any(h =>
         method.GetGenericParameters().Count == 1 && signature.ReturnType == "!!0" &&
         signature.ParameterTypes.SequenceEqual(new[] { "String", "Boolean" });
 }), "Get<T>(string, bool) ID fallback");
+if (args.Length == 2)
+{
+    using var built = new PEReader(File.OpenRead(args[1]));
+    var metadata = built.GetMetadataReader();
+    Check(!metadata.AssemblyReferences.Any(h => metadata.GetString(metadata.GetAssemblyReference(h).Name) == "LargerMaps"),
+        "AIPerformance has no LargerMaps assembly dependency");
+    Check(metadata.TypeDefinitions.Any(h => metadata.GetString(metadata.GetTypeDefinition(h).Name) == "AdvanceRecoveryRuntime"),
+        "recovery runtime belongs to AIPerformance.dll");
+}
 Console.WriteLine($"PASS: {checks} AI performance native metadata contracts; no native methods executed.");
 
 sealed class SignatureNames : ISignatureTypeProvider<string, object?>

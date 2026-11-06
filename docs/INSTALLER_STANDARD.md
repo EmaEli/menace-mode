@@ -125,11 +125,14 @@ the same exact 0.7.18 hash. Its bundled metadata checker validates mortar hooks,
 payload properties and runtime binary native-type references before staging in both
 the canonical installer and clean-source verifier. This does not prove native dispatch
 or balance; Suite/Camera products remain blocked on that scoped hash.
-LargerMaps 2.6.0 always expands to include AIPerformance 1.0.0
-before the scoped compatibility check and build/stage transaction (#93). Its companion
-runs managed behavior and proxy metadata checks before staging. Installed-settings mode
-supports the pair without replacing settings/loader. The scoped 0.7.18 selection does
-not authorize >64 native pathfinder edits; Larger Maps keeps its safe 64x64 fallback.
+LargerMaps 2.6.2 is standalone: never expand its module selection to include
+AIPerformance. The Suite explicitly lists both independent packages; neither manifest
+requires the other (#2/#93). AIPerformance 1.1.0 owns stalled-advance recovery and runs
+managed recovery/planning and proxy metadata checks before staging. Installed-settings
+mode supports either standalone without replacing settings/loader. On the reviewed 0.7.18 hash,
+LargerMaps 2.6.1 now supports the 28-site native plan, including both inlined node-grid
+fill bounds (#94). Earlier builds retain their original plans; unknown hashes and
+instruction conflicts still force 64x64. This is not in-game acceptance.
 The Jiangyu SDK comes from the hash-verified CLI archive; code is built directly with .NET against
 installed game proxies. Authored templates/bundles are precompiled for the pinned game,
 so the player does **not** need Unity Editor or a global Jiangyu configuration change.

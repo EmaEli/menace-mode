@@ -1,4 +1,4 @@
-"""Optional byte-level evidence for the reviewed 0.7.17 order gate, not execution."""
+"""Optional exact-binary evidence for reviewed 0.7.17/0.7.18 gates, not execution."""
 import hashlib
 import json
 import os
@@ -12,12 +12,13 @@ class NativeOrderContractTests(unittest.TestCase):
     def setUpClass(cls):
         filename = os.environ.get('MENACE_GAME_ASSEMBLY')
         if not filename:
-            raise unittest.SkipTest('Set MENACE_GAME_ASSEMBLY for native 0.7.17 checks')
+            raise unittest.SkipTest('Set MENACE_GAME_ASSEMBLY for native 0.7.17/0.7.18 checks')
         cls.binary = Path(filename).read_bytes()
         builds = json.loads((Path(__file__).with_name('pathfinding-sites.json')).read_text())['builds']
-        expected = next(b['sha256'] for b in builds if b['game_version'] == 'v0.7.17+22362')
-        if hashlib.sha256(cls.binary).hexdigest() != expected:
-            raise AssertionError('These instruction assertions apply only to the reviewed 0.7.17 binary')
+        sha = hashlib.sha256(cls.binary).hexdigest()
+        cls.version = next((b['game_version'] for b in builds if b['sha256'] == sha), None)
+        if cls.version not in ('v0.7.17+22362', 'v0.7.18+22828'):
+            raise AssertionError('Instruction assertions require a reviewed 0.7.17/0.7.18 binary')
         pe = struct.unpack_from('<I', cls.binary, 0x3c)[0]
         count = struct.unpack_from('<H', cls.binary, pe + 6)[0]
         table = pe + 24 + struct.unpack_from('<H', cls.binary, pe + 20)[0]
@@ -32,13 +33,35 @@ class NativeOrderContractTests(unittest.TestCase):
         self.fail(f'RVA {rva:X} not backed by section bytes')
 
     def assert_code(self, rva, hex_bytes):
+        rva = self.current_rva(rva)
         expected = bytes.fromhex(hex_bytes)
         self.assertEqual(self.read_rva(rva, len(expected)), expected, f'RVA {rva:X}')
 
     def assert_call(self, rva, target):
+        rva, target = self.current_rva(rva), self.current_rva(target)
         instruction = self.read_rva(rva, 5)
         self.assertEqual(instruction[0], 0xE8)
         self.assertEqual(rva + 5 + struct.unpack_from('<i', instruction, 1)[0], target)
+
+    def current_rva(self, rva):
+        if self.version == 'v0.7.17+22362':
+            return rva
+        # Individually reviewed native sites; no presumed whole-binary delta.
+        return {
+            0x7B29B0: 0x7BD270, 0x7B0436: 0x7BAD16, 0x7D72F0: 0x7E1CE0,
+            0x7DB791: 0x7E6331, 0x7AE980: 0x7B9300, 0x7DB9E5: 0x7E6585,
+            0x7DBE0C: 0x7E69AC, 0x7DBEF1: 0x7E6A91,
+            0x7AEA3F: 0x7B93BF, 0x7AE908: 0x7B9288,
+            0x7DBA63: 0x7E6603, 0x7DE823: 0x7E93C3,
+            0x7DBE49: 0x7E69E9, 0x7DC01D: 0x7E6BBD,
+            0x7B1834: 0x7BC0F4, 0x7B8610: 0x7C1350,
+            0x7B1883: 0x7BC163, 0x7B37D0: 0x7BE090,
+            0x7B1943: 0x7BC223, 0x7B1A58: 0x7BC338, 0x7B8680: 0x7C13C0,
+            0x7B1B02: 0x7BC3E2, 0x7B30B0: 0x7BD970,
+            0x7D7F61: 0x7E2951, 0x7D198A: 0x7DD09A,
+            0x7D1CDC: 0x7DD3EC, 0x6AF3A0: 0x6BBAB0,
+            0x7D1E02: 0x7DD512, 0x6963A0: 0x6A2FA0, 0x7D1E30: 0x7DD540,
+        }[rva]
 
     def test_agents_read_shared_faction_operational_zones(self):
         # mov rax,[rcx+10]; null check; mov rax,[rax+70]. Not a private unit plan.

@@ -6,7 +6,9 @@
     <Nullable>disable</Nullable>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="../../src/LargerMaps/AdvanceRecoveryState.cs" Link="AdvanceRecoveryState.cs" />
-    <Compile Include="../../src/LargerMaps/AdvanceRecoveryRuntime.cs" Link="AdvanceRecoveryRuntime.cs" />
+    <Compile Include="../../../jiangyu/AIPerformance/code/AdvanceRecoveryState.cs" Link="AdvanceRecoveryState.cs" />
+    <Compile Include="../../../jiangyu/AIPerformance/code/AdvanceRecoveryRuntime.cs" Link="AdvanceRecoveryRuntime.cs" />
+    <Compile Include="../../../jiangyu/AIPerformance/code/AdvanceRecoveryBuild.cs" Link="AdvanceRecoveryBuild.cs" />
+    <Compile Include="../../../jiangyu/AIPerformance/code/AdvanceRecovery.cs" Link="AdvanceRecovery.cs" />
   </ItemGroup>
 </Project>

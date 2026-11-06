@@ -1,4 +1,4 @@
-using LargerMaps;
+using AIPerformance;
 using Il2CppMenace.Tactical;
 using Il2CppMenace.Tactical.AI;
 using Il2CppMenace.Tactical.AI.Behaviors;
@@ -8,6 +8,10 @@ using Scores = Il2CppSystem.Collections.Generic.Dictionary<Il2CppMenace.Tactical
 
 int checks = 0;
 void Check(bool value, string label) { checks++; if (!value) throw new Exception(label); }
+Check(AdvanceRecoveryBuild.IsSupported("871b4c3468c68dae3d75e7b5e29fcc9b0a8a253fcebf64045af348f0aec75111"), "reviewed 0.7.17");
+Check(AdvanceRecoveryBuild.IsSupported("494C9E212D411D898B3ABAFB4AD233F7A39A22648D713A86B9641D698B2D12E9"), "reviewed 0.7.18, case insensitive");
+foreach (string hash in new[] { null, "", "0.7.18+22828", new string('0',64), "877622dd02ed79f6a3a37580b5cd9be12e29012bbd6f15a9c80cf917af1373db" })
+    Check(!AdvanceRecoveryBuild.IsSupported(hash), "unknown/unreviewed builds fail closed");
 var order = new AdvanceRecoveryOrder(10, 0, 5, 5, 1);
 var tracker = new AdvanceRecoveryState();
 bool Observe(int r, int x = 0, long map = 1, long agent = 20, AdvanceRecoveryOrder? o = null)
@@ -181,5 +185,49 @@ foreach (int cost in new[] { 0, 20, 101, int.MaxValue })
     try { AdvanceRecoveryRuntime.TryApply(a,t,s,1,3); Check(false,"partial-write fault should propagate"); }
     catch (InvalidOperationException) { Check(t[a.Tile].DistanceScore == 4 && t.Values.Last().DistanceScore == 2, "partial writes rolled back"); }
     finally { TileScore.WritesBeforeThrow = -1; }
+}
+// Exercise the actual hooks, not just their scoring policy, across native/enlarged maps.
+foreach (var dimensions in new[] { (64,64), (96,64), (64,96), (96,96) })
+{
+    Plugin.BeginFixture();
+    var (a,t,_) = Fixture();
+    TacticalManager.Instance = new() { Map = new() { Width = dimensions.Item1, Height = dimensions.Item2 } };
+    for (int r = 1; r <= 3; r++)
+    {
+        TacticalManager.Instance.m_Round = r;
+        Plugin.ScoreFixture(a,t);
+        Plugin.ChoiceFixture(a.Agent,a.Agent.Behaviors[0]);
+    }
+    Check((t[a.Tile].DistanceScore > 4) == (dimensions == (96,96)), "hooks use actual map dimensions " + dimensions);
+    Check(Plugin.Logs.Count == 0, "default hooks emit no per-actor logs");
+}
+{
+    Plugin.BeginFixture(diagnostics: true);
+    var (a,t,_) = Fixture();
+    TacticalManager.Instance = new();
+    for (int r = 1; r <= 2; r++)
+    {
+        TacticalManager.Instance.m_Round = r;
+        Plugin.ScoreFixture(a,t);
+        Plugin.ChoiceFixture(a.Agent,a.Agent.Behaviors[0]);
+    }
+    Plugin.ResetFixtureMission();
+    TacticalManager.Instance.m_Round = 3;
+    Plugin.ScoreFixture(a,t);
+    Check(t[a.Tile].DistanceScore == 4, "new mission cannot inherit idle history");
+    for (int i = 0; i < 500; i++) Plugin.ScoreFixture(a,t);
+    Check(Plugin.Logs.Count == 204, "diagnostics capped at 200 since mission reset");
+    Plugin.BeginFixture(diagnostics: true);
+    Plugin.RejectLog = true;
+    Plugin.ScoreFixture(a,t);
+    Plugin.ChoiceFixture(a.Agent,a.Agent.Behaviors[0]);
+    Check(Plugin.RecoveryEnabled, "diagnostic failures do not disable recovery");
+    Plugin.RejectLog = false;
+    Plugin.ScoreFixture(null,t);
+    Check(Plugin.RecoveryEnabled, "null actor safely rejected by actual hook");
+    TacticalManager.Instance.Map = null;
+    Plugin.ScoreFixture(a,t);
+    Plugin.ChoiceFixture(a.Agent,a.Agent.Behaviors[0]);
+    Check(Plugin.RecoveryEnabled, "scene teardown safely ignored by both hooks");
 }
 Console.WriteLine($"Advance recovery checks passed: {checks} (managed stand-ins, not IL2CPP/gameplay)");
