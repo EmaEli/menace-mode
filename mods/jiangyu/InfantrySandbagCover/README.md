@@ -1,4 +1,4 @@
-# Infantry Sandbag Cover 0.3.0
+# Infantry Sandbag Cover 0.3.1
 
 Experimental, opt-in package for [issue #89](https://github.com/EmaEli/menace-mode/issues/89). The player's named infantry
 squads and player local-forces infantry receive **Deploy Sandbags**, an 80 AP active action.
@@ -9,6 +9,8 @@ the default therefore costs 160 AP over two rounds. Settings changes affect new 
 
 An amber tile border and **Sandbags 1/2** label show unfinished work. The border uses the same
 independent dual-LineRenderer pattern as mortar ranging, without taking native marker channels.
+If Unity rejects the world renderer, the progress label remains available; a one-time warning
+records the failing renderer stage. The reported 0.3.0 renderer error still needs an in-game retest.
 Movement cancels progress, including moving away and back. A squad that already moved this
 round cannot build. Embarking, death and mission/scene changes clear unfinished work. Work is
 owned by its builder, not transferable to another squad. Skipping a work round while remaining
@@ -22,6 +24,9 @@ shared delayed-AoE channels; doing so can hide native Supply Drop markers.
 
 No cover or native environment-clearing effects occur until the final action. Native placement
 handlers are retained; failed final placement refunds that action's AP and keeps earlier work.
+The native action/completion pipeline runs on every work round; only the two effect handlers
+are suppressed before completion. Skipping ApplyToTile in 0.3.0 also skipped native busy cleanup,
+causing the reported hourglass lock. Final placement is checked after native effects, not scheduling.
 There is no target selection or crate projectile. Enemy infantry and vehicles receive no action.
 
 Requires Jiangyu 1.4.10 and MenaceModSettings >= 0.4.1. The canonical standalone installer can

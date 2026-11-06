@@ -66,6 +66,7 @@ namespace Il2CppMenace.Tactical
     public enum Direction { North = 0, East = 2, South = 4, West = 6 }
     public enum MovementAction { Walk }
     public class Entity { }
+    public class Element { }
     public sealed class Tile(int x, int z)
     {
         private static long _next;
@@ -82,7 +83,7 @@ namespace Il2CppMenace.Tactical
         public IntPtr Pointer = new(++_next);
         public Tile Tile = new(4, 5);
         public int AP = 100, HP = 100, TilesMovedThisTurn;
-        public bool Moving, Contained, Player = true, Infantry = true;
+        public bool Moving, Contained, Busy, Player = true, Infantry = true;
         public int GetActionPoints() => AP;
         public void SetActionPoints(int ap, bool force = false) => AP = ap;
         public Tile GetTile() => Tile;
@@ -95,6 +96,7 @@ namespace Il2CppMenace.Tactical
     public sealed class TacticalManager
     {
         public static TacticalManager Instance = new();
+        public HashSet<Skills.Skill> BusySkills = new();
         public int Round = 1;
         public static TacticalManager Get() => Instance;
         public int GetRound() => Round;
@@ -105,20 +107,24 @@ namespace Il2CppMenace.Tactical
 namespace Il2CppMenace.Tactical.Skills
 {
     using Il2CppMenace.Tactical;
+    using Il2CppMenace.Tactical.Skills.Effects;
     [Flags] public enum UsageParameter { Default = 0, Fake = 2, NoApConsumed = 64 }
     public struct TargetUsageParams { }
+    public class SkillEventHandler { public Skill ParentSkill { get; set; } }
     public sealed class Skill
     {
         private static long _next;
         public IntPtr Pointer = new(++_next);
         public string ID = ConstructionSystem.SkillId;
         public Actor Actor = new();
-        public bool NativeUsable = true, Delay, PlacementFails, ThrowPlacement, RejectAfterCharge;
-        public int Applies, EnvironmentChanges, Cost = 80;
+        public bool NativeUsable = true, Delay, DeferCompletion, PlacementFails, ThrowPlacement, ThrowEnvironment, RejectAfterCharge;
+        public int Applies, EnvironmentChanges, Cost = 80, NativeApplications, ClearBusyCalls, AfterUseCalls, ContainerUpdates;
+        private Tile _scheduledTile;
+        private UsageParameter _scheduledUsage;
         public string GetID() => ID;
         public Actor GetActor() => Actor;
         public int GetActionPointCost() => Cost;
-        public bool IsUsable() { bool value = NativeUsable && Actor.AP >= Cost; ConstructionSystem.Usable(this, ref value); return value; }
+        public bool IsUsable() { bool value = NativeUsable && !Actor.Busy && Actor.AP >= Cost; ConstructionSystem.Usable(this, ref value); return value; }
         public bool IsUsable(TargetUsageParams p) => IsUsable();
         public bool Use(Tile tile, UsageParameter usage = UsageParameter.Default)
         {
@@ -129,7 +135,12 @@ namespace Il2CppMenace.Tactical.Skills
                 if (original && IsUsable(new TargetUsageParams()))
                 {
                     Actor.AP -= Cost;
-                    if (!Delay && !RejectAfterCharge) ApplyToTile(tile, usage);
+                    if (!RejectAfterCharge)
+                    {
+                        Actor.Busy = true;
+                        TacticalManager.Instance.BusySkills.Add(this);
+                        if (!Delay) ApplyToTile(tile, usage);
+                    }
                     result = !RejectAfterCharge;
                 }
                 ConstructionSystem.AfterUse(this, result, state);
@@ -144,14 +155,64 @@ namespace Il2CppMenace.Tactical.Skills
             {
                 if (original)
                 {
-                    Applies++;
-                    if (ThrowPlacement) throw new InvalidOperationException("fixture placement exception");
-                    if (!PlacementFails) tile.Mask = 15;
-                    EnvironmentChanges++;
+                    // Native ApplyToTile schedules BOTH effects and completion. Skipping
+                    // this method leaves the accepted skill/actor/tactical manager busy.
+                    NativeApplications++;
+                    _scheduledTile = tile;
+                    _scheduledUsage = usage;
                 }
-                ConstructionSystem.AfterApply(this, state);
+                if (!DeferCompletion) FinishNative();
             }
-            catch (Exception e) { ConstructionSystem.ApplyFailed(e, state); throw; }
+            catch (Exception e) { ConstructionSystem.ApplyFailed(e, this, state); throw; }
+        }
+        public void FinishNative()
+        {
+            if (_scheduledTile == null) return;
+            var tile = _scheduledTile;
+            _scheduledTile = null;
+            new SpawnHalfCoverHandler { ParentSkill = this }.OnApply(Actor, Actor.Tile, tile, tile, null, true);
+            new DestroyEnvironmentFeaturesHandler { ParentSkill = this }.OnTileHit(this, tile, tile, tile.GetPos());
+            ClearBusy(_scheduledUsage);
+            AfterUseCalls++;
+            ContainerUpdates++;
+        }
+        public void ClearBusy(UsageParameter usage)
+        {
+            ClearBusyCalls++;
+            Actor.Busy = false;
+            TacticalManager.Instance.BusySkills.Remove(this);
+            ConstructionSystem.Cleared(this);
+        }
+    }
+}
+namespace Il2CppMenace.Tactical.Skills.Effects
+{
+    using Il2CppMenace.Tactical;
+    public sealed class SpawnHalfCoverHandler : SkillEventHandler
+    {
+        public void OnApply(Actor user, Tile from, Tile target, Tile center, Element element, bool hit)
+        {
+            try
+            {
+                if (!ConstructionSystem.BeforeCover(this, target)) return;
+                ParentSkill.Applies++;
+                if (ParentSkill.ThrowPlacement) throw new InvalidOperationException("fixture placement exception");
+                if (!ParentSkill.PlacementFails) target.Mask = 15;
+            }
+            catch (Exception e) { ConstructionSystem.CoverFailed(e, this); throw; }
+        }
+    }
+    public sealed class DestroyEnvironmentFeaturesHandler : SkillEventHandler
+    {
+        public void OnTileHit(Skill skill, Tile target, Tile center, UnityEngine.Vector3 impact)
+        {
+            try
+            {
+                if (!ConstructionSystem.BeforeEnvironment(skill, target)) return;
+                if (skill.ThrowEnvironment) throw new InvalidOperationException("fixture environment exception");
+                skill.EnvironmentChanges++;
+            }
+            catch (Exception e) { ConstructionSystem.EnvironmentFailed(e, skill); throw; }
         }
     }
 }

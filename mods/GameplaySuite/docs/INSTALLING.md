@@ -59,7 +59,7 @@ Startup/gameplay acceptance remains pending; prior camera evidence is not a 1.2.
 WeaponMechanicsRebalanced 0.4.15 is a scoped standalone code-only mortar correction (#59).
 Its canonical build and clean-source verifier inspect native mortar hook/property contracts
 and WMR binary type references before staging. No indexed templates/bundles are shipped.
-InfantrySandbagCover 0.3.0 (#89) is an opt-in standalone construction test on this exact build.
+InfantrySandbagCover 0.3.1 (#89) is an opt-in standalone construction test on this exact build.
 It adds a C# runtime to the native self-tile sandbag skill: configurable work rounds (default
 two), 80 AP per action, stationary progress and mortar-style tile markers. Its canonical build
 runs managed production-hook/marker tests and metadata-only native contracts before staging.

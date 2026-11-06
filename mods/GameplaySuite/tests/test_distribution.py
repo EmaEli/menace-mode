@@ -181,7 +181,7 @@ class DistributionTests(unittest.TestCase):
 
     def test_infantry_sandbag_cover_is_scoped_to_player_infantry_and_reuses_companions(self):
         payload, versions = BUILDER.collect(ROOT, "InfantrySandbagCover", True)
-        self.assertEqual(versions, {"InfantrySandbagCover": "0.3.0"})
+        self.assertEqual(versions, {"InfantrySandbagCover": "0.3.1"})
         compiled_path = "source/mods/jiangyu/InfantrySandbagCover/compiled/"
         self.assertIn(compiled_path + "templates.json", payload)
         self.assertNotIn("source/mods/jiangyu/MenaceModSettings/jiangyu.json", payload)

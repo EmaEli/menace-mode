@@ -72,7 +72,7 @@ warning. Full restore remains unimplemented. Evidence is recorded separately in 
 | WeaponRangesRebalanced | 2.10.2 | Shared SuiteSystem host, ranges/linked skills/override JSON; runtime cached-range enforcement for the configurable thrown-grenade cap (#75); gameplay acceptance pending after 2.10.1 failed |
 | CinematicActionCamera | 1.2.2 | Windows test install and post-install startup log verified on MENACE 0.7.17+22362; manifests/DLLs verified, settings preserved, backup retained; no camera startup errors/warnings; positive user feedback but explicit allied Jetpack auto-follow acceptance still pending (#60) |
 
-Experimental package (not included in the default Suite): **InfantrySandbagCover 0.3.0 (#89)**.
+Experimental package (not included in the default Suite): **InfantrySandbagCover 0.3.1 (#89)**.
 Configurable stationary construction (1–10 work rounds, default 2), at 80 AP per action and
 once per tactical round, replaces instant placement. Actor/tile progress and independent
 mortar-style amber tile borders show unfinished work; movement cancels it. Native cover and
@@ -80,7 +80,16 @@ environment handlers run only on completion; failed final placement refunds the 
 It now includes a C# runtime and requires MenaceModSettings >= 0.4.1. Installed-companion mode
 validates/reuses both companions without replacing them. Production runtime/marker stand-in
 tests and metadata-only native contracts are bundled and run before canonical staging.
-0.3.0 Windows build/install and in-game acceptance are pending. The previous 0.2.0 template-only
+0.3.0 passed canonical Windows BuildOnly/install, but gameplay feedback reported an hourglass
+lock after Deploy Sandbags. Native disassembly confirms its skipped ApplyToTile also skipped
+busy cleanup. 0.3.1 preserves native completion, gates only the two effects and settles final
+placement at ClearBusy after delayed effects. Stand-ins now model scheduled native busy cleanup.
+The 0.3.0 world-border ArgumentException is not yet resolved; GUI labels now survive border
+failure and a one-time warning identifies its stage. Local runtime build, 65 production-hook/
+marker checks, 54 native metadata checks, 194 Python tests and 18,098 scoped shared C# checks pass.
+Pinned 1.4.10 authoring compilation passed with unchanged template data. Canonical 0.3.1
+Windows BuildOnly/install and in-game acceptance remain pending.
+The previous 0.2.0 template-only
 candidate passed canonical BuildOnly/install on MENACE 0.7.18+22828, with backup
 `_MENACE_Backups/20261105-180433-36f506b924eb46cb94bae4d0108f4b0d`; that is not 0.3.0 evidence.
 

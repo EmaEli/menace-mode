@@ -1,3 +1,14 @@
+## 0.3.1 - Preserve native action completion (#89)
+
+- Fix the 0.3.0 hourglass lock after the first work action: preserve ApplyToTile and its
+  native completion callbacks; gate only cover placement and environment clearing.
+- Settle final construction/refunds at native ClearBusy, after delayed effects execute,
+  rather than checking for cover immediately after scheduling. Release busy on runtime errors.
+- Keep GUI progress labels available if the world border fails; log its failing stage once.
+  This is a fallback/diagnostic improvement, not proof that the native renderer error is fixed.
+- Model native actor/tactical busy ownership, scheduled effects and completion in regression
+  tests, including asynchronous success/failure and renderer failure. Game acceptance is separate.
+
 ## 0.3.0 - Configurable stationary construction
 
 - Add Construction turns (1–10, default 2) to MenaceModSettings; 80 AP per work action,

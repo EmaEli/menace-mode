@@ -4,6 +4,7 @@ using System.Runtime.CompilerServices;
 using HarmonyLib;
 using Il2CppMenace.Tactical;
 using Il2CppMenace.Tactical.Skills;
+using Il2CppMenace.Tactical.Skills.Effects;
 using Jiangyu.Sdk;
 using MenaceModSettings;
 
@@ -29,7 +30,8 @@ public sealed class ConstructionSystem : JiangyuSystem
         internal Actor Actor;
         internal Tile Tile;
         internal int Round, Cost, BeforeAP, BeforeCover;
-        internal bool Final, Applied, Refunded;
+        internal UsageParameter Usage;
+        internal bool Final, Applied, Refunded, Scheduled;
     }
 
     public override void OnInit()
@@ -46,7 +48,12 @@ public sealed class ConstructionSystem : JiangyuSystem
         Patch(typeof(Skill), "Use", nameof(BeforeUse), nameof(AfterUse), nameof(UseFailed), typeof(Tile), typeof(UsageParameter));
         try
         {
-            Patch(typeof(Skill), "ApplyToTile", nameof(BeforeApply), nameof(AfterApply), nameof(ApplyFailed), typeof(Tile), typeof(UsageParameter));
+            Patch(typeof(Skill), "ApplyToTile", nameof(BeforeApply), null, nameof(ApplyFailed), typeof(Tile), typeof(UsageParameter));
+            Patch(typeof(Skill), "ClearBusy", null, nameof(Cleared), null, typeof(UsageParameter));
+            Patch(typeof(SpawnHalfCoverHandler), "OnApply", nameof(BeforeCover), null, nameof(CoverFailed),
+                typeof(Actor), typeof(Tile), typeof(Tile), typeof(Tile), typeof(Element), typeof(bool));
+            Patch(typeof(DestroyEnvironmentFeaturesHandler), "OnTileHit", nameof(BeforeEnvironment), null, nameof(EnvironmentFailed),
+                typeof(Skill), typeof(Tile), typeof(Tile), typeof(UnityEngine.Vector3));
             Patch(typeof(Skill), "IsUsable", null, nameof(Usable));
             Patch(typeof(Skill), "IsUsable", null, nameof(Usable), null, typeof(TargetUsageParams));
             Patch(typeof(TacticalManager), "InvokeOnMovement", null, nameof(Moved), null,
@@ -109,7 +116,7 @@ public sealed class ConstructionSystem : JiangyuSystem
                 || !owner.Available(__instance, out var actor, out var tile)) return false;
             __0 = tile;
             __state = new Attempt { Actor = actor, Tile = tile, Round = Round,
-                Cost = __instance.GetActionPointCost(), BeforeAP = actor.GetActionPoints(), BeforeCover = CoverMask(tile) };
+                Cost = __instance.GetActionPointCost(), BeforeAP = actor.GetActionPoints(), BeforeCover = CoverMask(tile), Usage = __1 };
             owner._pending[__instance.Pointer.ToInt64()] = __state;
             owner._actors[Key(actor)] = actor;
             return true; // Native checks, AP charging, acted state and scheduling are preserved.
@@ -128,9 +135,7 @@ public sealed class ConstructionSystem : JiangyuSystem
     {
         if (__exception != null && __state != null)
         {
-            _owner?.Refund(__state);
-            _owner?._pending.Remove(__instance.Pointer.ToInt64());
-            _owner?.Fail(__exception);
+            _owner?.Abort(__instance, __exception);
         }
         return __exception;
     }
@@ -140,43 +145,94 @@ public sealed class ConstructionSystem : JiangyuSystem
         __state = null;
         if (!IsOurs(__instance)) return true;
         var owner = _owner;
-        // Never let untracked, fake, delayed-after-scene or duplicate applications create cover.
-        if (owner == null || !owner.MainThread || !owner._ready
-            || !owner._pending.TryGetValue(__instance.Pointer.ToInt64(), out var attempt)) return false;
+        // Only stale/duplicate calls are skipped. An accepted native use MUST reach
+        // ApplyToTile: it schedules ClearBusy, OnAfterUse and the container refresh.
+        if (owner == null || !owner.MainThread
+            || !owner._pending.TryGetValue(__instance.Pointer.ToInt64(), out var attempt) || attempt.Scheduled) return false;
         __state = attempt;
-        owner._pending.Remove(__instance.Pointer.ToInt64());
+        attempt.Scheduled = true;
+        attempt.Usage = __1;
         try
         {
             var actor = attempt.Actor;
             var tile = actor.GetTile();
-            if ((__1 & UsageParameter.Fake) != 0 || tile == null || __0 == null || actor.IsMoving()
+            if (!owner._ready || !owner._tactical || (__1 & UsageParameter.Fake) != 0 || tile == null || __0 == null || actor.IsMoving()
                 || actor.IsContainedWithinAnotherEntity() || actor.GetHitpoints() <= 0 || Round != attempt.Round
                 || tile.Pointer != attempt.Tile.Pointer || __0.Pointer != tile.Pointer || CoverMask(tile) == 15
                 || !owner._work.CanWork(Key(actor), tile.GetX(), tile.GetZ(), Round, actor.TilesMovedThisTurn))
-            { owner.Refund(attempt); return false; }
+            { owner.Refund(attempt); return true; }
             attempt.BeforeCover = CoverMask(tile);
             attempt.Final = owner._work.BeginWork(Key(actor), tile.GetX(), tile.GetZ(), Round, actor.TilesMovedThisTurn, owner._required);
             attempt.Applied = true;
-            return attempt.Final; // Intermediate rounds skip *all* placement/environment effects.
+            return true; // Effects are gated separately; native completion is never suppressed.
         }
-        catch (Exception e) { owner.Refund(attempt); owner.Fail(e); return false; }
+        catch (Exception e) { owner.Refund(attempt); owner.Fail(e); return true; }
     }
 
-    internal static void AfterApply(Skill __instance, Attempt __state)
+    internal static bool BeforeCover(SpawnHalfCoverHandler __instance, Tile __2)
+        => EffectsAllowed(__instance.ParentSkill, __2);
+
+    internal static bool BeforeEnvironment(Skill __0, Tile __1) => EffectsAllowed(__0, __1);
+
+    private static bool EffectsAllowed(Skill skill, Tile target)
     {
-        if (__state == null || !__state.Applied || !__state.Final) return;
+        if (!IsOurs(skill)) return true;
+        var owner = _owner;
         try
         {
-            if ((CoverMask(__state.Tile) & ~__state.BeforeCover) != 0)
-                _owner?._work.Complete(Key(__state.Actor), __state.Round);
-            else _owner?.Refund(__state); // Keep previous progress and permit a retry.
+            if (owner == null || !owner.MainThread || !owner._ready || !owner._tactical
+                || !owner._pending.TryGetValue(skill.Pointer.ToInt64(), out var attempt)
+                || !attempt.Applied || !attempt.Final || target == null || target.Pointer != attempt.Tile.Pointer) return false;
+            var actor = attempt.Actor;
+            return actor.GetHitpoints() > 0 && !actor.IsMoving() && !actor.IsContainedWithinAnotherEntity()
+                && actor.GetTile()?.Pointer == attempt.Tile.Pointer && actor.TilesMovedThisTurn == 0 && Round == attempt.Round;
         }
-        catch (Exception e) { _owner?.Refund(__state); _owner?.Fail(e); }
+        catch (Exception e) { owner?.Fail(e); return false; }
     }
 
-    internal static Exception ApplyFailed(Exception __exception, Attempt __state)
+    internal static void Cleared(Skill __instance)
     {
-        if (__exception != null && __state != null) { _owner?.Refund(__state); _owner?.Fail(__exception); }
+        var owner = _owner;
+        if (owner == null || !owner.MainThread || !owner._pending.Remove(__instance.Pointer.ToInt64(), out var attempt)) return;
+        try
+        {
+            // ApplyToTile returns before native effects execute. Inspect cover only
+            // at the native completion callback, never immediately after scheduling.
+            if (!attempt.Applied) owner.Refund(attempt);
+            else if (attempt.Final)
+            {
+                if ((CoverMask(attempt.Tile) & ~attempt.BeforeCover) != 0) owner._work.Complete(Key(attempt.Actor), attempt.Round);
+                else owner.Refund(attempt);
+            }
+        }
+        catch (Exception e) { owner.Refund(attempt); owner.Fail(e); }
+    }
+
+    private void Abort(Skill skill, Exception error)
+    {
+        if (MainThread && _pending.Remove(skill.Pointer.ToInt64(), out var attempt))
+        {
+            Refund(attempt);
+            skill.ClearBusy(attempt.Usage);
+        }
+        Fail(error);
+    }
+
+    internal static Exception CoverFailed(Exception __exception, SpawnHalfCoverHandler __instance)
+    {
+        if (__exception != null && IsOurs(__instance.ParentSkill)) _owner?.Abort(__instance.ParentSkill, __exception);
+        return __exception;
+    }
+
+    internal static Exception EnvironmentFailed(Exception __exception, Skill __0)
+    {
+        if (__exception != null && IsOurs(__0)) _owner?.Abort(__0, __exception);
+        return __exception;
+    }
+
+    internal static Exception ApplyFailed(Exception __exception, Skill __instance, Attempt __state)
+    {
+        if (__exception != null && __state != null) _owner?.Abort(__instance, __exception);
         return __exception;
     }
 

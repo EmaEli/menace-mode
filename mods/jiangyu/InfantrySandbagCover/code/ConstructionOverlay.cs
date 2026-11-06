@@ -18,6 +18,7 @@ internal sealed class ConstructionOverlay
     private Material _material;
     private GUIStyle _style;
     private bool _failed;
+    private string _stage = "initialization";
 
     private Material Material()
     {
@@ -26,7 +27,9 @@ internal sealed class ConstructionOverlay
         {
             var shader = Shader.Find(name);
             if (shader == null) continue;
+            _stage = "material creation (" + name + ")";
             _material = new Material(shader) { hideFlags = HideFlags.HideAndDontSave, renderQueue = 5000 };
+            _stage = "material properties";
             foreach (var p in new[] { ("_ZWrite", 0), ("_ZTest", 8), ("_Cull", 0), ("_SrcBlend", 5), ("_DstBlend", 10) })
                 if (_material.HasProperty(p.Item1)) _material.SetInt(p.Item1, p.Item2);
             if (_material.HasProperty("_Color")) _material.SetColor("_Color", Color.white);
@@ -41,8 +44,11 @@ internal sealed class ConstructionOverlay
         // Only one Renderer per GameObject; generic AddComponent<LineRenderer> is stripped.
         var child = new GameObject(outer ? "Sandbag Border Outline" : "Sandbag Border Progress")
             { hideFlags = HideFlags.HideAndDontSave };
+        _stage = "renderer parenting";
         child.transform.SetParent(root.transform, false);
+        _stage = "LineRenderer component creation";
         var line = child.AddComponent(Il2CppType.Of<LineRenderer>()).Cast<LineRenderer>();
+        _stage = "LineRenderer properties";
         line.useWorldSpace = true;
         line.loop = true;
         line.positionCount = 4;
@@ -55,7 +61,6 @@ internal sealed class ConstructionOverlay
 
     internal void Refresh(ConstructionState work, Dictionary<long, Actor> actors)
     {
-        if (_failed) return;
         try
         {
             var desired = new HashSet<long>();
@@ -67,29 +72,48 @@ internal sealed class ConstructionOverlay
                 if (tile == null) continue;
                 desired.Add(key);
                 if (_markers.ContainsKey(key)) continue;
+                // Keep the screen-space progress label independent of world-renderer
+                // availability. A Unity component failure must not hide all progress.
+                var marker = new Marker { Center = tile.GetPos() };
+                _markers[key] = marker;
+                if (_failed) continue;
+                _stage = "root creation";
                 var root = new GameObject("Infantry Sandbag Construction") { hideFlags = HideFlags.HideAndDontSave };
                 try
                 {
-                    var center = tile.GetPos();
+                    var center = marker.Center;
                     var material = Material();
                     var outer = Line(root, material, true);
                     var inner = Line(root, material, false);
+                    _stage = "border positions and colors";
                     Position(outer, center);
                     Position(inner, center);
                     outer.startColor = outer.endColor = new Color(0.015f, 0.015f, 0.015f, 0.96f);
                     inner.startColor = inner.endColor = new Color(1f, 0.78f, 0.12f, 1f);
-                    _markers[key] = new Marker { Root = root, Center = center };
+                    marker.Root = root;
                 }
                 catch { UnityEngine.Object.Destroy(root); throw; }
             }
             foreach (long key in _markers.Keys.ToArray())
-                if (!desired.Contains(key)) { UnityEngine.Object.Destroy(_markers[key].Root); _markers.Remove(key); }
+                if (!desired.Contains(key))
+                {
+                    if (_markers[key].Root != null) UnityEngine.Object.Destroy(_markers[key].Root);
+                    _markers.Remove(key);
+                }
         }
         catch (Exception e)
         {
+            bool firstFailure = !_failed;
             _failed = true;
-            ClearObjects();
-            Log.Warn("Sandbag tile overlay unavailable: " + e.GetType().Name);
+            foreach (var marker in _markers.Values)
+            {
+                if (marker.Root != null) UnityEngine.Object.Destroy(marker.Root);
+                marker.Root = null;
+            }
+            if (_material != null) UnityEngine.Object.Destroy(_material);
+            _material = null;
+            if (firstFailure) Log.Warn("Sandbag tile border unavailable at " + _stage + ": " + e.GetType().Name
+                + ": " + e.Message + ". Progress labels remain enabled.");
         }
     }
 
@@ -105,7 +129,7 @@ internal sealed class ConstructionOverlay
 
     internal void Draw(ConstructionState work)
     {
-        if (_failed || _markers.Count == 0 || Event.current == null || Event.current.type != EventType.Repaint) return;
+        if (_markers.Count == 0 || Event.current == null || Event.current.type != EventType.Repaint) return;
         var camera = Camera.main;
         if (camera == null) return;
         _style ??= new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter, fontSize = 16, fontStyle = FontStyle.Bold };

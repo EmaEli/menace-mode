@@ -19,6 +19,7 @@ public sealed class Transform(GameObject owner)
 public sealed class GameObject : Object
 {
     public static List<GameObject> All = new();
+    public static bool FailComponent;
     public string Name;
     public HideFlags hideFlags;
     public Transform transform;
@@ -27,6 +28,7 @@ public sealed class GameObject : Object
     public GameObject(string name) { Name = name; transform = new(this); All.Add(this); }
     public Component AddComponent(Type type)
     {
+        if (FailComponent) throw new ArgumentException("fixture native component failure");
         if (Renderer != null) throw new InvalidOperationException("Two renderers on the same object");
         if (type != typeof(LineRenderer)) throw new InvalidOperationException();
         return Renderer = new LineRenderer();

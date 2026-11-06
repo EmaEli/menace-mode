@@ -16,13 +16,15 @@ ConstructionState Work(ConstructionSystem host) => (ConstructionState)typeof(Con
     .GetField("_work", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(host);
 void Next(Skill skill) { TacticalManager.Instance.Round++; skill.Actor.AP = 100; skill.Actor.TilesMovedThisTurn = 0; }
 
-// Execute the production hooks around a native-equivalent accept/charge/apply pipeline.
+// Execute production hooks around accept/charge/schedule/effects/native completion.
 var host = Host();
 Check((int)ModSettings.Definitions.Single().Default == 2, "default two turns");
 Check((int)ModSettings.Definitions.Single().Coerce(-10) == 1 && (int)ModSettings.Definitions.Single().Coerce(100) == 10, "option clamps");
 var s = new Skill();
 Check(s.Use(s.Actor.Tile), "first work accepted after native internal IsUsable");
 Check(s.Actor.AP == 20 && s.Applies == 0 && s.EnvironmentChanges == 0 && s.Actor.Tile.Mask == 0, "paid first work, no early effects");
+Check(!s.Actor.Busy && !TacticalManager.Instance.BusySkills.Contains(s) && s.NativeApplications == 1
+    && s.ClearBusyCalls == 1 && s.AfterUseCalls == 1 && s.ContainerUpdates == 1, "intermediate work preserves native completion: no hourglass lock");
 Check(Work(host).Get(s.Actor.Pointer.ToInt64()).Completed == 1, "production progress recorded");
 s.Actor.AP = 100;
 Check(!s.Use(s.Actor.Tile) && s.Actor.AP == 100, "repeated action same round cannot double charge/progress");
@@ -40,6 +42,23 @@ Check(s.Applies == 1 && s.EnvironmentChanges == 1 && s.Actor.Tile.Mask == 15 && 
 host.Refresh(); Check(root.Destroyed, "finished marker disposed");
 s.Actor.Tile.Mask = 0; s.Actor.AP = 100;
 Check(!s.Use(s.Actor.Tile) && s.Actor.AP == 100, "successful completion also locks this round");
+host.OnUnload();
+
+// ApplyToTile returns before the effects and completion callbacks. Never refund a
+// successful final action early, and never skip the callback releasing native busy.
+host = Host(); s = new Skill { DeferCompletion = true };
+Check(s.Use(s.Actor.Tile) && s.Actor.Busy && TacticalManager.Instance.BusySkills.Contains(s), "accepted use enters native busy state");
+Check(s.NativeApplications == 1 && s.Actor.AP == 20 && s.Applies == 0, "intermediate callback scheduled without placement");
+s.ApplyToTile(s.Actor.Tile, UsageParameter.Default);
+Check(s.NativeApplications == 1, "duplicate application cannot schedule a second completion");
+s.FinishNative();
+Check(!s.Actor.Busy && !TacticalManager.Instance.BusySkills.Contains(s) && s.ClearBusyCalls == 1
+    && s.AfterUseCalls == 1 && s.ContainerUpdates == 1 && s.EnvironmentChanges == 0, "scheduled intermediate completion releases all native busy owners");
+Next(s); Check(s.Use(s.Actor.Tile), "delayed final work accepted");
+Check(s.Actor.AP == 20 && s.Actor.Tile.Mask == 0 && s.Actor.Busy, "no premature final refund or cover before native effect");
+s.FinishNative();
+Check(s.Actor.AP == 20 && s.Actor.Tile.Mask == 15 && !s.Actor.Busy && s.ClearBusyCalls == 2
+    && s.AfterUseCalls == 2 && s.ContainerUpdates == 2, "final placement settles after scheduled effects and native completion");
 host.OnUnload();
 
 // Settings snapshot, optional pauses, per-actor identity and rejected native actions.
@@ -94,7 +113,25 @@ host.OnUnload();
 
 host = Host(); ModSettings.SetTurns(1); s = new Skill { ThrowPlacement = true };
 try { s.Use(s.Actor.Tile); throw new Exception("expected fixture exception"); } catch (InvalidOperationException) { }
-Check(s.Actor.AP == 100 && !s.IsUsable(), "exception refunds once and fails closed"); host.OnUnload();
+Check(s.Actor.AP == 100 && !s.IsUsable() && !s.Actor.Busy && !TacticalManager.Instance.BusySkills.Contains(s), "exception refunds once, releases native busy and fails closed"); host.OnUnload();
+
+host = Host(); ModSettings.SetTurns(1); s = new Skill { DeferCompletion = true, ThrowPlacement = true };
+s.Use(s.Actor.Tile);
+try { s.FinishNative(); throw new Exception("expected delayed fixture exception"); } catch (InvalidOperationException) { }
+Check(s.Actor.AP == 100 && !s.Actor.Busy && !TacticalManager.Instance.BusySkills.Contains(s) && !s.IsUsable(), "delayed native handler exception also refunds and unblocks"); host.OnUnload();
+
+// Unity renderer failure must not disable the independent GUI progress label or
+// interfere with skill completion. The warning identifies the failing stage once.
+host = Host(); s = new Skill(); s.Use(s.Actor.Tile);
+GameObject.FailComponent = true; GUI.Labels.Clear(); int warnings = Jiangyu.Sdk.Log.Warnings.Count;
+host.Refresh(); ModGui.Draw();
+Check(GUI.Labels.Contains("Sandbags 1/2") && !s.Actor.Busy, "progress label survives renderer ArgumentException without busy lock");
+Check(Jiangyu.Sdk.Log.Warnings.Count == warnings + 1 && Jiangyu.Sdk.Log.Warnings.Last().Contains("LineRenderer component creation"), "renderer warning identifies failing stage");
+int failedObjects = GameObject.All.Count; host.Refresh(); ModGui.Draw();
+Check(GameObject.All.Count == failedObjects && Jiangyu.Sdk.Log.Warnings.Count == warnings + 1, "failed world renderer neither retries each frame nor spams warnings");
+Check(GameObject.All.Where(g => g.Name == "Infantry Sandbag Construction").All(g => g.Destroyed), "partial renderer roots cleaned up");
+GameObject.FailComponent = false; Next(s); s.Use(s.Actor.Tile); host.Refresh(); GUI.Labels.Clear(); ModGui.Draw();
+Check(GUI.Labels.Count == 0 && s.Actor.Tile.Mask == 15 && !s.Actor.Busy, "fallback label removed when construction completes"); host.OnUnload();
 
 host = Host();
 var ordinary = new Skill { ID = "active.unrelated", Actor = new Actor { Player = false } };
