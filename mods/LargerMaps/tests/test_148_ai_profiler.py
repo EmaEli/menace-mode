@@ -1,5 +1,4 @@
 """Offline v1.5 diagnostic profile invariants; runtime requires Windows/MENACE."""
-import hashlib
 import importlib.util
 import os
 from pathlib import Path
@@ -11,10 +10,6 @@ PLUGIN = (ROOT / 'src/LargerMaps/Plugin.cs').read_text()
 PROF = (ROOT / 'src/LargerMaps/AIProfiling.cs').read_text()
 TASK = (ROOT / '../jiangyu/AIPerformance/code/TaskLifetime.cs').read_text()
 COMPANION = (ROOT / '../jiangyu/AIPerformance/code/Plugin.cs').read_text()
-BASE_PLUGIN_HASH = '8d61e62c42db637f152314ee2a6f4ede5ed76baa8890dff6ba9dd15f2b5312bf'
-# #45 reviewed baseline: only the verified 0.7.17 build mapping was added.
-BASE_NATIVE_HASH = 'b3a149b45817259accf1f36674003d06b3218bc47f0d7590f961524c25d1f5ca'
-BASE_PATCH_MANIFEST_HASH = '66baaaa89c8e643482c0b573311483bb9e815551a96219763d5f9b3390e139b1'
 
 
 class AiProfiling148Tests(unittest.TestCase):
@@ -25,11 +20,11 @@ class AiProfiling148Tests(unittest.TestCase):
         self.assertIn('__result = Il2CppSystem.Threading.Tasks.Task.Run(__0);', source)
         self.assertIn('return false;', source)
 
-    def test_native_code_and_patch_manifest_exactly_preserved(self):
-        self.assertEqual(hashlib.sha256((ROOT/'src/LargerMaps/ExtendedPathfinding.cs').read_bytes()).hexdigest(),
-                         BASE_NATIVE_HASH)
-        self.assertEqual(hashlib.sha256((ROOT/'tests/pathfinding-sites.json').read_bytes()).hexdigest(),
-                         BASE_PATCH_MANIFEST_HASH)
+    def test_profiler_does_not_install_or_write_native_patch_plan(self):
+        # Native compatibility now includes #94; its old-build preservation is
+        # checked semantically in test_extended_pathfinding and NativePatchChecks.
+        for operation in ('ExtendedPathfinding.TryInstall', 'Marshal.WriteByte', 'VirtualProtect'):
+            self.assertNotIn(operation, PROF)
 
     def test_profiling_opt_in_and_hot_paths_deep_opt_in(self):
         self.assertIn('if (!ReadBool("DiagnoseAIPerformance", false)) return;', PROF)

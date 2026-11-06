@@ -1,5 +1,4 @@
 """Behavior ID sampling must reuse existing profiler flags, and not change AI."""
-import hashlib
 import importlib.util
 import re
 from pathlib import Path
@@ -19,7 +18,7 @@ class Behavior1410Tests(unittest.TestCase):
         self.assertIn('_aiPerfDeep = ReadBool("DiagnoseAIPathfinding", false);', PROF)
         self.assertIn('AddToggle("DiagnoseAIPerformance", "Log AI task / unit timings", false)', PLUGIN)
         self.assertIn('AddToggle("DiagnoseAIPathfinding", "Log AI path timings (needs AI task timings)", false)', PLUGIN)
-        self.assertIn('"version": "2.6.0"', META)
+        self.assertIn('"version": "2.6.1"', META)
 
     def test_reuses_existing_collect_hook_no_new_native_hooks(self):
         deep = PROF.split('if (_aiPerfDeep)', 1)[1].split('// With diagnostics OFF', 1)[0]
@@ -51,15 +50,9 @@ class Behavior1410Tests(unittest.TestCase):
         self.assertIn('kind == AiPerfKind.BehaviorCollect ? state.BehaviorId : null', PROF)
         self.assertIn('AI PERF behavior turn=#', PROF)
 
-    def test_no_change_to_gameplay_or_native_instruction_sites(self):
-        # #45: reviewed addition of the 0.7.17 fingerprint/RVAs only; 26 instruction
-        # descriptors/patch algorithm unchanged (also checked against the real DLL).
-        def digest(relative):
-            return hashlib.sha256((ROOT/relative).read_bytes()).hexdigest()
-        self.assertEqual(digest('src/LargerMaps/ExtendedPathfinding.cs'),
-                         'b3a149b45817259accf1f36674003d06b3218bc47f0d7590f961524c25d1f5ca')
-        self.assertEqual(digest('tests/pathfinding-sites.json'),
-                         '66baaaa89c8e643482c0b573311483bb9e815551a96219763d5f9b3390e139b1')
+    def test_profiling_remains_separate_from_worker_lifetime(self):
+        # #94 native plan preservation is covered by test_extended_pathfinding
+        # and linked production NativePatchChecks, not a frozen source-text hash.
         self.assertIn('PatchAiPerformance(harmony);', PLUGIN)
         self.assertNotIn('PatchAiTaskLifetime(harmony);', PLUGIN)
 

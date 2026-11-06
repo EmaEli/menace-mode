@@ -20,11 +20,16 @@ PLUGIN = (ROOT / 'src' / 'LargerMaps' / 'Plugin.cs').read_text()
 BINARY_PATH = os.getenv('MENACE_GAMEASSEMBLY', '')
 METHODS = ('MissionTemplateGetBounds', 'PathfindingProcessCtor', 'PathfindingProcessInit',
            'PathfindingManagerInit', 'PathfindingProcessFindPath', 'PathfindingProcessProcessNode',
-           'PathfindingProcessClear')
+           'PathfindingProcessClear', 'MapGenerateMoveNext')
 
 
 def site_rva(site, build):
-    return int(build['method_rvas'][site['method']], 16) + int(site['delta'], 16)
+    delta = site.get('delta_v0718', site['delta']) if build['game_version'] == 'v0.7.18+22828' else site['delta']
+    return int(build['method_rvas'][site['method']], 16) + int(delta, 16)
+
+
+def sites_for(build):
+    return [s for s in DATA['sites'] if s['method'] in build['method_rvas']]
 
 
 def rva_to_file_offset(raw, rva):
@@ -42,16 +47,26 @@ def rva_to_file_offset(raw, rva):
 
 
 class ExtendedPathfindingTests(unittest.TestCase):
+    def test_older_build_plans_are_exactly_preserved(self):
+        # Canonical JSON digest of the complete pre-#94 manifest. Remove only the
+        # explicit additions for 0.7.18, not any field of the three older plans.
+        legacy = dict(DATA)
+        legacy['builds'] = DATA['builds'][:3]
+        legacy['sites'] = [{k: v for k, v in s.items() if k != 'delta_v0718'}
+                           for s in DATA['sites'] if s['method'] != 'MapGenerateMoveNext']
+        digest = hashlib.sha256(json.dumps(legacy, sort_keys=True, separators=(',', ':')).encode()).hexdigest()
+        self.assertEqual(digest, 'bfcee49f62195a5b6849a318cc38caa56b2d1b79b615f001f267d963666d1274')
+
     def test_v0717_uses_new_dump_rvas_not_old_pathfinding_addresses(self):
         previous = next(b for b in DATA['builds'] if b['game_version'] == 'v0.7.16+22323')
         current = next(b for b in DATA['builds'] if b['game_version'] == 'v0.7.17+22362')
         self.assertEqual(current['sha256'], '871b4c3468c68dae3d75e7b5e29fcc9b0a8a253fcebf64045af348f0aec75111')
         self.assertEqual(current['method_rvas']['MissionTemplateGetBounds'], previous['method_rvas']['MissionTemplateGetBounds'])
-        for method in METHODS[1:]:
+        for method in METHODS[1:7]:
             self.assertEqual(int(current['method_rvas'][method], 16) - int(previous['method_rvas'][method], 16), 0x3A0)
 
     def test_builds_match_source_table(self):
-        pattern = r'new\("([^"]+)", "([0-9a-f]{64})",\s*((?:0x[0-9A-F]+,?\s*){7})\)'
+        pattern = r'new\("([^"]+)", "([0-9a-f]{64})",\s*((?:0x[0-9A-F]+,?\s*){7,8})\)'
         parsed = re.findall(pattern, SOURCE)
         self.assertEqual(len(parsed), len(DATA['builds']))
         self.assertGreaterEqual(len(parsed), 2)
@@ -59,18 +74,21 @@ class ExtendedPathfindingTests(unittest.TestCase):
             self.assertEqual(version, recorded['game_version'])
             self.assertEqual(sha, recorded['sha256'])
             values = [int(v, 16) for v in re.findall(r'0x[0-9A-F]+', rvas)]
-            self.assertEqual(values, [int(recorded['method_rvas'][m], 16) for m in METHODS])
+            self.assertEqual(values, [int(v, 16) for v in recorded['method_rvas'].values()])
         self.assertEqual(len({b['sha256'] for b in DATA['builds']}), len(DATA['builds']))
         for build in DATA['builds']:
-            self.assertEqual(tuple(build['method_rvas']), METHODS)
+            expected = METHODS if build['game_version'] == 'v0.7.18+22828' else METHODS[:7]
+            self.assertEqual(tuple(build['method_rvas']), expected)
 
     def test_sites_match_source_descriptors(self):
-        pattern = r'new\(NativeMethod\.(\w+), 0x([0-9A-F]+), (\d+), "([0-9A-F]+)", 0x([0-9A-F]+), 0x([0-9A-F]+), "([a-zA-Z0-9_-]+)"\)'
+        pattern = r'new\(NativeMethod\.(\w+), 0x([0-9A-F]+), (\d+), "([0-9A-F]+)", 0x([0-9A-F]+), 0x([0-9A-F]+), "([a-zA-Z0-9_-]+)"(?:, 0x([0-9A-F]+))?\)'
         parsed = re.findall(pattern, SOURCE)
         self.assertEqual(len(parsed), len(DATA['sites']))
-        self.assertEqual(len(parsed), 26)
+        self.assertEqual(len(parsed), 28)
         for raw, recorded in zip(parsed, DATA['sites']):
-            method, delta, offset, original, at80, at96, purpose = raw
+            method, delta, offset, original, at80, at96, purpose, override = raw
+            self.assertEqual(int(override, 16) if override else None,
+                             int(recorded['delta_v0718'], 16) if 'delta_v0718' in recorded else None)
             self.assertIn(method, METHODS)
             self.assertEqual((method,int(delta,16),int(offset),original,int(at80,16),int(at96,16),purpose),
                              (recorded['method'],int(recorded['delta'],16),recorded['immediate_offset'],recorded['expected_instruction_hex'],
@@ -81,7 +99,7 @@ class ExtendedPathfindingTests(unittest.TestCase):
         # form must resolve to exactly those addresses.
         build = next(b for b in DATA['builds'] if b['game_version'] == 'v0.7.15+21883')
         by_purpose = {}
-        for site in DATA['sites']:
+        for site in sites_for(build):
             by_purpose.setdefault(site['purpose'], []).append(site_rva(site, build))
         self.assertEqual(by_purpose['mission-bound-width'], [0x5F61C2])
         self.assertEqual(by_purpose['mission-bound-height'], [0x5F61CF])
@@ -95,7 +113,7 @@ class ExtendedPathfindingTests(unittest.TestCase):
         for build in DATA['builds']:
             positions=[]
             spans=[]
-            for site in DATA['sites']:
+            for site in sites_for(build):
                 rva=site_rva(site, build)
                 code=bytes.fromhex(site['expected_instruction_hex'])
                 off=site['immediate_offset']
@@ -123,8 +141,29 @@ class ExtendedPathfindingTests(unittest.TestCase):
         for key in ('queue-capacity','closed-buffer-allocation','closed-buffer-clear','findpath-buffer-clear'):
             self.assertIn(key,names)
 
+    def test_v0718_offsets_and_inlined_fill_are_build_specific(self):
+        for build in DATA['builds']:
+            plan = sites_for(build)
+            is_v0718 = build['game_version'] == 'v0.7.18+22828'
+            self.assertEqual(len(plan), 28 if is_v0718 else 26)
+            shifts = [site_rva(s, build) - int(build['method_rvas'][s['method']], 16)
+                      for s in plan if s['purpose'] == 'stride-disasm_findpath']
+            expected = ([766, 901, 1437, 2862, 3942, 4337, 5413, 5548, 5685, 5819, 5956]
+                        if is_v0718 else [766, 901, 1438, 2863, 3944, 4339, 5415, 5550, 5687, 5821, 5958])
+            self.assertEqual(shifts, expected)
+            fills = [site_rva(s, build) for s in plan if s['method'] == 'MapGenerateMoveNext']
+            self.assertEqual(fills, [0x6C3C27, 0x6C3C32] if is_v0718 else [])
+
+    def test_selected_plan_is_used_for_entire_native_transaction(self):
+        install = SOURCE[SOURCE.index('internal static bool TryInstall'):]
+        self.assertIn('PatchSite[] sites = SitesFor(build);', install)
+        self.assertNotRegex(install, r'\bSites\b')
+        self.assertIn('foreach (PatchSite site in sites)', install)
+        self.assertIn('bool fullyRolledBack = sites.All', install)
+        self.assertLess(install.index('foreach (PatchSite site in sites)'), install.index('if (!VirtualProtect'))
+
     def test_128_stride_collision_free_and_within_allocated_buffer(self):
-        for width in (64,80,96):
+        for width in (64,72,80,88,96):
             seen={x*128+z for x in range(width) for z in range(width)}
             self.assertEqual(len(seen),width*width)
             self.assertLess(max(seen),128*128)
@@ -177,17 +216,19 @@ class ExtendedPathfindingTests(unittest.TestCase):
         build=next((b for b in DATA['builds'] if b['sha256']==sha), None)
         self.assertIsNotNone(build, f'GameAssembly.dll {sha[:12]} is not a build in the manifest')
         offsets={}
-        for site in DATA['sites']:
+        plan = sites_for(build)
+        for site in plan:
             off=rva_to_file_offset(raw, site_rva(site, build))
             original=bytes.fromhex(site['expected_instruction_hex'])
             self.assertEqual(raw[off:off+len(original)],original,f"{site['purpose']} ({build['game_version']})")
             offsets[id(site)]=off
         # The selected byte changes have no overlaps and leave everything else alone.
-        for size in (80,96):
+        for size in (72,80,88,96):
             patched=bytearray(raw)
-            for site in DATA['sites']:
-                patched[offsets[id(site)]+site['immediate_offset']]=int(site[f'replacement_{size}'],16)
-            self.assertEqual(sum(a!=b for a,b in zip(raw,patched)),26)
+            for site in plan:
+                value = size if site['purpose'].endswith('-loop') or site['purpose'].startswith('mission-bound-') else int(site['replacement_80'],16)
+                patched[offsets[id(site)]+site['immediate_offset']]=value
+            self.assertEqual(sum(a!=b for a,b in zip(raw,patched)),len(plan))
 
 
 if __name__=='__main__':

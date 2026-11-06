@@ -48,10 +48,8 @@ class TestCombatPlanning(unittest.TestCase):
         self.assertEqual(data[to_offset(0x7b2342):to_offset(0x7b2342)+4], bytes.fromhex('44387814'))
         self.assertEqual(data[to_offset(0x7aea69):to_offset(0x7aea69)+4], bytes.fromhex('80781400'))
 
-    def test_versions_and_native_backend_unchanged(self):
+    def test_package_version(self):
         self.assertNotIn('private const string Version', PLUGIN)
-        self.assertEqual(json.loads((ROOT/'../jiangyu/LargerMaps/jiangyu.json').read_text())['version'],'2.6.0')
-        reference=Path('/mnt/data/local_routing_work/LargerMaps-1.5-local-tactical-routing-authoring/src/LargerMaps/ExtendedPathfinding.cs')
-        if reference.exists(): self.assertEqual(NATIVE,reference.read_text())
+        self.assertEqual(json.loads((ROOT/'../jiangyu/LargerMaps/jiangyu.json').read_text())['version'],'2.6.1')
 
 if __name__=='__main__':unittest.main()

@@ -32,9 +32,9 @@ class GlobalPositioningTests(unittest.TestCase):
             self.assertNotIn(forbidden, COMBAT)
 
     def test_current_jiangyu_versions_not_old_draft_modpack(self):
-        self.assertEqual(json.loads((PACKAGE / 'jiangyu.json').read_text())['version'], '2.6.0')
-        self.assertEqual(json.loads((PACKAGE / 'compiled/jiangyu.json').read_text())['version'], '2.6.0')
-        self.assertIn('<Version>2.6.0</Version>', (PACKAGE / 'code/LargerMaps.csproj').read_text())
+        self.assertEqual(json.loads((PACKAGE / 'jiangyu.json').read_text())['version'], '2.6.1')
+        self.assertEqual(json.loads((PACKAGE / 'compiled/jiangyu.json').read_text())['version'], '2.6.1')
+        self.assertIn('<Version>2.6.1</Version>', (PACKAGE / 'code/LargerMaps.csproj').read_text())
 
 
 if __name__ == '__main__':

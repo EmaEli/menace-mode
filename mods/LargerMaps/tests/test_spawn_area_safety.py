@@ -98,7 +98,7 @@ class SpawnAreaSafetyTests(unittest.TestCase):
             self.assertEqual(len({x*128+z for x in range(size) for z in range(size)}),size*size)
     def test_native_instruction_immediates_for_72_and_88(self):
         sites=json.loads((ROOT/'tests/pathfinding-sites.json').read_text())['sites']
-        self.assertEqual(len(sites),26)
+        self.assertEqual(len(sites),28)
         for size in (72,88):
             for site in sites:
                 original=bytearray.fromhex(site['expected_instruction_hex'])
@@ -151,7 +151,7 @@ class SpawnAreaSafetyTests(unittest.TestCase):
         self.assertNotIn('PatchAiTaskLifetime(harmony)',PLUGIN)
         self.assertIn('PatchTerrainHoleIndexing(harmony)',PLUGIN)
     def test_archive_version(self):
-        self.assertEqual(CONFIG['version'],'2.6.0')
+        self.assertEqual(CONFIG['version'],'2.6.1')
         self.assertIn('64/72/80/88/96',CONFIG['description'])
 
 if __name__ == '__main__':

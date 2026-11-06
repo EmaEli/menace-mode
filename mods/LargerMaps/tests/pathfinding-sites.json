@@ -38,6 +38,20 @@
         "PathfindingProcessProcessNode": "0x6b1810",
         "PathfindingProcessClear": "0x6af2d0"
       }
+    },
+    {
+      "game_version": "v0.7.18+22828",
+      "sha256": "494c9e212d411d898b3abafb4ad233f7a39a22648d713a86b9641d698b2d12e9",
+      "method_rvas": {
+        "MissionTemplateGetBounds": "0x613120",
+        "PathfindingProcessCtor": "0x6be5b0",
+        "PathfindingProcessInit": "0x6bd8f0",
+        "PathfindingManagerInit": "0x6bb510",
+        "PathfindingProcessFindPath": "0x6bbd90",
+        "PathfindingProcessProcessNode": "0x6bdf20",
+        "PathfindingProcessClear": "0x6bb9e0",
+        "MapGenerateMoveNext": "0x6c3720"
+      }
     }
   ],
   "internal_stride": 128,
@@ -197,6 +211,7 @@
       "purpose": "stride-disasm_findpath",
       "method": "PathfindingProcessFindPath",
       "delta": "0x59e",
+      "delta_v0718": "0x59d",
       "expected_instruction_hex": "C1E006",
       "immediate_offset": 2,
       "replacement_80": "0x07",
@@ -206,6 +221,7 @@
       "purpose": "stride-disasm_findpath",
       "method": "PathfindingProcessFindPath",
       "delta": "0xb2f",
+      "delta_v0718": "0xb2e",
       "expected_instruction_hex": "C1E006",
       "immediate_offset": 2,
       "replacement_80": "0x07",
@@ -215,6 +231,7 @@
       "purpose": "stride-disasm_findpath",
       "method": "PathfindingProcessFindPath",
       "delta": "0xf68",
+      "delta_v0718": "0xf66",
       "expected_instruction_hex": "C1E006",
       "immediate_offset": 2,
       "replacement_80": "0x07",
@@ -224,6 +241,7 @@
       "purpose": "stride-disasm_findpath",
       "method": "PathfindingProcessFindPath",
       "delta": "0x10f3",
+      "delta_v0718": "0x10f1",
       "expected_instruction_hex": "C1E006",
       "immediate_offset": 2,
       "replacement_80": "0x07",
@@ -233,6 +251,7 @@
       "purpose": "stride-disasm_findpath",
       "method": "PathfindingProcessFindPath",
       "delta": "0x1527",
+      "delta_v0718": "0x1525",
       "expected_instruction_hex": "C1E006",
       "immediate_offset": 2,
       "replacement_80": "0x07",
@@ -242,6 +261,7 @@
       "purpose": "stride-disasm_findpath",
       "method": "PathfindingProcessFindPath",
       "delta": "0x15ae",
+      "delta_v0718": "0x15ac",
       "expected_instruction_hex": "C1E006",
       "immediate_offset": 2,
       "replacement_80": "0x07",
@@ -251,6 +271,7 @@
       "purpose": "stride-disasm_findpath",
       "method": "PathfindingProcessFindPath",
       "delta": "0x1637",
+      "delta_v0718": "0x1635",
       "expected_instruction_hex": "C1E006",
       "immediate_offset": 2,
       "replacement_80": "0x07",
@@ -260,6 +281,7 @@
       "purpose": "stride-disasm_findpath",
       "method": "PathfindingProcessFindPath",
       "delta": "0x16bd",
+      "delta_v0718": "0x16bb",
       "expected_instruction_hex": "C1E006",
       "immediate_offset": 2,
       "replacement_80": "0x07",
@@ -269,6 +291,7 @@
       "purpose": "stride-disasm_findpath",
       "method": "PathfindingProcessFindPath",
       "delta": "0x1746",
+      "delta_v0718": "0x1744",
       "expected_instruction_hex": "C1E006",
       "immediate_offset": 2,
       "replacement_80": "0x07",
@@ -282,6 +305,24 @@
       "immediate_offset": 2,
       "replacement_80": "0x07",
       "replacement_96": "0x07"
+    },
+    {
+      "purpose": "generate-map-inner-loop",
+      "method": "MapGenerateMoveNext",
+      "delta": "0x507",
+      "expected_instruction_hex": "83FB40",
+      "immediate_offset": 2,
+      "replacement_80": "0x50",
+      "replacement_96": "0x60"
+    },
+    {
+      "purpose": "generate-map-outer-loop",
+      "method": "MapGenerateMoveNext",
+      "delta": "0x512",
+      "expected_instruction_hex": "83FE40",
+      "immediate_offset": 2,
+      "replacement_80": "0x50",
+      "replacement_96": "0x60"
     }
   ]
 }

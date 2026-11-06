@@ -50,7 +50,7 @@ class MissionBounds147Tests(unittest.TestCase):
             self.assertEqual(patched_immediate(site,96)[3:7], (96).to_bytes(4,'little'))
             self.assertIn('mission-bound-', SRC)
             self.assertIn('StartsWith("mission-bound-"', SRC)
-        self.assertEqual(len(PATCHES),26)
+        self.assertEqual(len(PATCHES),28)
 
     def test_selected_map_sizes_fit_original_imm32_encoding_and_bounds(self):
         for size in (72,80,88,96):
@@ -73,7 +73,7 @@ class MissionBounds147Tests(unittest.TestCase):
 
     def test_existing_backend_fail_closed(self):
         for term in ('SHA256.Create()', 'SupportedBuilds.FirstOrDefault(', 'if (build == null)',
-                     'foreach (PatchSite site in Sites)', 'Environment.FailFast(',
+                     'foreach (PatchSite site in sites)', 'Environment.FailFast(',
                      'FlushInstructionCache(', 'VirtualProtect('):
             self.assertIn(term,SRC)
 

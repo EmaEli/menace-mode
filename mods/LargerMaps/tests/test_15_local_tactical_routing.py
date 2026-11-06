@@ -7,7 +7,6 @@ ROOT=Path(__file__).resolve().parents[1]
 PLUGIN=(ROOT/'../jiangyu/AIPerformance/code/Plugin.cs').read_text()
 ROUTER=(ROOT/'src/LargerMaps/LocalTacticalRouting.cs').read_text()
 NATIVE=(ROOT/'src/LargerMaps/ExtendedPathfinding.cs').read_text()
-REFERENCE=Path('/mnt/data/local_routing_work/LargerMaps-1.4.13-conservative-areas-authoring/src/LargerMaps/ExtendedPathfinding.cs')
 
 class TestNativeAiCandidateLimits(unittest.TestCase):
     def test_feature_only_for_large_maps(self):
@@ -34,12 +33,11 @@ class TestNativeAiCandidateLimits(unittest.TestCase):
         self.assertIn('AddToggle("UseLocalTacticalRouting"',PLUGIN)
         self.assertIn('"LocalNearTileLimit", "Nearby destinations inspected", 12f, 64f, 20f',PLUGIN)
         self.assertIn('"LocalCullTileDistance", "Cull distance (tiles)", 10f, 20f, 12f',PLUGIN)
-    def test_prior_native_path_backend_exact(self):
-        if REFERENCE.exists():
-            self.assertEqual(NATIVE,REFERENCE.read_text())
+    def test_prior_native_path_backend_retains_reference_stride_site(self):
+        # Version-specific native plans are exercised by test_extended_pathfinding.
         self.assertIn('new(NativeMethod.PathfindingProcessFindPath, 0x2FE, 2, "C1E106", 0x07, 0x07',NATIVE)
     def test_version(self):
         self.assertNotIn('private const string Version', PLUGIN)
-        self.assertEqual(json.loads((ROOT/'../jiangyu/LargerMaps/jiangyu.json').read_text())['version'],'2.6.0')
+        self.assertEqual(json.loads((ROOT/'../jiangyu/LargerMaps/jiangyu.json').read_text())['version'],'2.6.1')
 
 if __name__=='__main__': unittest.main()

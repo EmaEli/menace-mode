@@ -1,4 +1,4 @@
-# Larger Maps 2.6.0 — separate AI performance companion
+# Larger Maps 2.6.1 — MENACE 0.7.18 native pathfinding
 
 The current host compiles the shared `mods/LargerMaps/src/LargerMaps` sources.
 Use the canonical Suite installer in `mods/GameplaySuite`; do not revive the old
@@ -14,17 +14,28 @@ does not disable the new companion. Optional local routing remains OFF. This avo
 evaluating hypothetical future firing positions, so AI positioning can differ.
 Diagnostics and conditional advance recovery remain in Larger Maps.
 
-The scoped 0.7.18 candidate does **not** add native 80/96 pathfinder support: requests
-above 64 still fall back safely to 64. Offline/build checks are not gameplay timing evidence.
+## MENACE 0.7.18 native support (#94)
+
+The exact 0.7.18+22828 GameAssembly SHA256 `494c9e21…` now has a reviewed
+28-site plan: the existing 26 edits with nine build-specific FindPath offsets, plus
+both node-grid fill bounds in the map generator. All instructions are verified before
+any write; write verification and rollback cover the complete selected plan. Earlier
+builds retain their 26-site plans; unknown builds or conflicts still fall back to 64x64.
+No game file is patched on disk. 64x64 does not install native edits. Conditional advance
+recovery remains restricted to 0.7.17. Gameplay/pathfinding acceptance is pending.
+
+Run the linked production-plan checks from the repository root with
+`dotnet run --project mods/LargerMaps/tests/NativePatchChecks -c Release -- . game_files/v0.7.18/GameAssembly.dll`.
+These read the original binary without executing native writes or proving AI speed.
 
 ## Floating forest prefabs (#92)
 
 ForestDense/Sparse/Single prefab placement now converts world coordinates to the
 actual heightmap domain, including the native inlined path that bypassed the old
 helper patch. Other prefab types, terrain stamps and native-sized maps are unchanged.
-102 managed production-hook assertions and local 0.7.18 compilation pass; Windows
-build/install and visual desert-map confirmation remain pending. The installed
-PC version observed on 6 November is still 2.5.0. See `docs/FLOATING_TREES_2026-11-06.md`
+102 managed production-hook assertions and local 0.7.18 compilation pass; visual
+desert-map confirmation remains pending. The 2.6.0 Windows install passed on 6 November;
+this is not visual acceptance. See `docs/FLOATING_TREES_2026-11-06.md`
 at the repository root for the evidence and deployment gates.
 
 ## City-layout area anchoring (#81, on by default)
