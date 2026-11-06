@@ -22,6 +22,19 @@ VERIFY_SPEC.loader.exec_module(VERIFIER)
 
 
 class DistributionTests(unittest.TestCase):
+    def test_larger_maps_automatically_bundles_ai_companion(self):
+        for reuse in (False, True):
+            with self.subTest(use_installed_settings=reuse):
+                payload, versions = BUILDER.collect(ROOT, "LargerMaps", reuse)
+                self.assertEqual(set(versions), {"LargerMaps", "AIPerformance"} | (set() if reuse else {"MenaceModSettings"}))
+                self.assertLess(list(versions).index("AIPerformance"), list(versions).index("LargerMaps"))
+                self.assertIn("source/mods/jiangyu/AIPerformance/compiled/code/AIPerformance.dll", payload)
+                self.assertIn("source/mods/jiangyu/AIPerformance/tests/NativeContractChecks/Program.cs", payload)
+                self.assertIn(b"-Modules LargerMaps", payload["INSTALL-LargerMaps.cmd"])
+                if reuse:
+                    self.assertIn(b"-UseInstalledSettings", payload["INSTALL-LargerMaps.cmd"])
+                    self.assertFalse(any(p.startswith("source/mods/jiangyu/MenaceModSettings/") for p in payload))
+
     def fixture(self, root):
         def write(name, content):
             path = root / name

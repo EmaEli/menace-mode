@@ -9,6 +9,8 @@ import unittest
 ROOT = Path(__file__).resolve().parents[1]
 PLUGIN = (ROOT / 'src/LargerMaps/Plugin.cs').read_text()
 PROF = (ROOT / 'src/LargerMaps/AIProfiling.cs').read_text()
+TASK = (ROOT / '../jiangyu/AIPerformance/code/TaskLifetime.cs').read_text()
+COMPANION = (ROOT / '../jiangyu/AIPerformance/code/Plugin.cs').read_text()
 BASE_PLUGIN_HASH = '8d61e62c42db637f152314ee2a6f4ede5ed76baa8890dff6ba9dd15f2b5312bf'
 # #45 reviewed baseline: only the verified 0.7.17 build mapping was added.
 BASE_NATIVE_HASH = 'b3a149b45817259accf1f36674003d06b3218bc47f0d7590f961524c25d1f5ca'
@@ -16,12 +18,10 @@ BASE_PATCH_MANIFEST_HASH = '66baaaa89c8e643482c0b573311483bb9e815551a96219763d5f
 
 
 class AiProfiling148Tests(unittest.TestCase):
-    def test_non_detaching_ai_task_source_is_byte_identical_to_1410(self):
-        """Areas differ intentionally; the actual worker-task patch must not."""
-        source = PLUGIN.split('private static void PatchAiTaskLifetime(', 1)[1].split(
-            'private static void PatchAiDiagnostics(', 1)[0]
-        self.assertEqual(hashlib.sha256(source.encode('utf-8')).hexdigest(),
-                         '40d6a681ff2e6503a29ca18a74206dcccf16eac2f18b7813540932aea6920cba')
+    def test_non_detaching_ai_task_is_owned_only_by_companion(self):
+        source = TASK
+        self.assertNotIn('AIFactionRunWithTimeoutPrefix', PLUGIN)
+        self.assertIn('PatchAiTaskLifetime(harmony);', COMPANION)
         self.assertIn('__result = Il2CppSystem.Threading.Tasks.Task.Run(__0);', source)
         self.assertIn('return false;', source)
 
@@ -56,10 +56,11 @@ class AiProfiling148Tests(unittest.TestCase):
         self.assertIn('InstallHooks(HarmonyLib.Harmony harmony)', PLUGIN)
 
     def test_task_lifetime_safety_unchanged(self):
-        ai = PLUGIN.split('private static void PatchAiTaskLifetime(',1)[1].split('private static void PatchAiDiagnostics(',1)[0]
+        ai = TASK
         self.assertIn('__result = Il2CppSystem.Threading.Tasks.Task.Run(__0);', ai)
         self.assertIn('return false;', ai)
-        self.assertIn('PatchAiTaskLifetime(harmony);\n            PatchAiPerformance(harmony);', PLUGIN)
+        self.assertIn('PatchAiPerformance(harmony);', PLUGIN)
+        self.assertNotIn('PatchAiTaskLifetime(harmony);', PLUGIN)
         self.assertIn('p.Task.IsCompleted', PROF)
         executable = re.sub(r'(?m)^\s*//.*$', '', PROF)
         for operation in ('Task.Wait(', '.Wait(', '.WaitAll(', '.Cancel(', 'Thread.Sleep(',

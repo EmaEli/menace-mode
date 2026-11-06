@@ -1,7 +1,7 @@
 #nullable disable
 using System.Reflection;
 
-namespace LargerMaps;
+namespace AIPerformance;
 
 // Runs the linked production setup/restore code with host/reflection/native-object
 // doubles. These are not IL2CPP templates and cannot prove game behavior or CPU cost.
@@ -51,7 +51,7 @@ public sealed partial class Plugin
         {
             var templates = ResetPlanningTest(preserve, simplify, size);
             ApplySimplifiedCombatPlanning();
-            bool active = size > 64 && simplify;
+            bool active = size >= 64 && simplify;
             for (int i = 0; i < templates.Length; i++)
                 check(templates[i].AIConfig.InfluencesPositioning == (!active || (preserve && i < 5)),
                     "actual setup: 64-map / simplify / selective toggle matrix");

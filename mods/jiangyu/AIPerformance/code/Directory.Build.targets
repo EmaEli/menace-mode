@@ -1,0 +1,12 @@
+<Project>
+  <Target Name="CheckSdk" BeforeTargets="ResolveAssemblyReferences" Condition="'$(JiangyuSdkDir)' == ''">
+    <Error Text="JiangyuSdkDir must identify the pinned Jiangyu SDK." />
+  </Target>
+  <ItemGroup>
+    <Reference Include="Jiangyu.Sdk" HintPath="$(JiangyuSdkDir)/Jiangyu.Sdk.dll" Private="false" />
+    <Reference Include="Il2CppInterop.Runtime" HintPath="$(MelonLoaderDir)/Il2CppInterop.Runtime.dll" Private="false" />
+    <Reference Include="Il2Cppmscorlib" HintPath="$(GameAssembliesDir)/Il2Cppmscorlib.dll" Private="false" />
+    <Reference Include="Assembly-CSharp" HintPath="$(GameAssembliesDir)/Assembly-CSharp.dll" Private="false" />
+    <Reference Include="UnityEngine.CoreModule" HintPath="$(GameAssembliesDir)/UnityEngine.CoreModule.dll" Private="false" />
+  </ItemGroup>
+</Project>

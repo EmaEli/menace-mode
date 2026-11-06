@@ -26,7 +26,7 @@ class ConservativeAreaReferenceTest(unittest.TestCase):
                          'da8cb24740212abc41c342d795d7091f56f06fc0416b4b9cb62b6b24f6095ccd')
     def test_safety_and_enlarged_mission_areas_still_exist(self):
         self.assertIn('PatchTerrainHoleIndexing(harmony);',src)
-        self.assertIn('PatchAiTaskLifetime(harmony);',src)
+        self.assertNotIn('PatchAiTaskLifetime(harmony);',src)
         self.assertIn('PatchMissionAreaScaling(harmony);',src)
         self.assertNotIn('PatchAllObjectiveAreaScopes(harmony);',src)
         self.assertNotIn('private const string Version', src)

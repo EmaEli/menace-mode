@@ -160,7 +160,7 @@ class ExtendedPathfindingTests(unittest.TestCase):
     def test_source_fallback_and_mandatory_patches_preserved(self):
         for expected in ('_activeMapSize = 64','ReadRequestedMapSize()',
                          'ExtendedPathfinding.TryInstall(requested, out string reason)',
-                         '_activeMapSize = requested','PatchAiTaskLifetime(harmony)',
+                         '_activeMapSize = requested','PatchAiPerformance(harmony)',
                          'PatchTerrainHoleIndexing(harmony)',
                          'if (Debug())','private static bool Debug() => false'):
             self.assertIn(expected,PLUGIN)

@@ -148,10 +148,10 @@ class SpawnAreaSafetyTests(unittest.TestCase):
         self.assertIn('args[2].ParameterType.Name.IndexOf("RectInt"',PLUGIN)
         self.assertIn('Math.Min((long)x, (long)x + w)',PLUGIN)
         self.assertIn('MinimumAiSpawnAreaSize = 5',PLUGIN)
-        self.assertIn('PatchAiTaskLifetime(harmony)',PLUGIN)
+        self.assertNotIn('PatchAiTaskLifetime(harmony)',PLUGIN)
         self.assertIn('PatchTerrainHoleIndexing(harmony)',PLUGIN)
     def test_archive_version(self):
-        self.assertEqual(CONFIG['version'],'2.5.1')
+        self.assertEqual(CONFIG['version'],'2.6.0')
         self.assertIn('64/72/80/88/96',CONFIG['description'])
 
 if __name__ == '__main__':

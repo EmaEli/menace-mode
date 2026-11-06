@@ -3,6 +3,10 @@
 param([string]$ToolsRoot)
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+if ($env:MENACE_WORK_ROOT) {
+    $env:TEMP = Join-Path $env:MENACE_WORK_ROOT 'Temp'
+    $env:TMP = $env:TEMP
+}
 if (-not $ToolsRoot) { $ToolsRoot = Join-Path $PSScriptRoot '..\tools' }
 foreach ($name in @('Install.Common.ps1', 'Install-IntegratedSuite.ps1')) {
     $tokens = $null; $errors = $null
@@ -22,7 +26,7 @@ $catalog = [pscustomobject]@{
     standaloneGameBuilds = @([pscustomobject]@{
         gameVersion = 'scoped'
         gameAssemblySha256 = (Get-FileHash -LiteralPath $scoped -Algorithm SHA256).Hash
-        modules = @('MenaceModSettings', 'GarrisonableBuildings', 'SquaddieFieldPromotions', 'SmokeOverhaul', 'CinematicActionCamera', 'WeaponMechanicsRebalanced')
+        modules = @('MenaceModSettings', 'GarrisonableBuildings', 'SquaddieFieldPromotions', 'SmokeOverhaul', 'CinematicActionCamera', 'WeaponMechanicsRebalanced', 'LargerMaps', 'AIPerformance')
     })
 }
 $checks = 0
@@ -45,6 +49,11 @@ Verify $scoped 'Standalone' @('MenaceModSettings', 'SmokeOverhaul') $true
 Verify $scoped 'Standalone' @('CinematicActionCamera') $true
 Verify $scoped 'Standalone' @('MenaceModSettings', 'CinematicActionCamera') $true
 Verify $scoped 'Standalone' @('WeaponMechanicsRebalanced') $true
+Verify $scoped 'Standalone' @('LargerMaps', 'AIPerformance') $true
+Verify $scoped 'Standalone' @('AIPerformance') $true
+Verify $scoped 'Standalone' @('LargerMaps', 'AIPerformance', 'OtherMod') $false
+Verify $scoped 'Suite' @('LargerMaps', 'AIPerformance') $false
+Verify $unknown 'Standalone' @('LargerMaps', 'AIPerformance') $false
 Verify $scoped 'Standalone' @('MenaceModSettings', 'WeaponMechanicsRebalanced') $true
 Verify $scoped 'Standalone' @('WeaponMechanicsRebalanced', 'OtherMod') $false
 Verify $scoped 'Suite' @('WeaponMechanicsRebalanced') $false
@@ -66,6 +75,8 @@ Verify $scoped 'Standalone' @('OtherMod') $false
 Verify $scoped 'Standalone' @('GarrisonableBuildings', 'OtherMod') $false
 Verify $unknown 'Standalone' @('GarrisonableBuildings') $false
 # Companion compatibility is mandatory even when only the feature is explicitly selected.
+$catalog.standaloneGameBuilds[0].modules = @('MenaceModSettings', 'LargerMaps')
+Verify $scoped 'Standalone' @('LargerMaps', 'AIPerformance') $false
 $catalog.standaloneGameBuilds[0].modules = @('GarrisonableBuildings')
 Verify $scoped 'Standalone' @('GarrisonableBuildings') $false
 $catalog.PSObject.Properties.Remove('standaloneGameBuilds')

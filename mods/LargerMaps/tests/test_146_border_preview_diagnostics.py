@@ -13,9 +13,9 @@ MANIFEST = json.loads((ROOT/'../jiangyu/LargerMaps/jiangyu.json').read_text())
 
 class PreviewGeometry147Tests(unittest.TestCase):
     def test_version_alignment(self):
-        self.assertEqual(MANIFEST['version'],'2.5.1')
+        self.assertEqual(MANIFEST['version'],'2.6.0')
         self.assertNotIn('private const string Version', SRC)
-        self.assertIn('<Version>2.5.1</Version>', (ROOT/'../jiangyu/LargerMaps/code/LargerMaps.csproj').read_text())
+        self.assertIn('<Version>2.6.0</Version>', (ROOT/'../jiangyu/LargerMaps/code/LargerMaps.csproj').read_text())
 
     def test_only_native_border_short_axis_is_scaled_after_bounds_fix(self):
         body = (ROOT/'src/LargerMaps/ConservativeMissionAreas.cs').read_text()
@@ -46,7 +46,7 @@ class PreviewGeometry147Tests(unittest.TestCase):
         self.assertIn('_areaGeometryDiagnosticLines = 0;',SRC)
 
     def test_existing_ai_safety_is_preserved(self):
-        self.assertIn('PatchAiTaskLifetime(harmony)',SRC)
+        self.assertNotIn('PatchAiTaskLifetime(harmony)',SRC)
         self.assertIn('ExtendedPathfinding.TryInstall(requested',SRC)
         self.assertIn('PatchTerrainHoleIndexing(harmony)',SRC)
         self.assertNotIn('PatchAllObjectiveAreaScopes(harmony)',SRC)

@@ -125,6 +125,11 @@ the same exact 0.7.18 hash. Its bundled metadata checker validates mortar hooks,
 payload properties and runtime binary native-type references before staging in both
 the canonical installer and clean-source verifier. This does not prove native dispatch
 or balance; Suite/Camera products remain blocked on that scoped hash.
+LargerMaps 2.6.0 always expands to include AIPerformance 1.0.0
+before the scoped compatibility check and build/stage transaction (#93). Its companion
+runs managed behavior and proxy metadata checks before staging. Installed-settings mode
+supports the pair without replacing settings/loader. The scoped 0.7.18 selection does
+not authorize >64 native pathfinder edits; Larger Maps keeps its safe 64x64 fallback.
 The Jiangyu SDK comes from the hash-verified CLI archive; code is built directly with .NET against
 installed game proxies. Authored templates/bundles are precompiled for the pinned game,
 so the player does **not** need Unity Editor or a global Jiangyu configuration change.

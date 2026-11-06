@@ -1,0 +1,12 @@
+<Project>
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <Nullable>disable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <DebugType>none</DebugType>
+    <DebugSymbols>false</DebugSymbols>
+    <MelonLoaderDir Condition="'$(MelonLoaderDir)' == ''">$(GameDir)/MelonLoader/net6</MelonLoaderDir>
+    <GameAssembliesDir Condition="'$(GameAssembliesDir)' == ''">$(GameDir)/MelonLoader/Il2CppAssemblies</GameAssembliesDir>
+  </PropertyGroup>
+</Project>

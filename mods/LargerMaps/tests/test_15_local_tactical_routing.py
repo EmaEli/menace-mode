@@ -4,14 +4,14 @@ import re
 import unittest
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
-PLUGIN=(ROOT/'src/LargerMaps/Plugin.cs').read_text()
+PLUGIN=(ROOT/'../jiangyu/AIPerformance/code/Plugin.cs').read_text()
 ROUTER=(ROOT/'src/LargerMaps/LocalTacticalRouting.cs').read_text()
 NATIVE=(ROOT/'src/LargerMaps/ExtendedPathfinding.cs').read_text()
 REFERENCE=Path('/mnt/data/local_routing_work/LargerMaps-1.4.13-conservative-areas-authoring/src/LargerMaps/ExtendedPathfinding.cs')
 
 class TestNativeAiCandidateLimits(unittest.TestCase):
     def test_feature_only_for_large_maps(self):
-        self.assertIn('TargetSize > ZoneReferenceSize && ReadBool("UseLocalTacticalRouting", false)',ROUTER)
+        self.assertIn('TargetSize >= ZoneReferenceSize && ReadBool("UseLocalTacticalRouting", false)',ROUTER)
     def test_existing_ai_config_not_replaced(self):
         self.assertIn('GetField("WEIGHTS"',ROUTER)
         self.assertIn('GetMember(weights, "NearTileLimit")',ROUTER)
@@ -26,7 +26,9 @@ class TestNativeAiCandidateLimits(unittest.TestCase):
         self.assertIn('TrySetMember(_localTacticalWeights, "CullTilesDistances", _localTacticalOriginalCull)',ROUTER)
         self.assertIn('public void OnUnload() { RestoreSimplifiedCombatPlanning(); RestoreLocalTacticalRouting(); }',PLUGIN)
     def test_runtime_hook_only_scene_callback(self):
-        self.assertIn('if (string.Equals(sceneName, "Tactical", StringComparison.OrdinalIgnoreCase))\n        {\n            ApplySimplifiedCombatPlanning();\n            ApplyLocalTacticalRouting();',PLUGIN)
+        tactical = PLUGIN.split('if (string.Equals(sceneName, "Tactical", StringComparison.OrdinalIgnoreCase))', 1)[1].split('else if', 1)[0]
+        self.assertIn('ApplySimplifiedCombatPlanning();', tactical)
+        self.assertIn('ApplyLocalTacticalRouting();', tactical)
         self.assertNotIn('nameof(LocalTactical',PLUGIN)
     def test_settings_default(self):
         self.assertIn('AddToggle("UseLocalTacticalRouting"',PLUGIN)
@@ -38,6 +40,6 @@ class TestNativeAiCandidateLimits(unittest.TestCase):
         self.assertIn('new(NativeMethod.PathfindingProcessFindPath, 0x2FE, 2, "C1E106", 0x07, 0x07',NATIVE)
     def test_version(self):
         self.assertNotIn('private const string Version', PLUGIN)
-        self.assertEqual(json.loads((ROOT/'../jiangyu/LargerMaps/jiangyu.json').read_text())['version'],'2.5.1')
+        self.assertEqual(json.loads((ROOT/'../jiangyu/LargerMaps/jiangyu.json').read_text())['version'],'2.6.0')
 
 if __name__=='__main__': unittest.main()

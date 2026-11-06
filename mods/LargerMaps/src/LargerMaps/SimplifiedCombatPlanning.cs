@@ -3,11 +3,11 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 
-namespace LargerMaps;
+namespace AIPerformance;
 
 /// <summary>
 /// A scene-scoped change to MENACE's own AI ability-planning flag. Only maps
-/// larger than 64x64 and explicit opt-in setting can modify templates.
+/// of at least 64x64 and an enabled companion setting can modify templates.
 /// No global FindPath hooks, per-turn work, or native AI algorithm patching.
 /// </summary>
 public sealed partial class Plugin
@@ -35,7 +35,7 @@ public sealed partial class Plugin
     private static readonly HashSet<IntPtr> _preservedInfantryFireProfiles = new();
 
     private static bool SimplifiedCombatPlanningEnabled()
-        => TargetSize > ZoneReferenceSize && ReadBool("SimplifyCombatAIPlanning", true);
+        => TargetSize >= ZoneReferenceSize && ReadBool("SimplifyCombatAIPlanning", true);
 
     private static void ApplySimplifiedCombatPlanning()
     {

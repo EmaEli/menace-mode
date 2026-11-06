@@ -65,6 +65,13 @@ two), 80 AP per action, stationary progress and mortar-style tile markers. Its c
 runs managed production-hook/marker tests and metadata-only native contracts before staging.
 Use `-UseInstalledSettings` to validate/reuse both MenaceModSettings and Jiangyu.Loader without
 replacing either. Windows/gameplay acceptance remains separate from these automated checks.
+LargerMaps 2.6.0 automatically includes AIPerformance 1.0.0 (#93/#57), including when
+using `--use-installed-settings` / `-UseInstalledSettings`. Both are built, staged and
+backed up as one transaction; installed settings/loader are validated and preserved.
+The companion's managed behavior and native proxy metadata checks run before staging.
+Its simplified planning defaults ON, including 64x64; old Larger Maps AI settings are
+not migrated. Optional candidate limits remain OFF. The scoped 0.7.18 Larger Maps
+candidate retains the safe 64x64 fallback: native pathfinding above 64 is not authorized.
 The exact hash remains mandatory. Suite/Camera products and other unlisted standalone
 modules remain blocked; this is not whole-suite or gameplay compatibility acceptance.
 

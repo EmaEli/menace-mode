@@ -4,13 +4,13 @@ import unittest
 from pathlib import Path
 
 ROOT=Path(__file__).resolve().parents[1]
-PLUGIN=(ROOT/'src/LargerMaps/Plugin.cs').read_text()
+PLUGIN=(ROOT/'../jiangyu/AIPerformance/code/Plugin.cs').read_text()
 COMBAT=(ROOT/'src/LargerMaps/SimplifiedCombatPlanning.cs').read_text()
 NATIVE=(ROOT/'src/LargerMaps/ExtendedPathfinding.cs').read_text()
 
 class TestCombatPlanning(unittest.TestCase):
     def test_feature_gated_to_large_maps_and_toggle(self):
-        self.assertIn('TargetSize > ZoneReferenceSize && ReadBool("SimplifyCombatAIPlanning", true)',COMBAT)
+        self.assertIn('TargetSize >= ZoneReferenceSize && ReadBool("SimplifyCombatAIPlanning", true)',COMBAT)
         self.assertIn('AddToggle("SimplifyCombatAIPlanning"', PLUGIN)
 
     def test_uses_game_native_flag_not_pathfinder_or_move_hooks(self):
@@ -50,7 +50,7 @@ class TestCombatPlanning(unittest.TestCase):
 
     def test_versions_and_native_backend_unchanged(self):
         self.assertNotIn('private const string Version', PLUGIN)
-        self.assertEqual(json.loads((ROOT/'../jiangyu/LargerMaps/jiangyu.json').read_text())['version'],'2.5.1')
+        self.assertEqual(json.loads((ROOT/'../jiangyu/LargerMaps/jiangyu.json').read_text())['version'],'2.6.0')
         reference=Path('/mnt/data/local_routing_work/LargerMaps-1.5-local-tactical-routing-authoring/src/LargerMaps/ExtendedPathfinding.cs')
         if reference.exists(): self.assertEqual(NATIVE,reference.read_text())
 

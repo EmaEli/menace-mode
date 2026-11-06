@@ -19,7 +19,7 @@ class Behavior1410Tests(unittest.TestCase):
         self.assertIn('_aiPerfDeep = ReadBool("DiagnoseAIPathfinding", false);', PROF)
         self.assertIn('AddToggle("DiagnoseAIPerformance", "Log AI task / unit timings", false)', PLUGIN)
         self.assertIn('AddToggle("DiagnoseAIPathfinding", "Log AI path timings (needs AI task timings)", false)', PLUGIN)
-        self.assertIn('"version": "2.5.1"', META)
+        self.assertIn('"version": "2.6.0"', META)
 
     def test_reuses_existing_collect_hook_no_new_native_hooks(self):
         deep = PROF.split('if (_aiPerfDeep)', 1)[1].split('// With diagnostics OFF', 1)[0]
@@ -60,7 +60,8 @@ class Behavior1410Tests(unittest.TestCase):
                          'b3a149b45817259accf1f36674003d06b3218bc47f0d7590f961524c25d1f5ca')
         self.assertEqual(digest('tests/pathfinding-sites.json'),
                          '66baaaa89c8e643482c0b573311483bb9e815551a96219763d5f9b3390e139b1')
-        self.assertIn('PatchAiTaskLifetime(harmony);\n            PatchAiPerformance(harmony);', PLUGIN)
+        self.assertIn('PatchAiPerformance(harmony);', PLUGIN)
+        self.assertNotIn('PatchAiTaskLifetime(harmony);', PLUGIN)
 
     def test_behavior_parser_old_and_new_lines(self):
         spec = importlib.util.spec_from_file_location('ai_parser_1410', ROOT/'tools/analyze_ai_perf.py')

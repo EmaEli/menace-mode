@@ -30,10 +30,11 @@ class AiRollover149Tests(unittest.TestCase):
             self.assertNotIn(forbidden, bad)
 
     def test_original_ai_timeout_protection_is_untouched(self):
-        safety = GAME.split('private static void PatchAiTaskLifetime(',1)[1].split('private static void PatchAiDiagnostics(',1)[0]
+        safety = (ROOT / '../jiangyu/AIPerformance/code/TaskLifetime.cs').read_text()
         self.assertIn('__result = Il2CppSystem.Threading.Tasks.Task.Run(__0);', safety)
         self.assertIn('return false;', safety)
-        self.assertIn('PatchAiTaskLifetime(harmony);\n            PatchAiPerformance(harmony);', GAME)
+        self.assertIn('PatchAiPerformance(harmony);', GAME)
+        self.assertNotIn('PatchAiTaskLifetime(harmony);', GAME)
         self.assertNotIn('private const string Version', GAME)
 
     def test_parser_preserves_actor_identity_and_duration(self):

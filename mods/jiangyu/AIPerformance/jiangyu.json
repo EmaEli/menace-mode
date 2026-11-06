@@ -1,0 +1,7 @@
+{
+  "name": "AIPerformance",
+  "version": "1.0.0",
+  "author": "Luca",
+  "description": "Larger Maps AI performance companion: real worker task lifetime, reversible simplified combat planning including 64x64, optional local candidate limits. No native pathfinding edits or default hot-path logging.",
+  "depends": ["Jiangyu >= 1.4.8", "MenaceModSettings >= 0.2.0"]
+}

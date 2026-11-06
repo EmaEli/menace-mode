@@ -38,18 +38,21 @@ def collect(root, module=None, use_installed_settings=False):
         raise ValueError("Unknown requested module")
     installed_companion_modules = {
         "SquaddieFieldPromotions", "SquaddieVeterancy", "TacticalRoundCheckpoint",
-        "CoordinatedFire", "WeaponMechanicsRebalanced", "InfantrySandbagCover",
+        "CoordinatedFire", "WeaponMechanicsRebalanced", "InfantrySandbagCover", "LargerMaps", "AIPerformance",
     }
     if use_installed_settings and module not in installed_companion_modules:
         raise ValueError(
             "Installed-companion mode is supported only by SquaddieFieldPromotions, "
             "SquaddieVeterancy, TacticalRoundCheckpoint, CoordinatedFire and "
-            "WeaponMechanicsRebalanced and InfantrySandbagCover"
+            "WeaponMechanicsRebalanced, InfantrySandbagCover, LargerMaps and AIPerformance"
         )
     if module == "SquaddieFieldPromotions" and not use_installed_settings:
         raise ValueError("Experimental preview requires --use-installed-settings; do not replace an existing companion")
     modules = catalog["modules"] if module is None else list(dict.fromkeys(
         ([] if use_installed_settings else ["MenaceModSettings"]) + [module]))
+    # One logical distribution: the AI companion is mandatory for Larger Maps.
+    if "LargerMaps" in modules and "AIPerformance" not in modules:
+        modules.insert(modules.index("LargerMaps"), "AIPerformance")
     payload = {}
 
     def add(path):
@@ -195,6 +198,9 @@ def main():
     subprocess.run(offline_args, cwd=ROOT, check=True)
     if args.module == "InfantrySandbagCover":
         subprocess.run([dotnet, "run", "--project", str(ROOT / "mods/jiangyu/InfantrySandbagCover/tests/OfflineChecks/OfflineChecks.csproj"),
+                        "-c", "Release"], cwd=ROOT, check=True)
+    if "AIPerformance" in versions:
+        subprocess.run([dotnet, "run", "--project", str(ROOT / "mods/jiangyu/AIPerformance/tests/OfflineChecks/OfflineChecks.csproj"),
                         "-c", "Release"], cwd=ROOT, check=True)
     revision = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
     sdk = json.loads((ROOT / TOOLS / "distribution.json").read_text())["dotnetSdk"]

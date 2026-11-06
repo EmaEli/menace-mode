@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../code/Plugin.cs" Link="Plugin.cs" />
+    <Compile Include="../../code/TaskLifetime.cs" Link="TaskLifetime.cs" />
+    <Compile Include="../../../../LargerMaps/src/LargerMaps/SimplifiedCombatPlanning.cs" Link="SimplifiedCombatPlanning.cs" />
+    <Compile Include="../../../../LargerMaps/src/LargerMaps/LocalTacticalRouting.cs" Link="LocalTacticalRouting.cs" />
+    <Compile Include="../../../../LargerMaps/src/LargerMaps/KnownCombatSkillIds.cs" Link="KnownCombatSkillIds.cs" />
+  </ItemGroup>
+</Project>

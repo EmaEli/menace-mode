@@ -1,7 +1,7 @@
 using System;
 using System.Reflection;
 
-namespace LargerMaps;
+namespace AIPerformance;
 
 /// <summary>
 /// Stage 1 of Local Tactical Routing. Use two EXISTING MENACE AI candidate-
@@ -23,7 +23,7 @@ public sealed partial class Plugin
     private static bool _localTacticalWarningLogged;
 
     private static bool LocalTacticalRoutingEnabled()
-        => TargetSize > ZoneReferenceSize && ReadBool("UseLocalTacticalRouting", false);
+        => TargetSize >= ZoneReferenceSize && ReadBool("UseLocalTacticalRouting", false);
 
     private static void ApplyLocalTacticalRouting()
     {

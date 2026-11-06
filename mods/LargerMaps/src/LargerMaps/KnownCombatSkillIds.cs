@@ -1,4 +1,4 @@
-namespace LargerMaps;
+namespace AIPerformance;
 
 /// <summary>
 /// Fallback names from the game's supplied SkillTemplate export (v0.7.15).

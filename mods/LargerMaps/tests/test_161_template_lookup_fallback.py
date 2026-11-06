@@ -29,7 +29,7 @@ class TestKnownCombatFallback(unittest.TestCase):
         self.assertIn('getById.Invoke(null, new object[] { id, false })',COMBAT)
 
     def test_only_opt_in_large_maps_and_no_global_hook(self):
-        self.assertIn('TargetSize > ZoneReferenceSize && ReadBool("SimplifyCombatAIPlanning", true)',COMBAT)
+        self.assertIn('TargetSize >= ZoneReferenceSize && ReadBool("SimplifyCombatAIPlanning", true)',COMBAT)
         self.assertIn('attacks + buffs == 0',COMBAT)
         self.assertIn('if (!isAttack && !isBuff) return;',COMBAT)
         self.assertIn('RestoreSimplifiedCombatPlanning()',COMBAT)
@@ -37,7 +37,7 @@ class TestKnownCombatFallback(unittest.TestCase):
             self.assertNotIn(forbidden,COMBAT)
 
     def test_version(self):
-        self.assertEqual(json.loads((ROOT/'../jiangyu/LargerMaps/jiangyu.json').read_text())['version'],'2.5.1')
+        self.assertEqual(json.loads((ROOT/'../jiangyu/LargerMaps/jiangyu.json').read_text())['version'],'2.6.0')
         self.assertNotIn('private const string Version', (ROOT/'src/LargerMaps/Plugin.cs').read_text())
 
 if __name__=='__main__': unittest.main()

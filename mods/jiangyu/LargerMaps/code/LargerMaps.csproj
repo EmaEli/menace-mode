@@ -9,7 +9,7 @@
   -->
   <PropertyGroup>
     <!-- Keep in step with jiangyu.json so the DLL metadata identifies the shipped build. -->
-    <Version>2.5.1</Version>
+    <Version>2.6.0</Version>
     <AssemblyName>LargerMaps</AssemblyName>
     <RootNamespace>LargerMaps</RootNamespace>
     <ImplicitUsings>disable</ImplicitUsings>
@@ -17,7 +17,7 @@
     <SharedSourceDir>$(MSBuildThisFileDirectory)../../../LargerMaps/src/LargerMaps</SharedSourceDir>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="$(SharedSourceDir)/*.cs" LinkBase="Shared" />
+    <Compile Include="$(SharedSourceDir)/*.cs" Exclude="$(SharedSourceDir)/SimplifiedCombatPlanning.cs;$(SharedSourceDir)/LocalTacticalRouting.cs;$(SharedSourceDir)/KnownCombatSkillIds.cs" LinkBase="Shared" />
   </ItemGroup>
   <ItemGroup>
     <!-- Direct Harmony (37 manual patches with __instance/__result/ref/__state) and
@@ -39,7 +39,8 @@
       so the loader has already loaded it into the default context when this DLL binds.
     -->
     <Reference Include="MenaceModSettings">
-      <HintPath>../../MenaceModSettings/compiled/code/MenaceModSettings.dll</HintPath>
+      <HintPath Condition="'$(MenaceModSettingsPath)' != ''">$(MenaceModSettingsPath)</HintPath>
+      <HintPath Condition="'$(MenaceModSettingsPath)' == ''">../../MenaceModSettings/compiled/code/MenaceModSettings.dll</HintPath>
       <Private>false</Private>
     </Reference>
   </ItemGroup>

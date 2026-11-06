@@ -1,8 +1,21 @@
-# Larger Maps 2.5.1 — forest prefab height correction candidate
+# Larger Maps 2.6.0 — separate AI performance companion
 
 The current host compiles the shared `mods/LargerMaps/src/LargerMaps` sources.
 Use the canonical Suite installer in `mods/GameplaySuite`; do not revive the old
 PR #18 one-click installer or install a second legacy Modpack Loader copy.
+
+## AI companion (#93 / #57)
+
+The same installer automatically builds and installs **AIPerformance 1.0.0** together
+with Larger Maps. Worker lifetime safety, simplified attack/buff planning and optional
+candidate limits now live only in `AIPerformance.dll`, with settings under **AI Performance**.
+Simplified planning defaults ON and now includes 64x64; the old Larger Maps OFF setting
+does not disable the new companion. Optional local routing remains OFF. This avoids
+evaluating hypothetical future firing positions, so AI positioning can differ.
+Diagnostics and conditional advance recovery remain in Larger Maps.
+
+The scoped 0.7.18 candidate does **not** add native 80/96 pathfinder support: requests
+above 64 still fall back safely to 64. Offline/build checks are not gameplay timing evidence.
 
 ## Floating forest prefabs (#92)
 

@@ -57,8 +57,8 @@ class ConservativeRuntimeContractTest(unittest.TestCase):
 
     def test_version_consistency(self):
         meta=json.loads((ROOT/'../jiangyu/LargerMaps/jiangyu.json').read_text())
-        self.assertEqual(meta['version'],'2.5.1')
-        self.assertIn('<Version>2.5.1</Version>',(ROOT/'../jiangyu/LargerMaps/code/LargerMaps.csproj').read_text())
+        self.assertEqual(meta['version'],'2.6.0')
+        self.assertIn('<Version>2.6.0</Version>',(ROOT/'../jiangyu/LargerMaps/code/LargerMaps.csproj').read_text())
 
     def test_pathfinder_and_profiler_not_modified(self):
         old=Path('/mnt/data/lm_work/v1412/LargerMaps-1.4.12-area-regression-diagnostic-authoring/src/LargerMaps')
@@ -66,7 +66,8 @@ class ConservativeRuntimeContractTest(unittest.TestCase):
             for name in ('ExtendedPathfinding.cs','AIProfiling.cs','Reference64MissionAreas.cs'):
                 self.assertEqual(hashlib.sha256((old/name).read_bytes()).digest(),
                                  hashlib.sha256((ROOT/'src/LargerMaps'/name).read_bytes()).digest())
-        self.assertIn('PatchAiTaskLifetime(harmony);',PLUGIN)
+        self.assertNotIn('PatchAiTaskLifetime(harmony);',PLUGIN)
+        self.assertIn('PatchAiTaskLifetime(harmony);',(ROOT/'../jiangyu/AIPerformance/code/Plugin.cs').read_text())
         self.assertIn('ExtendedPathfinding.TryInstall(requested',PLUGIN)
 
 if __name__ == '__main__': unittest.main()

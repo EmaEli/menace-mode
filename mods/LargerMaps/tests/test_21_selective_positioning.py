@@ -6,15 +6,15 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 COMBAT = (ROOT / "src/LargerMaps/SimplifiedCombatPlanning.cs").read_text()
-PLUGIN = (ROOT / "src/LargerMaps/Plugin.cs").read_text()
+PLUGIN = (ROOT / "../jiangyu/AIPerformance/code/Plugin.cs").read_text()
 PACKAGE = ROOT.parent / "jiangyu/LargerMaps"
 
 
 class SelectivePositioningTests(unittest.TestCase):
     def test_off_default_above_64_only_and_existing_lifecycle(self):
-        self.assertIn('TargetSize > ZoneReferenceSize && ReadBool("SimplifyCombatAIPlanning", true)', COMBAT)
+        self.assertIn('TargetSize >= ZoneReferenceSize && ReadBool("SimplifyCombatAIPlanning", true)', COMBAT)
         self.assertIn('ReadBool("PreserveBasicInfantryFirePositioning", false)', COMBAT)
-        self.assertIn('OFF; restart required)", false)', PLUGIN)
+        self.assertIn('OFF recommended)", false)', PLUGIN)
         self.assertIn('ApplySimplifiedCombatPlanning();', PLUGIN)
         self.assertIn('OnUnload() { RestoreSimplifiedCombatPlanning();', PLUGIN)
 
@@ -43,9 +43,9 @@ class SelectivePositioningTests(unittest.TestCase):
             self.assertNotIn(forbidden, COMBAT)
 
     def test_current_jiangyu_versions_not_old_draft_modpack(self):
-        self.assertEqual(json.loads((PACKAGE / 'jiangyu.json').read_text())['version'], '2.5.1')
-        self.assertEqual(json.loads((PACKAGE / 'compiled/jiangyu.json').read_text())['version'], '2.5.1')
-        self.assertIn('<Version>2.5.1</Version>', (PACKAGE / 'code/LargerMaps.csproj').read_text())
+        self.assertEqual(json.loads((PACKAGE / 'jiangyu.json').read_text())['version'], '2.6.0')
+        self.assertEqual(json.loads((PACKAGE / 'compiled/jiangyu.json').read_text())['version'], '2.6.0')
+        self.assertIn('<Version>2.6.0</Version>', (PACKAGE / 'code/LargerMaps.csproj').read_text())
 
 
 if __name__ == '__main__':

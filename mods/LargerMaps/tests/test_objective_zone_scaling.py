@@ -183,7 +183,7 @@ class ReferenceScalingTests(unittest.TestCase):
 
     def test_legacy_spawn_and_native_ai_safety_preserved(self):
         self.assertIn('mapWidth / (float)VanillaSize',SOURCE)
-        self.assertIn('PatchAiTaskLifetime(harmony)',SOURCE)
+        self.assertNotIn('PatchAiTaskLifetime(harmony)',SOURCE)
         self.assertIn('PatchTerrainHoleIndexing(harmony)',SOURCE)
         self.assertIn('private static bool Debug() => false;',SOURCE)
         self.assertIn('Math.Clamp(snapped, 64, 96)',SOURCE)
@@ -191,7 +191,7 @@ class ReferenceScalingTests(unittest.TestCase):
     def test_version_and_dump_class_coverage(self):
         self.assertNotIn('private const string Version', SOURCE)
         m=json.loads((ROOT/'../jiangyu/LargerMaps/jiangyu.json').read_text())
-        self.assertEqual(m['version'],'2.5.1')
+        self.assertEqual(m['version'],'2.6.0')
         dump=Path('/mnt/data/dump.cs')
         if dump.exists():
             text=dump.read_text()

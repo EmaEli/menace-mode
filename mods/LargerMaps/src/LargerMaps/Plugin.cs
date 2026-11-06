@@ -236,12 +236,7 @@ public sealed partial class Plugin
             settings.AddToggle("IncreaseTerrainStampDensity", "More terrain stamps on maps above 64x64", false);
             settings.AddSlider("TerrainStampDensityMultiplier", "Stamp attempt multiplier at 96x96", 1f, 5f, 1.5f);
             settings.AddHeader("AI on large maps (restart required)");
-            settings.AddToggle("SimplifyCombatAIPlanning", "Simplified attack planning (no future firing positions)", true);
-            settings.AddToggle("PreserveBasicInfantryFirePositioning", "MEN-002 experiment: preserve five infantry fire profiles (OFF; restart required)", false);
-            settings.AddToggle("UseLocalTacticalRouting", "Local tactical routing (limit destination search)", false);
             settings.AddToggle("RecoverStalledAdvance", "MEN-002 candidate: recover advance after two idle rounds (ON; restart required)", true);
-            settings.AddSlider("LocalNearTileLimit", "Nearby destinations inspected", 12f, 64f, 20f);
-            settings.AddSlider("LocalCullTileDistance", "Cull distance (tiles)", 10f, 20f, 12f);
             settings.AddHeader("Camera");
             settings.AddToggle("ExtendedZoomOut", "Extended zoom-out on enlarged maps", true);
             settings.AddSlider("ZoomOutMultiplier", "Maximum zoom-out multiplier", 1f, 4f, 2f);
@@ -273,25 +268,12 @@ public sealed partial class Plugin
 
         ResolveTypes();
         InstallHooks(harmony);
-        _log.Msg($"{ModName} {_version}: {TargetSize}x{TargetSize} tactical map; AI task safety and map/pathfinder backend unchanged; " +
+        _log.Msg($"{ModName} {_version}: {TargetSize}x{TargetSize} tactical map; AI performance supplied by AIPerformance.dll; " +
             (TargetSize <= ZoneReferenceSize ? "64x64 reference mission areas." : "conservative mission areas (no broad objective expansion)."));
     }
 
     public void OnSceneLoaded(int buildIndex, string sceneName)
     {
-        if (string.Equals(sceneName, "Tactical", StringComparison.OrdinalIgnoreCase))
-        {
-            ApplySimplifiedCombatPlanning();
-            ApplyLocalTacticalRouting();
-        }
-        else if (string.Equals(sceneName, "Strategy", StringComparison.OrdinalIgnoreCase) ||
-                 string.Equals(sceneName, "Title", StringComparison.OrdinalIgnoreCase) ||
-                 string.Equals(sceneName, "MissionPreparation", StringComparison.OrdinalIgnoreCase))
-        {
-            RestoreSimplifiedCombatPlanning();
-            RestoreLocalTacticalRouting();
-        }
-
         if (!Enabled() || !Debug()) return;
 
         if (string.Equals(sceneName, "MissionPreparation", StringComparison.OrdinalIgnoreCase))
@@ -329,7 +311,7 @@ public sealed partial class Plugin
         }
     }
     public void OnGUI() { }
-    public void OnUnload() { RestoreSimplifiedCombatPlanning(); RestoreLocalTacticalRouting(); }
+    public void OnUnload() { }
 
     private static void ResolveTypes()
     {
@@ -403,7 +385,6 @@ public sealed partial class Plugin
                 PatchFinalSpawnAreaSafety(harmony);
             PatchEvacSetpiecePlacement(harmony);
             PatchMissionRoundLimits(harmony);
-            PatchAiTaskLifetime(harmony);
             PatchAiPerformance(harmony);
             PatchAiDiagnostics(harmony);
             PatchAIRouteInvestigation(harmony);
@@ -1460,55 +1441,6 @@ public sealed partial class Plugin
         }
         catch { }
         return null;
-    }
-
-    // Vanilla AIFaction.RunWithTimeout launches a Task.Run wrapper. That wrapper starts
-    // a second Task for the actual AI action, calls Wait(12000), and RETURNS after the
-    // timeout even while the inner task is still running. Subsequent AI passes can then
-    // mutate the same Agent tile-score dictionaries concurrently. The native body and
-    // its 12,000 ms constant were verified against the supplied game binary and dump.
-    //
-    // Return the *actual* worker task to vanilla instead. This retains the native
-    // asynchronous AI scheduling/completion logic, prevents detached work after the
-    // 12-second wrapper finishes, and removes one unnecessary scheduled wrapper task.
-    // This does NOT introduce arbitrary timeouts or alter AI search/behavior scoring.
-    private static void PatchAiTaskLifetime(HarmonyLib.Harmony harmony)
-    {
-        if (_aiFactionType == null)
-        {
-            _log.Error($"{ModName}: AI task safety could not be installed: AIFaction type missing.");
-            return;
-        }
-
-        MethodInfo method = _aiFactionType
-            .GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)
-            .FirstOrDefault(m => m.Name == "RunWithTimeout"
-                && m.GetParameters().Length == 2
-                && m.GetParameters()[0].ParameterType == typeof(Il2CppSystem.Action)
-                && m.ReturnType == typeof(Il2CppSystem.Threading.Tasks.Task));
-
-        if (method == null)
-        {
-            _log.Error($"{ModName}: AI task safety could not be installed: expected AIFaction.RunWithTimeout(Action, Actor) signature missing. The native timeout behavior is unchanged.");
-            return;
-        }
-
-        MethodInfo prefix = typeof(Plugin).GetMethod(
-            nameof(AIFactionRunWithTimeoutPrefix), BindingFlags.Static | BindingFlags.NonPublic);
-        harmony.Patch(method, prefix: new HarmonyMethod(prefix));
-        _log.Msg($"{ModName}: AI task lifetime safety active (no detached work after vanilla's 12s timeout).");
-    }
-
-    private static bool AIFactionRunWithTimeoutPrefix(
-        Il2CppSystem.Action __0, ref Il2CppSystem.Threading.Tasks.Task __result)
-    {
-        if (!Enabled() || __0 == null) return true;
-
-        // Returning Task.Run(action) itself means the caller only observes completion
-        // once the actual AI evaluation has finished. Do not detach another inner task,
-        // skip actors, suppress exceptions, or spin/wait on the main game thread.
-        __result = Il2CppSystem.Threading.Tasks.Task.Run(__0);
-        return false;
     }
 
     private static void PatchAiDiagnostics(HarmonyLib.Harmony harmony)

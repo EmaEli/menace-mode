@@ -68,7 +68,7 @@ def compile_clean(files, game, sdk, dotnet):
             build_args = [dotnet, "build", str(project), "-c", "Release", "--nologo", "-v", "quiet",
                           f"-p:GameDir={game}", f"-p:GameAssembliesDir={refs}", f"-p:MelonLoaderDir={runtime}",
                           f"-p:JiangyuSdkDir={sdk}", "-p:JiangyuDev=false"]
-            if module in {"SquaddieFieldPromotions", "SquaddieVeterancy", "CoordinatedFire", "WeaponMechanicsRebalanced", "InfantrySandbagCover"} and "MenaceModSettings" not in modules:
+            if module in {"SquaddieFieldPromotions", "SquaddieVeterancy", "CoordinatedFire", "WeaponMechanicsRebalanced", "InfantrySandbagCover", "LargerMaps", "AIPerformance"} and "MenaceModSettings" not in modules:
                 settings_dll = game / "Mods/MenaceModSettings/code/MenaceModSettings.dll"
                 if not settings_dll.is_file():
                     settings_dll = ROOT / "mods/jiangyu/MenaceModSettings/compiled/code/MenaceModSettings.dll"
@@ -84,6 +84,11 @@ def compile_clean(files, game, sdk, dotnet):
                                 str(refs / "Assembly-CSharp.dll"), str(root / "compiled/code" / (assembly + ".dll"))],
                                check=True, cwd=source)
             if module == "InfantrySandbagCover":
+                subprocess.run([dotnet, "run", "--project", str(root / "tests/OfflineChecks/OfflineChecks.csproj"),
+                                "-c", "Release"], check=True, cwd=source)
+            if module == "AIPerformance":
+                subprocess.run([dotnet, "run", "--project", str(root / "tests/NativeContractChecks/NativeContractChecks.csproj"),
+                                "-c", "Release", "--", str(refs / "Assembly-CSharp.dll")], check=True, cwd=source)
                 subprocess.run([dotnet, "run", "--project", str(root / "tests/OfflineChecks/OfflineChecks.csproj"),
                                 "-c", "Release"], check=True, cwd=source)
         if "CinematicActionCamera" in modules:
