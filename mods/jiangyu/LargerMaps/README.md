@@ -1,8 +1,18 @@
-# Larger Maps 2.5.0 — city missions deploy on the city
+# Larger Maps 2.5.1 — forest prefab height correction candidate
 
 The current host compiles the shared `mods/LargerMaps/src/LargerMaps` sources.
 Use the canonical Suite installer in `mods/GameplaySuite`; do not revive the old
 PR #18 one-click installer or install a second legacy Modpack Loader copy.
+
+## Floating forest prefabs (#92)
+
+ForestDense/Sparse/Single prefab placement now converts world coordinates to the
+actual heightmap domain, including the native inlined path that bypassed the old
+helper patch. Other prefab types, terrain stamps and native-sized maps are unchanged.
+102 managed production-hook assertions and local 0.7.18 compilation pass; Windows
+build/install and visual desert-map confirmation remain pending. The installed
+PC version observed on 6 November is still 2.5.0. See `docs/FLOATING_TREES_2026-11-06.md`
+at the repository root for the evidence and deployment gates.
 
 ## City-layout area anchoring (#81, on by default)
 

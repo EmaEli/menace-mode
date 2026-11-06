@@ -1,3 +1,14 @@
+## 2.5.1 - Correct forest prefab height samples (#92)
+
+- Correct the forest-only `PointPropGenerator.SpawnPrefabs` path on enlarged maps.
+  The native 0.7.18 body inlines `ReprojectGameplayPoint`, bypassing the existing
+  helper patch and sampling world coordinates as heightmap pixels.
+- Preserve matching asset IDs, prefab RNG order, orientation, authored prefab scale
+  and LevelRoot parent; leave non-forest prefabs, gameplay entities/features,
+  decorative/ground points, terrain stamps and native-sized maps unchanged.
+- Managed production-hook checks and local compilation pass. This is a candidate:
+  Windows canonical build/install and visual desert-tree acceptance are pending.
+
 ## 2.5.0 - City missions deploy on the city (#81)
 
 - City missions build a fixed grid of 12x12 city tiles and street pieces around the map

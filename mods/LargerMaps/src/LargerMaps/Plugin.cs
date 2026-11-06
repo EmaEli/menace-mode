@@ -386,6 +386,7 @@ public sealed partial class Plugin
             PatchTerrainStampFootprint(harmony);
             PatchWorldHeightBilinearSafety(harmony);
             PatchGameplayPointReprojection(harmony);
+            PatchForestPrefabReprojection(harmony);
             PatchTerrainPointSpawnerHeightFix(harmony);
             PatchMapElevationTextureResize(harmony);
             PatchBaseTileHighlighterInit(harmony);
