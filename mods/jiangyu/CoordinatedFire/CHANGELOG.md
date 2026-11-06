@@ -1,3 +1,10 @@
+## 1.6.14
+
+- Preserve native camera mouse/key input during combined volleys and AP settlement (#90). Combat clicks, skill selection, end-turn and round-transition guards remain locked until the volley completes.
+- Preserve Escape targeting cancellation and native pause handling. Camera mouse input retains native focus/cursor-outside-screen checks; no AP, ammo, targeting or AI changes.
+- Local 0.7.18-reference build, 13 focused tests (50 new production-prefix assertions) and 18,099 shared C#/selected-artifact checks passed; manifest/assembly/file versions verified as 1.6.14/1.6.14.0/1.6.14.0. Broader Python run: 195 pass, one unrelated GarrisonableBuildings inventory-version failure during concurrent work.
+- Windows/gameplay verification pending; the canonical installer does not yet permit CoordinatedFire on the scoped 0.7.18 build. No PC files changed.
+
 ## 1.6.13
 
 - Added `NoInlining | NoOptimization` to `Runtime.InterceptActionPointWrite` after the mounted undeploy crash dump identified this helper in the .NET JIT compilation path (#44). Existing whole-assembly main-thread precompilation remains enabled.

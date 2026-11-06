@@ -54,7 +54,7 @@ warning. Full restore remains unimplemented. Evidence is recorded separately in 
 | MenaceModSettings | 0.8.2 | Jiangyu settings/UI; indexed stock-read fix (#65), canonical Windows BuildOnly/install verified 2026-10-21; 0.8.2 gameplay pending; stable assembly identity 1.0.0.0 |
 | BuildingCombatRules | 0.3.0 | Shared SuiteSystem host, Harmony/runtime; tree protection candidate #48 |
 | BuildingsBlockLineOfSight | 0.2.3 | Shared SuiteSystem host, Harmony/runtime |
-| CoordinatedFire | 1.6.13 | Shared SuiteSystem host, native attacks/HUD; #44 adds a targeted AP-helper JIT optimization guard; #82 AI pair selection and optional bounded capture retained; gameplay acceptance pending |
+| CoordinatedFire | 1.6.14 | Shared SuiteSystem host, native attacks/HUD; #90 preserves camera-only input during volleys; #44 AP-helper JIT guard and #82 AI capture retained; scoped 0.7.18 installer compatibility and gameplay acceptance pending |
 | CoverDestructionRebalance | 0.4.1 | KDL tiers + runtime light/medium mortar impact guard; #58 gameplay verification pending |
 | CustomSupplySliders | 0.2.1 | Shared SuiteSystem host; difficulty-menu slider ranges |
 | FieldLogistics | 1.0.11 | Shared SuiteSystem host + 4 KDL files; ammo support |

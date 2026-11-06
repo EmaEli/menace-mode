@@ -912,7 +912,17 @@ internal sealed class Runtime : IVolleyPort, IDisposable
         public static bool Select(ref bool __result)
         { if (Instance?.Locked != true) return true; __result = false; return false; }
         public static bool Mouse()
-        { return Instance?.Locked != true; }
+        {
+            if (Instance?.Locked != true) return true;
+            // TacticalState normally dispatches camera input before combat input.
+            // Preserve that camera-only path without allowing clicks to change the volley.
+            var manager = TacticalManager.Get();
+            var camera = Native.Valid(manager) ? manager.GetCamera() : null;
+            var ui = Il2CppMenace.UI.UIManager.Get();
+            if (Native.Valid(camera))
+                camera!.HandleMouseInput(Application.isFocused && Native.Valid(ui) && !ui.IsCursorOutsideScreen());
+            return false;
+        }
         public static bool Keyboard()
         {
             var r = Instance;
@@ -926,7 +936,11 @@ internal sealed class Runtime : IVolleyPort, IDisposable
                 }
                 return true; // Keep the native pause/menu escape route available.
             }
-            return !r.Locked;
+            if (!r.Locked) return true;
+            var manager = TacticalManager.Get();
+            var camera = Native.Valid(manager) ? manager.GetCamera() : null;
+            if (Native.Valid(camera)) camera!.HandleKeyInput();
+            return false; // Camera keys only; selection/action/end-turn keys stay blocked.
         }
     }
 }

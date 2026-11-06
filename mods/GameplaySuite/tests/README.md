@@ -39,6 +39,9 @@ From the repository root:
 - `test_coordinated_fire_jit_guard.py` executes the guarded AP helper with managed doubles:
   emitted method flags, inactive/settling/other-actor guards, exact debits and clipped gains.
   It does not reproduce MonoMod's native JIT crash or prove the mitigation in MENACE (#44).
+- `test_coordinated_fire_camera_input.py` executes production input prefixes: camera-only
+  dispatch during volleys/settlement, normal-input pass-through, focus/cursor boundaries,
+  missing manager/camera/UI and Escape cancellation/pause (50 assertions). No native input/game test (#90).
 - BuildKit ZIP/clean-source checks: see [INSTALLING.md](../docs/INSTALLING.md). The Python
   distribution tests exercise actual ZIP generation/integrity and inspect PowerShell wiring;
   they do **not** execute PowerShell, installer filesystem transactions or Windows rollback.
