@@ -313,6 +313,9 @@ class DistributionTests(unittest.TestCase):
             "-Product Standalone -Modules WeaponMechanicsRebalanced -UseInstalledSettings",
             launcher,
         )
+        readme = payload["README.txt"].decode()
+        self.assertIn("Requires existing MenaceModSettings and Jiangyu.Loader", readme)
+        self.assertIn("does NOT replace either", readme)
         project = (
             ROOT / "mods/jiangyu/WeaponMechanicsRebalanced/code/WeaponMechanicsRebalanced.csproj"
         ).read_text()
@@ -388,6 +391,42 @@ class DistributionTests(unittest.TestCase):
         self.assertEqual(len(runs), 2)
         self.assertIn("NativeContractChecks.csproj", runs[0][3])
         self.assertEqual(runs[1][-1], "MenaceModSettings,WeaponMechanicsRebalanced")
+
+    def test_clean_verifier_uses_external_settings_reference_for_sandbags(self):
+        payload, _ = BUILDER.collect(ROOT, "InfantrySandbagCover", True)
+        settings_dll = ROOT / "mods/jiangyu/MenaceModSettings/compiled/code/MenaceModSettings.dll"
+        with tempfile.TemporaryDirectory() as directory:
+            folder = Path(directory)
+            game = folder / "game"
+            sdk = folder / "sdk"
+            game.mkdir()
+            sdk.mkdir()
+            commands = []
+
+            def fake_run(arguments, **kwargs):
+                commands.append(arguments)
+                if len(arguments) > 2 and arguments[1] == "build":
+                    project = Path(arguments[2])
+                    output = project.parent / "bin/Release/InfantrySandbagCover.dll"
+                    output.parent.mkdir(parents=True, exist_ok=True)
+                    output.write_bytes(b"mock built DLL")
+                elif (arguments[1] == "run" and "NativeContractChecks.csproj" not in arguments[3]
+                      and "InfantrySandbagCover/tests/OfflineChecks/OfflineChecks.csproj" not in arguments[3]):
+                    extracted = Path(arguments[arguments.index("--") + 1])
+                    self.assertTrue(
+                        (extracted / "mods/jiangyu/MenaceModSettings/code/MenaceModSettings.csproj").is_file()
+                    )
+
+            with patch.object(VERIFIER.subprocess, "run", side_effect=fake_run), redirect_stdout(io.StringIO()):
+                VERIFIER.compile_clean(payload, game, sdk, "dotnet")
+
+        build = next(arguments for arguments in commands if arguments[1] == "build")
+        self.assertIn(f"-p:MenaceModSettingsPath={settings_dll}", build)
+        runs = [arguments for arguments in commands if arguments[1] == "run"]
+        self.assertEqual(len(runs), 3)
+        self.assertIn("NativeContractChecks.csproj", runs[0][3])
+        self.assertIn("InfantrySandbagCover/tests/OfflineChecks/OfflineChecks.csproj", runs[1][3])
+        self.assertEqual(runs[2][-1], "MenaceModSettings,InfantrySandbagCover")
 
     def test_installed_settings_are_validated_without_being_staged(self):
         source = (TOOLS / "Install-IntegratedSuite.ps1").read_text()
