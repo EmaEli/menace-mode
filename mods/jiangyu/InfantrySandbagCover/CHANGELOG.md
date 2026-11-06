@@ -8,6 +8,9 @@
   This is a fallback/diagnostic improvement, not proof that the native renderer error is fixed.
 - Model native actor/tactical busy ownership, scheduled effects and completion in regression
   tests, including asynchronous success/failure and renderer failure. Game acceptance is separate.
+- Canonical Windows BuildOnly/install passed on MENACE 0.7.18+22828 (2026-11-06), zero build
+  warnings/errors. Manifest/assembly/file 0.3.1 verified; prior 0.3.0 backed up outside Mods;
+  1,412 unrelated Mods/UserData files, settings, loader and 119 proxies unchanged. Gameplay pending.
 
 ## 0.3.0 - Configurable stationary construction
 

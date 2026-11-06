@@ -88,7 +88,12 @@ The 0.3.0 world-border ArgumentException is not yet resolved; GUI labels now sur
 failure and a one-time warning identifies its stage. Local runtime build, 65 production-hook/
 marker checks, 54 native metadata checks, 194 Python tests and 18,098 scoped shared C# checks pass.
 Pinned 1.4.10 authoring compilation passed with unchanged template data. Canonical 0.3.1
-Windows BuildOnly/install and in-game acceptance remain pending.
+Windows BuildOnly/install passed on 6 November with zero build warnings/errors; installed
+manifest/assembly/file 0.3.1/0.3.1.0/0.3.1.0 verified. Only the selected package was replaced;
+backup `20261106-095139-c58285be32b2414d807b25a84f4a9051` retains 0.3.0 outside Mods.
+All 1,412 unrelated Mods/UserData files and 119 native proxies are unchanged, including the
+settings companion and loader. Runtime source is local dev commit `43b026c`; the installed kit
+is based on that source. No 0.3.1 startup/gameplay acceptance has been reported yet.
 The previous 0.2.0 template-only
 candidate passed canonical BuildOnly/install on MENACE 0.7.18+22828, with backup
 `_MENACE_Backups/20261105-180433-36f506b924eb46cb94bae4d0108f4b0d`; that is not 0.3.0 evidence.
