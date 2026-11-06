@@ -22,7 +22,10 @@ both node-grid fill bounds in the map generator. All instructions are verified b
 any write; write verification and rollback cover the complete selected plan. Earlier
 builds retain their 26-site plans; unknown builds or conflicts still fall back to 64x64.
 No game file is patched on disk. 64x64 does not install native edits. Conditional advance
-recovery remains restricted to 0.7.17. Gameplay/pathfinding acceptance is pending.
+recovery remains restricted to 0.7.17. Canonical Windows BuildOnly/install passed
+on 6 November; manifest/assembly/file 2.6.1/2.6.1.0/2.6.1.0 and protected-file hashes
+were verified. Gameplay/pathfinding acceptance is pending. See
+`docs/LARGERMAPS_0.7.18_2026-11-06.md` at the repository root for evidence.
 
 Run the linked production-plan checks from the repository root with
 `dotnet run --project mods/LargerMaps/tests/NativePatchChecks -c Release -- . game_files/v0.7.18/GameAssembly.dll`.
