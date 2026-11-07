@@ -11,7 +11,7 @@ namespace HarmonyLib
     }
     public sealed class Harmony
     {
-        public void Patch(MethodInfo target, HarmonyMethod postfix) { }
+        public void Patch(MethodInfo target, HarmonyMethod postfix = null, HarmonyMethod prefix = null) { }
     }
     public static class AccessTools
     {
@@ -49,6 +49,8 @@ namespace AIPerformance
         }
         internal static void ResetFixtureMission() => AdvanceRecoveryReset();
         internal static void ScoreFixture(Actor actor, TileScores tiles) => AdvanceRecoveryScores(actor, tiles);
+        internal static void UtilityFixture(Il2CppMenace.Tactical.AI.Behaviors.Move move, TileScores tiles)
+            => AdvanceRecoveryUtility(move, tiles);
         internal static Behavior ChoiceFixture(Agent agent, Behavior choice)
         {
             AdvanceRecoveryChoice(agent, ref choice);

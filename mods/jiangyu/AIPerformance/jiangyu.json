@@ -1,6 +1,6 @@
 {
   "name": "AIPerformance",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "author": "Luca",
   "description": "Independent AI optimizations and conditional stalled-advance recovery on reviewed MENACE 0.7.17/0.7.18 large maps. Real worker task lifetime, reversible simplified planning including 64x64, optional local candidate limits. No LargerMaps dependency or native pathfinding edits.",
   "depends": ["Jiangyu >= 1.4.8", "MenaceModSettings >= 0.2.0"]

@@ -74,6 +74,14 @@ Method(agent, "GetFaction", "AIFaction");
 Method(agent, "GetBehaviors", "List<Behavior>");
 Method(agent, "IsSleeping", "Boolean");
 Method(agent, "IsDeploymentPhase", "Boolean");
+var behavior = Type("Il2CppMenace.Tactical.AI.Behavior");
+Method(behavior, "GetAgent", "Agent");
+Method(behavior, "GetUtilityThreshold", "Single");
+var movement = Type("Il2CppMenace.Tactical.AI.Behaviors.Move");
+Method(movement, "HasUtility", "Boolean", "Dictionary<Tile,TileScore>");
+Method(movement, "GetTargetTile", "TileScore");
+foreach (string member in new[] { "IsMovementDone", "HasMovedThisTurn", "IsDelayingMovement", "IsInsideContainerAndInert" })
+    Method(movement, member, "Boolean");
 Method(faction, "HasKnownOpponent", "Boolean");
 var zones = Type("Il2CppMenace.Tactical.AI.Behaviors.Criterions.ConsiderZones");
 Method(zones, "PostProcess", "Void", "Actor", "Dictionary<Tile,TileScore>");

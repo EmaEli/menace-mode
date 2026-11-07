@@ -18,7 +18,7 @@ namespace Il2CppMenace.Tactical
     }
     public class Actor
     {
-        public Actor() { Agent.Actor = this; }
+        public Actor() { Agent.Actor = this; foreach (var behavior in Agent.Behaviors) behavior.Owner = Agent; }
         public IntPtr Pointer = (IntPtr)10;
         public AI.Agent Agent = new();
         public Tile Tile = new(0, 0);
@@ -72,6 +72,12 @@ namespace Il2CppMenace.Tactical.AI
     }
     public class Behavior
     {
+        private static int _next;
+        public IntPtr Pointer = (IntPtr)Interlocked.Increment(ref _next);
+        public Agent Owner;
+        public Agent GetAgent() => Owner;
+        public float Threshold = 20;
+        public float GetUtilityThreshold() => Threshold;
         public string ID = "Idle";
         public int Score;
         public string GetID() => ID;
@@ -103,8 +109,15 @@ namespace Il2CppMenace.Tactical.AI.Behaviors
     public class Move : Behavior
     {
         public Data.TileScore TargetTile;
+        public bool Done, Moved, Delaying, Inert;
+        public bool IsMovementDone() => Done;
+        public bool HasMovedThisTurn() => Moved;
+        public bool IsDelayingMovement() => Delaying;
+        public bool IsInsideContainerAndInert() => Inert;
         public Move() { ID = "Move"; }
         public Data.TileScore GetTargetTile() => TargetTile;
+        public bool HasUtility(Il2CppSystem.Collections.Generic.Dictionary<Tactical.Tile, Data.TileScore> tiles)
+            => tiles.Values.Any(t => t.UtilityScore >= GetUtilityThreshold());
     }
     public class Attack : Behavior
     {
@@ -141,7 +154,19 @@ namespace Il2CppMenace.Tactical.AI.Data
                 _distanceScore = value;
             }
         }
-        public float UtilityScore, UtilityByAttacksScore, UtilityByAttacksScoreCandidate;
+        private float _utilityScore;
+        public static int UtilityWritesBeforeThrow = -1;
+        public float UtilityScore
+        {
+            get => _utilityScore;
+            set
+            {
+                if (UtilityWritesBeforeThrow == 0) { UtilityWritesBeforeThrow = -1; throw new InvalidOperationException("utility write failed"); }
+                if (UtilityWritesBeforeThrow > 0) UtilityWritesBeforeThrow--;
+                _utilityScore = value;
+            }
+        }
+        public float UtilityByAttacksScore, UtilityByAttacksScoreCandidate;
         public float SafetyScore = 123, UtilityScoreScaled = 456;
         public object Path = new();
         public int APCost;

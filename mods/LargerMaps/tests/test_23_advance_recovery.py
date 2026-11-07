@@ -49,6 +49,16 @@ class AdvanceRecoveryWiringTests(unittest.TestCase):
             with dump.open() as source:
                 self.assertTrue(any('public TileScore GetTargetTile()' in line for line in source), version)
 
+    def test_null_target_recovery_runs_before_native_utility_and_path_selection(self):
+        self.assertIn('typeof(Move), "HasUtility"', HOOK)
+        self.assertIn('prefix: new HarmonyMethod(typeof(Plugin), nameof(AdvanceRecoveryUtility))', HOOK)
+        self.assertIn('TrySeedAdvanceUtility', RUNTIME)
+        self.assertIn('float threshold = move.GetUtilityThreshold();', RUNTIME)
+        self.assertIn('distance < currentDistance && score.SafetyScore >= currentScore.SafetyScore', RUNTIME)
+        self.assertIn('edit.Score.UtilityScore = threshold;', RUNTIME)
+        self.assertIn('edit.Score.UtilityScore = edit.Utility;', RUNTIME)
+        self.assertIn('ADVANCE-UTILITY round=', HOOK)
+
     def test_rejection_diagnostics_are_opt_in_bounded_and_do_not_disable_gameplay(self):
         self.assertIn('out AdvanceRecoveryResult result', RUNTIME)
         self.assertIn('out bool diagnosticCandidate, out bool stalled', RUNTIME)

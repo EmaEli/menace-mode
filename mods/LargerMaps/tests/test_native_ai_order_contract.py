@@ -61,6 +61,7 @@ class NativeOrderContractTests(unittest.TestCase):
             0x7D7F61: 0x7E2951, 0x7D198A: 0x7DD09A,
             0x7D1CDC: 0x7DD3EC, 0x6AF3A0: 0x6BBAB0,
             0x7D1E02: 0x7DD512, 0x6963A0: 0x6A2FA0, 0x7D1E30: 0x7DD540,
+            0x7D0C30: 0x7DC340, 0x7B8830: 0x7C1570, 0x7D0CAF: 0x7DC3BF,
         }[rva]
 
     def test_agents_read_shared_faction_operational_zones(self):
@@ -110,6 +111,11 @@ class NativeOrderContractTests(unittest.TestCase):
         self.assert_call(0x7D1CDC, 0x6AF3A0)  # FindPathForwardOrBackward
         self.assert_call(0x7D1E02, 0x6963A0)  # ClipPathToCost
         self.assert_code(0x7D1E30, '41897d40')  # APCost = clipped cost
+
+    def test_move_utility_accepts_native_threshold_before_path_selection(self):
+        self.assert_call(0x7D0C30, 0x7B8830)  # Behavior.GetUtilityThreshold
+        # HasUtility: UtilityScore >= threshold; lower values continue enumeration.
+        self.assert_code(0x7D0CAF, 'f30f1040300f2fc672d7')
 
 
 if __name__ == '__main__':

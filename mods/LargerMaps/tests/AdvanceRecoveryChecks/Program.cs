@@ -242,6 +242,59 @@ foreach (int cost in new[] { 0, 20, 101, int.MaxValue })
     catch (InvalidOperationException) { Check(t[a.Tile].DistanceScore == 4 && t.Values.Last().DistanceScore == 2, "partial writes rolled back"); }
     finally { TileScore.WritesBeforeThrow = -1; }
 }
+// Null-target regression: no path/AP data exists yet, native HasUtility must see order utility.
+foreach (bool known in new[] { false, true })
+{
+    var (a,t,s) = Fixture(); a.Agent.Faction.Known = known;
+    var move = (Move)a.Agent.Behaviors[1];
+    AdvanceRecoveryRuntime.TryApply(a,t,s,1,3);
+    Check(move.GetTargetTile() == null && !move.HasUtility(t), "reproduce null-target utility rejection");
+    var unsafeTile = new Tile(6,0);
+    t.Add(unsafeTile, new() { Tile = unsafeTile, SafetyScore = 122 });
+    Check(AdvanceRecoveryRuntime.TrySeedAdvanceUtility(move,a,t,s,1,3,out int seeded) && seeded == 1,
+        "known/unseen safe order progress is eligible before paths exist");
+    Check(move.HasUtility(t) && t.Values.ElementAt(1).UtilityScore == move.GetUtilityThreshold(), "native threshold, not arbitrary boost");
+    Check(t[a.Tile].UtilityScore == 0 && t[unsafeTile].UtilityScore == 0, "current/less-safe tiles get no incentive");
+    Check(t.Values.All(v => v.APCost == 0 && v.UtilityScoreScaled == 456 && v.Path != null), "native AP/path/scaled data untouched");
+    Check(!AdvanceRecoveryRuntime.TrySeedAdvanceUtility(move,a,t,s,1,3,out _), "existing utility is preserved on repeated polls");
+}
+foreach (string rejection in new[] { "history", "map", "round", "sleep", "deployment", "dying", "moving", "garrison",
+    "already moved", "suppression", "morale", "no AP", "allied", "defend", "mixed orders", "attack target", "other action",
+    "utility", "attack utility", "pending attack utility", "unknown safety", "no closer tile", "no safe progress" })
+{
+    var (a,t,s) = Fixture(); var move = (Move)a.Agent.Behaviors[1];
+    AdvanceRecoveryRuntime.TryApply(a,t,s,1,3);
+    if (rejection == "no safe progress") t.Values.Last().SafetyScore = 122;
+    else if (cases.TryGetValue(rejection, out var mutate)) mutate(a,t);
+    var before = t.Values.Select(v => v.UtilityScore).ToArray();
+    Check(!AdvanceRecoveryRuntime.TrySeedAdvanceUtility(move,a,t,rejection == "history" ? new() : s,
+        rejection == "map" ? 2 : 1,rejection == "round" ? 4 : 3,out _), "utility guard: " + rejection);
+    Check(before.SequenceEqual(t.Values.Select(v => v.UtilityScore)), "utility guard writes nothing: " + rejection);
+}
+foreach (float threshold in new[] { 0, -1, float.NaN, float.PositiveInfinity })
+{
+    var (a,t,s) = Fixture(); AdvanceRecoveryRuntime.TryApply(a,t,s,1,3);
+    var move = (Move)a.Agent.Behaviors[1]; move.Threshold = threshold;
+    Check(!AdvanceRecoveryRuntime.TrySeedAdvanceUtility(move,a,t,s,1,3,out _), "invalid native threshold rejected");
+}
+foreach (string flag in new[] { "done", "moved", "delaying", "inert", "wrong move" })
+{
+    var (a,t,s) = Fixture(); AdvanceRecoveryRuntime.TryApply(a,t,s,1,3);
+    var move = (Move)a.Agent.Behaviors[1];
+    move.Done = flag == "done"; move.Moved = flag == "moved";
+    move.Delaying = flag == "delaying"; move.Inert = flag == "inert";
+    Check(!AdvanceRecoveryRuntime.TrySeedAdvanceUtility(flag == "wrong move" ? new Move() : move,a,t,s,1,3,out _),
+        "native movement guard: " + flag);
+}
+{
+    var (a,t,s) = Fixture(); AdvanceRecoveryRuntime.TryApply(a,t,s,1,3);
+    var move = (Move)a.Agent.Behaviors[1];
+    var next = new Tile(6,0); t.Add(next,new() { Tile = next });
+    TileScore.UtilityWritesBeforeThrow = 1;
+    try { AdvanceRecoveryRuntime.TrySeedAdvanceUtility(move,a,t,s,1,3,out _); Check(false,"utility fault must propagate"); }
+    catch (InvalidOperationException) { Check(t.Values.All(v => v.UtilityScore == 0), "partial utility writes rolled back"); }
+    finally { TileScore.UtilityWritesBeforeThrow = -1; }
+}
 // Exercise the actual hooks, not just their scoring policy, across native/enlarged maps.
 foreach (var dimensions in new[] { (64,64), (96,64), (64,96), (96,96) })
 {
@@ -252,9 +305,11 @@ foreach (var dimensions in new[] { (64,64), (96,64), (64,96), (96,96) })
     {
         TacticalManager.Instance.m_Round = r;
         Plugin.ScoreFixture(a,t);
+        Plugin.UtilityFixture((Move)a.Agent.Behaviors[1],t);
         Plugin.ChoiceFixture(a.Agent,a.Agent.Behaviors[0]);
     }
     Check((t[a.Tile].DistanceScore > 4) == (dimensions == (96,96)), "hooks use actual map dimensions " + dimensions);
+    Check((t.Values.Last().UtilityScore > 0) == (dimensions == (96,96)), "utility prefix respects actual map dimensions " + dimensions);
     Check(Plugin.Logs.Count == 0, "default hooks emit no per-actor logs");
 }
 {

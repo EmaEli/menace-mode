@@ -33,9 +33,10 @@ public sealed partial class Plugin
             // Resolve every hook before installing any. A partial install remains inert.
             var scores = AccessTools.Method(typeof(ConsiderZones), "PostProcess", new[] { typeof(Actor), typeof(TileScores) });
             var choice = AccessTools.Method(typeof(Agent), "PickBehavior", Type.EmptyTypes);
+            var utility = AccessTools.Method(typeof(Move), "HasUtility", new[] { typeof(TileScores) });
             var reset = typeof(TacticalManager).GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
                 .Single(m => m.Name == "OnInit" && m.GetParameters().Length == 1);
-            if (scores == null || choice == null) throw new MissingMethodException("advance recovery hooks");
+            if (scores == null || choice == null || utility == null) throw new MissingMethodException("advance recovery hooks");
             // First managed calls can originate on IL2CPP workers (#44).
             foreach (Type type in new[] { typeof(AdvanceRecoveryRuntime), typeof(AdvanceRecoveryState), typeof(AdvanceRecoveryOrder), typeof(Plugin) })
                 foreach (MethodInfo method in type.GetMethods(BindingFlags.Static | BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly))
@@ -43,6 +44,7 @@ public sealed partial class Plugin
                         RuntimeHelpers.PrepareMethod(method.MethodHandle);
             harmony.Patch(scores, postfix: new HarmonyMethod(typeof(Plugin), nameof(AdvanceRecoveryScores)));
             harmony.Patch(choice, postfix: new HarmonyMethod(typeof(Plugin), nameof(AdvanceRecoveryChoice)));
+            harmony.Patch(utility, prefix: new HarmonyMethod(typeof(Plugin), nameof(AdvanceRecoveryUtility)));
             harmony.Patch(reset, postfix: new HarmonyMethod(typeof(Plugin), nameof(AdvanceRecoveryReset)));
             _advanceRecoveryDiagnostics = ReadBool("DiagnoseAdvanceRecovery", false);
             _advanceRecoveryEnabled = true;
@@ -55,6 +57,22 @@ public sealed partial class Plugin
     {
         _advanceRecovery.Reset();
         Interlocked.Exchange(ref _advanceRecoveryLogCount, 0);
+    }
+
+    private static void AdvanceRecoveryUtility(Move __instance, TileScores __0)
+    {
+        if (!_advanceRecoveryEnabled) return;
+        try
+        {
+            var manager = TacticalManager.Get();
+            var map = manager?.GetMap();
+            if (map == null || map.Width <= ZoneReferenceSize || map.Height <= ZoneReferenceSize) return;
+            var actor = __instance?.GetAgent()?.GetActor();
+            if (AdvanceRecoveryRuntime.TrySeedAdvanceUtility(__instance, actor, __0, _advanceRecovery,
+                map.Pointer.ToInt64(), manager.m_Round, out int seeded) && _advanceRecoveryDiagnostics)
+                AdvanceRecoveryLog($"ADVANCE-UTILITY round={manager.m_Round} actor={actor.Pointer.ToInt64():X} seeded={seeded}");
+        }
+        catch (Exception ex) { AdvanceRecoveryDisable(ex); }
     }
 
     private static void AdvanceRecoveryScores(Actor __0, TileScores __1)

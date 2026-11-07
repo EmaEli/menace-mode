@@ -164,7 +164,65 @@ internal static class AdvanceRecoveryRuntime
     internal static bool TryGetAdvanceMove(Agent agent, Actor actor, Behavior chosen, out Move move)
     {
         move = null;
-        if (agent == null || actor == null || chosen == null || chosen.GetID().ToString() != "Idle") return false;
+        if (chosen == null || chosen.GetID().ToString() != "Idle" ||
+            !TryGetAdvanceContext(agent, actor, out move, out Zone zone, out Tile current)) return false;
+        int ap = actor.GetActionPoints();
+        TileScore destination = move.GetTargetTile();
+        if (destination?.Tile == null || destination.APCost <= 0 || destination.APCost > ap) return false;
+        int destinationDistance = RectIntExtensions.GetDistanceTo(zone.Area, destination.Tile);
+        return destinationDistance >= 0 && destinationDistance < RectIntExtensions.GetDistanceTo(zone.Area, current);
+    }
+
+    // Called before native HasUtility, not after native destination/path selection.
+    // Only explicit order progress receives utility; no hypothetical attack search.
+    internal static bool TrySeedAdvanceUtility(Move movement, Actor actor, TileScores tiles,
+        AdvanceRecoveryState state, long map, int round, out int seeded)
+    {
+        seeded = 0;
+        Agent agent = actor?.GetAgent();
+        if (movement == null || agent == null || tiles == null || tiles.Count < 2 || tiles.Count > 4096 ||
+            !state.HasMoveFallbackEligibility(map, round, actor.Pointer.ToInt64(), agent.Pointer.ToInt64()) ||
+            !TryGetAdvanceContext(agent, actor, out Move move, out Zone zone, out Tile current) ||
+            move.Pointer != movement.Pointer || move.IsMovementDone() || move.HasMovedThisTurn() ||
+            move.IsDelayingMovement() || move.IsInsideContainerAndInert()) return false;
+        if (!tiles.TryGetValue(current, out TileScore currentScore) || currentScore?.Tile == null ||
+            currentScore.Tile.Pointer != current.Pointer || !float.IsFinite(currentScore.SafetyScore)) return false;
+        float threshold = move.GetUtilityThreshold();
+        if (!Positive(threshold)) return false;
+        int currentDistance = RectIntExtensions.GetDistanceTo(zone.Area, current);
+        var edits = new List<(TileScore Score, float Utility)>();
+        foreach (var pair in tiles)
+        {
+            TileScore score = pair.Value;
+            if (score?.Tile == null || !float.IsFinite(score.SafetyScore) || !float.IsFinite(score.DistanceScore) ||
+                !float.IsFinite(score.UtilityScore) || !float.IsFinite(score.UtilityByAttacksScore) ||
+                !float.IsFinite(score.UtilityByAttacksScoreCandidate) || score.UtilityScore > 0 ||
+                score.UtilityByAttacksScore > 0 || score.UtilityByAttacksScoreCandidate > 0) return false;
+            int distance = RectIntExtensions.GetDistanceTo(zone.Area, score.Tile);
+            if (distance < 0) return false;
+            if (distance < currentDistance && score.SafetyScore >= currentScore.SafetyScore)
+                edits.Add((score, score.UtilityScore));
+        }
+        if (edits.Count == 0) return false;
+        bool committed = false;
+        try
+        {
+            foreach (var edit in edits) edit.Score.UtilityScore = threshold;
+            committed = true;
+        }
+        finally
+        {
+            if (!committed) foreach (var edit in edits) edit.Score.UtilityScore = edit.Utility;
+        }
+        // APCost may still be zero: native Move owns reachability, clipping and safety ranking.
+        seeded = edits.Count;
+        return true;
+    }
+
+    private static bool TryGetAdvanceContext(Agent agent, Actor actor, out Move move, out Zone zone, out Tile current)
+    {
+        move = null; zone = null; current = null;
+        if (agent == null || actor == null) return false;
         AIFaction faction = agent.GetFaction();
         var role = agent.GetRole();
         var zones = agent.GetZones();
@@ -175,10 +233,10 @@ internal static class AdvanceRecoveryRuntime
             actor.GetSuppressionPct() != 0 || !float.IsFinite(actor.GetMoralePct()) || actor.GetMoralePct() < 1 ||
             actor.GetActionPoints() <= 0) return false;
 
-        Zone zone = zones[0];
+        zone = zones[0];
         if (zone == null || (int)zone.Order != 1 || zone.Area.width <= 0 || zone.Area.height <= 0 ||
             !Positive(zone.Priority) || !Positive(role.ZoneImportanceWeight)) return false;
-        Tile current = actor.GetTile();
+        current = actor.GetTile();
         if (current == null) return false;
         int currentDistance = RectIntExtensions.GetDistanceTo(zone.Area, current);
         if (currentDistance <= 0) return false;
@@ -202,11 +260,7 @@ internal static class AdvanceRecoveryRuntime
             if (attack != null && (attack.m_Candidates == null || attack.m_Candidates.Count != 0)) return false;
         }
 
-        int ap = actor.GetActionPoints();
-        TileScore destination = move?.GetTargetTile();
-        if (destination?.Tile == null || destination.APCost <= 0 || destination.APCost > ap) return false;
-        int destinationDistance = RectIntExtensions.GetDistanceTo(zone.Area, destination.Tile);
-        return destinationDistance >= 0 && destinationDistance < currentDistance;
+        return move != null;
     }
 
     private static bool Positive(float value) => float.IsFinite(value) && value > 0;

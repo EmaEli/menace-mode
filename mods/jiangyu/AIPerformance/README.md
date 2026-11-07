@@ -1,4 +1,4 @@
-# AI Performance 1.2.0
+# AI Performance 1.2.1
 
 Independent AI DLL; Larger Maps is optional and no longer installs it automatically.
 Requires Jiangyu and MenaceModSettings. The Suite explicitly includes both modules.
@@ -24,14 +24,18 @@ Requires Jiangyu and MenaceModSettings. The Suite explicitly includes both modul
   other actions or tile utility. Sleep, defense and arrival are preserved. Once native
   Move has produced an AP-valid destination toward the order, recovery selects Move
   instead of Idle; native Move still owns destination/path/safety calculation.
-- No contact or attack candidate is fabricated. Pre-contact stalled advances can move
-  using the already-computed native Move target; no extra AI/path search is added.
+- Handles the null-destination case before native Move.HasUtility: safe tiles strictly
+  closer to the advance order receive the native movement utility threshold, only after
+  the existing idle-history and no-shot guards pass. Current/farther/less-safe tiles
+  receive no incentive; existing positive utility is preserved. Native Move still
+  chooses targets and computes reachable paths/AP costs; no additional path search.
+- No contact or attack candidate is fabricated. This applies before or after contact.
   History resets between missions. Old Larger Maps recovery settings are not migrated;
   use **AI Performance / RecoverStalledAdvance** for OFF comparisons.
 - No update loop or default per-unit logging. Optional `DiagnoseAdvanceRecovery`
   defaults OFF and is capped at 200 lines per mission. When enabled, it traces only
   hostile advance-order candidates, deduplicates unchanged rejection stages, and reports
-  whether recovery was armed/applied/forced plus the subsequent Move/Idle scores. Larger Maps
+  whether recovery was armed/applied/forced plus seeded utility and subsequent Move/Idle scores. Larger Maps
   retains optional general AI diagnostics but no recovery hooks.
 
 Managed fixture checks exercise production task/planning/restore code. Metadata-only
