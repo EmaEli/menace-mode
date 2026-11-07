@@ -59,6 +59,11 @@ class AdvanceRecoveryWiringTests(unittest.TestCase):
         self.assertIn('edit.Score.UtilityScore = edit.Utility;', RUNTIME)
         self.assertIn('ADVANCE-UTILITY round=', HOOK)
 
+    def test_provisional_move_does_not_cancel_same_round_re_evaluation(self):
+        self.assertIn('IsProvisionalAdvanceChoice(__instance, actor, __result)', HOOK)
+        self.assertIn('idleOnly, provisionalAdvance)', HOOK)
+        self.assertIn('TryGetAdvanceDestination(agent, actor, out Move move) && chosen.Pointer == move.Pointer', RUNTIME)
+
     def test_rejection_diagnostics_are_opt_in_bounded_and_do_not_disable_gameplay(self):
         self.assertIn('out AdvanceRecoveryResult result', RUNTIME)
         self.assertIn('out bool diagnosticCandidate, out bool stalled', RUNTIME)

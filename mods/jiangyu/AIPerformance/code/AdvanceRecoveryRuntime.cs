@@ -164,8 +164,19 @@ internal static class AdvanceRecoveryRuntime
     internal static bool TryGetAdvanceMove(Agent agent, Actor actor, Behavior chosen, out Move move)
     {
         move = null;
-        if (chosen == null || chosen.GetID().ToString() != "Idle" ||
-            !TryGetAdvanceContext(agent, actor, out move, out Zone zone, out Tile current)) return false;
+        return chosen != null && chosen.GetID().ToString() == "Idle" &&
+            TryGetAdvanceDestination(agent, actor, out move);
+    }
+
+    internal static bool IsProvisionalAdvanceChoice(Agent agent, Actor actor, Behavior chosen)
+        => chosen != null && chosen.GetID().ToString() == "Move" &&
+            TryGetAdvanceDestination(agent, actor, out Move move) && chosen.Pointer == move.Pointer;
+
+    private static bool TryGetAdvanceDestination(Agent agent, Actor actor, out Move move)
+    {
+        if (!TryGetAdvanceContext(agent, actor, out move, out Zone zone, out Tile current)) return false;
+        if (move.IsMovementDone() || move.HasMovedThisTurn() || move.IsDelayingMovement() ||
+            move.IsInsideContainerAndInert()) return false;
         int ap = actor.GetActionPoints();
         TileScore destination = move.GetTargetTile();
         if (destination?.Tile == null || destination.APCost <= 0 || destination.APCost > ap) return false;

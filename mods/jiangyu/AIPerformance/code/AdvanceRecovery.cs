@@ -119,9 +119,12 @@ public sealed partial class Plugin
             long actorId = actor.Pointer.ToInt64();
             long agentId = __instance.Pointer.ToInt64();
             Move advanceMove = null;
-            bool forcedMove = _advanceRecovery.HasMoveFallbackEligibility(mapId, manager.m_Round, actorId, agentId) &&
+            bool eligible = _advanceRecovery.HasMoveFallbackEligibility(mapId, manager.m_Round, actorId, agentId);
+            bool forcedMove = eligible &&
                 AdvanceRecoveryRuntime.TryGetAdvanceMove(__instance, actor, __result, out advanceMove);
             if (forcedMove) __result = advanceMove;
+            bool provisionalAdvance = eligible &&
+                AdvanceRecoveryRuntime.IsProvisionalAdvanceChoice(__instance, actor, __result);
             bool idleOnly = AdvanceRecoveryRuntime.IdleOnly(__instance, __result);
             string choiceDetails = null;
             if (_advanceRecoveryDiagnostics)
@@ -138,7 +141,7 @@ public sealed partial class Plugin
                 }
                 catch { }
             }
-            _advanceRecovery.Choice(mapId, manager.m_Round, actorId, agentId, idleOnly);
+            _advanceRecovery.Choice(mapId, manager.m_Round, actorId, agentId, idleOnly, provisionalAdvance);
             if (choiceDetails != null)
                 AdvanceRecoveryLog($"ADVANCE-CHOICE round={manager.m_Round} actor={actorId:X} {choiceDetails} " +
                     _advanceRecovery.Describe(actorId));

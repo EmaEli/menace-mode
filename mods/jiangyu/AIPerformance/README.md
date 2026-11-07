@@ -1,4 +1,4 @@
-# AI Performance 1.2.1
+# AI Performance 1.2.2
 
 Independent AI DLL; Larger Maps is optional and no longer installs it automatically.
 Requires Jiangyu and MenaceModSettings. The Suite explicitly includes both modules.
@@ -30,6 +30,10 @@ Requires Jiangyu and MenaceModSettings. The Suite explicitly includes both modul
   receive no incentive; existing positive utility is preserved. Native Move still
   chooses targets and computes reachable paths/AP costs; no additional path search.
 - No contact or attack candidate is fabricated. This applies before or after contact.
+- A legal recovered Move selection retains eligibility during same-round re-evaluation;
+  provisional selection alone is not proof of movement. Actual position/order changes,
+  completed movement, useful non-movement actions and all existing combat guards cancel
+  recovery normally. This fixes 1.2.1 losing its target between planning and execution.
   History resets between missions. Old Larger Maps recovery settings are not migrated;
   use **AI Performance / RecoverStalledAdvance** for OFF comparisons.
 - No update loop or default per-unit logging. Optional `DiagnoseAdvanceRecovery`

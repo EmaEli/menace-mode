@@ -27,6 +27,16 @@ Idle(3); Check(!Observe(4, x: 1), "later Idle cannot erase activity");
 tracker.Reset(); Observe(1); Idle(1); Observe(2); Idle(2);
 tracker.Choice(1, 2, 10, 20, false); Idle(2);
 Check(!Observe(3), "useful choice invalidates idle history");
+tracker.Reset(); Observe(1); Idle(1); Observe(2); Idle(2); Observe(3);
+tracker.MarkMoveFallbackEligible(1,3,10,20);
+tracker.Choice(1,3,10,20,false,provisionalAdvance:true);
+Check(tracker.HasMoveFallbackEligibility(1,3,10,20), "provisional advance retains this round's eligibility");
+Check(!Observe(4), "provisional selection alone cannot count as another completed idle round");
+tracker.Reset(); Observe(1); Idle(1); Observe(2); Idle(2); Observe(3);
+tracker.MarkMoveFallbackEligible(1,3,10,20);
+tracker.Choice(1,3,10,20,false);
+tracker.Choice(1,3,10,20,false,provisionalAdvance:true);
+Check(!tracker.HasMoveFallbackEligibility(1,3,10,20), "provisional flag cannot resurrect earlier useful activity");
 foreach (string change in new[] { "map", "agent", "order", "gap", "rewind", "reset" })
 {
     tracker.Reset(); Observe(1); Idle(1); Observe(2); Idle(2);
@@ -294,6 +304,75 @@ foreach (string flag in new[] { "done", "moved", "delaying", "inert", "wrong mov
     try { AdvanceRecoveryRuntime.TrySeedAdvanceUtility(move,a,t,s,1,3,out _); Check(false,"utility fault must propagate"); }
     catch (InvalidOperationException) { Check(t.Values.All(v => v.UtilityScore == 0), "partial utility writes rolled back"); }
     finally { TileScore.UtilityWritesBeforeThrow = -1; }
+}
+// Regression from 1.2.1: a provisional worker choice precedes another same-round evaluation.
+foreach (bool known in new[] { false, true })
+{
+    Plugin.BeginFixture();
+    var (a,t,_) = Fixture(); a.Agent.Faction.Known = known;
+    var move = (Move)a.Agent.Behaviors[1];
+    TacticalManager.Instance = new();
+    for (int r = 1; r <= 3; r++)
+    {
+        TacticalManager.Instance.m_Round = r;
+        Plugin.ScoreFixture(a,t);
+        Plugin.UtilityFixture(move,t);
+        if (r < 3) Plugin.ChoiceFixture(a.Agent,a.Agent.Behaviors[0]);
+    }
+    Check(move.HasUtility(t), "first evaluation has recovered order utility");
+    move.TargetTile = t.Values.Last(); move.TargetTile.APCost = 2; move.Score = 109;
+    Check(ReferenceEquals(Plugin.ChoiceFixture(a.Agent,move),move), "native provisional Move selection is not replaced");
+    Tile destination = move.TargetTile.Tile;
+    for (int poll = 0; poll < 5; poll++)
+    {
+        var fresh = new Scores();
+        fresh.Add(a.Tile,new() { Tile = a.Tile });
+        fresh.Add(destination,new() { Tile = destination });
+        move.TargetTile = null; move.Score = 0;
+        Plugin.ScoreFixture(a,fresh);
+        Plugin.UtilityFixture(move,fresh);
+        Check(move.HasUtility(fresh), "provisional choice must not disarm same-round target re-evaluation");
+        move.TargetTile = fresh[destination]; move.TargetTile.APCost = 2; move.Score = 109;
+        Plugin.ChoiceFixture(a.Agent,move);
+    }
+    // Selection alone is not an idle round either; actual movement invalidates eligibility.
+    a.Tile = destination; a.TilesMovedThisTurn = 1;
+    var afterMove = new Scores(); afterMove.Add(a.Tile,new() { Tile = a.Tile });
+    var closer = new Tile(6,0); afterMove.Add(closer,new() { Tile = closer });
+    Plugin.ScoreFixture(a,afterMove); Plugin.UtilityFixture(move,afterMove);
+    Check(!move.HasUtility(afterMove), "actual movement cancels same-round recovery");
+}
+foreach (string invalid in new[] { "no target", "unaffordable", "not closer", "other action", "attack target",
+    "suppression", "done", "moved", "delaying", "inert", "wrong move", "normal useful choice" })
+{
+    Plugin.BeginFixture(); var (a,t,_) = Fixture(); var move = (Move)a.Agent.Behaviors[1];
+    TacticalManager.Instance = new();
+    for (int r = 1; r <= 3; r++)
+    {
+        TacticalManager.Instance.m_Round = r; Plugin.ScoreFixture(a,t);
+        if (r < 3) Plugin.ChoiceFixture(a.Agent,a.Agent.Behaviors[0]);
+    }
+    move.TargetTile = t.Values.Last(); move.TargetTile.APCost = 2; move.Score = 109;
+    Behavior chosen = move;
+    if (invalid == "no target") move.TargetTile = null;
+    if (invalid == "unaffordable") move.TargetTile.APCost = 101;
+    if (invalid == "not closer") move.TargetTile = new() { Tile = a.Tile, APCost = 2 };
+    if (invalid == "other action") a.Agent.Behaviors.Add(new() { ID = "Reload", Score = 1 });
+    if (invalid == "attack target") ((Attack)a.Agent.Behaviors[2]).m_Candidates.Add(new());
+    if (invalid == "suppression") a.Suppression = 0.1f;
+    move.Done = invalid == "done"; move.Moved = invalid == "moved";
+    move.Delaying = invalid == "delaying"; move.Inert = invalid == "inert";
+    if (invalid == "wrong move") chosen = new Move();
+    if (invalid == "normal useful choice") chosen = new() { ID = "Reload", Score = 1 };
+    Plugin.ChoiceFixture(a.Agent,chosen);
+    move.TargetTile = null; move.Score = 0; a.Suppression = 0;
+    move.Done = move.Moved = move.Delaying = move.Inert = false;
+    ((Attack)a.Agent.Behaviors[2]).m_Candidates.Clear();
+    a.Agent.Behaviors.RemoveAll(b => b.ID == "Reload");
+    var fresh = new Scores(); fresh.Add(a.Tile,new() { Tile = a.Tile });
+    var next = new Tile(5,0); fresh.Add(next,new() { Tile = next });
+    Plugin.ScoreFixture(a,fresh); Plugin.UtilityFixture(move,fresh);
+    Check(!move.HasUtility(fresh), "ineligible provisional choice still cancels history: " + invalid);
 }
 // Exercise the actual hooks, not just their scoring policy, across native/enlarged maps.
 foreach (var dimensions in new[] { (64,64), (96,64), (64,96), (96,96) })

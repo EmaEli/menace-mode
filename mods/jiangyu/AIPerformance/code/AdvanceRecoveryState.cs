@@ -78,13 +78,17 @@ internal sealed class AdvanceRecoveryState
         }
     }
 
-    internal void Choice(long map, int round, long actor, long agent, bool idleOnly)
+    internal void Choice(long map, int round, long actor, long agent, bool idleOnly, bool provisionalAdvance = false)
     {
         lock (_sync)
         {
             if (_map != map || !_actors.TryGetValue(actor, out Entry e) || e.Round != round || e.Agent != agent) return;
             // A later Idle poll must never erase an earlier useful action/choice.
             if (idleOnly) e.Idle = true;
+            // PickBehavior also runs provisionally before native re-evaluation. A legal
+            // recovered Move is not movement evidence: retain only this round's eligibility.
+            // Actual position/order changes are still invalidated by Observe.
+            else if (provisionalAdvance && e.MoveFallbackRound == round && !e.Busy) e.Idle = false;
             else { e.Busy = true; e.IdleRounds = 0; e.LastChoiceSignature = null; e.AppliedRecoveryRound = -1; e.MoveFallbackRound = -1; }
         }
     }
