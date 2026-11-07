@@ -54,8 +54,41 @@ threshold. Existing native movement/execution remains in control after seeding.
   AIPerformance bundle and runs them before Windows staging. No new installer is needed.
 
 These checks do not establish native dispatch, effective in-game approach movement,
-load/save behavior or 64x64/96x96 turn-time impact. Canonical deployment evidence is
-recorded below once performed. The source intentionally remains OFF by default.
+load/save behavior or 64x64/96x96 turn-time impact. The source remains OFF by default.
+
+## Canonical Windows deployment
+
+- Source commit `f16d975` on `dev`. The 52-file, single-package BuildKit passed ZIP
+  integrity and clean extracted-source build/metadata checks before transfer.
+- Installed candidate ZIP SHA256:
+  `282da0c062c4278b426c9ec8ecb5366a1b00af3454d119924f22d76be71b57d6`.
+- Transfer/script round-trip and remote SHA256 checks passed separately from SSH.
+  The canonical installer ran BuildOnly, then Standalone/AIPerformance with
+  `-UseInstalledSettings` on MENACE 0.7.18+22828 and private SDK 10.0.113.
+- Both Windows builds had zero warnings/errors; 105 native metadata, 29 planning/task
+  and 12,562 recovery/contact checks passed again before staging. BuildOnly left live
+  files unchanged. Installed manifest/assembly/file verified 1.3.0/1.3.0.0/1.3.0.0.
+- Installed DLL SHA256:
+  `28324d93447a2435934d926a9feda4c3173f9c459a462559a85359ccf75a31c3`.
+- Retained outside-Mods backup and journal:
+  `_MENACE_Backups/20261107-172842-385e83fce61a4157a6407b475e4301b9`.
+  Journal targets are only AIPerformance and its legacy root-DLL conflict name.
+  All moved originals and installed files were hash-verified; original 1.2.2 retained.
+- All 1,431 protected Mods/UserData files are unchanged. Settings companion and
+  Jiangyu.Loader reused, not replaced. No saves/preferences changed. Game was closed
+  throughout; no startup, live approach movement or turn-time acceptance yet.
+- Retained PC bundle/logs:
+  `E:\MENACE-Work\Builds\AIPerformance-1.3.0-contact-20261107`;
+  stable canonical log `E:\MENACE-Work\Temp\MENACE-install.log`.
+- This deployment evidence was added after packaging; installed code/settings match
+  `f16d975`. No documentation-only reinstall was performed.
+
+To test: in AI Performance enable **Unassigned infantry approach recent contacts
+(0.7.18)**, restart MENACE, then start a pirate/Rogue mission. Units with mission zones
+are deliberately excluded; this is not an override for ordered units. Keep existing
+performance settings unchanged. Optional contact diagnostics can show approach seeding;
+report gameplay behavior and whether AI turn times changed. Retrieve a fresh Latest.log
+after the reported test. Issue #17 remains open, including the later artillery work.
 
 ## Next stage: indirect fire (not implemented)
 
