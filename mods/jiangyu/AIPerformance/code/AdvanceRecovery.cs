@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -6,6 +7,7 @@ using System.Threading;
 using HarmonyLib;
 using Il2CppMenace.Tactical;
 using Il2CppMenace.Tactical.AI;
+using Il2CppMenace.Tactical.AI.Behaviors;
 using Il2CppMenace.Tactical.AI.Behaviors.Criterions;
 using TileScores = Il2CppSystem.Collections.Generic.Dictionary<Il2CppMenace.Tactical.Tile, Il2CppMenace.Tactical.AI.Data.TileScore>;
 
@@ -63,15 +65,30 @@ public sealed partial class Plugin
             var manager = TacticalManager.Get();
             var map = manager?.GetMap();
             if (map == null || map.Width <= ZoneReferenceSize || map.Height <= ZoneReferenceSize) return;
-            bool applied = AdvanceRecoveryRuntime.TryApply(__0, __1, _advanceRecovery, map.Pointer.ToInt64(), manager.m_Round, out var result);
-            if (_advanceRecoveryDiagnostics && __0 != null)
-                AdvanceRecoveryLog($"ADVANCE-CHECK round={manager.m_Round} actor={__0.Pointer.ToInt64():X} result={result} applied={applied} " +
-                    _advanceRecovery.Describe(__0.Pointer.ToInt64()));
+            long mapId = map.Pointer.ToInt64();
+            bool applied = AdvanceRecoveryRuntime.TryApply(__0, __1, _advanceRecovery, mapId, manager.m_Round, _advanceRecoveryDiagnostics,
+                out var result, out bool diagnosticCandidate, out bool stalled);
+            bool recoveryApplied = applied || (__0 != null && _advanceRecovery.HasRecoveryApplication(
+                mapId, manager.m_Round, __0.Pointer.ToInt64(), __0.GetAgent()?.Pointer.ToInt64() ?? 0));
+            if (_advanceRecoveryDiagnostics && __0 != null && diagnosticCandidate &&
+                (stalled || result != AdvanceRecoveryResult.History))
+            {
+                try
+                {
+                    long actorId = __0.Pointer.ToInt64();
+                    long agentId = __0.GetAgent()?.Pointer.ToInt64() ?? 0;
+                    _advanceRecovery.RecordRecoveryCheck(mapId, manager.m_Round, actorId, agentId, (int)result, recoveryApplied);
+                    if (_advanceRecovery.ShouldLogDiagnostic(mapId, actorId, (int)result))
+                        AdvanceRecoveryLog($"ADVANCE-CHECK round={manager.m_Round} actor={actorId:X} result={result} " +
+                            $"armed={stalled} applied={recoveryApplied} tiles={__1?.Count ?? 0} " + _advanceRecovery.Describe(actorId));
+                }
+                catch { }
+            }
         }
         catch (Exception ex) { AdvanceRecoveryDisable(ex); }
     }
 
-    private static void AdvanceRecoveryChoice(Agent __instance, Behavior __result)
+    private static void AdvanceRecoveryChoice(Agent __instance, ref Behavior __result)
     {
         if (!_advanceRecoveryEnabled) return;
         try
@@ -80,13 +97,49 @@ public sealed partial class Plugin
             var map = manager?.GetMap();
             var actor = __instance?.GetActor();
             if (map == null || actor == null || map.Width <= ZoneReferenceSize || map.Height <= ZoneReferenceSize) return;
+            long mapId = map.Pointer.ToInt64();
+            long actorId = actor.Pointer.ToInt64();
+            long agentId = __instance.Pointer.ToInt64();
+            Move advanceMove = null;
+            bool forcedMove = _advanceRecovery.HasMoveFallbackEligibility(mapId, manager.m_Round, actorId, agentId) &&
+                AdvanceRecoveryRuntime.TryGetAdvanceMove(__instance, actor, __result, out advanceMove);
+            if (forcedMove) __result = advanceMove;
             bool idleOnly = AdvanceRecoveryRuntime.IdleOnly(__instance, __result);
-            _advanceRecovery.Choice(map.Pointer.ToInt64(), manager.m_Round, actor.Pointer.ToInt64(), __instance.Pointer.ToInt64(), idleOnly);
+            string choiceDetails = null;
             if (_advanceRecoveryDiagnostics)
-                AdvanceRecoveryLog($"ADVANCE-CHOICE round={manager.m_Round} actor={actor.Pointer.ToInt64():X} idleOnly={idleOnly} " +
-                    _advanceRecovery.Describe(actor.Pointer.ToInt64()));
+            {
+                try
+                {
+                    string chosen = __result == null ? "null" : __result.GetID().ToString();
+                    var scores = AdvanceRecoveryChoiceScores(__instance);
+                    string signature = $"{chosen}|{scores.Move}|{scores.Idle}|{idleOnly}|{forcedMove}";
+                    if (_advanceRecovery.ShouldLogChoice(mapId, manager.m_Round, actorId, agentId, signature,
+                        out int recoveryResult, out bool recoveryApplied))
+                        choiceDetails = $"recovery={(AdvanceRecoveryResult)recoveryResult} applied={recoveryApplied} " +
+                            $"chosen={chosen} moveScore={scores.Move} idleScore={scores.Idle} idleOnly={idleOnly} forcedMove={forcedMove}";
+                }
+                catch { }
+            }
+            _advanceRecovery.Choice(mapId, manager.m_Round, actorId, agentId, idleOnly);
+            if (choiceDetails != null)
+                AdvanceRecoveryLog($"ADVANCE-CHOICE round={manager.m_Round} actor={actorId:X} {choiceDetails} " +
+                    _advanceRecovery.Describe(actorId));
         }
         catch (Exception ex) { AdvanceRecoveryDisable(ex); }
+    }
+
+    private static (string Move, string Idle) AdvanceRecoveryChoiceScores(Agent agent)
+    {
+        string move = "missing", idle = "missing";
+        foreach (Behavior behavior in agent.GetBehaviors())
+        {
+            if (behavior == null) continue;
+            string id = behavior.GetID().ToString();
+            string score = behavior.GetScore().ToString(CultureInfo.InvariantCulture);
+            if (id == "Move") move = score;
+            else if (id == "Idle") idle = score;
+        }
+        return (move, idle);
     }
 
     private static void AdvanceRecoveryLog(string message)

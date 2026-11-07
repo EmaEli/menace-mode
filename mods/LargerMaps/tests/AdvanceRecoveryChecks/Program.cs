@@ -40,6 +40,9 @@ Check(tracker.Describe(10) == "history=absent", "diagnostics do not create histo
 Observe(1); Idle(1);
 Check(tracker.Describe(10).Contains("idle=True busy=False"), "diagnostics expose idle evidence");
 Check(tracker.Describe(10).Contains("idleRounds=0"), "diagnostics never complete a round");
+Check(tracker.ShouldLogDiagnostic(1, 20, (int)AdvanceRecoveryResult.History), "first recovery stage is logged");
+Check(!tracker.ShouldLogDiagnostic(1, 20, (int)AdvanceRecoveryResult.History), "unchanged stage is deduplicated");
+Check(tracker.ShouldLogDiagnostic(1, 20, (int)AdvanceRecoveryResult.Applied), "changed recovery stage is logged");
 Check(!Observe(2), "diagnostic reads do not advance history"); Idle(2);
 Check(Observe(3), "diagnostic reads preserve recovery eligibility");
 tracker.Reset();
@@ -91,12 +94,12 @@ foreach (int faction in Enumerable.Range(0, 11))
 var cases = new Dictionary<string, Action<Actor, Scores>>
 {
     ["allied"] = (a,t) => a.Agent.Faction.Allied = true,
+    ["no known contact"] = (a,t) => a.Agent.Faction.Known = false,
     ["civilian role"] = (a,t) => a.Agent.Role.AvoidOpponents = true,
     ["defend"] = (a,t) => a.Agent.Zones[0].Order = 2,
     ["mixed orders"] = (a,t) => a.Agent.Zones.Add(new() { Order = 2 }),
     ["multiple advance"] = (a,t) => a.Agent.Zones.Add(new()),
     ["no order"] = (a,t) => a.Agent.Zones.Clear(),
-    ["no known contact"] = (a,t) => a.Agent.Faction.Known = false,
     ["sleep"] = (a,t) => a.Agent.Sleeping = true,
     ["deployment"] = (a,t) => a.Agent.Deployment = true,
     ["dying"] = (a,t) => a.Dying = true,
@@ -144,6 +147,36 @@ foreach (var (label, expected) in new Dictionary<string, AdvanceRecoveryResult>
     var (a,t,s) = Fixture(); cases[label](a,t);
     Check(!AdvanceRecoveryRuntime.TryApply(a,t,s,1,3,out var result) && result == expected, label + " exact rejection stage");
 }
+{
+    var (a,t,s) = Fixture(); a.Agent.Faction.Known = false;
+    Check(!AdvanceRecoveryRuntime.TryApply(a,t,s,1,3,out var contactResult) && contactResult == AdvanceRecoveryResult.Contact,
+        "no-contact recovery preserves native zone scoring");
+    Check(s.HasMoveFallbackEligibility(1,3,10,20), "stalled explicit order remains eligible for Move fallback without contact");
+    Check(t[a.Tile].DistanceScore == 4, "no-contact recovery does not double-apply native zone scores");
+}
+{
+    var (a,t,s) = Fixture();
+    Check(AdvanceRecoveryRuntime.TryApply(a,t,s,1,3), "known-contact stalled order receives missing native score contributions");
+    float appliedDistance = t[a.Tile].DistanceScore;
+    Check(!AdvanceRecoveryRuntime.TryApply(a,t,s,1,3,out var result) && result == AdvanceRecoveryResult.AlreadyApplied,
+        "recovery is applied only once per actor per round");
+    Check(t[a.Tile].DistanceScore == appliedDistance, "repeat evaluation does not stack recovery scores");
+}
+{
+    var (a,t,s) = Fixture();
+    Check(AdvanceRecoveryRuntime.TryApply(a,t,s,1,3,true,out var result,out bool candidate,out bool armed) &&
+        candidate && armed && result == AdvanceRecoveryResult.Applied, "hostile advance recovery reports target and armed state");
+}
+{
+    var (a,t,s) = Fixture(); a.Agent.Zones.Add(new() { Order = 2 });
+    Check(!AdvanceRecoveryRuntime.TryApply(a,t,s,1,3,true,out var result,out bool candidate,out bool armed) &&
+        candidate && !armed && result == AdvanceRecoveryResult.Orders, "mixed hostile orders remain rejected but diagnosable");
+}
+{
+    var (a,t,s) = Fixture(); a.Agent.Zones[0].Order = 2;
+    Check(!AdvanceRecoveryRuntime.TryApply(a,t,s,1,3,true,out var result,out bool candidate,out _) &&
+        !candidate && result == AdvanceRecoveryResult.Zone, "defensive orders are not diagnostic targets");
+}
 foreach (int cost in new[] { 0, 20, 101, int.MaxValue })
 {
     var (a,t,s) = Fixture(); t.Values.Last().APCost = cost;
@@ -181,6 +214,29 @@ foreach (int cost in new[] { 0, 20, 101, int.MaxValue })
     Check(!AdvanceRecoveryRuntime.IdleOnly(a.Agent,a.Agent.Behaviors[0]), "positive native Move is not stalled Idle");
 }
 {
+    var (a,t,s) = Fixture();
+    var move = (Move)a.Agent.Behaviors[1];
+    var destination = new Tile(4, 0);
+    var target = new TileScore { Tile = destination, APCost = 2 };
+    t.Add(destination, target);
+    move.TargetTile = target;
+    Check(AdvanceRecoveryRuntime.TryGetAdvanceMove(a.Agent, a, a.Agent.Behaviors[0], out Move forced) &&
+        ReferenceEquals(forced, move), "stalled unseen advance selects existing legal native Move target");
+    Check(!AdvanceRecoveryRuntime.TryGetAdvanceMove(a.Agent, a, move, out _), "non-Idle native choice is preserved");
+    move.TargetTile = new TileScore { Tile = new Tile(-1, 0), APCost = 2 };
+    Check(!AdvanceRecoveryRuntime.TryGetAdvanceMove(a.Agent, a, a.Agent.Behaviors[0], out _), "Move target must advance toward order");
+    move.TargetTile = new TileScore { Tile = destination, APCost = 0 };
+    Check(!AdvanceRecoveryRuntime.TryGetAdvanceMove(a.Agent, a, a.Agent.Behaviors[0], out _), "unprocessed Move target is not forced");
+    move.TargetTile = new TileScore { Tile = destination, APCost = 101 };
+    Check(!AdvanceRecoveryRuntime.TryGetAdvanceMove(a.Agent, a, a.Agent.Behaviors[0], out _), "Move target beyond AP is not forced");
+    move.TargetTile = target;
+    ((Attack)a.Agent.Behaviors.Last()).m_Candidates.Add(new());
+    Check(!AdvanceRecoveryRuntime.TryGetAdvanceMove(a.Agent, a, a.Agent.Behaviors[0], out _), "valid attack candidate prevents forced Move");
+    ((Attack)a.Agent.Behaviors.Last()).m_Candidates.Clear();
+    a.Agent.Behaviors.Last().Score = 1;
+    Check(!AdvanceRecoveryRuntime.TryGetAdvanceMove(a.Agent, a, a.Agent.Behaviors[0], out _), "positive competing action prevents forced Move");
+}
+{
     var (a,t,s) = Fixture(); TileScore.WritesBeforeThrow = 1;
     try { AdvanceRecoveryRuntime.TryApply(a,t,s,1,3); Check(false,"partial-write fault should propagate"); }
     catch (InvalidOperationException) { Check(t[a.Tile].DistanceScore == 4 && t.Values.Last().DistanceScore == 2, "partial writes rolled back"); }
@@ -202,6 +258,26 @@ foreach (var dimensions in new[] { (64,64), (96,64), (64,96), (96,96) })
     Check(Plugin.Logs.Count == 0, "default hooks emit no per-actor logs");
 }
 {
+    Plugin.BeginFixture();
+    var (a,t,_) = Fixture();
+    a.Agent.Faction.Known = false;
+    var move = (Move)a.Agent.Behaviors[1];
+    var destination = new Tile(4, 0);
+    var target = new TileScore { Tile = destination, APCost = 2 };
+    t.Add(destination, target);
+    move.TargetTile = target;
+    TacticalManager.Instance = new() { Map = new() { Width = 96, Height = 96 } };
+    Behavior choice = a.Agent.Behaviors[0];
+    for (int r = 1; r <= 3; r++)
+    {
+        TacticalManager.Instance.m_Round = r;
+        Plugin.ScoreFixture(a,t);
+        choice = Plugin.ChoiceFixture(a.Agent, choice);
+    }
+    Check(ReferenceEquals(choice, move), "actual hook forces existing legal Move target for an unseen stalled advance");
+    Check(t[a.Tile].DistanceScore == 4, "unseen forced Move does not add duplicate native zone scores");
+}
+{
     Plugin.BeginFixture(diagnostics: true);
     var (a,t,_) = Fixture();
     TacticalManager.Instance = new();
@@ -211,16 +287,47 @@ foreach (var dimensions in new[] { (64,64), (96,64), (64,96), (96,96) })
         Plugin.ScoreFixture(a,t);
         Plugin.ChoiceFixture(a.Agent,a.Agent.Behaviors[0]);
     }
+    Check(Plugin.Logs.Count == 0, "unarmed history does not emit recovery traces");
+    TacticalManager.Instance.m_Round = 3;
+    Plugin.ScoreFixture(a,t);
+    Check(Plugin.Logs.Count == 1 && Plugin.Logs[0].Contains("ADVANCE-CHECK round=3") &&
+        Plugin.Logs[0].Contains("result=Applied armed=True applied=True"), "armed candidate logs its applied stage");
+    Plugin.ChoiceFixture(a.Agent,a.Agent.Behaviors[0]);
+    Check(Plugin.Logs.Count == 2 && Plugin.Logs[1].Contains("ADVANCE-CHOICE round=3") &&
+        Plugin.Logs[1].Contains("recovery=Applied") && Plugin.Logs[1].Contains("chosen=Idle") &&
+        Plugin.Logs[1].Contains("moveScore=0") && Plugin.Logs[1].Contains("idleScore=0"), "recovery choice reports Move and Idle scores");
+    Plugin.ChoiceFixture(a.Agent,a.Agent.Behaviors[0]);
+    Check(Plugin.Logs.Count == 2, "unchanged recovery choice is deduplicated");
+}
+{
+    Plugin.BeginFixture(diagnostics: true);
+    var (a,t,_) = Fixture();
+    TacticalManager.Instance = new();
     Plugin.ResetFixtureMission();
     TacticalManager.Instance.m_Round = 3;
     Plugin.ScoreFixture(a,t);
     Check(t[a.Tile].DistanceScore == 4, "new mission cannot inherit idle history");
-    for (int i = 0; i < 500; i++) Plugin.ScoreFixture(a,t);
-    Check(Plugin.Logs.Count == 204, "diagnostics capped at 200 since mission reset");
+    Check(Plugin.Logs.Count == 0, "reset mission does not emit an unarmed recovery trace");
+}
+{
     Plugin.BeginFixture(diagnostics: true);
+    TacticalManager.Instance = new();
+    for (int i = 0; i < 500; i++)
+    {
+        var (a,t,_) = Fixture();
+        a.Pointer = (IntPtr)(100 + i);
+        a.Agent.Pointer = (IntPtr)(1000 + i);
+        a.Agent.Zones.Add(new() { Order = 2 });
+        Plugin.ScoreFixture(a,t);
+    }
+    Check(Plugin.Logs.Count == 200, "targeted diagnostics capped at 200 lines per mission");
+}
+{
+    Plugin.BeginFixture(diagnostics: true);
+    var (a,t,_) = Fixture();
+    a.Agent.Zones.Add(new() { Order = 2 });
     Plugin.RejectLog = true;
     Plugin.ScoreFixture(a,t);
-    Plugin.ChoiceFixture(a.Agent,a.Agent.Behaviors[0]);
     Check(Plugin.RecoveryEnabled, "diagnostic failures do not disable recovery");
     Plugin.RejectLog = false;
     Plugin.ScoreFixture(null,t);

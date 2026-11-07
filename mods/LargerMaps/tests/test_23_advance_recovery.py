@@ -30,15 +30,32 @@ class AdvanceRecoveryWiringTests(unittest.TestCase):
     def test_no_extra_attack_path_search_or_contact_mutation(self):
         for forbidden in ('SetSleeping(', 'SetOrder(', 'FindPath(', 'IsUsableOn(',
                           'HasLineOfSight(', 'Task.Run(', '.Evaluate(', '.Execute(',
-                          'ref bool __result', 'ref Behavior __result', '.TTL =',
+                          'ref bool __result', '.TTL =',
                           '.m_Score =', '.SafetyScore =', '.UtilityByAttacksScore ='):
             self.assertNotIn(forbidden, RUNTIME + HOOK)
-        self.assertIn('if (!faction.HasKnownOpponent()) return false;', RUNTIME)
+        self.assertIn('ref Behavior __result', HOOK)
+        self.assertIn('__result = advanceMove;', HOOK)
+        self.assertIn('if (!faction.HasKnownOpponent())', RUNTIME)
+        self.assertIn('state.MarkMoveFallbackEligible', RUNTIME)
+        self.assertIn('HasMoveFallbackEligibility', HOOK)
+
+    def test_force_move_reuses_native_legal_target_without_new_path_search(self):
+        self.assertIn('TryGetAdvanceMove', RUNTIME)
+        self.assertIn('GetTargetTile()', RUNTIME)
+        self.assertIn('state.MarkMoveFallbackEligible', RUNTIME)
+        self.assertIn('destination.APCost <= 0 || destination.APCost > ap', RUNTIME)
+        for version in ('v0.7.17', 'v0.7.18'):
+            dump = ROOT.parent.parent / 'game_files' / version / 'dump/dump.cs'
+            with dump.open() as source:
+                self.assertTrue(any('public TileScore GetTargetTile()' in line for line in source), version)
 
     def test_rejection_diagnostics_are_opt_in_bounded_and_do_not_disable_gameplay(self):
         self.assertIn('out AdvanceRecoveryResult result', RUNTIME)
+        self.assertIn('out bool diagnosticCandidate, out bool stalled', RUNTIME)
+        self.assertIn('ShouldLogDiagnostic', HOOK)
         self.assertIn('ADVANCE-CHECK round=', HOOK)
         self.assertIn('ADVANCE-CHOICE round=', HOOK)
+        self.assertIn('moveScore=', HOOK)
         self.assertIn('ReadBool("DiagnoseAdvanceRecovery", false)', HOOK)
         self.assertIn('Interlocked.Increment(ref _advanceRecoveryLogCount) <= 200', HOOK)
         self.assertIn('catch { }', HOOK)
@@ -50,6 +67,7 @@ class AdvanceRecoveryWiringTests(unittest.TestCase):
 
     def test_pre_path_recovery_does_not_read_uncomputed_ap_costs(self):
         self.assertNotIn('score.APCost', RUNTIME)
+        self.assertIn('destination.APCost', RUNTIME)
         self.assertIn('progress |= distance < currentDistance;', RUNTIME)
         self.assertIn('ap <= 0', RUNTIME)
         self.assertIn('score.UtilityScore > 0', RUNTIME)

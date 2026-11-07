@@ -49,6 +49,10 @@ namespace AIPerformance
         }
         internal static void ResetFixtureMission() => AdvanceRecoveryReset();
         internal static void ScoreFixture(Actor actor, TileScores tiles) => AdvanceRecoveryScores(actor, tiles);
-        internal static void ChoiceFixture(Agent agent, Behavior choice) => AdvanceRecoveryChoice(agent, choice);
+        internal static Behavior ChoiceFixture(Agent agent, Behavior choice)
+        {
+            AdvanceRecoveryChoice(agent, ref choice);
+            return choice;
+        }
     }
 }

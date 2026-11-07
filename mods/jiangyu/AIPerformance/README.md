@@ -1,4 +1,4 @@
-# AI Performance 1.1.0
+# AI Performance 1.2.0
 
 Independent AI DLL; Larger Maps is optional and no longer installs it automatically.
 Requires Jiangyu and MenaceModSettings. The Suite explicitly includes both modules.
@@ -20,16 +20,19 @@ Requires Jiangyu and MenaceModSettings. The Suite explicitly includes both modul
   default on actual maps above 64x64 and independently hash-locked to reviewed
   0.7.17+22362 / 0.7.18+22828 binaries. Unknown builds retain native behavior.
 - Requires two idle rounds at the same position/order, one hostile AdvanceTowards
-  zone, known contact, full morale, no suppression, available AP, no valid attack
-  candidates/positive other actions or tile utility. Sleep, defense and arrival are
-  preserved. Only missing native distance/inside-zone utility contributions are
-  restored; native Move still decides paths, AP, safety and action competition.
-- No contact override or promise to fix pre-contact stalls. No extra AI/path search.
+  zone, full morale, no suppression, available AP, no valid attack candidates/positive
+  other actions or tile utility. Sleep, defense and arrival are preserved. Once native
+  Move has produced an AP-valid destination toward the order, recovery selects Move
+  instead of Idle; native Move still owns destination/path/safety calculation.
+- No contact or attack candidate is fabricated. Pre-contact stalled advances can move
+  using the already-computed native Move target; no extra AI/path search is added.
   History resets between missions. Old Larger Maps recovery settings are not migrated;
   use **AI Performance / RecoverStalledAdvance** for OFF comparisons.
 - No update loop or default per-unit logging. Optional `DiagnoseAdvanceRecovery`
-  defaults OFF and is capped at 200 lines per mission. Larger Maps retains optional
-  general AI diagnostics but no recovery hooks.
+  defaults OFF and is capped at 200 lines per mission. When enabled, it traces only
+  hostile advance-order candidates, deduplicates unchanged rejection stages, and reports
+  whether recovery was armed/applied/forced plus the subsequent Move/Idle scores. Larger Maps
+  retains optional general AI diagnostics but no recovery hooks.
 
 Managed fixture checks exercise production task/planning/restore code. Metadata-only
 checks inspect current game proxies before canonical staging; they do not execute IL2CPP.

@@ -61,7 +61,7 @@ namespace Il2CppMenace.Tactical.AI
         public AIFaction Faction = new();
         public Data.RoleData Role = new();
         public List<Zone> Zones = [new()];
-        public List<Behavior> Behaviors = [new(), new() { ID = "Move" }, new Behaviors.Attack()];
+        public List<Behavior> Behaviors = [new(), new Behaviors.Move(), new Behaviors.Attack()];
         public bool Deployment, Sleeping;
         public AIFaction GetFaction() => Faction;
         public Data.RoleData GetRole() => Role;
@@ -100,6 +100,12 @@ namespace Il2CppMenace.Tactical.AI
 }
 namespace Il2CppMenace.Tactical.AI.Behaviors
 {
+    public class Move : Behavior
+    {
+        public Data.TileScore TargetTile;
+        public Move() { ID = "Move"; }
+        public Data.TileScore GetTargetTile() => TargetTile;
+    }
     public class Attack : Behavior
     {
         public List<object> m_Candidates = new();
