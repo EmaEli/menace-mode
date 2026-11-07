@@ -549,3 +549,62 @@ stable installer log `E:\MENACE-Work\Temp\MENACE-install.log`. Game stayed close
 **1.2.2 startup/gameplay remains untested.** This fixes a reproduced state-lifetime defect,
 not proven enemy attack behavior. User plays normally; agent checks the next fresh log.
 Keep fast planning ON and #2 open. Do not require another20-turn diagnostic marathon.
+
+## 1.2.2: movement improves, civilian pressure and shooting still inadequate — 7 November
+
+User reports enemies ignoring civilians and hardly shooting. Captured a read-only,
+fixed-length live snapshot at15:26:20UTC without interrupting the running game or changing
+Mods/settings/saves.16,248,142 bytes, SHA256
+`54A6F0A2B009D286161FB9915C48E72888F53F7979C84E1E66085E66CE545DC5`;
+installed AI DLL remains exactly the verified1.2.2 hash above. Private capture:
+`.tmp/Latest-AIPerformance-1.2.2-feedback-20261107c.log`, PC
+`E:\MENACE-Work\Builds\AI122-feedback-20261107c`. This is not an end-of-session log.
+
+### What the capture establishes
+
+- One map, rounds1–60. All18 hostile actors change round-start tile at least five times;
+  all six heavy teams now move on16–19 rounds. Latest hostile round-start has9 alive/9 dead.
+  This supports improved movement, not accepted combat behavior or a controlled speedup.
+- 22 logged accepted hostile attack Use calls:16 enemy medium-mortar launches, four
+  sustained-fire assault-rifle uses, one battle-rifle use and one anti-tank grenade.
+  The remaining225 accepted skills are mostly deploy/get-up stance changes, not attacks.
+- Two mortar uses explicitly target a civilian.worker in round14. Two civilian identities
+  occur as known hostile-faction contacts in12 round-start entries across rounds12–26.
+  Therefore civilian attack targeting is not entirely disabled. Contact TTL cycles2/1/0;
+  faction memory and proximity do not prove a particular shooter currently has line of sight.
+  Other attack target tiles lack an actor, so do not claim those were all player-targeted.
+- 9,481 logged attack evaluations:9,426 zero-score/empty,51 positive with candidates and
+  four zero-score with candidates. Positive evaluations appear only in rounds6/14/20/21/
+  23/24/55. Route-budget caps mean these are observed counts, not complete attack totals.
+- 1,384 completed activation summaries, max Evaluate77.3ms; pending/dropped0. Max wall
+  22,156.2ms includes other activation work/waits; no cause or computation-time claim from
+  wall alone. No recovery-disable, timeout or NullReferenceException is recorded.
+
+### Supported next target, not another movement override
+
+Fast planning remains active:226 attack/three buff profiles adjusted. Source deliberately
+sets AIConfig.InfluencesPositioning=false for every eligible attack profile. Independently
+rechecked native0.7.18 OnCollect at RVA7D4920: flag check7D4BF2 branches to false-return
+7D6465 before opponent/line-of-sight/skill-applicability positioning collection. Exact
+reviewed binary hash and relevant instruction bytes pass private assertions. This verifies
+the loss of firing-position planning, not that it is the sole cause of sparse direct fire.
+
+The leading suspect is now that blanket planning trade-off; the movement recovery does
+not replace tactical firing-position selection. Do not ship another speculative movement
+patch or claim all soldiers have valid shots from existing contacts. Before redesigning
+combat planning, request approval for a controlled mission-start comparison with simplified
+attack planning OFF. It may restore the severe slow turns from #57, so no setting change
+without consent, no interruption of the current mission, and no promise of a quick replay.
+Any eventual solution must preserve useful firing-position planning with bounded work,
+rather than simply forcing Move or leaving all native searches unbounded.
+
+Separately,122 WeaponMechanicsRebalanced outer-ring suppression warning entries accompany
+244 InvalidCastException mentions (Structure→Actor). Source's ring loop calls Tile.GetActor
+without HasActor; exact throwing callsite is not logged. Its catch is in a suppression
+postfix after effects, not proof of blocked attack selection. Tracked separately in #96
+(related to #59), not as the cause of #2;
+do not silently change that mod during the AI investigation.
+
+Captured-log integrity/count assertions and native-byte assertions pass. No production
+source, settings or installed files were changed; no new build/deployment/game fix claimed.
+#2 remains open; gameplay feedback is a failure of the combat goal despite better movement.
