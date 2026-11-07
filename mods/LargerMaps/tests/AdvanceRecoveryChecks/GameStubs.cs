@@ -25,8 +25,21 @@ namespace Il2CppMenace.Tactical
         public int AP = 100, TilesMovedThisTurn;
         public bool Moving, Dying, Contained;
         public float Suppression, Morale = 1;
+        public bool Detected, RejectHiddenReads, Infantry = true, Vehicle;
+        public int FactionKind = 1, PositionReads;
+        public HashSet<Il2CppMenace.Tags.TagType> Tags = new();
         public AI.Agent GetAgent() => Agent;
-        public Tile GetTile() => Tile;
+        public Tile GetTile()
+        {
+            if (RejectHiddenReads && !Detected) throw new Exception("hidden position read");
+            PositionReads++; return Tile;
+        }
+        public bool IsDetectedByFaction(int faction) => Detected;
+        public void SetDetectedByFaction(int faction) { Detected = true; }
+        public int GetFaction() => FactionKind;
+        public bool IsInfantry() => Infantry;
+        public bool IsVehicle() => Vehicle;
+        public bool HasTag(Il2CppMenace.Tags.TagType tag) => Tags.Contains(tag);
         public bool IsMoving() => Moving;
         public bool IsDying() => Dying;
         public bool IsContainedWithinAnotherEntity() => Contained;
@@ -47,6 +60,8 @@ namespace Il2CppMenace.Tactical
         public Map Map = new();
         public int m_Round = 1;
         public Map GetMap() => Map;
+        public AI.AIFaction Faction;
+        public AI.AIFaction GetFaction(int kind) => Faction;
         public void OnInit(object mission) { }
     }
 }
@@ -86,12 +101,20 @@ namespace Il2CppMenace.Tactical.AI
     }
     public class AIFaction
     {
+        public IntPtr Pointer = (IntPtr)30;
         public int Kind = 7;
         public bool Allied, Known = true;
         public int GetFactionType() => Kind;
         public bool IsAlliedWithPlayer() => Allied;
         public bool HasKnownOpponent() => Known;
+        public bool IsAlliedWith(int faction) => Allied;
+        public T TryCast<T>() where T : class => this as T;
+        public List<Opponent> Opponents = new();
+        public List<Opponent> GetOpponents() => Opponents;
+        public void OnOpponentSighted(Tactical.Actor actor, int ttl) { }
+        public void OnTurnStart() { }
     }
+    public sealed class Opponent { public Tactical.Actor Actor; }
     public class Zone
     {
         public UnityEngine.RectInt Area = new(10, 0, 5, 5);
@@ -138,6 +161,7 @@ namespace Il2CppMenace.Tactical.AI.Data
     {
         public bool AvoidOpponents;
         public float ZoneImportanceWeight = 1, UtilityScale = 2, UtilityThresholdScale = 1;
+        public float Move = 1;
     }
     public class TileScore
     {
@@ -185,4 +209,8 @@ namespace Il2CppMenace.Tools
             => ThrowOnInside ? throw new InvalidOperationException("native geometry unavailable") :
                 t.GetX() >= r.xMin && t.GetX() < r.xMin + r.width && t.GetZ() >= r.yMin && t.GetZ() < r.yMin + r.height;
     }
+}
+namespace Il2CppMenace.Tags
+{
+    public enum TagType { MACHINE, XENO, DRONE, INDIRECT_FIRE, WEAPONS_TEAM }
 }

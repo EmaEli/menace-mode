@@ -7,6 +7,9 @@ namespace AIPerformance
     {
         private static void PatchAdvanceRecovery(HarmonyLib.Harmony harmony) { }
         private static void AdvanceRecoveryReset() { }
+        private static bool _contactConvergenceEnabled { get; set; }
+        private static void PatchContactConvergence(HarmonyLib.Harmony harmony) { }
+        private static void ContactConvergenceReset() { }
     }
 }
 

@@ -1,7 +1,33 @@
-# AI Performance 1.2.2
+# AI Performance 1.3.0
 
 Independent AI DLL; Larger Maps is optional and no longer installs it automatically.
 Requires Jiangyu and MenaceModSettings. The Suite explicitly includes both modules.
+
+## Experimental recent-contact approaches (#17)
+
+- `ConvergeOnLastKnownContacts` is OFF by default and requires a game restart.
+  Enable **AI Performance / Unassigned infantry approach recent contacts (0.7.18)**
+  before launching a mission. Independent of simplified planning and advance recovery.
+- Only pirate/Rogue infantry with **no faction mission zones**, no useful combat
+  action/candidates and no existing tile utility qualify. Does not override defense,
+  attack, retreat, sleep/deployment, suppression, morale or movement restrictions.
+  Vehicles, machine/xeno/drone units, indirect-fire assets and weapons teams are excluded.
+- Stores coordinates only on native faction-detection events, never by polling hidden
+  actors or remembered-contact TTL lists. Contacts expire after two unseen rounds;
+  approach uncertainty grows from 3 to 7 tiles. No hidden movement/death tracking.
+- At most three responders per faction approach slightly different areas. Arrival,
+  two stationary rounds or three response rounds stop the attempt; fresh detection
+  can permit another. Absent responders release their slots. Native Move chooses
+  reachable destinations, cover, paths and AP; only no-less-safe progress tiles receive
+  its utility threshold. No new path search or shared mission-order mutation.
+- Reviewed 0.7.18 native hash only; works on both 64x64 and enlarged maps.
+  Unknown builds retain native behavior. `DiagnoseContactConvergence` is OFF by
+  default and capped at 50 lines per mission. No per-frame work.
+- First-stage prototype: **no last-known mortar fire, preparatory bombardment or
+  off-map artillery changes yet**. Existing combat/planning behavior is unchanged
+  when the new option is OFF. Gameplay effectiveness and turn-time impact need testing.
+
+## Existing performance and advance-recovery behavior
 
 - Tracks the actual AI worker task instead of a wrapper that detaches after 12 seconds.
   Does not cancel work, skip units, suppress exceptions or block the game thread.

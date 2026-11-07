@@ -65,9 +65,13 @@ two), 80 AP per action, stationary progress and mortar-style tile markers. Its c
 runs managed production-hook/marker tests and metadata-only native contracts before staging.
 Use `-UseInstalledSettings` to validate/reuse both MenaceModSettings and Jiangyu.Loader without
 replacing either. Windows/gameplay acceptance remains separate from these automated checks.
-LargerMaps 2.6.2 and AIPerformance 1.1.0 are independent standalone selections (#2/#93).
+LargerMaps 2.6.2 and AIPerformance 1.3.0 are independent standalone selections (#2/#93).
 Neither requires or silently bundles the other; the default Suite explicitly selects both.
 Each supports `--use-installed-settings` / `-UseInstalledSettings` to preserve settings/loader.
+AIPerformance 1.3.0 adds a separate OFF-by-default experimental recent-contact approach
+option for unassigned pirate/Rogue infantry on reviewed 0.7.18 (#17). Native detection
+events supply coordinates; no hidden-position polling or mission-order replacement.
+Three responders per faction maximum; no artillery targeting changes in this first stage.
 AIPerformance owns conditional recovery (reviewed 0.7.17/0.7.18, actual maps above 64x64)
 and runs managed recovery/planning and native proxy metadata checks before staging.
 Its simplified planning remains ON; old Larger Maps AI settings are not migrated.

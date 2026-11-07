@@ -10,5 +10,9 @@
     <Compile Include="../../../jiangyu/AIPerformance/code/AdvanceRecoveryRuntime.cs" Link="AdvanceRecoveryRuntime.cs" />
     <Compile Include="../../../jiangyu/AIPerformance/code/AdvanceRecoveryBuild.cs" Link="AdvanceRecoveryBuild.cs" />
     <Compile Include="../../../jiangyu/AIPerformance/code/AdvanceRecovery.cs" Link="AdvanceRecovery.cs" />
+    <Compile Include="../../../jiangyu/AIPerformance/code/ContactMemoryState.cs" Link="ContactMemoryState.cs" />
+    <Compile Include="../../../jiangyu/AIPerformance/code/ContactConvergenceRuntime.cs" Link="ContactConvergenceRuntime.cs" />
+    <Compile Include="../../../jiangyu/AIPerformance/code/ContactConvergenceBuild.cs" Link="ContactConvergenceBuild.cs" />
+    <Compile Include="../../../jiangyu/AIPerformance/code/ContactConvergence.cs" Link="ContactConvergence.cs" />
   </ItemGroup>
 </Project>

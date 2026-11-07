@@ -22,6 +22,8 @@ Check(harmony.Target.Name == "RunWithTimeout", "Correct task hook");
 Check(harmony.Target.GetParameters()[1].ParameterType == typeof(Il2CppMenace.Tactical.Actor), "Actor contract");
 Check(ModSettings.Values[("AI Performance", "RecoverStalledAdvance")] is true, "Recovery defaults ON independently");
 Check(ModSettings.Values[("AI Performance", "DiagnoseAdvanceRecovery")] is false, "Recovery diagnostics default OFF");
+Check(ModSettings.Values[("AI Performance", "ConvergeOnLastKnownContacts")] is false, "Experimental convergence defaults OFF");
+Check(ModSettings.Values[("AI Performance", "DiagnoseContactConvergence")] is false, "Contact diagnostics default OFF");
 var action = new Il2CppSystem.Action();
 object[] taskArgs = { action, null };
 Check(!(bool)harmony.Prefix.Invoke(null, taskArgs), "Skip detached wrapper");

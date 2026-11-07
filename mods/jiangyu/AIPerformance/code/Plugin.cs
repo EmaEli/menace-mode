@@ -25,9 +25,13 @@ public sealed partial class Plugin
             settings.AddSlider("LocalCullTileDistance", "Cull distance (tiles)", 10f, 20f, 12f);
             settings.AddToggle("RecoverStalledAdvance", "Recover advance after two idle rounds (maps above 64x64)", true);
             settings.AddToggle("DiagnoseAdvanceRecovery", "Log bounded advance recovery checks", false);
+            settings.AddHeader("Experimental AI behavior (restart required)");
+            settings.AddToggle("ConvergeOnLastKnownContacts", "Unassigned infantry approach recent contacts (0.7.18)", false);
+            settings.AddToggle("DiagnoseContactConvergence", "Log bounded contact approaches", false);
         });
         PatchAiTaskLifetime(harmony);
         PatchAdvanceRecovery(harmony);
+        PatchContactConvergence(harmony);
     }
 
     public void OnSceneLoaded(int buildIndex, string sceneName)
@@ -45,10 +49,15 @@ public sealed partial class Plugin
             RestoreSimplifiedCombatPlanning();
             RestoreLocalTacticalRouting();
             AdvanceRecoveryReset();
+            ContactConvergenceReset();
         }
     }
 
-    public void OnUnload() { RestoreSimplifiedCombatPlanning(); RestoreLocalTacticalRouting(); AdvanceRecoveryReset(); }
+    public void OnUnload()
+    {
+        _contactConvergenceEnabled = false;
+        RestoreSimplifiedCombatPlanning(); RestoreLocalTacticalRouting(); AdvanceRecoveryReset(); ContactConvergenceReset();
+    }
 
     private static bool ReadBool(string key, bool fallback)
     {

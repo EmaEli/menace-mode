@@ -15,8 +15,9 @@ namespace HarmonyLib
     }
     public static class AccessTools
     {
-        public static MethodInfo Method(Type type, string name, Type[] parameters)
-            => type.GetMethod(name, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance, parameters);
+        public static MethodInfo Method(Type type, string name, Type[] parameters = null)
+            => parameters == null ? type.GetMethod(name, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance) :
+                type.GetMethod(name, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance, parameters);
     }
 }
 namespace AIPerformance
@@ -56,5 +57,22 @@ namespace AIPerformance
             AdvanceRecoveryChoice(agent, ref choice);
             return choice;
         }
+        internal static void BeginContactFixture(bool diagnostics = false)
+        {
+            ContactConvergenceReset();
+            _contactConvergenceEnabled = true;
+            _contactConvergenceDiagnostics = diagnostics;
+            RejectLog = false;
+            Logs.Clear();
+        }
+        internal static void ContactSightFixture(AIFaction faction, Actor actor)
+        {
+            TacticalManager.Instance.Faction = faction;
+            ContactConvergenceDetected(actor, (int)faction.GetFactionType());
+        }
+        internal static void ContactUtilityFixture(Il2CppMenace.Tactical.AI.Behaviors.Move move, TileScores tiles)
+            => ContactConvergenceUtility(move, tiles);
+        internal static void ResetContactFixture() => ContactConvergenceReset();
+        internal static bool ContactEnabled => _contactConvergenceEnabled;
     }
 }

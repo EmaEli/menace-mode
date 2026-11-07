@@ -86,6 +86,16 @@ Method(faction, "HasKnownOpponent", "Boolean");
 var zones = Type("Il2CppMenace.Tactical.AI.Behaviors.Criterions.ConsiderZones");
 Method(zones, "PostProcess", "Void", "Actor", "Dictionary<Tile,TileScore>");
 var manager = Type("Il2CppMenace.Tactical.TacticalManager");
+Method(manager, "GetFaction", "BaseFaction", "Int32");
+var actor = Type("Il2CppMenace.Tactical.Actor");
+Method(actor, "SetDetectedByFaction", "Void", "Int32");
+Method(actor, "IsDetectedByFaction", "Boolean", "Int32");
+var entity = Type("Il2CppMenace.Tactical.Entity");
+Method(entity, "GetFaction", "FactionType");
+Method(entity, "HasTag", "Boolean", "TagType");
+Method(entity, "IsInfantry", "Boolean");
+Method(entity, "IsVehicle", "Boolean");
+Method(Type("Il2CppMenace.Tactical.AI.BaseFaction"), "IsAlliedWith", "Boolean", "Int32");
 Check(manager.GetMethods().Count(h =>
 {
     var method = reader.GetMethodDefinition(h);
@@ -97,6 +107,7 @@ var role = Type("Il2CppMenace.Tactical.AI.Data.RoleData");
 Property(role, "AvoidOpponents", "Boolean");
 foreach (string member in new[] { "ZoneImportanceWeight", "UtilityScale", "UtilityThresholdScale" })
     Property(role, member, "Single");
+Property(role, "Move", "Single");
 var zone = Type("Il2CppMenace.Tactical.AI.Zone");
 Property(zone, "Area", "RectInt");
 Property(zone, "Priority", "Single");
@@ -128,6 +139,8 @@ if (args.Length == 2)
         "AIPerformance has no LargerMaps assembly dependency");
     Check(metadata.TypeDefinitions.Any(h => metadata.GetString(metadata.GetTypeDefinition(h).Name) == "AdvanceRecoveryRuntime"),
         "recovery runtime belongs to AIPerformance.dll");
+    Check(metadata.TypeDefinitions.Any(h => metadata.GetString(metadata.GetTypeDefinition(h).Name) == "ContactConvergenceRuntime"),
+        "contact runtime included in AIPerformance.dll");
 }
 Console.WriteLine($"PASS: {checks} AI performance native metadata contracts; no native methods executed.");
 
