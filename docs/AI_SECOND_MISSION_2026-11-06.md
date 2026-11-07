@@ -469,3 +469,83 @@ and verified installation metadata are retained in that staging directory.
 retrieves fresh Latest.log and checks actual hidden-unit movement/utility and turn
 timings; do not ask the user to observe units hidden by fog. No post-install startup or
 gameplay has run yet; no claim that civilian attacks or all stalls are fixed. #2 stays open.
+
+## 1.2.1 gameplay feedback and 1.2.2 re-evaluation correction — 7 November
+
+User reports enemies still rarely appear and seem reluctant to attack. Captured a new
+read-only snapshot with the game closed; verified source/download hashes and installed
+AI DLL against the 1.2.1 deployment. Capture: 6,264,903 bytes, SHA256
+`6752D04F0F69F6911F8BA2B3AA8D4F977536153D7612DB1C2A289137145BDCB8`;
+private local `.tmp/Latest-AIPerformance-1.2.1-feedback-20261107b.log`, PC snapshot
+`E:\MENACE-Work\Builds\AI121-feedback-20261107b`. No raw log is published.
+
+### Observed result: some movement, still no accepted gameplay fix
+
+- One map, rounds1–21, 18 hostile actors initially, 17 surviving plus one dead by round9.
+  Infantry now change round-start tiles on 6–10 rounds. Of six heavy teams, three never
+  change tile; the others change on one, two and five rounds. One surviving walker moves
+  on five rounds, the other once then remains stationary for19 rounds.
+- 80 bounded ADVANCE-UTILITY records cover all18 enemies (2,096 seeded tiles), alongside
+  41 CHECK /79 CHOICE records. All79 recovery choices choose positive-score Move;
+  forcedMove stays false because native selection itself now sees the recovered utility.
+- All4,856 logged hostile attack evaluations have score0 and candidates0. The14 accepted
+  hostile skills are nine deploy/five get-up stance actions; no hostile attack Use call
+  is logged. This is not evidence they refused an existing valid shot or proof of why
+  native attack candidates are absent. Route limits exist, so these are logged counts.
+- In136 actor-rounds, a Move choice with a non-null destination is followed by Idle with
+  a null destination in the same round. Two stationary machine-gun teams show this in
+  round3 with AP100 at agent-start, flags false, scores108/109 and targets(59,87)/(26,86).
+  Subsequent evaluation loses utility/target without any round-start displacement.
+  AP0 at faction round-start is prior-turn state, not evidence they lack fresh AP.
+- 547 complete activation summaries; max wall1,931.5ms, max Evaluate83.4ms, pending/dropped0.
+  No logged recovery-disable, NullReferenceException, InvalidCastException or timeout.
+  Fast planning/recovery active; all15 route probes installed. Captured-log assertions pass.
+
+### Concrete code defect and scoped correction
+
+AdvanceRecoveryState.Choice treated every non-idle selection as completed useful activity.
+The first provisional native Move therefore marked the actor busy and cleared eligibility before
+the next native evaluation could rebuild tile scores. The new actual-hook fixture fails
+on1.2.1 at the second utility pass, before changing production code.
+
+Local dev source `7e7d360` (not pushed), AIPerformance1.2.2: retain this round's existing
+eligibility only for the same native Move instance with an affordable, strictly closer
+target and all actor/order/no-shot guards. Actual position/order changes, moved/done/
+delaying/inert states and useful non-movement actions still invalidate recovery. Merely
+selecting Move is neither proof of movement nor another completed idle round. No extra
+evaluation/path search, contact/attack fabrication, AP edits or changed settings.
+
+The two-pass fixture now passes with/without known contacts, including five repeated
+re-evaluations; actual movement cancels recovery. Twelve invalid-choice cases still cancel
+it, and a provisional flag cannot resurrect useful activity or create another idle round.
+12,386 recovery checks, 27 planning checks, 91 proxy metadata contracts, 199 Python tests
+and18,295 full offline C# assertions pass. Production build has zero warnings/errors.
+The first Python run found the migration inventory still said1.2.1; updated the row and
+reran all199 successfully. Managed fixtures remain distinct from native gameplay proof.
+
+### 1.2.2 Windows test installation
+
+- Reviewed game binary and all119 current proxy hashes match local build references.
+  Transfer round trip, ZIP and all46 payload hashes, clean-source build/metadata checks pass.
+  One-package BuildKit SHA256:
+  `7ddbfdf2a3a8feb828bc0bb8ef672752469f585265c77026723fa35b71c8fef1`.
+- Canonical Windows BuildOnly and standalone install pass on0.7.18+22828 / SDK10.0.113,
+  zero build warnings/errors. Bundled91/27/12,386 checks pass again before staging.
+  Installed manifest/assembly/file:1.2.2/1.2.2.0/1.2.2.0. DLL SHA256:
+  `54151AB9C28636E2D8AF9C91CAAD275792CB4011CE8F43CCF24D092327D8BD90`.
+- Affected-only backup/journal:
+  `_MENACE_Backups/20261107-143021-45a573e5462c4a3dbebc0a87c9906de9`.
+  Targets exactly AIPerformance and the known root-DLL conflict. All retained-original and
+  installed-file hashes verified; retained DLL matches preflight1.2.1 exactly. All1,427
+  protected Mods/UserData files unchanged. Settings/loader reused, saves untouched.
+- Canonical install reported success. A private post-verification helper expected one
+  backup entry in the stable transcript but found11 historical installs because the
+  canonical transcript deliberately appends. Corrected the helper to select the latest
+  entry, then verified versions, originals/live hashes and protected files without
+  reinstalling. No installer/build failure or live-file workaround.
+
+PC staging: `E:\MENACE-Work\Builds\AIPerformance-1.2.2-20261107-recheck`;
+stable installer log `E:\MENACE-Work\Temp\MENACE-install.log`. Game stayed closed.
+**1.2.2 startup/gameplay remains untested.** This fixes a reproduced state-lifetime defect,
+not proven enemy attack behavior. User plays normally; agent checks the next fresh log.
+Keep fast planning ON and #2 open. Do not require another20-turn diagnostic marathon.
