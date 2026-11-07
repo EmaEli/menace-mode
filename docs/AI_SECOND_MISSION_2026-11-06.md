@@ -188,3 +188,284 @@ No game, settings, saves or mod files changed during this investigation.
 Next opt-in: targeted, bounded hostile recovery-stage diagnostics to identify whether
 history/actor/candidate/tile guards reject recovery or whether native Move still rejects
 recovered scores. Do not weaken combat/contact safeguards or change settings silently.
+
+## Diagnostic candidate installation — 6 November
+
+AIPerformance 1.1.1 adds the opt-in `DiagnoseAdvanceRecovery` trace; recovery behavior
+remains ON by default on supported maps above 64x64. BuildKit created a one-package,
+46-file candidate (ZIP SHA256
+`e2edd9c804ce82337db5306bf70185ff9aa0680fd12439f9b707bfaf3891c7be`). Local ZIP
+inventory, clean extracted-source Release build against fresh 0.7.18 references, 81
+native metadata contracts, 27 managed behavior checks, and 12,268 managed recovery
+fixtures passed. None of the managed/metadata checks executes IL2CPP gameplay.
+
+Canonical Windows BuildOnly and installation passed on MENACE 0.7.18+22828 with the
+pinned .NET SDK 10.0.113. The Windows AIPerformance Release build had zero warnings and
+errors; 81 native metadata contracts, 27 managed behavior checks and 12,268 managed
+recovery fixtures passed. Installed manifest/assembly/file versions are
+**1.1.1 / 1.1.1.0 / 1.1.1.0**; installed DLL SHA256 is
+`06ABCFE83E092A3E63F756F9974B1D8F1502423A2580EFDE0466B3FB4032EE98`. MenaceModSettings
+and Jiangyu.Loader were validated and reused, not replaced. The outside-Mods backup
+`_MENACE_Backups/20261106-213826-006c98bc11ca473d92d7edae5eb59295` records only
+AIPerformance and its legacy root-DLL conflict target, AIPerformance.dll. MENACE remained
+closed after installation. No fresh post-install Latest.log or gameplay result exists yet.
+
+Original test instructions requested **AI Performance / DiagnoseAdvanceRecovery** ON
+and a restart; this toggle defaults OFF and is capped at 200 lines per mission.
+Expected markers are `ADVANCE-CHECK` (recovery result/armed/applied state) and
+`ADVANCE-CHOICE` (chosen behavior and Move/Idle scores). Asking the user to observe
+a hidden hostile was inappropriate: use existing `DiagnoseAIRoutes` round-start
+positions and decisions for movement evidence, independently of player visibility.
+No release or source push was performed.
+
+## User diagnostic run — 7 November
+
+User completed a 20-turn run. The fresh Latest.log is retained privately at
+`.tmp/Latest-AIPerformance-1.1.1-user-test-20261107.log` (5,720,037 bytes; SHA256
+`905e220e098621ec8386af488806106ba07feff8063ff70a300bcd258ed60326`). It reports
+MENACE 0.7.18+22828, AIPerformance 1.1.1, LargerMaps 2.6.2, and the conditional
+advance-recovery-enabled startup message. AI task records span rounds 1–19 (519
+activations, zero pending/dropped tasks); the log has no error records.
+
+There are **zero `ADVANCE-CHECK` and zero `ADVANCE-CHOICE` records**, so this run does
+not show whether recovery was applied. The saved `DiagnoseAdvanceRecovery` value was
+read as true after the session, but the log cannot establish whether it was true when
+the plugin initialized. The absence does not identify the cause: the setting is cached
+at startup, and early input/map gates can also suppress these records.
+
+The user could not see AI units. Initial analysis incorrectly treated that as making
+the whole run inconclusive; existing route diagnostics establish movement independently
+of visibility. All 15 route hooks were installed. The same capture contains 2,729 route
+state records, 160 faction-round records and 638 behavior-choice records on one map:
+
+- Round-start snapshots cover **rounds 1–20**, unlike task summaries (rounds 1–19).
+- **18 hostile teams/vehicles initially; 17 alive and one dead from round 7 through 20.**
+  This is not an absence of enemy spawning, and these counts are not individual soldiers.
+- Twelve hostiles change round-start tile at least once. All **six heavy-weapon teams**
+  (three machineguns, two mortars, one autocannon) retain their initial tile throughout
+  rounds 1–20, each with 19 recorded Idle choices and 19 zero-scored Move evaluations.
+- Two surviving walkers move once, then have 18 consecutive unchanged round-to-round
+  positions. Several infantry also stop well short of their advance order area.
+- At round 15, the machinegun at (59,88) and walker at (88,21) have AP100 at agent-start,
+  morale1, suppression0, are awake and have one known faction opponent. Each has a single
+  AdvanceTowards order outside its current position. Choice records show **Move=0,
+  Idle=1**, with 24 and 22 movement candidates respectively. Round-start AP0 is a prior
+  turn boundary observation, not evidence that they lacked AP when choosing behavior.
+- Five accepted hostile skill calls are recorded (three officer whistles, two stance
+  deployments), but no accepted hostile attack calls. There are 57 route-limit records;
+  the stationary positions are independently supported by round-start snapshots.
+
+**The movement stall persists in 1.1.1; #2 is not fixed.** Recovery application and its
+precise rejection stage remain unknown. These records do not prove a rendering or
+visibility-system bug. Next investigate the zero Move scores and silent recovery hooks
+using these concrete stalled actors, not another request to visually track hidden units.
+No game, mod, setting or save was changed in this follow-up. No raw log is published.
+
+### User clarification: central position, one approaching walker
+
+The user clarifies that they were in the map centre and one walker reached them;
+the earlier "no AI visible" wording should not be read as literally zero encounters.
+The matching walker progresses from (50,83) to (50,58) by round6, then is absent from
+the living roster from round7. Recorded central player positions include (49,51) and
+(50,51), consistent with that encounter; this does not independently identify its killer.
+
+Of the 18 initial enemies, six foot units continue making intermittent progress late
+in the run (four conscript squads, one infantry squad, one officer squad). Three other
+foot units stop earlier, two surviving walkers move once then stop, six heavy teams
+never change round-start tile, and the approaching walker dies. Only two enemies change
+round-start position between rounds19 and20; six move at least once in rounds17–20.
+Several late movers advance approximately every third round, not continuously.
+
+All **2,014 recorded hostile STATE/EXECUTE sleep flags are False**; all 420 recorded
+MOVE-EVAL delaying flags are False. This does not support IsSleeping or the observed
+movement-delay flag as the explanation, although other intentional timing is not ruled out.
+
+All ten civilians remain alive at every round-start snapshot. From rounds11–19 the only
+known faction opponent at round-start is a worker, with contact TTL cycling 2,1,0;
+round20 has another known worker. Round7 instead has a known Carda contact. Every one
+of **4,200 recorded hostile attack evaluations** has score0 and candidates0; there are
+no accepted hostile attack calls recorded. Contact knowledge is not proof of a legal
+shot, range or line of sight for any particular shooter.
+
+The nearest surviving advancing squad ends around 12 tiles from the recorded central
+player position, with other advancing squads farther away. Terrain/vision limits are
+a plausible reason they remained unseen, not established visibility results. A leading
+movement hypothesis is the previously reviewed known-contact gate suppressing advance
+incentives while attack positioning fails to take over; civilian contact and the
+three-round cycle are consistent with this, not a newly proven cause. It cannot by
+itself explain heavy teams already stationary before any known contact.
+
+## Historical alien fix comparison — 7 November
+
+The user correctly points out that this resembles the previously accepted alien
+problem, not a new sleeping/visibility theory. Reviewed #2's original acceptance,
+the consolidated accepted source at `f1a58c9`, extraction `bdeff9e`, planning change
+`c80ed83`, recovery migration `c08101d`, and the current uncommitted 1.1.1 changes.
+
+The accepted 20 October setup had **two separate parts**:
+
+1. **SimplifyCombatAIPlanning OFF** (local routing and selective preservation OFF):
+   restoring native future firing-position evaluation recovered combat. That capture
+   recorded 37 accepted/APPLIED enemy attacks, although 29/31 aliens still stalled early.
+2. **RecoverStalledAdvance ON, LargerMaps 2.3.2**: stopped requiring positive/affordable
+   cached APCost at ConsiderZones.PostProcess, because native Move computes paths/costs
+   afterward. Recovery added a limited early objective-movement benefit (13/31 versus
+   2/31 tile changes in 5→6, then 5/31 versus 2/31 in 6→7). The user accepted that
+   bounded result; do not retrospectively claim a universal fix.
+
+### What changed
+
+- The first 0.7.18 regression really did disable recovery: the previous code required
+  exact 0.7.17. This was already addressed by `c08101d`; current startup reports recovery
+  enabled, so the old unsupported-version warning is not the current explanation.
+- Recovery runtime and history at migration are gameplay-equivalent to the accepted
+  2.3.2 source after namespace/comment/whitespace normalization. The corrected geometric
+  progress test remains; the premature APCost check has **not** returned. Current
+  recovery still includes hostile type9 (Rogue Army), not only type7 aliens.
+- **The accepted planning configuration was not preserved by extraction.** Settings
+  moved from `Larger Maps` to `AI Performance`; the new setting defaults ON and ignores
+  the old OFF value. This was deliberate source behavior, even explicitly exercised
+  by OfflineChecks: an old Larger Maps OFF value still allows the new AI setting to
+  disable InfluencesPositioning. It nevertheless differs from the accepted alien setup.
+- The accepted 2.3.2 capture has no planning-simplification setup message and 35 recovery
+  applications. The current 1.1.1 capture reports **226 attack / three buff profiles
+  simplified**, with no recovery-stage records. `c80ed83` also removed an optional five
+  infantry-profile preservation experiment, but that experiment was OFF in the accepted
+  alien run and is not the fix to restore blindly.
+
+### Verification and decision
+
+Re-ran eight exact native-byte checks on **each** original 0.7.17 and 0.7.18 binary:
+known-contact gates, score weights, inside-zone utility, hook phase and later Move/AP
+ownership all pass. Current production fixtures pass **12,268 recovery checks** and
+**27 planning checks**, including old-setting isolation and explicit new-setting OFF.
+These are static/managed checks, not evidence of native hook execution or a gameplay fix.
+
+Confirmed: a configuration mismatch from the accepted setup, not a lost 2.3.2 APCost
+correction. The game patch exposed the old compatibility restriction, but the reviewed
+native gates themselves still match the intended port. Whether current live recovery
+is called/applies remains unresolved. Different factions and maps also prevent a direct
+causal conclusion from the two captures.
+
+The smallest discriminating next step is a **user-approved, backed-up change only to
+AI Performance / SimplifyCombatAIPlanning = OFF**, restart, same affected mission, with
+recovery ON and other settings fixed. Native firing-position work may restore slow AI
+turns (#57), so do not change it silently or call this a verified solution. No source
+gameplay, installed mod, setting or save was changed during this historical comparison.
+
+## AIPerformance 1.2.0 gameplay — 7 November, 13:30–13:34
+
+User feedback: **"20 turns passed. no enemies attacked civilians"**. This is not
+acceptance. Fog of War prevents the user from tracking hidden enemies; use actual
+logged positions, not visibility, to assess movement. The user rejected planning OFF
+because it previously made a mission take three hours; keep fast planning ON.
+
+Private capture `.tmp/Latest-AIPerformance-1.2.0-20turns-20261107.log`:
+5,890,944 bytes / 16,735 lines, SHA256
+`ef10c1ef619638c7cdafd8b2f16d5176117be5a998f0b613c0896df2cf95911d`.
+Script upload/download and remote/local hashes matched; game was closed at capture.
+Installed AIPerformance assembly 1.2.0.0 and DLL hash match the verified installation.
+Startup identifies LargerMaps 2.6.2, 96x96, enabled recovery and 226 attack / three buff
+profiles simplified. No settings, saves, installed mods or gameplay source changed.
+
+### Result: persistent stalls, with live recovery evidence now available
+
+- One map, rounds 1–20: 18 Rogue Army teams/vehicles initially; 17 alive and one dead
+  at round 20. All six heavy teams retain their initial round-start tile throughout:
+  two mortars, three machineguns and one autocannon. Two surviving walkers move once,
+  then remain stationary for 18 rounds. Other infantry do move; this is not a total
+  faction freeze or missing spawn.
+- Five accepted hostile skill calls are logged: two stance deployments and three
+  officer whistles. No hostile attack skill call is logged. There are 57 route-limit
+  records; absence of action records alone cannot establish complete attack coverage.
+  The user's report remains the direct evidence of no civilian attacks.
+- Unlike the prior run, targeted diagnostics **are present**: 101 `ADVANCE-CHECK` and
+  100 `ADVANCE-CHOICE` records across rounds 3–12. Check results: Contact 25,
+  Applied 40, AlreadyApplied 36. The bounded trace stops before round 20; do not infer
+  later recovery activity from its silence. No logged choice has `forcedMove=True`.
+- Recovery does apply to stalled actors, yet choices still show Idle / Move=0 /
+  Idle=1. Thus "recovery never runs" and "0.7.18 unsupported" are not explanations
+  for this capture. Score application alone does not prove completed movement.
+- Across 195 logged choices for the six heavy teams and two surviving walkers,
+  193 show a null stored movement target. Example: round 3 mortar at (94,65), AP=100,
+  awake, no suppression, 19 movement candidates, `hasUtility=False`, target null,
+  Move=0 / Idle=1. Candidate tiles are not a selected, reachable movement destination.
+- The 1.2.0 fallback in `AdvanceRecoveryRuntime.TryGetAdvanceMove` requires an existing
+  target (`Move.GetTargetTile()`), affordable positive APCost and strict order progress.
+  A null target necessarily rejects it. This is a concrete coverage gap in the fallback,
+  not proof of which native gate prevents every unit from selecting a target.
+- Fast-turn evidence remains positive: 519 complete actor-activation summaries, zero
+  pending/dropped tasks, maximum observed activation 1,962.9 ms and maximum individual
+  Evaluate call 80.1 ms. These are activation/call timings, not whole-faction turn times.
+  No recovery-disable, null-reference or invalid-cast record appears.
+
+Private parser and `.tmp/verify-ai120-20turns-20261107.py` assertions passed, including
+capture/DLL integrity, positions, exact recovery-stage counts and skill attribution.
+The parser preserves the event actor rather than replacing it with nested target fields.
+
+**Next target:** review the native utility/target-selection step before PickBehavior.
+The existing-target-only fallback cannot cover the demonstrated null-target case.
+Any replacement must keep fast planning ON, retain native path/AP/safety ownership,
+and avoid hypothetical firing-position search. No new native override is validated or
+installed by this investigation. Issue #2 remains open; 1.2.0 did not fix these stalls.
+
+## AIPerformance 1.2.1 — missing-destination candidate, 7 November
+
+User approved reworking the fallback, keeping fast planning ON. Source committed locally
+on dev as `7970fbd` (not pushed). Existing unrelated working-tree changes are preserved.
+
+### Implementation
+
+Reviewed native Move.HasUtility in both exact supported binaries: it compares raw tile
+UtilityScore against the inherited Behavior.GetUtilityThreshold before native Move's
+destination/path/AP work. Existing distance recovery alone need not satisfy that gate.
+The new prefix supplies the configured native threshold only to strictly closer order
+tiles whose raw SafetyScore is no worse than the current tile. It requires the existing
+two-idle-round eligibility, one explicit hostile AdvanceTowards zone, full morale, no
+suppression, no attack candidates/positive competing actions or positive tile utility.
+Movement-done, moved, delayed and inert states are preserved. Unknown data fails closed.
+
+It does not require an existing target or computed APCost. Native Move still performs
+target selection, pathfinding/clipping, AP accounting and safety ranking. No second AI
+pass, hypothetical shot search, fabricated contacts, attack candidates, path edits,
+teleportation or setting change. Existing utility is not overwritten; failed partial
+utility writes are rolled back. Optional ADVANCE-UTILITY reports seeded tile counts.
+
+### Checks and deployment (not gameplay acceptance)
+
+- 12,355 managed recovery checks, including null-target regression with/without contact,
+  unsafe/current tiles, no history, attack/utility guards, native movement flags, repeated
+  polls, transaction failure and actual prefix map gating. 27 planning checks pass.
+- Nine exact-byte native contract tests pass on each reviewed 0.7.17/0.7.18 binary.
+  91 proxy metadata contracts pass; none execute native IL2CPP methods.
+- 199 GameplaySuite Python tests and 18,295 full offline C# assertions pass. Production
+  AIPerformance DLL builds with zero warnings/errors. Offline fixtures emit pre-existing
+  nullable warnings when rebuilt; this is separate from the zero-warning production build.
+- Current PC reviewed native hash and all 119 proxy hashes match local references.
+  Transfer round trip, ZIP SHA256, all 46 inventoried payloads and clean extracted-source
+  build pass. Kit has exactly one package; settings companion and loader are reused.
+- BuildKit `.tmp/MENACE-AIPerformance-1.2.1-nulltarget-20261107.zip`, SHA256
+  `9e6bcb4bd2b7a0ad91b72a16235ffd2fdcfcf4e45d373fa3a556df2b90963f40`.
+- Canonical Windows BuildOnly and standalone install pass on 0.7.18+22828 with private
+  SDK 10.0.113; zero production build warnings/errors. All three bundled check suites
+  (91 metadata / 27 planning / 12,355 recovery) pass again before staging.
+- Installed manifest/assembly/file versions: 1.2.1 / 1.2.1.0 / 1.2.1.0. Installed DLL
+  SHA256 `8CA4A7122C5EA7C5A795DEB804D1F66551A789FFD9B3929300A35B6313CE5A17`.
+- Affected-only verified original backup/journal:
+  `_MENACE_Backups/20261107-134840-cccd428fc84a40beb40c2f3ef4bce00a`.
+  Targets exactly AIPerformance and the known root AIPerformance.dll conflict; installed
+  files and retained originals match journal hashes. All 1,426 protected Mods/UserData
+  files match the preflight inventory. Game stayed closed. No saves/settings changed.
+- Installer itself reported success. A private post-verification wrapper could not
+  uniquely discover the new backup folder; verification was rerun successfully against
+  the exact installer-reported journal, without reinstalling or changing live files.
+  This was a verification-helper failure, not an installer/build failure.
+
+PC staging/evidence: `E:\MENACE-Work\Builds\AIPerformance-1.2.1-20261107-nulltarget`.
+Stable installer log: `E:\MENACE-Work\Temp\MENACE-install.log`; BuildOnly/install logs
+and verified installation metadata are retained in that staging directory.
+
+**Next:** user plays the same affected mission normally for several enemy turns. Agent
+retrieves fresh Latest.log and checks actual hidden-unit movement/utility and turn
+timings; do not ask the user to observe units hidden by fog. No post-install startup or
+gameplay has run yet; no claim that civilian attacks or all stalls are fixed. #2 stays open.
