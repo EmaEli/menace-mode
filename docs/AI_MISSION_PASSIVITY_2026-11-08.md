@@ -96,11 +96,37 @@ The new path therefore does **not** sum single-zone repairs or choose the first 
   fixtures pass 12,633 recovery/contact checks, including odd/even ID, stale choices,
   repeat evaluation, order mutations, mixed orders, safety, arrival and count bounds.
 - 11 exact-native tests pass on each original 0.7.17/0.7.18 binary. 107 current proxy
-  metadata contracts, 29 planning checks, 207 Suite Python tests and 149 LargerMaps
-  Python tests (eight environment skips) pass. Updated three stale source-literal
+  metadata contracts, 29 planning checks and 207 Suite Python tests pass. LargerMaps
+  Python: 149 run, 141 pass, eight environment skips. Updated three stale source-literal
   unload assertions for the existing 1.3.0 lifecycle; no unload gameplay code changed.
 - 18,009 scoped shared C# checks pass. Production 1.3.1 builds with zero warnings/errors;
   the shared managed fixtures emit existing nullable-context warnings on rebuild.
 - Closed-PC preflight confirms original 1.3.0 DLL, reviewed native hash and all 119
   local proxy hashes match the current PC. Canonical packaging/installation follows;
   these offline checks do not execute native IL2CPP or prove restored combat.
+
+## Canonical Windows installation completed
+
+- Source: local `dev` commit `2bc037b`. Canonical standalone installed-settings BuildKit:
+  54 inventoried files, AIPerformance only. ZIP SHA256
+  `ad1fc434318a0bc1224f8df32b3b796a226839ca915c23fbb53bd2498011bcd9`.
+  Local inventory/clean extracted-source rebuild and actual DLL metadata gates pass.
+- Canonical Windows BuildOnly and install pass on MENACE 0.7.18+22828 with private SDK
+  10.0.113, zero production warnings/errors; 107 metadata, 29 planning and 12,633
+  recovery/contact fixture checks pass again before staging. MENACE closed throughout.
+- Installed manifest/assembly/file versions: **1.3.1 / 1.3.1.0 / 1.3.1.0**. DLL SHA256
+  `3248324066a87fbc03d3cc5303a5a4f6ef8816ea7836c2c11e027b4dc329d8d1`.
+- Backup: `_MENACE_Backups/20261108-154531-223bf5a14969475ba633bf8e9ca2d655`.
+  Journal scope is AIPerformance and its known legacy DLL slot only. Backup originals
+  match 1.3.0; all installed files match the canonical journal. No manual live copying.
+- All **1,561 protected Mods/UserData/proxy files** unchanged across BuildOnly/install.
+  Installed MenaceModSettings and Jiangyu.Loader validated/reused; settings untouched.
+  Saves were not read or modified. No additional diagnostics or settings enabled.
+- Retained kit/logs: `E:\MENACE-Work\Builds\AIPerformance-1.3.1-multiorder-20261108`.
+  Local capture: `.tmp/ai131-windows-install.log`; verification metadata downloaded.
+- Post-install startup, native dispatch, combat and turn-time acceptance **not tested**.
+  #2 and #17 remain open. Test a normal mission of this type; no prescribed 20–30-turn
+  replay. Retrieve fresh Latest.log when the user reports the result.
+
+Tracker records: [#2 deployment](https://github.com/EmaEli/menace-mode/issues/2#issuecomment-6722905423),
+[#17 scope](https://github.com/EmaEli/menace-mode/issues/17#issuecomment-6722905694).
