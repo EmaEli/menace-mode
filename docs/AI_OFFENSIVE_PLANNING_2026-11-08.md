@@ -28,6 +28,9 @@ Reviewed binary: MENACE 0.7.18+22828, GameAssembly SHA256
 - 24 probes/evaluation, 48/actor/round, 256 actor entries; stop starting probes after 20 ms.
   This is a **soft** elapsed check, not cancellation of an individual expensive native call.
   Repeated polls and old-map tasks cannot renew the hard count. No additional task/path search.
+- Prime lazy skill IDs during main-thread scene setup, then read only cached m_ID on AI
+  workers. Unity object names and lazy GetID calls are forbidden in the probe path; missing
+  cache entries fail closed. Fixtures throw if worker probes try reading a Unity name.
 - Native positive InflictDamage with real native candidates can replace Move/Idle at
   PickBehavior. Other useful actions and severe suppression/morale conditions are preserved.
   Native attack execution remains authoritative; no direct skill.Use or free attacks.
@@ -54,7 +57,7 @@ AP reserve, idempotence, finite/legality/state guards, hidden/mission targets, l
 direction/multi-order allocation, native-failure rollback and concurrent hard budgets.
 Metadata-only native contract checks cover the additional methods and writable fields.
 Four exact-native phase/flag/reserve checks pass; these are not native execution tests.
-Final local totals: 12,952 production-linked checks, 30 planning checks, 156 native metadata
+Final local totals: 12,953 production-linked checks, 31 planning checks, 161 native metadata
 contracts, 207 Suite Python tests, 153 LargerMaps Python tests (eight skips), and 18,009
 scoped shared behavior/artifact checks. The shared fixture build reports existing nullable
 warnings; the production AI build has zero warnings/errors.

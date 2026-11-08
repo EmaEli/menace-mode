@@ -184,7 +184,8 @@ namespace Il2CppMenace.Tactical.Skills
     }
     public class SkillTemplate
     {
-        public string name = "active.fixture";
+        public string m_ID = "active.fixture";
+        public string name => throw new InvalidOperationException("Unity name access is forbidden on worker probes");
         public bool IsAttack = true, IsTargeted = true, IsLineOfFireNeeded = true;
         public bool IsDeploymentRequired, IsWeaponSetupRequired;
         public int AoEType;

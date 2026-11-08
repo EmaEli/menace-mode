@@ -196,5 +196,8 @@ internal static class OffensivePlanningChecks
             visited.Count <= OffensivePlanningRuntime.MaxTargets, "dense map/contact set stays within evaluation and target caps");
         for (int i = 0; i < 20; i++) f.Plan();
         check(f.Damage.Skill.Probes <= OffensivePlanningBudget.PerRound, "same-unit repeated AI passes cannot replenish round probes");
+        f = new(); f.Damage.Skill.Template.m_ID = null; f.Plan();
+        check(f.Damage.Skill.Probes == 0 && f.Front.UtilityByAttacksScore == 0,
+            "missing cached ID fails closed without a Unity name read or lazy GetID call");
     }
 }

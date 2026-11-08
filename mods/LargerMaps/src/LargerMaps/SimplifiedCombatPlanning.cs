@@ -157,7 +157,10 @@ public sealed partial class Plugin
 
             bool isAttack = Convert.ToBoolean(GetMember(template, "IsAttack") ?? false);
             string typeName = config.GetType().FullName ?? "";
-            string templateId = knownBuffId ?? Convert.ToString(GetMember(template, "name") ??
+            // Scene setup primes GetID's lazy Unity-name cache on the main thread.
+            // Worker scoring reads m_ID and must never call UnityEngine.Object.name.
+            string templateId = knownBuffId ?? Convert.ToString(template.GetType().GetMethod("GetID",
+                                        BindingFlags.Public | BindingFlags.Instance)?.Invoke(template, null) ?? GetMember(template, "name") ??
                                         GetMember(template, "Name") ?? "");
             bool isBuff = typeName.EndsWith(".Behaviors.Data.Buff", StringComparison.Ordinal) ||
                           typeName.EndsWith(".AI.Data.Buff", StringComparison.Ordinal) ||

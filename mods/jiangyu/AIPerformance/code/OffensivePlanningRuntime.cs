@@ -81,7 +81,8 @@ internal static class OffensivePlanningRuntime
             var damage = behavior?.TryCast<InflictDamage>();
             var skill = damage?.GetSkill();
             var template = skill?.GetTemplate();
-            if (template == null || !simplified(template.name) || !template.IsAttack || !template.IsTargeted ||
+            if (template == null || string.IsNullOrEmpty(template.m_ID) || !simplified(template.m_ID) ||
+                !template.IsAttack || !template.IsTargeted ||
                 !template.IsLineOfFireNeeded || (int)template.AoEType != 0 || template.IsDeploymentRequired ||
                 template.IsWeaponSetupRequired || skill.HasLimitedUses() || skill.IsOutOfUses() ||
                 template.AIConfig == null || !Positive(template.AIConfig.ScoreMult)) continue;

@@ -43,6 +43,7 @@ var buff = Add("active.rogue_officer_whistle", false, 2);
 var utility = Add("active.unrelated_noncombat", false, 3);
 plugin.OnSceneLoaded(0, "Tactical");
 Check(!attack.AIConfig.InfluencesPositioning, "64x64 optimization applies despite old Larger Maps OFF");
+Check(attack.m_ID == attack.name, "Scene setup primes native-style cached skill ID for worker reads");
 Check(!buff.AIConfig.InfluencesPositioning, "Known buff optimized");
 Check(utility.AIConfig.InfluencesPositioning, "Unrelated utility preserved");
 Check(logs.Any(l => l.Contains("2 attack") || l.Contains("1 attack / 1 buff")), "Successful count");

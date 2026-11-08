@@ -81,6 +81,8 @@ namespace Il2CppMenace.Tactical.Skills
     public sealed class SkillTemplate
     {
         public string name;
+        public string m_ID;
+        public string GetID() => m_ID ??= name;
         public bool IsAttack;
         public bool IsLineOfFireNeeded = true;
         public Profile AIConfig;

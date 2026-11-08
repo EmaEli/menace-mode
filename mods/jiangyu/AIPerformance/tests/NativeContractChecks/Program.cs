@@ -105,6 +105,8 @@ Method(Type("Il2CppMenace.Tactical.Tile"), "GetEntity", "Entity");
 Method(Type("Il2CppMenace.Tactical.AI.Behaviors.InflictDamage"), "GetTargetValue", "Single", "Boolean", "Skill", "Tile", "Tile", "Tile");
 Method(Type("Il2CppMenace.Tactical.AI.SkillBehavior"), "GetSkill", "Skill");
 var skill = Type("Il2CppMenace.Tactical.Skills.Skill");
+Property(Type("Il2CppMenace.Tools.DataTemplate"), "m_ID", "String");
+Method(Type("Il2CppMenace.Tools.DataTemplate"), "GetID", "String");
 Method(skill, "IsUsableOn", "Boolean", "Tile", "Tile", "TargetUsageParams");
 Method(skill, "IsApplicableTo", "Boolean", "Tile", "Entity");
 Method(skill, "GetFinalUserTile", "Tile", "Tile", "Tile");
