@@ -10,6 +10,8 @@ namespace AIPerformance
         private static bool _contactConvergenceEnabled { get; set; }
         private static void PatchContactConvergence(HarmonyLib.Harmony harmony) { }
         private static void ContactConvergenceReset() { }
+        private static bool _missionCivilianPriorityEnabled { get; set; }
+        private static void PatchMissionCivilianPriority(HarmonyLib.Harmony harmony) { }
     }
 }
 

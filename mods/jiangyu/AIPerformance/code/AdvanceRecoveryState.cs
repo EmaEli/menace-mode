@@ -21,8 +21,9 @@ internal sealed class AdvanceRecoveryState
         internal long Agent;
         internal int Round, X, Z, IdleRounds;
         internal int RecoveryRound, RecoveryResult, AppliedRecoveryRound, MoveFallbackRound;
+        internal int Distance = -1, AdvanceDistance = -1, AdvanceRound = -1;
         internal AdvanceRecoveryOrder Order;
-        internal bool Idle, Busy, RecoveryApplied;
+        internal bool Idle, Busy, RecoveryApplied, AdvanceSelected, Continuing;
         internal string LastChoiceSignature;
     }
 
@@ -45,7 +46,8 @@ internal sealed class AdvanceRecoveryState
                 : "history=absent";
     }
 
-    internal bool Observe(long map, int round, long actor, long agent, int x, int z, AdvanceRecoveryOrder order)
+    internal bool Observe(long map, int round, long actor, long agent, int x, int z, AdvanceRecoveryOrder order,
+        int distance = -1)
     {
         lock (_sync)
         {
@@ -60,26 +62,38 @@ internal sealed class AdvanceRecoveryState
             if (!_actors.TryGetValue(actor, out Entry e))
             {
                 if (_actors.Count >= MaxActors) return false;
-                _actors[actor] = new Entry { Agent = agent, Round = round, X = x, Z = z, Order = order };
+                _actors[actor] = new Entry { Agent = agent, Round = round, X = x, Z = z, Order = order, Distance = distance };
                 return false;
             }
-            bool same = e.Agent == agent && e.X == x && e.Z == z && e.Order == order;
+            bool sameOrder = e.Agent == agent && e.Order == order;
+            bool same = sameOrder && e.X == x && e.Z == z;
             if (e.Round != round)
             {
+                // A provisional selection is never progress. Continue only after an
+                // observed distance reduction, in the very next round, on the same order.
+                e.Continuing = sameOrder && e.Round + 1 == round && e.AdvanceSelected &&
+                    e.AdvanceRound + 1 == round && distance > 0 && distance < e.AdvanceDistance;
                 e.IdleRounds = same && e.Round + 1 == round && e.Idle && !e.Busy ? Math.Min(2, e.IdleRounds + 1) : 0;
+                e.AdvanceSelected = false;
                 if (e.IdleRounds == 0) e.LastChoiceSignature = null;
                 e.Round = round;
                 e.Idle = e.Busy = false;
                 e.AppliedRecoveryRound = -1;
                 e.MoveFallbackRound = -1;
             }
-            else if (!same) { e.IdleRounds = 0; e.Idle = false; e.Busy = true; e.AppliedRecoveryRound = -1; e.MoveFallbackRound = -1; }
-            e.Agent = agent; e.X = x; e.Z = z; e.Order = order;
-            return e.IdleRounds >= 2 && !e.Busy;
+            else if (!same)
+            {
+                if (!sameOrder) e.AdvanceSelected = false;
+                e.Continuing = false;
+                e.IdleRounds = 0; e.Idle = false; e.Busy = true; e.AppliedRecoveryRound = -1; e.MoveFallbackRound = -1;
+            }
+            e.Agent = agent; e.X = x; e.Z = z; e.Order = order; e.Distance = distance;
+            return (e.IdleRounds >= 2 || e.Continuing) && !e.Busy;
         }
     }
 
-    internal void Choice(long map, int round, long actor, long agent, bool idleOnly, bool provisionalAdvance = false)
+    internal void Choice(long map, int round, long actor, long agent, bool idleOnly, bool provisionalAdvance = false,
+        bool advanceActivity = false)
     {
         lock (_sync)
         {
@@ -88,9 +102,19 @@ internal sealed class AdvanceRecoveryState
             if (idleOnly) e.Idle = true;
             // PickBehavior also runs provisionally before native re-evaluation. A legal
             // recovered Move is not movement evidence: retain only this round's eligibility.
-            // Actual position/order changes are still invalidated by Observe.
-            else if (provisionalAdvance && e.MoveFallbackRound == round && !e.Busy) e.Idle = false;
-            else { e.Busy = true; e.IdleRounds = 0; e.LastChoiceSignature = null; e.AppliedRecoveryRound = -1; e.MoveFallbackRound = -1; }
+            else if (provisionalAdvance && e.MoveFallbackRound == round && !e.Busy)
+            {
+                e.Idle = false;
+                e.AdvanceSelected = true; e.AdvanceDistance = e.Distance; e.AdvanceRound = round;
+            }
+            else
+            {
+                // Movement completion polls may follow the provisional Move. Preserve
+                // its origin evidence, but never grant another move in the same round.
+                if (!advanceActivity) e.AdvanceSelected = false;
+                e.Continuing = false;
+                e.Busy = true; e.IdleRounds = 0; e.LastChoiceSignature = null; e.AppliedRecoveryRound = -1; e.MoveFallbackRound = -1;
+            }
         }
     }
 
@@ -170,7 +194,7 @@ internal sealed class AdvanceRecoveryState
             result = 0;
             applied = false;
             if (_map != map || !_actors.TryGetValue(actor, out Entry e) || e.Round != round || e.Agent != agent ||
-                e.IdleRounds < 2 || e.RecoveryRound != round) return false;
+                (e.IdleRounds < 2 && !e.Continuing) || e.RecoveryRound != round) return false;
             string completeSignature = $"{e.RecoveryResult}|{e.RecoveryApplied}|{signature}";
             if (e.LastChoiceSignature == completeSignature) return false;
             e.LastChoiceSignature = completeSignature;

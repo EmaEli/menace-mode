@@ -34,7 +34,7 @@ internal static class MultiOrderChecks
             check(move.HasUtility(tiles), "two advance orders recover with/without contact: " + known);
             check(tiles.Values.All(t => t.DistanceScore == 7 && t.APCost == 0),
                 "multi-order recovery leaves native weighted distances/AP untouched");
-            check(tiles.Values.Single(t => t.Tile.GetX() == 5).UtilityScore == move.Threshold &&
+            check(tiles.Values.Single(t => t.Tile.GetX() == 5).UtilityScore == move.Threshold * 1.5f &&
                 tiles.Values.Single(t => t.Tile.GetX() == -5).UtilityScore == 0,
                 "native even actor allocation progresses toward first zone, not the other zone");
             move.TargetTile = tiles.Values.Single(t => t.Tile.GetX() == 5); move.TargetTile.APCost = 20;
@@ -54,9 +54,65 @@ internal static class MultiOrderChecks
         {
             var (actor, move, tiles) = Setup(); actor.ID = id; Arm(actor, tiles);
             Plugin.UtilityFixture(move, tiles);
-            check(tiles.Values.Single(t => t.Tile.GetX() == -5).UtilityScore == move.Threshold &&
+            check(tiles.Values.Single(t => t.Tile.GetX() == -5).UtilityScore == move.Threshold * (1f + 5f / 15) &&
                 tiles.Values.Single(t => t.Tile.GetX() == 5).UtilityScore == 0,
                 "odd actor native allocation progresses toward second zone: " + id);
+        }
+        {
+            var (actor, move, tiles) = Setup(false); Arm(actor, tiles);
+            var near = new Tile(1, 0); var far = new Tile(8, 0);
+            tiles.Add(near, new() { Tile = near, DistanceScore = 7 });
+            tiles.Add(far, new() { Tile = far, DistanceScore = 7 });
+            Plugin.UtilityFixture(move, tiles);
+            check(tiles[far].UtilityScore > tiles[near].UtilityScore && tiles[near].UtilityScore > move.Threshold &&
+                tiles[far].UtilityScore <= move.Threshold * 2, "bounded utility prefers meaningful safe progress");
+            check(tiles.Values.All(t => t.DistanceScore == 7 && t.APCost == 0), "progress leaves native distance and AP untouched");
+        }
+        foreach (int completionPoll in new[] { 0, 1, 2 })
+        {
+            var (actor, move, tiles) = Setup(false);
+            actor.Agent.Zones[0].Area = new(60, 0, 5, 5);
+            Arm(actor, tiles);
+            for (int round = 3; round <= 20; round++)
+            {
+                TacticalManager.Instance.m_Round = round;
+                actor.TilesMovedThisTurn = 0; move.TargetTile = null;
+                tiles = new();
+                tiles.Add(actor.Tile, new() { Tile = actor.Tile });
+                var next = new Tile(actor.Tile.GetX() + 1, 0);
+                tiles.Add(next, new() { Tile = next });
+                Plugin.ScoreFixture(actor, tiles); Plugin.UtilityFixture(move, tiles);
+                check(move.HasUtility(tiles), "continuous advance has no two-round rearm: " + round);
+                move.TargetTile = tiles[next]; move.TargetTile.APCost = 20;
+                check(ReferenceEquals(Plugin.ChoiceFixture(actor.Agent, actor.Agent.Behaviors[0]), move),
+                    "continuous advance uses native destination: " + round);
+                actor.Tile = next; actor.TilesMovedThisTurn = 1;
+                if (completionPoll == 2) Plugin.ChoiceFixture(actor.Agent, move);
+                Plugin.ScoreFixture(actor, tiles);
+                if (completionPoll == 1) Plugin.ChoiceFixture(actor.Agent, move);
+                foreach (var score in tiles.Values) score.UtilityScore = 0;
+                Plugin.UtilityFixture(move, tiles);
+                check(Plugin.RecoveryEnabled && !move.HasUtility(tiles) && move.TargetTile.APCost == 20,
+                    "completed movement cannot seed a second move in the same round");
+            }
+        }
+        foreach (string interruption in new[] { "no movement", "away", "arrival", "order", "attack", "gap", "reset" })
+        {
+            var (actor, move, tiles) = Setup(false); Arm(actor, tiles);
+            Plugin.UtilityFixture(move, tiles);
+            move.TargetTile = tiles.Values.Single(t => t.Tile.GetX() == 5); move.TargetTile.APCost = 20;
+            Plugin.ChoiceFixture(actor.Agent, actor.Agent.Behaviors[0]);
+            if (interruption == "attack") Plugin.ChoiceFixture(actor.Agent, actor.Agent.Behaviors[2]);
+            actor.Tile = new(interruption == "no movement" ? 0 : interruption == "away" ? -1 :
+                interruption == "arrival" ? 10 : 1, 0);
+            if (interruption == "order") actor.Agent.Zones[1].Priority = 2;
+            if (interruption == "reset") Plugin.ResetFixtureMission();
+            TacticalManager.Instance.m_Round = interruption == "gap" ? 5 : 4;
+            tiles = new();
+            tiles.Add(actor.Tile, new() { Tile = actor.Tile });
+            var next = new Tile(actor.Tile.GetX() + 1, 0); tiles.Add(next, new() { Tile = next });
+            Plugin.ScoreFixture(actor, tiles); Plugin.UtilityFixture(move, tiles);
+            check(!move.HasUtility(tiles), "continuation invalidated by " + interruption);
         }
         foreach (string invalid in new[] { "defense", "null zone", "zero priority", "bad geometry", "too many", "negative ID",
             "suppressed", "low morale", "sleep", "attack", "other action", "unsafe", "arrived" })

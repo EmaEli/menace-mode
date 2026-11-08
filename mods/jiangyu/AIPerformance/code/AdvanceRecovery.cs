@@ -142,7 +142,9 @@ public sealed partial class Plugin
                 }
                 catch { }
             }
-            _advanceRecovery.Choice(mapId, manager.m_Round, actorId, agentId, idleOnly, provisionalAdvance);
+            bool advanceActivity = __result != null && __result.GetID().ToString() == "Move" &&
+                (actor.IsMoving() || actor.TilesMovedThisTurn > 0);
+            _advanceRecovery.Choice(mapId, manager.m_Round, actorId, agentId, idleOnly, provisionalAdvance, advanceActivity);
             if (choiceDetails != null)
                 AdvanceRecoveryLog($"ADVANCE-CHOICE round={manager.m_Round} actor={actorId:X} {choiceDetails} " +
                     _advanceRecovery.Describe(actorId));

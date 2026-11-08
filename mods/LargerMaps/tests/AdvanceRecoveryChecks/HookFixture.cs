@@ -74,5 +74,13 @@ namespace AIPerformance
             => ContactConvergenceUtility(move, tiles);
         internal static void ResetContactFixture() => ContactConvergenceReset();
         internal static bool ContactEnabled => _contactConvergenceEnabled;
+        internal static void BeginCivilianFixture() => _missionCivilianPriorityEnabled = true;
+        internal static bool CivilianPriorityEnabled => _missionCivilianPriorityEnabled;
+        internal static float CivilianPriorityFixture(Il2CppMenace.Tactical.AI.Behaviors.InflictDamage behavior,
+            bool immediate, Tile tile, Tile aimedAt, float score)
+        {
+            MissionCivilianPriorityValue(behavior, immediate, tile, aimedAt, ref score);
+            return score;
+        }
     }
 }

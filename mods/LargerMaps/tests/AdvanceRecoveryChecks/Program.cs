@@ -10,6 +10,7 @@ int checks = 0;
 void Check(bool value, string label) { checks++; if (!value) throw new Exception(label); }
 ContactConvergenceChecks.Run(Check);
 MultiOrderChecks.Run(Check);
+MissionCivilianChecks.Run(Check);
 Check(AdvanceRecoveryBuild.IsSupported("871b4c3468c68dae3d75e7b5e29fcc9b0a8a253fcebf64045af348f0aec75111"), "reviewed 0.7.17");
 Check(AdvanceRecoveryBuild.IsSupported("494C9E212D411D898B3ABAFB4AD233F7A39A22648D713A86B9641D698B2D12E9"), "reviewed 0.7.18, case insensitive");
 foreach (string hash in new[] { null, "", "0.7.18+22828", new string('0',64), "877622dd02ed79f6a3a37580b5cd9be12e29012bbd6f15a9c80cf917af1373db" })
@@ -265,7 +266,8 @@ foreach (bool known in new[] { false, true })
     t.Add(unsafeTile, new() { Tile = unsafeTile, SafetyScore = 122 });
     Check(AdvanceRecoveryRuntime.TrySeedAdvanceUtility(move,a,t,s,1,3,out int seeded) && seeded == 1,
         "known/unseen safe order progress is eligible before paths exist");
-    Check(move.HasUtility(t) && t.Values.ElementAt(1).UtilityScore == move.GetUtilityThreshold(), "native threshold, not arbitrary boost");
+    Check(move.HasUtility(t) && t.Values.ElementAt(1).UtilityScore == move.GetUtilityThreshold() * 1.5f,
+        "native threshold plus bounded proportional progress");
     Check(t[a.Tile].UtilityScore == 0 && t[unsafeTile].UtilityScore == 0, "current/less-safe tiles get no incentive");
     Check(t.Values.All(v => v.APCost == 0 && v.UtilityScoreScaled == 456 && v.Path != null), "native AP/path/scaled data untouched");
     Check(!AdvanceRecoveryRuntime.TrySeedAdvanceUtility(move,a,t,s,1,3,out _), "existing utility is preserved on repeated polls");

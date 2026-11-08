@@ -28,10 +28,12 @@ public sealed partial class Plugin
             settings.AddHeader("Experimental AI behavior (restart required)");
             settings.AddToggle("ConvergeOnLastKnownContacts", "Unassigned infantry approach recent contacts (0.7.18)", false);
             settings.AddToggle("DiagnoseContactConvergence", "Log bounded contact approaches", false);
+            settings.AddToggle("PrioritizeMissionCivilians", "Prioritize visible civilian mission targets (0.7.18)", true);
         });
         PatchAiTaskLifetime(harmony);
         PatchAdvanceRecovery(harmony);
         PatchContactConvergence(harmony);
+        PatchMissionCivilianPriority(harmony);
     }
 
     public void OnSceneLoaded(int buildIndex, string sceneName)
@@ -56,6 +58,7 @@ public sealed partial class Plugin
     public void OnUnload()
     {
         _contactConvergenceEnabled = false;
+        _missionCivilianPriorityEnabled = false;
         RestoreSimplifiedCombatPlanning(); RestoreLocalTacticalRouting(); AdvanceRecoveryReset(); ContactConvergenceReset();
     }
 

@@ -1,7 +1,24 @@
-# AI Performance 1.3.1
+# AI Performance 1.4.0
 
 Independent AI DLL; Larger Maps is optional and no longer installs it automatically.
 Requires Jiangyu and MenaceModSettings. The Suite explicitly includes both modules.
+
+## Continued mission advances and civilian objectives (#2/#17)
+
+- After recovery starts, actual progress toward the same complete advance order allows
+  recovery next round without another two-idle-round wait. Selection alone is not progress;
+  no progress, changed orders, gaps, arrival or useful other actions stop continuation.
+- Safe closer native candidates receive 1–2x native utility threshold, proportional to
+  progress. Native safety/distance scores, pathfinding, clipping and AP are unchanged.
+- `PrioritizeMissionCivilians` defaults ON, restart required, reviewed 0.7.18 only.
+  It doubles an already-positive native immediate damage value for a detected non-allied
+  civilian/local escort explicitly targeted by ongoing ProtectUnit/RescueUnit or matching
+  native Collateral conditions. Hidden, unrelated, allied, dead or contained targets,
+  incidental splash and invalid/zero-value attacks are unchanged. At most 32 objectives
+  are inspected during an existing native evaluation; no new attack/path search or polling.
+- This does not discover unseen civilians, make all civilians enemies or guarantee a shot.
+  Other mission types retain native targeting. Fast planning remains ON; optional contact
+  convergence and its default remain unchanged. Gameplay impact still needs a fresh test.
 
 ## Experimental recent-contact approaches (#17)
 
@@ -51,7 +68,7 @@ Requires Jiangyu and MenaceModSettings. The Suite explicitly includes both modul
   Move has produced an AP-valid destination toward the order, recovery selects Move
   instead of Idle; native Move still owns destination/path/safety calculation.
 - Handles the null-destination case before native Move.HasUtility: safe tiles strictly
-  closer to the advance order receive the native movement utility threshold, only after
+  closer to the advance order receive bounded native-threshold progress utility, only after
   the existing idle-history and no-shot guards pass. Current/farther/less-safe tiles
   receive no incentive; existing positive utility is preserved. Native Move still
   chooses targets and computes reachable paths/AP costs; no additional path search.
@@ -62,9 +79,9 @@ Requires Jiangyu and MenaceModSettings. The Suite explicitly includes both modul
   utility/choice, so even an unselected zone's change invalidates stale eligibility.
 - No contact or attack candidate is fabricated. This applies before or after contact.
 - A legal recovered Move selection retains eligibility during same-round re-evaluation;
-  provisional selection alone is not proof of movement. Actual position/order changes,
-  completed movement, useful non-movement actions and all existing combat guards cancel
-  recovery normally. This fixes 1.2.1 losing its target between planning and execution.
+  provisional selection alone is not proof of movement. Actual movement prevents another
+  recovered move that round; observed progress can continue recovery next round. Order changes,
+  useful non-movement actions and all existing combat guards cancel recovery normally.
   History resets between missions. Old Larger Maps recovery settings are not migrated;
   use **AI Performance / RecoverStalledAdvance** for OFF comparisons.
 - No update loop or default per-unit logging. Optional `DiagnoseAdvanceRecovery`

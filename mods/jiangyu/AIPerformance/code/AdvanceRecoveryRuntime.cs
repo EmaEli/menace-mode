@@ -66,7 +66,8 @@ internal static class AdvanceRecoveryRuntime
         result = AdvanceRecoveryResult.Position;
         Tile current = actor.GetTile();
         if (current == null) return false;
-        stalled = state.Observe(map, round, actor.Pointer.ToInt64(), agent.Pointer.ToInt64(), current.GetX(), current.GetZ(), order);
+        stalled = state.Observe(map, round, actor.Pointer.ToInt64(), agent.Pointer.ToInt64(), current.GetX(), current.GetZ(), order,
+            RectIntExtensions.GetDistanceTo(area, current));
         result = AdvanceRecoveryResult.History;
         if (!stalled) return false;
         if (state.HasRecoveryApplication(map, round, actor.Pointer.ToInt64(), agent.Pointer.ToInt64()))
@@ -215,7 +216,7 @@ internal static class AdvanceRecoveryRuntime
         float threshold = move.GetUtilityThreshold();
         if (!Positive(threshold)) return false;
         int currentDistance = RectIntExtensions.GetDistanceTo(zone.Area, current);
-        var edits = new List<(TileScore Score, float Utility)>();
+        var edits = new List<(TileScore Score, float Utility, float Recovered)>();
         foreach (var pair in tiles)
         {
             TileScore score = pair.Value;
@@ -226,13 +227,20 @@ internal static class AdvanceRecoveryRuntime
             int distance = RectIntExtensions.GetDistanceTo(zone.Area, score.Tile);
             if (distance < 0) return false;
             if (distance < currentDistance && score.SafetyScore >= currentScore.SafetyScore)
-                edits.Add((score, score.UtilityScore));
+            {
+                // Prefer more progress among the native candidates instead of giving
+                // every one-tile step the same utility. Bounded by twice the native
+                // threshold; native safety, reachability, path clipping and AP still win.
+                float utility = threshold * (1f + (currentDistance - distance) / (float)currentDistance);
+                if (!Positive(utility)) return false;
+                edits.Add((score, score.UtilityScore, utility));
+            }
         }
         if (edits.Count == 0) return false;
         bool committed = false;
         try
         {
-            foreach (var edit in edits) edit.Score.UtilityScore = threshold;
+            foreach (var edit in edits) edit.Score.UtilityScore = edit.Recovered;
             committed = true;
         }
         finally
@@ -251,7 +259,8 @@ internal static class AdvanceRecoveryRuntime
         Tile tile = actor.GetTile();
         bool valid = tile != null && TryReadAdvanceOrders(agent, actor, out _, out AdvanceRecoveryOrder order) &&
             state.MatchesContext(map, round, actor.Pointer.ToInt64(), agent.Pointer.ToInt64(), tile.GetX(), tile.GetZ(), order);
-        if (!valid) state.Choice(map, round, actor.Pointer.ToInt64(), agent.Pointer.ToInt64(), false);
+        if (!valid) state.Choice(map, round, actor.Pointer.ToInt64(), agent.Pointer.ToInt64(), false,
+            advanceActivity: actor.IsMoving() || actor.TilesMovedThisTurn > 0);
         return valid;
     }
 

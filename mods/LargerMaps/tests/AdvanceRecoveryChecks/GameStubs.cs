@@ -15,11 +15,17 @@ namespace Il2CppMenace.Tactical
         public IntPtr Pointer = (IntPtr)Interlocked.Increment(ref _next);
         public int GetX() => x;
         public int GetZ() => z;
+        public Entity Entity;
+        public Entity GetEntity() => Entity;
     }
-    public class Actor
+    public class Entity
+    {
+        public IntPtr Pointer = (IntPtr)10;
+        public T TryCast<T>() where T : class => this as T;
+    }
+    public class Actor : Entity
     {
         public Actor() { Agent.Actor = this; foreach (var behavior in Agent.Behaviors) behavior.Owner = Agent; }
-        public IntPtr Pointer = (IntPtr)10;
         public AI.Agent Agent = new();
         public Tile Tile = new(0, 0);
         public int AP = 100, TilesMovedThisTurn, ID = 10;
@@ -62,6 +68,8 @@ namespace Il2CppMenace.Tactical
         public Map GetMap() => Map;
         public AI.AIFaction Faction;
         public AI.AIFaction GetFaction(int kind) => Faction;
+        public Il2CppMenace.Strategy.Mission Mission = new();
+        public Il2CppMenace.Strategy.Mission GetMission() => Mission;
         public void OnInit(object mission) { }
     }
 }
@@ -103,11 +111,11 @@ namespace Il2CppMenace.Tactical.AI
     {
         public IntPtr Pointer = (IntPtr)30;
         public int Kind = 7;
-        public bool Allied, Known = true;
+        public bool Allied, AllyCivilian, Known = true;
         public int GetFactionType() => Kind;
         public bool IsAlliedWithPlayer() => Allied;
         public bool HasKnownOpponent() => Known;
-        public bool IsAlliedWith(int faction) => Allied;
+        public bool IsAlliedWith(int faction) => Allied || ((faction == 3 || faction == 4) && AllyCivilian);
         public T TryCast<T>() where T : class => this as T;
         public List<Opponent> Opponents = new();
         public List<Opponent> GetOpponents() => Opponents;
@@ -146,6 +154,40 @@ namespace Il2CppMenace.Tactical.AI.Behaviors
     {
         public List<object> m_Candidates = new();
         public Attack() { ID = "InflictDamage"; }
+    }
+    public class InflictDamage : Attack
+    {
+        protected float GetTargetValue(bool immediate, Il2CppMenace.Tactical.Skills.Skill skill,
+            Tactical.Tile target, Tactical.Tile from, Tactical.Tile aimedAt) => 10;
+    }
+}
+namespace Il2CppMenace.Tactical.Skills { public class Skill { } }
+namespace Il2CppMenace.Strategy
+{
+    public class Mission { public Tactical.Objectives.ObjectiveManager Objectives = new(); }
+}
+namespace Il2CppMenace.Tactical.Objectives
+{
+    public class Objective
+    {
+        public Entity Target;
+        public bool Ongoing = true, Throw;
+        public bool IsOngoing() => Ongoing;
+        public Entity GetTarget() => Throw ? throw new Exception("objective read failed") : Target;
+        public T TryCast<T>() where T : class => this as T;
+    }
+    public class ProtectUnit : Objective { }
+    public class RescueUnit : Objective { }
+    public class Collateral : Objective
+    {
+        public bool Matches = true;
+        public bool FulfillsConditions(Entity target) => Matches;
+    }
+    public class ObjectiveManager
+    {
+        public List<Objective> Objectives = new();
+        public Objective[] m_Objectives => Objectives.ToArray();
+        public List<Objective> GetObjectives() => Objectives;
     }
 }
 namespace Il2CppMenace.Tactical.AI.Behaviors.Criterions

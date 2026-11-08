@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.4.0 — 8 November 2026
+
+- Continue a recovered advance in the next round after actual progress toward the same
+  complete mission order, rather than waiting two idle rounds again after every step.
+- Prefer greater safe progress among already-computed native tiles with a bounded
+  1–2x native utility threshold. Native distance weighting, paths and AP remain untouched.
+- Add default-ON `PrioritizeMissionCivilians` on reviewed 0.7.18: double positive native
+  immediate damage value only for visible, non-allied civilian/local escort targets of
+  ongoing ProtectUnit/RescueUnit or matching native Collateral conditions. No generic
+  civilian hostility, hidden contacts, incidental splash priority or fabricated attacks.
+- Keep fast planning ON, all combat/order/arrival guards and optional convergence unchanged.
+  Linked hook/metadata checks cover continuation, cancellation, progress and objective scope.
+  Build/install evidence is separate from gameplay acceptance (#2/#17).
+
 ## 1.3.1 — 8 November 2026
 
 - Recover stalled units assigned multiple AdvanceTowards orders (#2), rather than
