@@ -125,6 +125,12 @@ the same exact 0.7.18 hash. Its bundled metadata checker validates mortar hooks,
 payload properties and runtime binary native-type references before staging in both
 the canonical installer and clean-source verifier. This does not prove native dispatch
 or balance; Suite/Camera products remain blocked on that scoped hash.
+SquaddieVeterancy 1.10.4 (#97) is a scoped standalone code-only candidate on the same
+exact 0.7.18 hash. Its canonical build and extracted-source verifier inspect delayed
+movement, actor/element lifecycle, native firefighting signatures and binary type references
+before staging. Installed-settings mode preserves the settings companion and loader.
+Managed checks exercise the production retreat lifecycle, but do not prove IL2CPP dispatch
+or gameplay. Suite/Camera products remain blocked on the scoped hash.
 LargerMaps 2.6.2 is standalone: never expand its module selection to include
 AIPerformance. The Suite explicitly lists both independent packages; neither manifest
 requires the other (#2/#93). AIPerformance 1.1.0 owns stalled-advance recovery and runs

@@ -78,7 +78,7 @@ def compile_clean(files, game, sdk, dotnet):
             subprocess.run(build_args, check=True, cwd=source)
             assembly = ET.parse(project).findtext("PropertyGroup/AssemblyName", module)
             shutil.copy2(root / "code/bin/Release" / (assembly + ".dll"), root / "compiled/code" / (assembly + ".dll"))
-            if module in {"WeaponMechanicsRebalanced", "InfantrySandbagCover"}:
+            if module in {"WeaponMechanicsRebalanced", "InfantrySandbagCover", "SquaddieVeterancy"}:
                 contracts = root / "tests/NativeContractChecks/NativeContractChecks.csproj"
                 subprocess.run([dotnet, "run", "--project", str(contracts), "-c", "Release", "--",
                                 str(refs / "Assembly-CSharp.dll"), str(root / "compiled/code" / (assembly + ".dll"))],

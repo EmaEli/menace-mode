@@ -1,4 +1,5 @@
 """ZIP builder and installer source guards; these do not execute PowerShell or Windows."""
+import ast
 import importlib.util
 import io
 import json
@@ -19,6 +20,18 @@ sys.modules["build_kit"] = BUILDER
 VERIFY_SPEC = importlib.util.spec_from_file_location("verify_kit", TOOLS / "verify_kit.py")
 VERIFIER = importlib.util.module_from_spec(VERIFY_SPEC)
 VERIFY_SPEC.loader.exec_module(VERIFIER)
+
+
+def native_contract_modules():
+    for node in ast.walk(ast.parse((TOOLS / "verify_kit.py").read_text())):
+        if (isinstance(node, ast.If) and isinstance(node.test, ast.Compare)
+                and isinstance(node.test.left, ast.Name) and node.test.left.id == "module"
+                and isinstance(node.test.comparators[0], ast.Set)
+                and any(isinstance(statement, ast.Assign)
+                        and any(isinstance(target, ast.Name) and target.id == "contracts"
+                                for target in statement.targets) for statement in node.body)):
+            return ast.literal_eval(node.test.comparators[0])
+    raise AssertionError("Missing native contract module gate")
 
 
 class DistributionTests(unittest.TestCase):
@@ -274,7 +287,7 @@ class DistributionTests(unittest.TestCase):
         self.assertIn("Assert-Hash (Join-Path $GamePath 'Mods\\Jiangyu.Loader.dll') $catalog.loaderSha256", installer)
         gate = installer.index("if ($name -eq 'InfantrySandbagCover')")
         self.assertLess(gate, installer.index("Copy-Item -LiteralPath $compiled -Destination (Join-Path $stage $name)"))
-        self.assertIn('"InfantrySandbagCover"}', (TOOLS / "verify_kit.py").read_text())
+        self.assertIn("InfantrySandbagCover", native_contract_modules())
 
     def test_preview_uses_canonical_standalone_launcher_without_replacing_settings(self):
         with tempfile.TemporaryDirectory() as folder:
@@ -305,7 +318,10 @@ class DistributionTests(unittest.TestCase):
 
     def test_veterancy_candidate_reuses_installed_settings_without_bundling_them(self):
         payload, versions = BUILDER.collect(ROOT, "SquaddieVeterancy", True)
-        self.assertEqual(versions, {"SquaddieVeterancy": "1.10.3"})
+        manifest = json.loads((ROOT / "mods/jiangyu/SquaddieVeterancy/jiangyu.json").read_text())
+        self.assertEqual(versions, {"SquaddieVeterancy": manifest["version"]})
+        self.assertIn("SquaddieVeterancy", native_contract_modules())
+        self.assertIn("source/mods/jiangyu/SquaddieVeterancy/tests/NativeContractChecks/Program.cs", payload)
         self.assertIn("source/mods/jiangyu/SquaddieVeterancy/compiled/code/SquaddieProbe.dll", payload)
         project = (ROOT / "mods/jiangyu/SquaddieVeterancy/code/SquaddieVeterancy.csproj").read_text()
         self.assertIn("<MenaceModSettingsPath Condition=", project)
@@ -366,7 +382,7 @@ class DistributionTests(unittest.TestCase):
                     output = project.parent / "bin/Release/SquaddieProbe.dll"
                     output.parent.mkdir(parents=True, exist_ok=True)
                     output.write_bytes(b"mock built DLL")
-                elif arguments[1] == "run":
+                elif arguments[1] == "run" and "OfflineChecks.csproj" in arguments[3]:
                     extracted = Path(arguments[arguments.index("--") + 1])
                     # Without the project witness ArtifactChecks mistakes the
                     # external code companion for a data package and fails.
@@ -378,7 +394,9 @@ class DistributionTests(unittest.TestCase):
         build = next(arguments for arguments in commands if arguments[1] == "build")
         self.assertIn(f"-p:MenaceModSettingsPath={settings_dll}", build)
         self.assertEqual(sum(arguments[1] == "build" for arguments in commands), 1)
-        offline = next(arguments for arguments in commands if arguments[1] == "run")
+        native = next(arguments for arguments in commands if arguments[1] == "run" and "NativeContractChecks.csproj" in arguments[3])
+        self.assertTrue(native[-1].endswith("compiled/code/SquaddieProbe.dll"))
+        offline = next(arguments for arguments in commands if arguments[1] == "run" and "OfflineChecks.csproj" in arguments[3])
         self.assertEqual(offline[-1], "MenaceModSettings,SquaddieVeterancy")
 
     def test_clean_verifier_uses_an_external_settings_reference_for_wmr(self):
@@ -504,7 +522,7 @@ class DistributionTests(unittest.TestCase):
         source = (TOOLS / "Install-IntegratedSuite.ps1").read_text()
         gate = source.index("if ($name -eq 'WeaponMechanicsRebalanced')")
         self.assertLess(gate, source.index('Copy-Item -LiteralPath $compiled -Destination (Join-Path $stage $name)'))
-        self.assertIn('module in {"WeaponMechanicsRebalanced", "InfantrySandbagCover"}', (TOOLS / "verify_kit.py").read_text())
+        self.assertIn("WeaponMechanicsRebalanced", native_contract_modules())
         catalog = json.loads((TOOLS / "distribution.json").read_text())
         self.assertIn("WeaponMechanicsRebalanced", catalog["standaloneGameBuilds"][0]["modules"])
 

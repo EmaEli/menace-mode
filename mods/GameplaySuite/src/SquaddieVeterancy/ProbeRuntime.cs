@@ -86,6 +86,7 @@ internal sealed class ProbeRuntime : IDisposable
         public bool RetreatInProgress;
         public long RetreatStartedAtMs;
         public bool BreakHandledThisActivation;
+        public bool FireHandledThisActivation;
         // Keep the vehicle visibly in Break Contact until its forced-retreat activation
         // has actually ended.  Dropping to Buttoned Up while AP is still forced to zero
         // made a Buttoned vehicle look/behave like it was panicking.
@@ -1040,6 +1041,8 @@ internal sealed class ProbeRuntime : IDisposable
         // means only the configured AP and accuracy penalties; Break Contact remains
         // the separate controlled-retreat state at the higher pressure threshold.
         PatchPostfix(typeof(Actor), "GetMoraleState", nameof(ActorGetMoraleStatePostfix));
+        PatchPrefix(typeof(PathMover), "StartMovement", nameof(PathMoverStartMovementPrefix),
+            new[] { typeof(Il2CppMenace.Tactical.Path), typeof(MovementAction), typeof(bool) });
         PatchPrefix(typeof(ChangeMalfunctionChanceHandler), "OnBeforeAnySkillUsed", nameof(MalfunctionBeforeAnySkillUsedPrefix));
         PatchPrefix(typeof(ChangeMalfunctionChanceHandler), "OnAnySkillAppliedByElement", nameof(MalfunctionOnAnySkillAppliedByElementPrefix));
         PatchPostfix(typeof(JammingHandler), "IsJammed", nameof(JammingIsJammedPostfix));
@@ -6127,6 +6130,17 @@ internal sealed class ProbeRuntime : IDisposable
         return state.Pressure >= _vehicleButtonedThreshold ? _vehicleButtonedAccuracyPenaltyPct : 0;
     }
 
+    private static bool PathMoverStartMovementPrefix(PathMover __instance) =>
+        Current == null || !Current._enabled || VehicleRetreatSafety.CanStartMovement(__instance);
+
+    private static void CancelDeadVehicleRetreat(VehiclePressureState state)
+    {
+        state.BreakContactPending = false;
+        state.RetreatInProgress = false;
+        state.PostBreakPressureResetPending = false;
+        state.BreakHandledThisActivation = true;
+    }
+
     private void UpdateVehiclePressureSystem(TacticalManager manager)
     {
         if (!_vehicleCrewPressure || !Valid(manager)) return;
@@ -6139,6 +6153,11 @@ internal sealed class ProbeRuntime : IDisposable
         // Do not treat that transient gap as a new activation or the Buttoned AP
         // penalty could be applied twice when the same actor reappears.
         if (activePtr == 0) return;
+        if (!VehicleRetreatSafety.IsLivingActor(active))
+        {
+            if (_vehiclePressureStates.TryGetValue(activePtr, out var dead)) CancelDeadVehicleRetreat(dead);
+            return;
+        }
 
         if (_vehiclePressureActiveActorPtr != 0 && _vehiclePressureActiveActorPtr != activePtr
             && _vehiclePressureStates.TryGetValue(_vehiclePressureActiveActorPtr, out var previous))
@@ -6155,6 +6174,7 @@ internal sealed class ProbeRuntime : IDisposable
                 state.ActivationSerial = ++_vehiclePressureActivationSerial;
                 state.ApPenaltyAppliedThisActivation = false;
                 state.BreakHandledThisActivation = false;
+                state.FireHandledThisActivation = false;
                 state.RetreatInProgress = false;
                 BeginVehiclePressureActivation(manager, active!, state);
             }
@@ -6168,11 +6188,17 @@ internal sealed class ProbeRuntime : IDisposable
             }
             catch { }
         }
+        else if (_vehiclePressureStates.TryGetValue(activePtr, out var pending)
+            && !pending.BreakHandledThisActivation
+            && (pending.BreakContactPending || pending.Pressure >= _vehicleBreakContactThreshold))
+        {
+            BeginVehiclePressureActivation(manager, active!, pending);
+        }
     }
 
     private void BeginVehiclePressureActivation(TacticalManager manager, Actor actor, VehiclePressureState state)
     {
-        if (!Valid(actor)) return;
+        if (!VehicleRetreatSafety.IsLivingActor(actor)) return;
         state.Actor = actor;
 
         if (TryResolvePlayerPilotForOwner(state.OwnerPtr, out var pilot) && !string.IsNullOrWhiteSpace(pilot.TemplateId))
@@ -6191,6 +6217,11 @@ internal sealed class ProbeRuntime : IDisposable
     private void EndVehiclePressureActivation(VehiclePressureState state)
     {
         if (state == null) return;
+        if (!VehicleRetreatSafety.IsLivingActor(state.Actor))
+        {
+            CancelDeadVehicleRetreat(state);
+            return;
+        }
         if (state.RetreatInProgress && state.Actor != null && Valid(state.Actor))
             FinalizeBreakContact(state.Actor, state, "activation-ended");
 
@@ -6221,7 +6252,7 @@ internal sealed class ProbeRuntime : IDisposable
 
     private void ApplyButtonedApPenalty(Actor actor, VehiclePressureState state)
     {
-        if (state.ApPenaltyAppliedThisActivation || _vehicleButtonedApPenalty <= 0 || !Valid(actor)) return;
+        if (state.ApPenaltyAppliedThisActivation || _vehicleButtonedApPenalty <= 0 || !VehicleRetreatSafety.IsLivingActor(actor)) return;
         try
         {
             int before = actor.GetActionPoints();
@@ -6238,7 +6269,15 @@ internal sealed class ProbeRuntime : IDisposable
 
     private void TryStartBreakContact(TacticalManager manager, Actor actor, VehiclePressureState state)
     {
-        if (state.BreakHandledThisActivation || !Valid(actor)) return;
+        if (state.BreakHandledThisActivation || !VehicleRetreatSafety.IsLivingActor(actor)) return;
+        // Wait for turn-start effects and any native skill to settle before moving.
+        // Firefighting uses the real skill/AP cost once, then retreat uses remaining AP.
+        if (!VehicleRetreatSafety.IsReadyToRetreat(actor)) return;
+        if (!state.FireHandledThisActivation)
+        {
+            state.FireHandledThisActivation = true;
+            if (VehicleRetreatSafety.TryExtinguishFire(actor)) return;
+        }
         state.BreakHandledThisActivation = true;
 
         // Do not hand control back to MENACE's generic morale-flee behavior here.
@@ -6259,6 +6298,11 @@ internal sealed class ProbeRuntime : IDisposable
 
         try
         {
+            if (!VehicleRetreatSafety.IsLivingActor(actor))
+            {
+                CancelDeadVehicleRetreat(state);
+                return;
+            }
             bool started = actor.MoveTo(destination, ref action, MovementFlags.None);
             if (!started)
             {
@@ -6293,7 +6337,7 @@ internal sealed class ProbeRuntime : IDisposable
         cost = 0;
         distanceGain = 0f;
         locomotion = "none";
-        if (!Valid(manager) || !Valid(actor) || !state.HasThreat) return false;
+        if (!Valid(manager) || !VehicleRetreatSafety.IsLivingActor(actor) || !state.HasThreat) return false;
 
         Map map;
         Tile current;
@@ -6435,6 +6479,11 @@ internal sealed class ProbeRuntime : IDisposable
     private void FinalizeBreakContact(Actor actor, VehiclePressureState state, string reason)
     {
         if (!state.RetreatInProgress) return;
+        if (!VehicleRetreatSafety.IsLivingActor(actor))
+        {
+            CancelDeadVehicleRetreat(state);
+            return;
+        }
         int beforeAp = 0;
         try
         {
