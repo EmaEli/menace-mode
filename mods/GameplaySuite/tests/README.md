@@ -15,6 +15,13 @@ From the repository root:
   Hostile floor/reset and unchanged player ranging run in OfflineChecks. WMR's bundled
   metadata-only checker validates mortar hooks/properties/binary references; none of these
   execute IL2CPP or establish actual casualties/balance (#59).
+- `test_enemy_mortar_ai.py` executes the production WMR 0.6.1 AI callbacks with managed
+  stand-ins: low-score priority, Move/Idle selection, 2–4-round lost-contact memory,
+  expiry/no renewal, target/actor/skill isolation, native legality/resource guards,
+  allied-area safety, structure tiles, settings and worker-thread exclusion. It reproduces
+  worker evaluation followed by main-thread execution and next-round Idle replacement,
+  including zero-integer-score candidates and busy/executing/emergency guards. The native
+  metadata gate checks the new hooks and fields. Neither proves real AI dispatch or gameplay.
 - Smoke stat checks execute production snapshot/neutralization code against managed legacy
   scalar and 0.7.18 array fixtures: all stat types, providers, exact restoration, partial
   setter failures, failed rollback retry, ignored setters and fresh native-pointer wrappers.

@@ -1,3 +1,12 @@
+## 0.6.1 — apply sustained mortar policy at native execution (#59)
+
+- Fix the 0.6.0 thread-routing defect: evaluation and PickBehavior can run on native workers, where the main-thread guard skipped priority and target memory. Apply the policy in Agent.Execute only after evaluation completes and before the native action starts.
+- Recover legal, safe, positive native candidates when integer utility leaves no selected target. Continue fixed-tile missions through subsequent rounds without renewing blind memory, overriding emergencies or interrupting an executing setup/rotation/shot.
+- Preserve native AP, ammunition, firing and animation. Optional debug output records selected mortar actions; normal logging remains silent.
+- Add a worker-evaluation → main-thread-execution regression (failed before the fix), next-round Idle replacement/expiry and unsafe-candidate guards. Validation: 207 Python tests, 149 managed assertions, 18,009 scoped offline/artifact checks, clean extracted-source Release build (zero warnings/errors), 152 native metadata checks and 38 binary type references pass.
+- Canonical Windows BuildOnly and WMR-only install passed on 0.7.18+22828 with SDK 10.0.113 and zero warnings/errors. Manifest/assembly/file 0.6.1/0.6.1.0/0.6.1.0 and 1,439 unchanged unrelated Mods/UserData files verified. DLL SHA256: `78f4a26bc269925a149e692b5694324ed0d04c57104697db57dd1cdc54f0ef33`. Prior 0.6.0 retained outside Mods under `_MENACE_Backups/20261108-151844-73c0bd71a8bf4b2fa864863e323d8dbe`. Source: `04b7b96be65e5755f487d7438ea8fdf20920218a`; candidate SHA256: `618efcbee38994a89385b5a8c25316c065a9031aff17cee0e4dcc955535fac4c`. Startup/gameplay re-test pending; #59 remains open.
+- The 0.6.0 gameplay follow-up recorded two shots in round 17 and none in rounds 18–22 with 100 AP; its prior offline/build/install success did not establish sustained fire in-game.
+
 ## 0.6.0 — optional sustained enemy mortar AI (#59)
 
 - Add default-ON HE mortar fire priority and a 2–4-round fire mission setting (default 3, acquisition round included).

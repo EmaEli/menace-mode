@@ -49,6 +49,17 @@ All 121 proxy hashes match the PC, and its 12 hook signatures and smoke property
 are checked by a metadata-only test in the canonical build before staging. This permits
 testing the native-stat fix and bounded lifecycle observations, not a claim that cloud
 disappearance is fixed. No game-indexed templates/bundles need recompilation for this mod.
+WeaponMechanicsRebalanced 0.6.1 (#59) can also use `-UseInstalledSettings`; its standalone
+candidate validates and reuses the existing companion and loader, staging only WMR. Smoke
+shells now use the HE Scatter baseline for their mortar size (light 3, 80 mm medium 4,
+120 mm heavy 5); preview and shot ranging share the same baseline, with native template
+restoration after firing. Its native contract checks include effective skill range, direct
+actor/tile line of sight and `GetAvailableScatterTiles(Tile)` before staging. Actual
+bullseye and smoke-range balance still need gameplay. Default-ON sustained enemy mortar AI
+adds legal-fire priority and 2–4-round last-known-tile fire missions (default 3), with
+production-hook managed checks and native AI contract checks. The 0.6.1 correction applies
+the policy on the main thread before native execution; 0.6.0 did not sustain fire in the
+reported gameplay test. Gameplay re-test remains pending.
 CinematicActionCamera 1.2.3 is a scoped standalone code-only candidate for the controller
 namespace move (#88). Its bundled checks validate autofocus behavior, native event
 signatures and runtime binary type references before staging. Select
