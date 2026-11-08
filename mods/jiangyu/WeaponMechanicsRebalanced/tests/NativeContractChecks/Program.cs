@@ -61,6 +61,32 @@ foreach (string name in new[] { "Scatter", "ScatterChance", "ActionPointCost", "
 Member(template, "MarkAsActed", "Boolean", true);
 Member(template, "Repetitions", "UInt16", true);
 Member(template, "EventHandlers", "List<SkillEventHandlerTemplate>", false);
+const string aiAttack = "Il2CppMenace.Tactical.AI.Behaviors.Attack";
+const string behavior = "Il2CppMenace.Tactical.AI.Behavior";
+const string skillBehavior = "Il2CppMenace.Tactical.AI.SkillBehavior";
+const string agent = "Il2CppMenace.Tactical.AI.Agent";
+Method(aiAttack, "OnEvaluate", "Int32", "Actor");
+Method(aiAttack, "OnExecute", "Boolean", "Actor");
+Method(agent, "PickBehavior", "Behavior");
+Method(agent, "GetBehaviors", "List<Behavior>");
+Method(agent, "GetActor", "Actor");
+Method(agent, "GetFaction", "AIFaction");
+Method(agent, "IsDeploymentPhase", "Boolean");
+Method(agent, "IsSleeping", "Boolean");
+Method(behavior, "GetAgent", "Agent");
+Method(behavior, "GetScore", "Int32");
+Method(skillBehavior, "GetSkill", "Skill");
+Member(aiAttack, "m_Candidates", "List<Data>", false);
+Member(skillBehavior, "m_TargetTile", "Tile", true);
+Member(skillBehavior, "m_AdditionalRadius", "Int32", false);
+foreach (string name in new[] { "m_DeployBeforeExecuting", "m_SetupBeforeExecuting", "m_RotateBeforeExecuting", "m_DontActuallyExecute", "m_IsExecuted" })
+    Member(skillBehavior, name, "Boolean", false);
+Member("Il2CppMenace.Tactical.TacticalManager", "m_Round", "Int32", false);
+Method("Il2CppMenace.Tactical.AI.AIFaction", "IsAlliedWithPlayer", "Boolean");
+foreach (string name in new[] { "IsOutOfUses", "IsAffordable", "IsUsable" }) Method(skill, name, "Boolean");
+Method(skill, "IsUsableOn", "Boolean", "Tile", "Tile");
+Method("Il2CppMenace.Tactical.Tile", "HasActor", "Boolean");
+Method("Il2CppMenace.Tactical.Entity", "IsAlliedWith", "Boolean", "Int32");
 foreach (string name in new[] { "DamageMult", "DamageToArmorDurabilityMult", "SuppressionDropoffAOE", "AccuracyBonus", "AccuracyMult" })
     Member(attack, name, "Single", true);
 using var runtime = new PEReader(File.OpenRead(args[1]));

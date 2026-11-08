@@ -1,4 +1,10 @@
-# Weapon Mechanics Rebalanced 0.5.0
+# Weapon Mechanics Rebalanced 0.6.0
+
+**0.6.0 sustained enemy mortar AI (#59; gameplay check pending):** F9 → Weapon Mechanics Rebalanced → Enemy mortar AI has a default-ON option to prefer HE mortar fire over movement/Idle. Native-scored legal targets receive 6× priority with a floor of 250; a ready mortar is preferred to Move/Idle. Fire missions last **3 rounds by default**, configurable from **2–4**, including the acquisition round. During that window, keep shelling the saved tile even after contact is lost; never track a hidden unit's new position. Blind fire does not extend the window. New maps, round rollback, disabling the option or disabling WMR clear memory. Native AP, ammo, deployment, rotation and skill legality still apply; friendly units inside the conservative scatter/AoE area prevent blind fire. Other weapons, smoke mortar decisions and player AI are unchanged. This is a preference, not a guarantee of a shot when the mortar cannot legally fire. Fire-mission memory is session-only, not saved.
+
+**0.5.1 smoke mortar dispersion (#59):** smoke shells now use the same size-based starting Scatter as HE: light 3, 80 mm medium 4 and 120 mm heavy 5. MENACE shares the standard smoke skill between light and 80 mm mortars, so WMR identifies the weapon at shot/preview time and restores the native shared template afterward. Smoke and HE continue to share per-target ranging: prior shots tighten to 2, while a lucky exact hit solves only that target to 1.
+
+**Aimed-tile feedback (#59):** while aiming a mortar, the pointed-at in-range square now shows both `Spread N` and the exact `Bullseye NN%` chance. The readout shares the same effective-range and line-of-sight calculation as firing; it is omitted if the exact-target scatter filter is unavailable.
 
 **0.5.0 mortar bullseye chance (#59; gameplay check pending):** all covered player and hostile mortars now have a 25% actual chance to hit the aimed tile at half effective range when the mortar can see the target, or 10% when firing indirectly at a target it cannot see. Each tile closer/farther changes the chance by 2 percentage points; the result is clamped to 5–70%. The shot temporarily adjusts native ScatterChance and removes the aimed tile from scatter outcomes, then restores the template value, so these are actual hit odds rather than a scatter-roll approximation.
 
@@ -40,7 +46,7 @@ The economy adjustments below apply to regular player/vehicle skill profiles. Th
 - limited HE and smoke mortar uses are doubled;
 - HE physical HP damage and armor-durability damage are multiplied by 0.5;
 - native suppression output is not reduced;
-- HE base Scatter is 3 / 4 / 5 for light / medium / 120 mm mortar fire;
+- HE and smoke base Scatter is 3 / 4 / 5 for light / medium / 120 mm mortar fire;
 - baseline light/heavy ScatterChance remains 85%, medium remains 80%;
 - actual bullseye chance at half of the skill's effective range is 25% with direct line of sight and 10% for indirect fire; each tile closer/farther changes it by 2 percentage points, clamped to 5–70%;
 - shot-time ScatterChance and the scatter candidate set are adjusted together so the aimed tile's exact landing probability matches that chance, then the native template ScatterChance is restored;

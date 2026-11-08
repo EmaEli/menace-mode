@@ -1,9 +1,24 @@
+## 0.6.0 — optional sustained enemy mortar AI (#59)
+
+- Add default-ON HE mortar fire priority and a 2–4-round fire mission setting (default 3, acquisition round included).
+- Boost native-scored targets and prefer a ready mortar over Move/Idle. Retain the target tile through lost contact until expiry, without reading hidden opponent coordinates or renewing missions from blind shots.
+- Retain native action/deployment/rotation/AP/ammunition checks. Reject blind fire near friendly actors; clear memory on scene changes, round rollback and disable. Do not alter player, smoke or unrelated weapon AI.
+- Add executable production-hook/lifecycle checks with managed stand-ins and extend the native metadata gate. Automated validation and canonical PC deployment are recorded separately; gameplay acceptance pending.
+
+## 0.5.1 — caliber-based smoke mortar dispersion (#59)
+
+- Smoke shells now start at the same size-based Scatter as HE: light 3, medium 4, heavy 5. The shared standard smoke skill is resolved from the firing weapon (light vs. 80 mm tripod), while both 120 mm autoloader skills use 5.
+- Apply existing per-target tightening and lucky-hit solution rules to smoke as well as HE. Shot-time changes restore the shared native smoke template after firing; preview and ranging markers use the same caliber-specific baseline.
+- Add pure regression checks for each smoke profile and source guards for firing, preview and template restoration.
+- Validation: 16 focused mortar tests and all 205 GameplaySuite Python tests pass; 17,979 standalone offline C# checks pass; WMR Release compile, the 104-file WMR-only BuildKit, and clean extracted-source build pass. BuildKit verification reports 18,009 offline checks, 78 native metadata checks and 31 binary type references. Windows BuildOnly/install and gameplay acceptance pending.
+
 ## 0.5.0 — range- and visibility-based mortar bullseye chance (#59; gameplay check pending)
 
 - Set actual mortar bullseye odds to 25% with direct line of sight or 10% for indirect fire at half the skill's effective range, changing by two percentage points per tile and clamping to 5–70%.
 - Calibrate the native scatter roll and exclude the aimed tile from scattered outcomes so the configured bullseye percentage is the actual chance to land on target. Restore the original template ScatterChance after each shot; baseline values, scatter ranging, damage and action economy remain otherwise unchanged.
+- While aiming a mortar, show the current `Spread N` and exact `Bullseye NN%` chance as text on the in-range square under the cursor. The preview shares the same effective-range and line-of-sight calculation as firing and avoids overlapping that tile's historical ranging label; hide the chance if the exact-target scatter filter is unavailable.
 - Apply the same per-shot rule to every covered player and hostile mortar skill. Add offline formula/clamp checks and source guards for range, visibility, filtering and restoration.
-- Validation: 200 Python tests, 18,005 offline C# checks, 78 native metadata checks and 31 binary type references passed. Clean extracted-source build and BuildKit verification passed; Windows build/install and gameplay acceptance remain pending.
+- Validation: 201 GameplaySuite Python tests and 18,005 offline C# checks passed. WMR-only BuildKit ZIP verification passed (103 files); canonical Windows BuildOnly/install passed on game 0.7.18+22828 with 78 native metadata checks and 31 binary type references. Installed manifest/assembly/file versions 0.5.0/0.5.0.0/0.5.0.0; MenaceModSettings and Jiangyu.Loader hashes remained unchanged, and the previous WMR package is retained in `_MENACE_Backups`. In-game rendering remains pending.
 
 ## 0.4.17 — player-style enemy ranging, reset each turn (#59; gameplay check pending)
 

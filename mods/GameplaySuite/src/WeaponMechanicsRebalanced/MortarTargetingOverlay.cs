@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace MenaceWeaponMechanicsRebalanced;
@@ -25,6 +26,41 @@ public sealed partial class Plugin
         return camera != null ? camera : Camera.main;
     }
 
+    private static bool TryGetMortarBullseyeChance(
+        Il2CppMenace.Tactical.Skills.Skill skill,
+        Il2CppMenace.Tactical.Actor actor,
+        Il2CppMenace.Tactical.Tile target,
+        out int bullseyeChance,
+        out bool directSight)
+    {
+        bullseyeChance = -1;
+        directSight = false;
+        if (!_mortarScatterCenterFilterPatchInstalled) return false;
+
+        Il2CppMenace.Tactical.Tile originTile = actor.GetTile();
+        if (originTile == null) return false;
+
+        int effectiveRange = Math.Max(0, skill.GetMaxRange());
+        int targetDistance = originTile.GetDistanceTo(target);
+        directSight = MortarCanSeeTarget(actor, originTile, target);
+        bullseyeChance = MortarScatterRules.BullseyeChance(targetDistance, effectiveRange, directSight);
+        return true;
+    }
+
+    private static Il2CppMenace.Tactical.Tile? GetCurrentMortarPreviewTarget(
+        Il2CppMenace.Tactical.Skills.Skill skill,
+        Il2CppMenace.Tactical.Actor actor)
+    {
+        var state = Il2CppMenace.States.TacticalState.Get();
+        var target = state == null ? null : state.GetCurrentTile();
+        var template = skill.GetTemplate();
+        Il2CppMenace.Tactical.Tile originTile = actor.GetTile();
+        if (target == null || template == null || originTile == null) return null;
+        if (template.IsDeploymentRequired && !actor.IsDeployed()) return null;
+        if (!skill.IsInRange(target, originTile)) return null;
+        return target;
+    }
+
     private static int GetMortarTargetScatter(
         Il2CppMenace.Tactical.Skills.Skill skill,
         Il2CppMenace.Tactical.Actor actor,
@@ -46,20 +82,22 @@ public sealed partial class Plugin
         try
         {
             var manager = Il2CppMenace.Tactical.TacticalManager.Get();
-            var state = Il2CppMenace.States.TacticalState.Get();
             var skill = GetSelectedMortarSkill();
-            if (manager == null || state == null || skill == null) return;
+            if (manager == null || skill == null) return;
             var actor = skill.GetActor();
             var template = skill.GetTemplate();
-            var target = state.GetCurrentTile();
-            if (actor == null || template == null || target == null) return;
-            if (template.IsDeploymentRequired && !actor.IsDeployed()) return;
-            if (!skill.IsInRange(target, actor.GetTile())) return;
+            if (actor == null || template == null) return;
+            var target = GetCurrentMortarPreviewTarget(skill, actor);
+            if (target == null) return;
             var map = manager.GetMap();
             var camera = GetMortarOverlayCamera(manager);
             if (map == null || camera == null) return;
 
-            int scatter = GetMortarTargetScatter(skill, actor, target, template.Scatter);
+            int baseScatter = GetMortarBaseScatter(skill, skill.GetID(), template.Scatter);
+            int scatter = GetMortarTargetScatter(skill, actor, target, baseScatter);
+            int bullseyeChance = TryGetMortarBullseyeChance(skill, actor, target, out int chance, out _)
+                ? chance
+                : -1;
             Color color = new Color(1f, 0.78f, 0.12f, 1f);
             int x = target.GetX(), z = target.GetZ();
             for (int dz = -scatter; dz <= scatter; dz++)
@@ -79,13 +117,48 @@ public sealed partial class Plugin
             }
 
             EnsureMortarOverlayStyles();
-            DrawMortarTileScatter(camera, target, scatter, color, "Spread ");
+            DrawMortarTargetPreview(camera, target, scatter, bullseyeChance, color);
         }
         catch (Exception ex)
         {
             _mortarPreviewErrorLogged = true;
             if (_debugLogging)
                 Warn($"Mortar scatter preview disabled for this scene: {ex}");
+        }
+    }
+
+    private static void DrawMortarTargetPreview(
+        Camera camera,
+        Il2CppMenace.Tactical.Tile tile,
+        int effectiveScatter,
+        int bullseyeChance,
+        Color color)
+    {
+        if (_mortarBonusStyle == null || _mortarBonusShadowStyle == null) return;
+
+        Vector3 center = tile.GetPos();
+        center.y += 0.18f;
+        Vector3 p = camera.WorldToScreenPoint(center);
+        if (p.z <= 0f) return;
+
+        const float width = 140f;
+        const float height = 40f;
+        float x = p.x - width * 0.5f;
+        float y = Screen.height - p.y - height * 0.5f;
+        string text = bullseyeChance >= 0
+            ? $"Spread {Math.Max(0, effectiveScatter)}\nBullseye {bullseyeChance}%"
+            : $"Spread {Math.Max(0, effectiveScatter)}";
+
+        Color old = _mortarBonusStyle.normal.textColor;
+        try
+        {
+            _mortarBonusStyle.normal.textColor = color;
+            GUI.Label(new Rect(x + 1f, y + 1f, width, height), text, _mortarBonusShadowStyle);
+            GUI.Label(new Rect(x, y, width, height), text, _mortarBonusStyle);
+        }
+        finally
+        {
+            _mortarBonusStyle.normal.textColor = old;
         }
     }
 }

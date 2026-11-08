@@ -11,23 +11,45 @@ OVERLAY = (ROOT / "src/WeaponMechanicsRebalanced/MortarTargetingOverlay.cs").rea
 class MortarTargetingTests(unittest.TestCase):
     def test_shot_and_preview_use_same_target_lookup(self):
         self.assertIn("GetMortarTargetScatter(__instance, actor, __0, originalScatter, useDisplayedState: false)", PLUGIN)
-        self.assertIn("GetMortarTargetScatter(skill, actor, target, template.Scatter)", OVERLAY)
+        self.assertIn("GetMortarTargetScatter(skill, actor, target, baseScatter)", OVERLAY)
         self.assertIn("MortarRangingKey(skill, actor)", OVERLAY)
         self.assertIn("solutions.TryGetValue((target.GetX(), target.GetZ()), out ranging)", OVERLAY)
         self.assertIn("return useDisplayedState", OVERLAY)
         self.assertIn("GetMortarDisplayedEffectiveScatter(ranging, baseScatter)", OVERLAY)
         self.assertIn("MortarScatterRules.EffectiveScatter", PLUGIN)
 
+    def test_smoke_uses_size_specific_scatter_for_shots_and_preview(self):
+        self.assertIn("GetMortarBaseScatter(__instance, skillId, templateScatter)", PLUGIN)
+        self.assertIn("GetMortarBaseScatter(skill, skill.GetID(), template.Scatter)", OVERLAY)
+        self.assertIn("MortarScatterRules.MortarSmokeBaseScatter(skillId, weaponId)", PLUGIN)
+        self.assertIn("TemplateScatter = templateScatter", PLUGIN)
+        self.assertIn("if (effectiveScatter != templateScatter)", PLUGIN)
+        self.assertIn("__state.Template.Scatter = __state.TemplateScatter", PLUGIN)
+        for smoke_id in (
+            "StandardMortarSmokeSkillId",
+            "HeavyMortarSmokeSkillId",
+            "TwinFireHeavyMortarSmokeSkillId",
+        ):
+            self.assertIn(smoke_id, PLUGIN + (ROOT / "src/WeaponMechanicsRebalanced/MortarScatterRules.cs").read_text())
+
     def test_dynamic_bullseye_odds_use_effective_range_and_actual_visibility(self):
-        self.assertIn("__instance.GetMaxRange()", PLUGIN)
-        self.assertIn("originTile.GetDistanceTo(__0)", PLUGIN)
-        self.assertIn("MortarCanSeeTarget(actor, originTile, __0)", PLUGIN)
-        self.assertIn("MortarScatterRules.BullseyeChance(targetDistance, effectiveRange, directSight)", PLUGIN)
+        self.assertIn("TryGetMortarBullseyeChance(__instance, actor, __0", PLUGIN)
+        self.assertIn("skill.GetMaxRange()", OVERLAY)
+        self.assertIn("originTile.GetDistanceTo(target)", OVERLAY)
+        self.assertIn("MortarCanSeeTarget(actor, originTile, target)", OVERLAY)
+        self.assertIn("MortarScatterRules.BullseyeChance(targetDistance, effectiveRange, directSight)", OVERLAY)
         self.assertIn("MortarScatterRules.ScatterChanceForBullseye(bullseyeChance)", PLUGIN)
         self.assertIn('m.Name, "GetAvailableScatterTiles"', PLUGIN)
         self.assertIn("MortarRangingAvailableScatterTilesPostfix", PLUGIN)
         self.assertIn("_mortarScatterCandidateRemoveMethod.Invoke(__result, new object[] { __0 })", PLUGIN)
         self.assertIn("__state.Template.ScatterChance = __state.OriginalScatterChance", PLUGIN)
+
+    def test_aimed_square_displays_the_same_bullseye_chance_as_firing(self):
+        self.assertIn("TryGetMortarBullseyeChance(skill, actor, target", OVERLAY)
+        self.assertIn("DrawMortarTargetPreview(camera, target, scatter, bullseyeChance, color)", OVERLAY)
+        self.assertIn('Bullseye {bullseyeChance}%"', OVERLAY)
+        self.assertIn("GetCurrentMortarPreviewTarget(selectedSkill, actor)", PLUGIN)
+        self.assertIn("previewTarget.GetX() != pair.Key.X", PLUGIN)
 
     def test_hostile_mortars_range_per_target_and_reset_each_turn(self):
         self.assertIn("Dictionary<(long Actor, long Weapon, (int X, int Z) Target), MortarTurnScatterState> EnemyMortarTurnRanging", PLUGIN)
@@ -99,12 +121,12 @@ class MortarTargetingTests(unittest.TestCase):
         self.assertNotIn(".ScatterChance", OVERLAY)
         self.assertNotIn(".Scatter(", OVERLAY)
         self.assertIn("state.GetCurrentTile()", OVERLAY)
-        self.assertIn("!skill.IsInRange(target, actor.GetTile())", OVERLAY)
+        self.assertIn("!skill.IsInRange(target, originTile)", OVERLAY)
         self.assertIn("template.IsDeploymentRequired && !actor.IsDeployed()", OVERLAY)
 
     def test_preview_geometry_and_label_are_distinct_from_blast_aoe(self):
         self.assertIn("MortarScatterRules.BorderEdges(dx, dz, scatter)", OVERLAY)
-        self.assertIn('scatter, color, "Spread "', OVERLAY)
+        self.assertIn("DrawMortarTargetPreview(camera, target, scatter, bullseyeChance, color)", OVERLAY)
         for bit in (1, 2, 4, 8):
             self.assertIn(f"== null) edges |= {bit};", OVERLAY)
         self.assertNotIn("GetAffectedTiles", OVERLAY)

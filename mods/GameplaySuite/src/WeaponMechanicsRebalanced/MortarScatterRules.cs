@@ -8,6 +8,25 @@ internal static class MortarScatterRules
     internal const int SolvedScatter = 1;
     internal const int MinBullseyeChance = 5;
     internal const int MaxBullseyeChance = 70;
+    internal const string StandardMortarSmokeSkillId = "active.launch_mortar_smoke";
+    internal const string HeavyMortarSmokeSkillId = "active.mod.launch_mortar_smoke_autoloader";
+    internal const string TwinFireHeavyMortarSmokeSkillId = "active.mod.twinfire.launch_mortar_smoke_autoloader";
+    internal const string MediumMortarWeaponId = "specialweapon.tripod_medium_mortar_80mm";
+
+    internal static int MortarSmokeBaseScatter(string skillId, string weaponId)
+    {
+        if (string.Equals(skillId, HeavyMortarSmokeSkillId, StringComparison.OrdinalIgnoreCase)
+            || string.Equals(skillId, TwinFireHeavyMortarSmokeSkillId, StringComparison.OrdinalIgnoreCase))
+        {
+            return 5;
+        }
+
+        if (!string.Equals(skillId, StandardMortarSmokeSkillId, StringComparison.OrdinalIgnoreCase))
+            return -1;
+
+        // MENACE shares this skill template between the light mortar and the 80 mm tripod mortar.
+        return string.Equals(weaponId, MediumMortarWeaponId, StringComparison.OrdinalIgnoreCase) ? 4 : 3;
+    }
 
     internal static int BullseyeChance(int distance, int effectiveRange, bool directSight)
     {

@@ -5,9 +5,9 @@ using Menace.SDK;
 using MenaceModSuite.Shared;
 using UnityEngine;
 
-[assembly: AssemblyVersion("0.5.0.0")]
-[assembly: AssemblyFileVersion("0.5.0.0")]
-[assembly: AssemblyInformationalVersion("0.5.0")]
+[assembly: AssemblyVersion("0.6.0.0")]
+[assembly: AssemblyFileVersion("0.6.0.0")]
+[assembly: AssemblyInformationalVersion("0.6.0")]
 
 namespace MenaceWeaponMechanicsRebalanced;
 
@@ -15,7 +15,7 @@ namespace MenaceWeaponMechanicsRebalanced;
 public sealed partial class Plugin : IHostedPlugin
 {
     private const string SettingsGroup = "Weapon Mechanics Rebalanced";
-    private const string Version = "0.5.0";
+    private const string Version = "0.6.0";
 
     private sealed class MortarSkillSpec
     {
@@ -63,8 +63,8 @@ public sealed partial class Plugin : IHostedPlugin
         },
     };
 
-    // Smoke mortar fire follows the same action-economy rebalance as HE: half AP
-    // per fire mission and double limited uses. Keep smoke dispersion/VFX/effects native.
+    // Smoke mortar fire follows HE's action-economy rebalance. Its per-caliber scatter
+    // baseline is selected at shot/preview time because the light and 80 mm mortars share a template.
     private static readonly string[] MortarSmokeSkillIds =
     {
         "active.launch_mortar_smoke",
@@ -107,6 +107,7 @@ public sealed partial class Plugin : IHostedPlugin
         public (int X, int Z) TileKey;
         public bool IsHostileMortar;
         public Il2CppMenace.Tactical.Skills.SkillTemplate? Template;
+        public int TemplateScatter = -1;
         public int OriginalScatter = -1;
         public int OriginalScatterChance = -1;
         public int EffectiveScatter = -1;
@@ -206,6 +207,10 @@ public sealed partial class Plugin : IHostedPlugin
             s.AddHeader("General");
             s.AddToggle("EnableGameplay", "Enable Weapon Mechanics Rebalanced", true);
 
+            s.AddHeader("Enemy mortar AI");
+            s.AddToggle("EnemyMortarFirePriority", "Enemy mortars prefer sustained fire to movement", true);
+            s.AddSlider("EnemyMortarFireRounds", "Enemy mortar fire mission (rounds, including acquisition)", 2f, 4f, 3f);
+
             s.AddHeader("Diagnostics");
             s.AddToggle("DebugLogging", "Debug logging", false);
         });
@@ -214,6 +219,7 @@ public sealed partial class Plugin : IHostedPlugin
         InstallMortarSuppressionRadiusPatch(harmony);
         InstallMortarRangingPatch(harmony);
         InstallFireModeEconomyPatches(harmony);
+        InstallEnemyMortarAi(harmony);
         ModSettings.OnSettingChanged += OnSettingChanged;
         DevConsole.RegisterPanel(SettingsGroup, DrawDebug);
         MelonCoroutines.Start(DelayedApply("initialize"));
@@ -225,6 +231,7 @@ public sealed partial class Plugin : IHostedPlugin
         MortarRangingSolutions.Clear();
         PendingMortarImpacts.Clear();
         EnemyMortarTurnRanging.Clear();
+        EnemyMortarMissions.Clear();
         _mortarOverlayErrorLogged = false;
         _mortarPreviewErrorLogged = false;
         _mortarWorldRendererLogged = false;
@@ -288,6 +295,11 @@ public sealed partial class Plugin : IHostedPlugin
     private static void ReloadSettings()
     {
         _enabled = Setting("EnableGameplay", true);
+        _enemyMortarFirePriority = Setting("EnemyMortarFirePriority", true);
+        float fireRounds = Setting("EnemyMortarFireRounds", 3f);
+        _enemyMortarFireRounds = float.IsFinite(fireRounds) ? Math.Clamp((int)MathF.Round(fireRounds), 2, 4) : 3;
+        if (!_enabled || !_enemyMortarFirePriority) EnemyMortarMissions.Clear();
+        else EnemyMortarMissions.SetDuration(_enemyMortarFireRounds);
         _debugLogging = Setting("DebugLogging", false);
         if (!_enabled)
         {
@@ -965,7 +977,8 @@ public sealed partial class Plugin : IHostedPlugin
             if (key.Actor == 0) return;
 
             var tileKey = (__0.GetX(), __0.GetZ());
-            int originalScatter = Math.Max(0, template.Scatter);
+            int templateScatter = Math.Max(0, template.Scatter);
+            int originalScatter = GetMortarBaseScatter(__instance, skillId, templateScatter);
             int originalScatterChance = template.ScatterChance;
             bool isHostileMortar = IsHostileMortarActor(actor);
             int effectiveScatter = isHostileMortar
@@ -977,13 +990,9 @@ public sealed partial class Plugin : IHostedPlugin
             int effectiveScatterChance = originalScatterChance;
             int bullseyeChance = -1;
             bool directSight = false;
-            Il2CppMenace.Tactical.Tile originTile = actor.GetTile();
-            if (_mortarScatterCenterFilterPatchInstalled && originTile != null)
+            if (TryGetMortarBullseyeChance(__instance, actor, __0, out int calculatedBullseyeChance, out directSight))
             {
-                int effectiveRange = Math.Max(0, __instance.GetMaxRange());
-                int targetDistance = originTile.GetDistanceTo(__0);
-                directSight = MortarCanSeeTarget(actor, originTile, __0);
-                bullseyeChance = MortarScatterRules.BullseyeChance(targetDistance, effectiveRange, directSight);
+                bullseyeChance = calculatedBullseyeChance;
                 effectiveScatterChance = MortarScatterRules.ScatterChanceForBullseye(bullseyeChance);
             }
 
@@ -994,6 +1003,7 @@ public sealed partial class Plugin : IHostedPlugin
                 TileKey = tileKey,
                 IsHostileMortar = isHostileMortar,
                 Template = template,
+                TemplateScatter = templateScatter,
                 OriginalScatter = originalScatter,
                 OriginalScatterChance = originalScatterChance,
                 EffectiveScatter = effectiveScatter,
@@ -1005,7 +1015,7 @@ public sealed partial class Plugin : IHostedPlugin
             };
             _activeMortarApplyState = __state;
 
-            if (effectiveScatter != originalScatter)
+            if (effectiveScatter != templateScatter)
                 template.Scatter = effectiveScatter;
             if (effectiveScatterChance != originalScatterChance)
                 template.ScatterChance = effectiveScatterChance;
@@ -1019,7 +1029,7 @@ public sealed partial class Plugin : IHostedPlugin
         {
             if (__state?.Template != null)
             {
-                try { if (__state.OriginalScatter >= 0) __state.Template.Scatter = __state.OriginalScatter; }
+                try { if (__state.TemplateScatter >= 0) __state.Template.Scatter = __state.TemplateScatter; }
                 catch { }
                 try { if (__state.OriginalScatterChance >= 0) __state.Template.ScatterChance = __state.OriginalScatterChance; }
                 catch { }
@@ -1112,8 +1122,8 @@ public sealed partial class Plugin : IHostedPlugin
 
         try
         {
-            if (__state.Template != null && __state.OriginalScatter >= 0)
-                __state.Template.Scatter = __state.OriginalScatter;
+            if (__state.Template != null && __state.TemplateScatter >= 0)
+                __state.Template.Scatter = __state.TemplateScatter;
             if (__state.Template != null && __state.OriginalScatterChance >= 0)
                 __state.Template.ScatterChance = __state.OriginalScatterChance;
 
@@ -1148,9 +1158,9 @@ public sealed partial class Plugin : IHostedPlugin
         }
         finally
         {
-            if (__state.Template != null && __state.OriginalScatter >= 0)
+            if (__state.Template != null && __state.TemplateScatter >= 0)
             {
-                try { __state.Template.Scatter = __state.OriginalScatter; }
+                try { __state.Template.Scatter = __state.TemplateScatter; }
                 catch { }
             }
             if (__state.Template != null && __state.OriginalScatterChance >= 0)
@@ -1280,6 +1290,22 @@ public sealed partial class Plugin : IHostedPlugin
             EnemyMortarTurnRanging[targetKey] = state;
         }
         return state;
+    }
+
+    private static int GetMortarBaseScatter(
+        Il2CppMenace.Tactical.Skills.Skill skill,
+        string skillId,
+        int templateScatter)
+    {
+        string weaponId = string.Empty;
+        if (string.Equals(skillId, MortarScatterRules.StandardMortarSmokeSkillId, StringComparison.OrdinalIgnoreCase))
+        {
+            try { weaponId = skill.GetItem()?.GetID() ?? string.Empty; }
+            catch { }
+        }
+
+        int smokeScatter = MortarScatterRules.MortarSmokeBaseScatter(skillId, weaponId);
+        return smokeScatter >= 0 ? smokeScatter : Math.Max(0, templateScatter);
     }
 
     private static (long Actor, long Weapon) MortarRangingKey(
@@ -1611,7 +1637,10 @@ public sealed partial class Plugin : IHostedPlugin
 
             var desired = new Dictionary<(int X, int Z), MortarHighlightBlend>();
             var selectedKey = selectedSkill == null ? default : MortarRangingKey(selectedSkill, actor);
-            int? selectedScatter = selectedSkill?.GetTemplate()?.Scatter;
+            var selectedTemplate = selectedSkill?.GetTemplate();
+            int? selectedScatter = selectedSkill == null || selectedTemplate == null
+                ? null
+                : GetMortarBaseScatter(selectedSkill, selectedSkill.GetID(), selectedTemplate.Scatter);
             foreach (var pair in MortarRangingSolutions)
             {
                 if (pair.Key.Actor != actorKey) continue;
@@ -1722,6 +1751,9 @@ public sealed partial class Plugin : IHostedPlugin
             Il2CppMenace.Tactical.Actor? actor = GetMortarDisplayActor(manager, selectedSkill);
             long actorKey = NativeKey(actor);
             if (actor == null || actorKey == 0) return;
+            var previewTarget = !_mortarPreviewErrorLogged && selectedSkill != null
+                ? GetCurrentMortarPreviewTarget(selectedSkill, actor)
+                : null;
 
             // If a mortar skill is actively selected, prefer that physical weapon.
             // Otherwise show every registered solution belonging to the selected mortar
@@ -1760,7 +1792,10 @@ public sealed partial class Plugin : IHostedPlugin
             // registered dispersion on each tile. The optional label reports the
             // effective Scatter value for the next shot (S1 is a solved firing solution).
             var merged = new Dictionary<(int X, int Z), MortarHighlightBlend>();
-            int? selectedScatter = selectedSkill?.GetTemplate()?.Scatter;
+            var selectedTemplate = selectedSkill?.GetTemplate();
+            int? selectedScatter = selectedSkill == null || selectedTemplate == null
+                ? null
+                : GetMortarBaseScatter(selectedSkill, selectedSkill.GetID(), selectedTemplate.Scatter);
             for (int m = 0; m < solutionMaps.Count; m++)
             {
                 foreach (var pair in solutionMaps[m])
@@ -1785,7 +1820,12 @@ public sealed partial class Plugin : IHostedPlugin
 
                 Color color = GetMortarOverlayColor(pair.Value);
                 DrawMortarTileBorder(camera, tile, pair.Value.SolutionFound ? 3f : 2f, color);
-                DrawMortarTileScatter(camera, tile, pair.Value.EffectiveScatter, color);
+                if (previewTarget == null
+                    || previewTarget.GetX() != pair.Key.X
+                    || previewTarget.GetZ() != pair.Key.Z)
+                {
+                    DrawMortarTileScatter(camera, tile, pair.Value.EffectiveScatter, color);
+                }
             }
         }
         catch (Exception ex)

@@ -4,6 +4,20 @@ internal static class MortarScatterChecks
 {
     internal static void Run(Action<bool, string> check)
     {
+        check(MortarScatterRules.MortarSmokeBaseScatter(
+                MortarScatterRules.StandardMortarSmokeSkillId, "") == 3,
+            "standard light-mortar smoke starts at the light HE scatter baseline");
+        check(MortarScatterRules.MortarSmokeBaseScatter(
+                MortarScatterRules.StandardMortarSmokeSkillId, MortarScatterRules.MediumMortarWeaponId) == 4,
+            "shared standard smoke skill detects the 80 mm medium mortar baseline");
+        check(MortarScatterRules.MortarSmokeBaseScatter(
+                MortarScatterRules.HeavyMortarSmokeSkillId, "") == 5
+            && MortarScatterRules.MortarSmokeBaseScatter(
+                MortarScatterRules.TwinFireHeavyMortarSmokeSkillId, "") == 5,
+            "both 120 mm autoloader smoke skills start at the heavy baseline");
+        check(MortarScatterRules.MortarSmokeBaseScatter("unrelated.skill", "") == -1,
+            "non-mortar smoke skills retain their native scatter");
+
         check(MortarScatterRules.BullseyeChance(10, 20, true) == 25,
             "direct bullseye chance is 25 percent at half effective range");
         check(MortarScatterRules.BullseyeChance(9, 20, true) == 27
@@ -37,7 +51,7 @@ internal static class MortarScatterChecks
         foreach (int baseScatter in new[] { -1, 0, 1 })
         foreach (bool solved in new[] { false, true })
             check(MortarScatterRules.EffectiveScatter(baseScatter, 20, solved) == Math.Max(0, baseScatter),
-                "ranging never widens naturally small scatter (e.g. smoke)");
+                "ranging never widens naturally small scatter");
 
         check(MortarScatterRules.ColorProgress(5, 4, false) == 0.25f,
             "scatter color starts dark red after one correction");
