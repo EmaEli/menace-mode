@@ -130,3 +130,6 @@ The new path therefore does **not** sum single-zone repairs or choose the first 
 
 Tracker records: [#2 deployment](https://github.com/EmaEli/menace-mode/issues/2#issuecomment-6722905423),
 [#17 scope](https://github.com/EmaEli/menace-mode/issues/17#issuecomment-6722905694).
+
+Update: [1.3.1 gameplay feedback](AI_MULTI_ORDER_FEEDBACK_2026-11-08.md) confirms all 18
+enemies move, but often one tile per three rounds; sparse combat remains unresolved.
