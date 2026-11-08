@@ -5,9 +5,9 @@ using Menace.SDK;
 using MenaceModSuite.Shared;
 using UnityEngine;
 
-[assembly: AssemblyVersion("0.4.17.0")]
-[assembly: AssemblyFileVersion("0.4.17.0")]
-[assembly: AssemblyInformationalVersion("0.4.17")]
+[assembly: AssemblyVersion("0.5.0.0")]
+[assembly: AssemblyFileVersion("0.5.0.0")]
+[assembly: AssemblyInformationalVersion("0.5.0")]
 
 namespace MenaceWeaponMechanicsRebalanced;
 
@@ -15,7 +15,7 @@ namespace MenaceWeaponMechanicsRebalanced;
 public sealed partial class Plugin : IHostedPlugin
 {
     private const string SettingsGroup = "Weapon Mechanics Rebalanced";
-    private const string Version = "0.4.17";
+    private const string Version = "0.5.0";
 
     private sealed class MortarSkillSpec
     {
@@ -75,7 +75,7 @@ public sealed partial class Plugin : IHostedPlugin
     // Both sides range each target tile independently for each physical mortar.
     // Each prior shot reduces Scatter by one to 2; a lucky exact hit solves it to 1.
     // Only hostile histories reset at Actor.OnTurnStart, including lucky-hit solutions.
-    // Ranging never changes ScatterChance.
+    // Shot-time bullseye accuracy is scoped to ApplyToTile and restored afterward.
     private static readonly HashSet<string> MortarRangingSkillIds = new(StringComparer.OrdinalIgnoreCase)
     {
         "active.launch_light_mortar_frag",
@@ -110,6 +110,9 @@ public sealed partial class Plugin : IHostedPlugin
         public int OriginalScatter = -1;
         public int OriginalScatterChance = -1;
         public int EffectiveScatter = -1;
+        public int EffectiveScatterChance = -1;
+        public int BullseyeChance = -1;
+        public bool DirectSight;
         public bool DirectHit;
         public int ImpactX;
         public int ImpactZ;
@@ -126,6 +129,9 @@ public sealed partial class Plugin : IHostedPlugin
     private static readonly Dictionary<(long Actor, long Weapon, (int X, int Z) Target), MortarTurnScatterState> EnemyMortarTurnRanging = new();
     private static bool _mortarActorTurnStartPatchInstalled;
     private static bool _mortarImpactPatchInstalled;
+    private static bool _mortarScatterCenterFilterPatchInstalled;
+    private static bool _mortarScatterFilterErrorLogged;
+    private static MethodInfo? _mortarScatterCandidateRemoveMethod;
 
     private static readonly Dictionary<string, object> OriginalFireModeTemplateValues = new(StringComparer.OrdinalIgnoreCase);
 
@@ -751,6 +757,9 @@ public sealed partial class Plugin : IHostedPlugin
     private static void InstallMortarRangingPatch(global::HarmonyLib.Harmony harmony)
     {
         _mortarImpactPatchInstalled = false;
+        _mortarScatterCenterFilterPatchInstalled = false;
+        _mortarScatterFilterErrorLogged = false;
+        _mortarScatterCandidateRemoveMethod = null;
         try
         {
             Type? skillType = global::HarmonyLib.AccessTools.TypeByName("Il2CppMenace.Tactical.Skills.Skill");
@@ -767,6 +776,14 @@ public sealed partial class Plugin : IHostedPlugin
                     .FirstOrDefault(m => string.Equals(m.Name, "Scatter", StringComparison.Ordinal)
                         && m.GetParameters().Length == 1
                         && string.Equals(m.ReturnType.FullName, "Il2CppMenace.Tactical.Tile", StringComparison.Ordinal));
+            MethodInfo? scatterTiles = skillType == null
+                ? null
+                : global::HarmonyLib.AccessTools.GetDeclaredMethods(skillType)
+                    .FirstOrDefault(m => string.Equals(m.Name, "GetAvailableScatterTiles", StringComparison.Ordinal)
+                        && m.GetParameters().Length == 1
+                        && string.Equals(m.GetParameters()[0].ParameterType.FullName,
+                            "Il2CppMenace.Tactical.Tile", StringComparison.Ordinal)
+                        && m.ReturnType.Name.Contains("HashSet", StringComparison.Ordinal));
             MethodInfo? onTileHit = attackHandlerType == null
                 ? null
                 : global::HarmonyLib.AccessTools.GetDeclaredMethods(attackHandlerType)
@@ -809,6 +826,31 @@ public sealed partial class Plugin : IHostedPlugin
                 applyToTile,
                 prefix: new global::HarmonyLib.HarmonyMethod(typeof(Plugin), nameof(MortarRangingApplyToTilePrefix)),
                 postfix: new global::HarmonyLib.HarmonyMethod(typeof(Plugin), nameof(MortarRangingApplyToTilePostfix)));
+
+            MethodInfo? removeScatterTile = scatterTiles?.ReturnType.GetMethods(BindingFlags.Public | BindingFlags.Instance)
+                .FirstOrDefault(m => string.Equals(m.Name, "Remove", StringComparison.Ordinal)
+                    && m.GetParameters().Length == 1
+                    && m.GetParameters()[0].ParameterType == typeof(Il2CppMenace.Tactical.Tile));
+            if (scatterTiles != null && removeScatterTile != null)
+            {
+                try
+                {
+                    _mortarScatterCandidateRemoveMethod = removeScatterTile;
+                    harmony.Patch(
+                        scatterTiles,
+                        postfix: new global::HarmonyLib.HarmonyMethod(typeof(Plugin), nameof(MortarRangingAvailableScatterTilesPostfix)));
+                    _mortarScatterCenterFilterPatchInstalled = true;
+                }
+                catch (Exception ex)
+                {
+                    _mortarScatterCandidateRemoveMethod = null;
+                    Warn($"Mortar exact bullseye chance unavailable: scatter-center filter patch failed: {ex.GetType().Name}: {ex.Message}.");
+                }
+            }
+            else
+            {
+                Warn("Mortar exact bullseye chance unavailable: Skill.GetAvailableScatterTiles/1 or its HashSet.Remove(Tile) method was not found.");
+            }
 
             if (onTileHit != null)
             {
@@ -863,7 +905,7 @@ public sealed partial class Plugin : IHostedPlugin
             }
 
             InstallMortarActorTurnStartPatch(harmony);
-            DebugLog($"Mortar ranging patches installed: per-target histories and player UI waits for impact={_mortarImpactPatchInstalled}; hostile Scatter tightens to 2, lucky exact hits solve that target to 1, and all hostile histories reset on Actor.OnTurnStart; ScatterChance is unchanged.");
+            DebugLog($"Mortar ranging patches installed: per-target histories and player UI waits for impact={_mortarImpactPatchInstalled}; hostile Scatter tightens to 2, lucky exact hits solve that target to 1, hostile histories reset on Actor.OnTurnStart, and exact distance/LOS bullseye odds are available={_mortarScatterCenterFilterPatchInstalled}.");
         }
         catch (Exception ex)
         {
@@ -932,8 +974,18 @@ public sealed partial class Plugin : IHostedPlugin
                     : originalScatter
                 : GetMortarTargetScatter(__instance, actor, __0, originalScatter, useDisplayedState: false);
 
-            if (effectiveScatter != originalScatter)
-                template.Scatter = effectiveScatter;
+            int effectiveScatterChance = originalScatterChance;
+            int bullseyeChance = -1;
+            bool directSight = false;
+            Il2CppMenace.Tactical.Tile originTile = actor.GetTile();
+            if (_mortarScatterCenterFilterPatchInstalled && originTile != null)
+            {
+                int effectiveRange = Math.Max(0, __instance.GetMaxRange());
+                int targetDistance = originTile.GetDistanceTo(__0);
+                directSight = MortarCanSeeTarget(actor, originTile, __0);
+                bullseyeChance = MortarScatterRules.BullseyeChance(targetDistance, effectiveRange, directSight);
+                effectiveScatterChance = MortarScatterRules.ScatterChanceForBullseye(bullseyeChance);
+            }
 
             __state = new MortarApplyState
             {
@@ -945,21 +997,83 @@ public sealed partial class Plugin : IHostedPlugin
                 OriginalScatter = originalScatter,
                 OriginalScatterChance = originalScatterChance,
                 EffectiveScatter = effectiveScatter,
+                EffectiveScatterChance = effectiveScatterChance,
+                BullseyeChance = bullseyeChance,
+                DirectSight = directSight,
                 ImpactX = int.MinValue,
                 ImpactZ = int.MinValue,
             };
             _activeMortarApplyState = __state;
+
+            if (effectiveScatter != originalScatter)
+                template.Scatter = effectiveScatter;
+            if (effectiveScatterChance != originalScatterChance)
+                template.ScatterChance = effectiveScatterChance;
+
             if (!isHostileMortar && _mortarImpactPatchInstalled && __state.SkillKey != 0)
                 EnqueuePendingMortarImpact(__state);
 
-            DebugLog($"MORTAR APPLY actor=0x{key.Actor:X} weapon=0x{key.Weapon:X} target=({tileKey.Item1},{tileKey.Item2}) baseScatter={originalScatter} effectiveScatter={effectiveScatter} scatterChance={originalScatterChance}% skill={skillId}.");
+            DebugLog($"MORTAR APPLY actor=0x{key.Actor:X} weapon=0x{key.Weapon:X} target=({tileKey.Item1},{tileKey.Item2}) baseScatter={originalScatter} effectiveScatter={effectiveScatter} bullseyeChance={bullseyeChance}% directSight={directSight} scatterChance={effectiveScatterChance}% skill={skillId}.");
         }
         catch (Exception ex)
         {
+            if (__state?.Template != null)
+            {
+                try { if (__state.OriginalScatter >= 0) __state.Template.Scatter = __state.OriginalScatter; }
+                catch { }
+                try { if (__state.OriginalScatterChance >= 0) __state.Template.ScatterChance = __state.OriginalScatterChance; }
+                catch { }
+            }
             __state = null;
             _activeMortarApplyState = null;
             if (_debugLogging)
                 Warn($"Mortar ranging ApplyToTile prefix failed: {ex.GetType().Name}: {ex.Message}");
+        }
+    }
+
+    private static bool MortarCanSeeTarget(
+        Il2CppMenace.Tactical.Actor actor,
+        Il2CppMenace.Tactical.Tile originTile,
+        Il2CppMenace.Tactical.Tile targetTile)
+    {
+        try
+        {
+            if (!originTile.HasLineOfSightTo(targetTile, Il2CppTactical.LineOfSightFlags.Default))
+                return false;
+            Il2CppMenace.Tactical.Entity targetEntity = targetTile.GetEntity();
+            return targetEntity == null || actor.HasLineOfSightTo(targetEntity, originTile, targetTile);
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private static void MortarRangingAvailableScatterTilesPostfix(
+        Il2CppMenace.Tactical.Skills.Skill __instance,
+        Il2CppMenace.Tactical.Tile __0,
+        object? __result)
+    {
+        MortarApplyState? state = _activeMortarApplyState;
+        if (!_enabled || __instance == null || __0 == null || __result == null
+            || state == null || state.BullseyeChance < MortarScatterRules.MinBullseyeChance
+            || NativeKey(__instance) != state.SkillKey
+            || __0.GetX() != state.TileKey.X || __0.GetZ() != state.TileKey.Z)
+            return;
+
+        try
+        {
+            if (_mortarScatterCandidateRemoveMethod == null)
+                throw new MissingMethodException("HashSet<Tile>.Remove(Tile) is unavailable.");
+            _mortarScatterCandidateRemoveMethod.Invoke(__result, new object[] { __0 });
+        }
+        catch (Exception ex)
+        {
+            if (!_mortarScatterFilterErrorLogged)
+            {
+                _mortarScatterFilterErrorLogged = true;
+                Warn($"Mortar bullseye scatter-center filter failed: {ex.GetType().Name}: {ex.Message}; shot-time odds may be approximate.");
+            }
         }
     }
 
@@ -1000,6 +1114,8 @@ public sealed partial class Plugin : IHostedPlugin
         {
             if (__state.Template != null && __state.OriginalScatter >= 0)
                 __state.Template.Scatter = __state.OriginalScatter;
+            if (__state.Template != null && __state.OriginalScatterChance >= 0)
+                __state.Template.ScatterChance = __state.OriginalScatterChance;
 
             if (!_enabled || __state.RangingKey.Actor == 0) return;
 
@@ -1013,7 +1129,7 @@ public sealed partial class Plugin : IHostedPlugin
                     string enemyImpact = __state.ImpactX == int.MinValue
                         ? "unknown"
                         : $"({__state.ImpactX},{__state.ImpactZ})";
-                    DebugLog($"ENEMY MORTAR RESULT actor=0x{__state.RangingKey.Actor:X} weapon=0x{__state.RangingKey.Weapon:X} target=({__state.TileKey.X},{__state.TileKey.Z}) impact={enemyImpact} directHit={__state.DirectHit} shotScatter={__state.EffectiveScatter} nextScatter={nextScatter} scatterChance={__state.OriginalScatterChance}% shots={turnState.Shots} solution={turnState.SolutionFound}.");
+                    DebugLog($"ENEMY MORTAR RESULT actor=0x{__state.RangingKey.Actor:X} weapon=0x{__state.RangingKey.Weapon:X} target=({__state.TileKey.X},{__state.TileKey.Z}) impact={enemyImpact} directHit={__state.DirectHit} shotScatter={__state.EffectiveScatter} bullseyeChance={__state.BullseyeChance}% directSight={__state.DirectSight} scatterChance={__state.EffectiveScatterChance}% nextScatter={nextScatter} shots={turnState.Shots} solution={turnState.SolutionFound}.");
                 }
                 return;
             }
@@ -1023,7 +1139,7 @@ public sealed partial class Plugin : IHostedPlugin
             string impact = __state.ImpactX == int.MinValue
                 ? "unknown"
                 : $"({__state.ImpactX},{__state.ImpactZ})";
-            DebugLog($"MORTAR RESULT actor=0x{__state.RangingKey.Actor:X} weapon=0x{__state.RangingKey.Weapon:X} target=({__state.TileKey.X},{__state.TileKey.Z}) impact={impact} directHit={__state.DirectHit} shotScatter={__state.EffectiveScatter} nextScatter={ranging.LastEffectiveScatter} scatterChance={__state.OriginalScatterChance}% shots={ranging.Shots} solution={ranging.SolutionFound}.");
+            DebugLog($"MORTAR RESULT actor=0x{__state.RangingKey.Actor:X} weapon=0x{__state.RangingKey.Weapon:X} target=({__state.TileKey.X},{__state.TileKey.Z}) impact={impact} directHit={__state.DirectHit} shotScatter={__state.EffectiveScatter} bullseyeChance={__state.BullseyeChance}% directSight={__state.DirectSight} scatterChance={__state.EffectiveScatterChance}% nextScatter={ranging.LastEffectiveScatter} shots={ranging.Shots} solution={ranging.SolutionFound}.");
         }
         catch (Exception ex)
         {
@@ -1035,6 +1151,11 @@ public sealed partial class Plugin : IHostedPlugin
             if (__state.Template != null && __state.OriginalScatter >= 0)
             {
                 try { __state.Template.Scatter = __state.OriginalScatter; }
+                catch { }
+            }
+            if (__state.Template != null && __state.OriginalScatterChance >= 0)
+            {
+                try { __state.Template.ScatterChance = __state.OriginalScatterChance; }
                 catch { }
             }
             if (ReferenceEquals(_activeMortarApplyState, __state))

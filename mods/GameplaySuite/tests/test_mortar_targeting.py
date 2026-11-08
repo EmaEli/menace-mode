@@ -18,6 +18,17 @@ class MortarTargetingTests(unittest.TestCase):
         self.assertIn("GetMortarDisplayedEffectiveScatter(ranging, baseScatter)", OVERLAY)
         self.assertIn("MortarScatterRules.EffectiveScatter", PLUGIN)
 
+    def test_dynamic_bullseye_odds_use_effective_range_and_actual_visibility(self):
+        self.assertIn("__instance.GetMaxRange()", PLUGIN)
+        self.assertIn("originTile.GetDistanceTo(__0)", PLUGIN)
+        self.assertIn("MortarCanSeeTarget(actor, originTile, __0)", PLUGIN)
+        self.assertIn("MortarScatterRules.BullseyeChance(targetDistance, effectiveRange, directSight)", PLUGIN)
+        self.assertIn("MortarScatterRules.ScatterChanceForBullseye(bullseyeChance)", PLUGIN)
+        self.assertIn('m.Name, "GetAvailableScatterTiles"', PLUGIN)
+        self.assertIn("MortarRangingAvailableScatterTilesPostfix", PLUGIN)
+        self.assertIn("_mortarScatterCandidateRemoveMethod.Invoke(__result, new object[] { __0 })", PLUGIN)
+        self.assertIn("__state.Template.ScatterChance = __state.OriginalScatterChance", PLUGIN)
+
     def test_hostile_mortars_range_per_target_and_reset_each_turn(self):
         self.assertIn("Dictionary<(long Actor, long Weapon, (int X, int Z) Target), MortarTurnScatterState> EnemyMortarTurnRanging", PLUGIN)
         self.assertIn("GetEnemyMortarTurnState(key, tileKey).EffectiveScatter(originalScatter)", PLUGIN)

@@ -1,3 +1,10 @@
+## 0.5.0 — range- and visibility-based mortar bullseye chance (#59; gameplay check pending)
+
+- Set actual mortar bullseye odds to 25% with direct line of sight or 10% for indirect fire at half the skill's effective range, changing by two percentage points per tile and clamping to 5–70%.
+- Calibrate the native scatter roll and exclude the aimed tile from scattered outcomes so the configured bullseye percentage is the actual chance to land on target. Restore the original template ScatterChance after each shot; baseline values, scatter ranging, damage and action economy remain otherwise unchanged.
+- Apply the same per-shot rule to every covered player and hostile mortar skill. Add offline formula/clamp checks and source guards for range, visibility, filtering and restoration.
+- Validation: 200 Python tests, 18,005 offline C# checks, 78 native metadata checks and 31 binary type references passed. Clean extracted-source build and BuildKit verification passed; Windows build/install and gameplay acceptance remain pending.
+
 ## 0.4.17 — player-style enemy ranging, reset each turn (#59; gameplay check pending)
 
 - Replace the mistaken widening rule with the player's size-based scatter and -1 per shot at the same target, stopping at 2 unless a lucky exact hit solves that target to 1.

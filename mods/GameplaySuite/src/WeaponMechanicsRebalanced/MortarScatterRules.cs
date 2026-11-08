@@ -6,6 +6,22 @@ internal static class MortarScatterRules
     internal const int ReductionPerShot = 1;
     internal const int UnsolvedFloor = 2;
     internal const int SolvedScatter = 1;
+    internal const int MinBullseyeChance = 5;
+    internal const int MaxBullseyeChance = 70;
+
+    internal static int BullseyeChance(int distance, int effectiveRange, bool directSight)
+    {
+        int halfRange = Math.Max(0, effectiveRange) / 2;
+        long tilesFromHalfRange = (long)halfRange - Math.Max(0, distance);
+        long chance = (directSight ? 25L : 10L) + tilesFromHalfRange * 2L;
+        return (int)Math.Clamp(chance, MinBullseyeChance, MaxBullseyeChance);
+    }
+
+    internal static int ScatterChanceForBullseye(int bullseyeChance)
+    {
+        int clampedChance = Math.Clamp(bullseyeChance, MinBullseyeChance, MaxBullseyeChance);
+        return 100 - clampedChance;
+    }
 
     internal static int EffectiveScatter(int baseScatter, int shots, bool solutionFound)
     {

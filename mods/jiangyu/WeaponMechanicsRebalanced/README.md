@@ -1,4 +1,6 @@
-# Weapon Mechanics Rebalanced 0.4.17
+# Weapon Mechanics Rebalanced 0.5.0
+
+**0.5.0 mortar bullseye chance (#59; gameplay check pending):** all covered player and hostile mortars now have a 25% actual chance to hit the aimed tile at half effective range when the mortar can see the target, or 10% when firing indirectly at a target it cannot see. Each tile closer/farther changes the chance by 2 percentage points; the result is clamped to 5–70%. The shot temporarily adjusts native ScatterChance and removes the aimed tile from scatter outcomes, then restores the template value, so these are actual hit odds rather than a scatter-roll approximation.
 
 **0.4.17 corrected enemy ranging (#59; gameplay check pending):** enemies now use the player's size-based starting scatter, -1 per prior shot at the same target down to 2, and Scatter 1 after a lucky exact hit on that target. Enemy histories, including lucky-hit zeroing, reset every turn at `Actor.OnTurnStart`. The enemy-only medium skill restores the player's ScatterChance 80%; the previous 0.4.16 widening rule was a mistaken interpretation, not the intended design. Its 33-AP repeated-action allowance is retained.
 
@@ -39,7 +41,9 @@ The economy adjustments below apply to regular player/vehicle skill profiles. Th
 - HE physical HP damage and armor-durability damage are multiplied by 0.5;
 - native suppression output is not reduced;
 - HE base Scatter is 3 / 4 / 5 for light / medium / 120 mm mortar fire;
-- light/heavy ScatterChance remains 85%, medium remains 80%;
+- baseline light/heavy ScatterChance remains 85%, medium remains 80%;
+- actual bullseye chance at half of the skill's effective range is 25% with direct line of sight and 10% for indirect fire; each tile closer/farther changes it by 2 percentage points, clamped to 5–70%;
+- shot-time ScatterChance and the scatter candidate set are adjusted together so the aimed tile's exact landing probability matches that chance, then the native template ScatterChance is restored;
 - suppression AoE falloff is broadened and a suppression-only outer ring extends one tile beyond the native HE blast AoE at 50% suppression;
 - no artificial repetition-based mortar salvos are added.
 
@@ -53,7 +57,7 @@ Both sides remember intended target tiles independently for each physical mortar
 - the lucky-hit chance uses native shot dispersion, as for players, not an additional custom roll;
 - a different target starts at base scatter: neither corrections nor lucky-hit zeroing transfer;
 - all hostile target histories, including solved Scatter 1, reset at `Actor.OnTurnStart`;
-- ScatterChance is unchanged at every ranging stage;
+- per-target scatter ranging leaves the baseline ScatterChance unchanged; shot-time bullseye accuracy is calculated separately and restored after firing;
 - firing solutions remain independent per tile for players and enemies;
 - HE and smoke from the same physical mortar share the same solution;
 - infantry mortar solutions are retained only while the crew remains deployed;

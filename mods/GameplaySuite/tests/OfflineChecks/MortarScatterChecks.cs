@@ -4,6 +4,22 @@ internal static class MortarScatterChecks
 {
     internal static void Run(Action<bool, string> check)
     {
+        check(MortarScatterRules.BullseyeChance(10, 20, true) == 25,
+            "direct bullseye chance is 25 percent at half effective range");
+        check(MortarScatterRules.BullseyeChance(9, 20, true) == 27
+            && MortarScatterRules.BullseyeChance(11, 20, true) == 23,
+            "direct bullseye chance changes by two points per tile around half range");
+        check(MortarScatterRules.BullseyeChance(10, 20, false) == 10,
+            "indirect bullseye chance is 10 percent at half effective range");
+        check(MortarScatterRules.BullseyeChance(0, 100, true) == 70
+            && MortarScatterRules.BullseyeChance(20, 20, false) == 5,
+            "bullseye chance is clamped between five and seventy percent");
+        check(MortarScatterRules.ScatterChanceForBullseye(25) == 75
+            && MortarScatterRules.ScatterChanceForBullseye(10) == 90
+            && MortarScatterRules.ScatterChanceForBullseye(5) == 95
+            && MortarScatterRules.ScatterChanceForBullseye(70) == 30,
+            "native scatter roll is calibrated to the requested exact bullseye chance");
+
         foreach (int baseScatter in new[] { 3, 4, 5 })
         {
             for (int shots = 0; shots <= 12; shots++)
