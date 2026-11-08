@@ -62,3 +62,12 @@ This follows the rejected slow-cadence [1.3.1 test](AI_MULTI_ORDER_FEEDBACK_2026
 - Startup/native dispatch, actual battle behavior and turn timings **not yet tested**.
   No claim of a live targeting or movement fix. #2/#17 remain open; retrieve fresh Latest.log
   after the user's next gameplay feedback. Do not request another identical twenty-turn run.
+
+## Subsequent gameplay feedback
+
+The user rejects the apparent aimless movement. A fresh hash-verified live prefix confirms
+18 enemies moving, but includes six accepted moves farther from both stable mission orders,
+zero attack/mission-distance utility on those destinations and only ten accepted mortar
+attacks through round 14. This is not a complete-mission or cover-safety diagnosis.
+See [wandering investigation](AI_WANDERING_FEEDBACK_2026-11-08.md) for evidence and limits.
+1.4.0 is not accepted as solving initiative; #2/#17 stay open. No follow-up live change made.
