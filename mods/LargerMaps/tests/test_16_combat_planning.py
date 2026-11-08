@@ -29,7 +29,7 @@ class TestCombatPlanning(unittest.TestCase):
 
     def test_scene_scoped_restore_and_no_false_success(self):
         self.assertIn('RestoreSimplifiedCombatPlanning()', PLUGIN)
-        self.assertIn('OnUnload() { RestoreSimplifiedCombatPlanning();',PLUGIN)
+        self.assertRegex(PLUGIN, r'public void OnUnload\(\)\s*\{[^}]*RestoreSimplifiedCombatPlanning\(\);')
         self.assertIn('RestoreSimplifiedCombatPlanning();', COMBAT)
         self.assertIn('_combatPlanningRestores.Clear();', COMBAT)
         self.assertIn('no eligible skill templates updated', COMBAT)

@@ -3,7 +3,8 @@ using System.Collections.Generic;
 
 namespace AIPerformance;
 
-internal readonly record struct AdvanceRecoveryOrder(int X, int Z, int Width, int Height, float Priority);
+internal readonly record struct AdvanceRecoveryOrder(int X, int Z, int Width, int Height, float Priority,
+    string Context = null);
 
 // Managed evidence only: repeated choice polls are not completed idle rounds.
 internal sealed class AdvanceRecoveryState
@@ -152,6 +153,13 @@ internal sealed class AdvanceRecoveryState
         lock (_sync)
             return _map == map && _actors.TryGetValue(actor, out Entry e) && e.Round == round &&
                 e.Agent == agent && e.MoveFallbackRound == round && !e.Busy;
+    }
+
+    internal bool MatchesContext(long map, int round, long actor, long agent, int x, int z, AdvanceRecoveryOrder order)
+    {
+        lock (_sync)
+            return _map == map && _actors.TryGetValue(actor, out Entry e) && e.Round == round &&
+                e.Agent == agent && e.X == x && e.Z == z && e.Order == order && !e.Busy;
     }
 
     internal bool ShouldLogChoice(long map, int round, long actor, long agent, string signature,

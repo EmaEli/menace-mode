@@ -9,6 +9,7 @@ using Scores = Il2CppSystem.Collections.Generic.Dictionary<Il2CppMenace.Tactical
 int checks = 0;
 void Check(bool value, string label) { checks++; if (!value) throw new Exception(label); }
 ContactConvergenceChecks.Run(Check);
+MultiOrderChecks.Run(Check);
 Check(AdvanceRecoveryBuild.IsSupported("871b4c3468c68dae3d75e7b5e29fcc9b0a8a253fcebf64045af348f0aec75111"), "reviewed 0.7.17");
 Check(AdvanceRecoveryBuild.IsSupported("494C9E212D411D898B3ABAFB4AD233F7A39A22648D713A86B9641D698B2D12E9"), "reviewed 0.7.18, case insensitive");
 foreach (string hash in new[] { null, "", "0.7.18+22828", new string('0',64), "877622dd02ed79f6a3a37580b5cd9be12e29012bbd6f15a9c80cf917af1373db" })
@@ -109,7 +110,7 @@ var cases = new Dictionary<string, Action<Actor, Scores>>
     ["civilian role"] = (a,t) => a.Agent.Role.AvoidOpponents = true,
     ["defend"] = (a,t) => a.Agent.Zones[0].Order = 2,
     ["mixed orders"] = (a,t) => a.Agent.Zones.Add(new() { Order = 2 }),
-    ["multiple advance"] = (a,t) => a.Agent.Zones.Add(new()),
+    ["added advance resets history"] = (a,t) => a.Agent.Zones.Add(new()),
     ["no order"] = (a,t) => a.Agent.Zones.Clear(),
     ["sleep"] = (a,t) => a.Agent.Sleeping = true,
     ["deployment"] = (a,t) => a.Agent.Deployment = true,

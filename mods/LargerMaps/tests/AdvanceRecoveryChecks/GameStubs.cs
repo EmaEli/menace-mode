@@ -22,7 +22,7 @@ namespace Il2CppMenace.Tactical
         public IntPtr Pointer = (IntPtr)10;
         public AI.Agent Agent = new();
         public Tile Tile = new(0, 0);
-        public int AP = 100, TilesMovedThisTurn;
+        public int AP = 100, TilesMovedThisTurn, ID = 10;
         public bool Moving, Dying, Contained;
         public float Suppression, Morale = 1;
         public bool Detected, RejectHiddenReads, Infantry = true, Vehicle;

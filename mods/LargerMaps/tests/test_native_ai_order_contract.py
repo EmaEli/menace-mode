@@ -62,6 +62,7 @@ class NativeOrderContractTests(unittest.TestCase):
             0x7D1CDC: 0x7DD3EC, 0x6AF3A0: 0x6BBAB0,
             0x7D1E02: 0x7DD512, 0x6963A0: 0x6A2FA0, 0x7D1E30: 0x7DD540,
             0x7D0C30: 0x7DC340, 0x7B8830: 0x7C1570, 0x7D0CAF: 0x7DC3BF,
+            0x7DBA16: 0x7E65B6, 0x7DBFDD: 0x7E6B7D, 0x4D03C0: 0x4D03C0,
         }[rva]
 
     def test_agents_read_shared_faction_operational_zones(self):
@@ -88,6 +89,16 @@ class NativeOrderContractTests(unittest.TestCase):
         # int distance * WEIGHTS.DistanceToZones * DistanceToAdvanceZones
         # * (role.ZoneImportanceWeight * zone.Priority), added to DistanceScore.
         self.assert_code(0x7DBA63, '660f6ec60f5bc0f30f594258f30f59425cf30f59c6f30f58c7f30f114724')
+
+    def test_multi_advance_distance_uses_actor_id_modulo_and_distinct_weighting(self):
+        # More than one advance zone: Entity.ID at +0x10 modulo count selects
+        # the ordinal receiving an extra native multiplier. Never sum single-zone repairs.
+        self.assert_code(0x4D03C0, '8b4110c3')
+        self.assert_code(0x7DBA16, '4183fe017e12418b47109941f7fe413bd47505f3410f59f0')
+
+    def test_multi_advance_inside_utility_only_uses_id_allocated_zone(self):
+        # Non-allocated zone skips utility even when the tile is inside it.
+        self.assert_code(0x7DBFDD, '4183fe017e3a418b45109941f7fe413bd77580')
 
     def test_inside_utility_uses_native_threshold_and_zone_priority(self):
         self.assert_code(0x7DE823, 'f30f5ff70f287c2420f30f597018')  # max base/scaled * threshold scale

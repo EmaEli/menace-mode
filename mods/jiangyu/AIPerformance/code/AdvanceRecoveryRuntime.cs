@@ -13,11 +13,12 @@ internal enum AdvanceRecoveryResult
 {
     Input, Orders, Faction, Zone, Position, History, Contact, ActorState, Resources,
     ActionScore, AttackCandidates, Arrival, Weights, TileData, TileUtility, Geometry,
-    Arithmetic, Progress, CurrentTile, Applied, AlreadyApplied
+    Arithmetic, Progress, CurrentTile, Applied, AlreadyApplied, MultipleOrders
 }
 
 internal static class AdvanceRecoveryRuntime
 {
+    internal const int MaxAdvanceOrders = 8;
     // Missing single-zone contributions reviewed on exact 0.7.17 and 0.7.18 binaries.
     // Explicit AdvanceTowards orders can move unseen units; attack/contact candidates are never fabricated.
     internal static bool TryApply(Actor actor, TileScores tiles, AdvanceRecoveryState state, long map, int round)
@@ -40,28 +41,31 @@ internal static class AdvanceRecoveryRuntime
         var zones = agent?.GetZones();
         int kind = faction == null ? -1 : (int)faction.GetFactionType();
         bool alliedWithPlayer = faction != null && faction.IsAlliedWithPlayer();
-        if (collectDiagnostics && kind >= 5 && kind <= 9 && !alliedWithPlayer && zones != null)
+        if (collectDiagnostics && kind >= 5 && kind <= 9 && !alliedWithPlayer && zones != null &&
+            zones.Count <= MaxAdvanceOrders)
             foreach (Zone candidateZone in zones)
                 if (candidateZone != null && (int)candidateZone.Order == 1)
                 {
                     diagnosticCandidate = true;
                     break;
                 }
-        // One unambiguous advance order only. Mixed, defensive and future orders fail closed.
+        // Only bounded, exclusively AdvanceTowards orders. Never pick an arbitrary first zone.
         result = AdvanceRecoveryResult.Orders;
-        if (faction == null || role == null || zones == null || zones.Count != 1) return false;
+        if (faction == null || role == null || zones == null || zones.Count < 1 || zones.Count > MaxAdvanceOrders) return false;
         result = AdvanceRecoveryResult.Faction;
         if (kind < 5 || kind > 9 || alliedWithPlayer || role.AvoidOpponents) return false;
+        result = zones.Count == 1 ? AdvanceRecoveryResult.Zone : AdvanceRecoveryResult.Orders;
+        if (!TryReadAdvanceOrders(agent, actor, out Zone zone, out AdvanceRecoveryOrder order))
+        {
+            state.Choice(map, round, actor.Pointer.ToInt64(), agent.Pointer.ToInt64(), false);
+            return false;
+        }
         result = AdvanceRecoveryResult.Zone;
-        Zone zone = zones[0];
-        if (zone == null || (int)zone.Order != 1) return false;
         var area = zone.Area;
-        if (area.width <= 0 || area.height <= 0 ||
-            !Positive(zone.Priority) || !Positive(role.ZoneImportanceWeight)) return false;
+        if (!Positive(role.ZoneImportanceWeight)) return false;
         result = AdvanceRecoveryResult.Position;
         Tile current = actor.GetTile();
         if (current == null) return false;
-        var order = new AdvanceRecoveryOrder(area.xMin, area.yMin, area.width, area.height, zone.Priority);
         stalled = state.Observe(map, round, actor.Pointer.ToInt64(), agent.Pointer.ToInt64(), current.GetX(), current.GetZ(), order);
         result = AdvanceRecoveryResult.History;
         if (!stalled) return false;
@@ -98,6 +102,15 @@ internal static class AdvanceRecoveryRuntime
         result = AdvanceRecoveryResult.Arrival;
         int currentDistance = RectIntExtensions.GetDistanceTo(area, current);
         if (currentDistance <= 0) return false; // Arrival is not a patrol order.
+        if (zones.Count > 1)
+        {
+            // Native multi-zone distance weighting is NOT the single-zone formula.
+            // Keep its scores intact; enable only guarded HasUtility progress toward
+            // the ID-allocated zone, then let native Move own ranking/path/AP.
+            state.MarkMoveFallbackEligible(map, round, actor.Pointer.ToInt64(), agent.Pointer.ToInt64());
+            result = AdvanceRecoveryResult.MultipleOrders;
+            return false;
+        }
         result = AdvanceRecoveryResult.Weights;
         var weights = AIConfig.WEIGHTS;
         if (weights == null || !Positive(weights.DistanceToZones) || !Positive(weights.DistanceToAdvanceZones) ||
@@ -193,6 +206,7 @@ internal static class AdvanceRecoveryRuntime
         Agent agent = actor?.GetAgent();
         if (movement == null || agent == null || tiles == null || tiles.Count < 2 || tiles.Count > 4096 ||
             !state.HasMoveFallbackEligibility(map, round, actor.Pointer.ToInt64(), agent.Pointer.ToInt64()) ||
+            !ValidateFallbackContext(actor, state, map, round) ||
             !TryGetAdvanceContext(agent, actor, out Move move, out Zone zone, out Tile current) ||
             move.Pointer != movement.Pointer || move.IsMovementDone() || move.HasMovedThisTurn() ||
             move.IsDelayingMovement() || move.IsInsideContainerAndInert()) return false;
@@ -230,23 +244,60 @@ internal static class AdvanceRecoveryRuntime
         return true;
     }
 
+    internal static bool ValidateFallbackContext(Actor actor, AdvanceRecoveryState state, long map, int round)
+    {
+        Agent agent = actor?.GetAgent();
+        if (agent == null) return false;
+        Tile tile = actor.GetTile();
+        bool valid = tile != null && TryReadAdvanceOrders(agent, actor, out _, out AdvanceRecoveryOrder order) &&
+            state.MatchesContext(map, round, actor.Pointer.ToInt64(), agent.Pointer.ToInt64(), tile.GetX(), tile.GetZ(), order);
+        if (!valid) state.Choice(map, round, actor.Pointer.ToInt64(), agent.Pointer.ToInt64(), false);
+        return valid;
+    }
+
+    private static bool TryReadAdvanceOrders(Agent agent, Actor actor, out Zone selected, out AdvanceRecoveryOrder order)
+    {
+        selected = null; order = default;
+        var zones = agent?.GetZones();
+        if (actor == null || zones == null || zones.Count < 1 || zones.Count > MaxAdvanceOrders) return false;
+        int count = zones.Count;
+        // Reviewed native ConsiderZones uses Entity.ID % advance-zone count.
+        int id = count == 1 ? 0 : actor.ID;
+        if (id < 0) return false;
+        int index = id % count;
+        var context = count == 1 ? null : new string[count];
+        for (int i = 0; i < count; i++)
+        {
+            Zone zone = zones[i];
+            if (zone == null || (int)zone.Order != 1 || !Positive(zone.Priority)) return false;
+            var area = zone.Area;
+            if (area.width <= 0 || area.height <= 0) return false;
+            if (context != null)
+                context[i] = FormattableString.Invariant($"{area.xMin},{area.yMin},{area.width},{area.height},{zone.Priority:R}");
+            if (i == index)
+            {
+                selected = zone;
+                order = new(area.xMin, area.yMin, area.width, area.height, zone.Priority);
+            }
+        }
+        if (context != null) order = order with { Context = id + ":" + string.Join(";", context) };
+        return zones.Count == count;
+    }
+
     private static bool TryGetAdvanceContext(Agent agent, Actor actor, out Move move, out Zone zone, out Tile current)
     {
         move = null; zone = null; current = null;
         if (agent == null || actor == null) return false;
         AIFaction faction = agent.GetFaction();
         var role = agent.GetRole();
-        var zones = agent.GetZones();
-        if (faction == null || role == null || zones == null || zones.Count != 1 ||
+        if (faction == null || role == null ||
             faction.IsAlliedWithPlayer() || (int)faction.GetFactionType() < 5 || (int)faction.GetFactionType() > 9 ||
             role.AvoidOpponents || agent.IsDeploymentPhase() || agent.IsSleeping() || actor.IsMoving() || actor.IsDying() ||
             actor.IsContainedWithinAnotherEntity() || actor.TilesMovedThisTurn != 0 || actor.IsActionPointsSpent() ||
             actor.GetSuppressionPct() != 0 || !float.IsFinite(actor.GetMoralePct()) || actor.GetMoralePct() < 1 ||
             actor.GetActionPoints() <= 0) return false;
 
-        zone = zones[0];
-        if (zone == null || (int)zone.Order != 1 || zone.Area.width <= 0 || zone.Area.height <= 0 ||
-            !Positive(zone.Priority) || !Positive(role.ZoneImportanceWeight)) return false;
+        if (!TryReadAdvanceOrders(agent, actor, out zone, out _) || !Positive(role.ZoneImportanceWeight)) return false;
         current = actor.GetTile();
         if (current == null) return false;
         int currentDistance = RectIntExtensions.GetDistanceTo(zone.Area, current);

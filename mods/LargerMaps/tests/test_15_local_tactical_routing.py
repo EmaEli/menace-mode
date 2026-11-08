@@ -23,7 +23,7 @@ class TestNativeAiCandidateLimits(unittest.TestCase):
         self.assertIn('RestoreLocalTacticalRouting()',ROUTER)
         self.assertIn('TrySetMember(_localTacticalWeights, "NearTileLimit", _localTacticalOriginalNear)',ROUTER)
         self.assertIn('TrySetMember(_localTacticalWeights, "CullTilesDistances", _localTacticalOriginalCull)',ROUTER)
-        self.assertIn('public void OnUnload() { RestoreSimplifiedCombatPlanning(); RestoreLocalTacticalRouting(); AdvanceRecoveryReset(); }',PLUGIN)
+        self.assertRegex(PLUGIN, r'public void OnUnload\(\)\s*\{[^}]*RestoreSimplifiedCombatPlanning\(\);[^}]*RestoreLocalTacticalRouting\(\);[^}]*AdvanceRecoveryReset\(\);[^}]*ContactConvergenceReset\(\);')
     def test_runtime_hook_only_scene_callback(self):
         tactical = PLUGIN.split('if (string.Equals(sceneName, "Tactical", StringComparison.OrdinalIgnoreCase))', 1)[1].split('else if', 1)[0]
         self.assertIn('ApplySimplifiedCombatPlanning();', tactical)

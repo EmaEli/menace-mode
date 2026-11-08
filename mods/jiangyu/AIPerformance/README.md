@@ -1,4 +1,4 @@
-# AI Performance 1.3.0
+# AI Performance 1.3.1
 
 Independent AI DLL; Larger Maps is optional and no longer installs it automatically.
 Requires Jiangyu and MenaceModSettings. The Suite explicitly includes both modules.
@@ -45,8 +45,8 @@ Requires Jiangyu and MenaceModSettings. The Suite explicitly includes both modul
 - Conditional advance recovery now lives here, not in LargerMaps.dll. It is ON by
   default on actual maps above 64x64 and independently hash-locked to reviewed
   0.7.17+22362 / 0.7.18+22828 binaries. Unknown builds retain native behavior.
-- Requires two idle rounds at the same position/order, one hostile AdvanceTowards
-  zone, full morale, no suppression, available AP, no valid attack candidates/positive
+- Requires two idle rounds at the same position/order, one to eight exclusively hostile
+  AdvanceTowards zones, full morale, no suppression, available AP, no valid attack candidates/positive
   other actions or tile utility. Sleep, defense and arrival are preserved. Once native
   Move has produced an AP-valid destination toward the order, recovery selects Move
   instead of Idle; native Move still owns destination/path/safety calculation.
@@ -55,6 +55,11 @@ Requires Jiangyu and MenaceModSettings. The Suite explicitly includes both modul
   the existing idle-history and no-shot guards pass. Current/farther/less-safe tiles
   receive no incentive; existing positive utility is preserved. Native Move still
   chooses targets and computes reachable paths/AP costs; no additional path search.
+- Multiple advance orders use the native Entity.ID modulo advance-count allocation,
+  not the first/nearest zone. Multi-zone distance weights are left untouched; only safe
+  utility toward the allocated zone is recovered. Arrival stops recovery; mixed/defensive
+  orders are excluded. The full ordered list of areas/priorities is revalidated before
+  utility/choice, so even an unselected zone's change invalidates stale eligibility.
 - No contact or attack candidate is fabricated. This applies before or after contact.
 - A legal recovered Move selection retains eligibility during same-round re-evaluation;
   provisional selection alone is not proof of movement. Actual position/order changes,

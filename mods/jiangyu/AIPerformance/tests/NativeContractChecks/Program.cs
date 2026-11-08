@@ -91,6 +91,7 @@ var actor = Type("Il2CppMenace.Tactical.Actor");
 Method(actor, "SetDetectedByFaction", "Void", "Int32");
 Method(actor, "IsDetectedByFaction", "Boolean", "Int32");
 var entity = Type("Il2CppMenace.Tactical.Entity");
+Property(entity, "ID", "Int32");
 Method(entity, "GetFaction", "FactionType");
 Method(entity, "HasTag", "Boolean", "TagType");
 Method(entity, "IsInfantry", "Boolean");

@@ -16,7 +16,7 @@ class GlobalPositioningTests(unittest.TestCase):
         self.assertIn('foreach (string id in KnownCombatSkillIds)', COMBAT)
         self.assertIn('foreach (string id in KnownSupportSkillIds)', COMBAT)
         self.assertIn('ApplySimplifiedCombatPlanning();', PLUGIN)
-        self.assertIn('OnUnload() { RestoreSimplifiedCombatPlanning();', PLUGIN)
+        self.assertRegex(PLUGIN, r'public void OnUnload\(\)\s*\{[^}]*RestoreSimplifiedCombatPlanning\(\);')
 
     def test_every_eligible_template_is_modified_without_faction_filter(self):
         self.assertIn('foreach (object template in EnumerateSkillTemplates(templates))', COMBAT)

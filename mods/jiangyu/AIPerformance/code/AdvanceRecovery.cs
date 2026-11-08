@@ -119,7 +119,8 @@ public sealed partial class Plugin
             long actorId = actor.Pointer.ToInt64();
             long agentId = __instance.Pointer.ToInt64();
             Move advanceMove = null;
-            bool eligible = _advanceRecovery.HasMoveFallbackEligibility(mapId, manager.m_Round, actorId, agentId);
+            bool eligible = _advanceRecovery.HasMoveFallbackEligibility(mapId, manager.m_Round, actorId, agentId) &&
+                AdvanceRecoveryRuntime.ValidateFallbackContext(actor, _advanceRecovery, mapId, manager.m_Round);
             bool forcedMove = eligible &&
                 AdvanceRecoveryRuntime.TryGetAdvanceMove(__instance, actor, __result, out advanceMove);
             if (forcedMove) __result = advanceMove;
