@@ -11,6 +11,7 @@ public sealed partial class Plugin
     private static long NativeKey(Native? value) => value?.Key ?? 0;
     private static bool IsHostileMortarActor(Actor actor) => actor.Hostile;
     private static void Warn(string text) => throw new Exception(text);
+    private static void DebugLog(string text) { }
     private static int checks;
     private static void Check(bool value, string reason)
     {
@@ -21,9 +22,12 @@ public sealed partial class Plugin
     {
         EnemyMortarMissions.Clear();
         TacticalManager.Current = new();
+        TacticalManager.Busy = false;
         _enabled = _enemyMortarFirePriority = true;
         _enemyMortarFireRounds = 3;
-        InstallEnemyMortarAi(new HarmonyLib.Harmony());
+        var harmony = new HarmonyLib.Harmony();
+        InstallEnemyMortarAi(harmony);
+        Check(harmony.Targets.SequenceEqual(new[] { "Execute" }), "Policy must not hook worker Evaluate/PickBehavior");
         var map = TacticalManager.Get().Map;
         var agent = new Agent();
         agent.Actor.Tile = map.Add(0, 0);
@@ -42,8 +46,84 @@ public sealed partial class Plugin
     {
         attack.m_Candidates.Clear(); attack.m_TargetTile = null; attack.Score = 0;
     }
+    private static void ExecuteSelection(Agent agent, bool runOriginal = true)
+    {
+        var hook = typeof(Plugin).GetMethod("EnemyMortarExecute", BindingFlags.NonPublic | BindingFlags.Static);
+        Check(hook != null, "Main-thread execution hook must exist, not only worker evaluation hooks");
+        hook!.Invoke(null, new object[] { agent, runOriginal });
+    }
     public static void Main()
     {
+        // Native Agent.Evaluate/PickBehavior run on a worker; Agent.Execute is on
+        // Unity's thread. Reproduce the live round-17 shot followed by Idle.
+        {
+            var (agent, attack, target) = Fixture();
+            Task.Run(() => Evaluate(attack, 90)).GetAwaiter().GetResult();
+            agent.m_ActiveBehavior = attack;
+            ExecuteSelection(agent);
+            Check(attack.Score >= 250, "Worker-scored attack acquires its mission at execution");
+            for (int round = 11; round <= 12; round++)
+            {
+                TacticalManager.Get().m_Round = round;
+                LoseTarget(attack);
+                agent.Actor.AP = 100;
+                agent.m_ActiveBehavior = new() { Id = "Idle" };
+                Task.Run(() => Evaluate(attack)).GetAwaiter().GetResult();
+                ExecuteSelection(agent);
+                Check(agent.m_ActiveBehavior == attack && attack.m_TargetTile == target,
+                    "Next round replaces Idle with remembered mortar target after worker evaluation");
+                Check(agent.Actor.AP == 100 && attack.Skill.Uses == 0, "Native execution still owns AP/ammo");
+            }
+            TacticalManager.Get().m_Round = 13;
+            LoseTarget(attack); agent.m_ActiveBehavior = new() { Id = "Idle" };
+            ExecuteSelection(agent);
+            Check(agent.m_ActiveBehavior.Id == "Idle", "Execution does not renew expired blind mission");
+        }
+        {
+            var (agent, attack, target) = Fixture();
+            attack.m_TargetTile = null; // Native utility rounded to zero; candidates still exist.
+            agent.m_ActiveBehavior = new() { Id = "Move", Score = 10000 };
+            ExecuteSelection(agent);
+            Check(agent.m_ActiveBehavior == attack && attack.m_TargetTile == target,
+                "Legal positive native candidate is usable even when no native target was selected");
+        }
+        foreach (string guard in new[] { "illegal", "ammo", "ap", "pinned", "friendly", "nan", "zero", "setup", "already-executed" })
+        {
+            var (agent, attack, target) = Fixture();
+            attack.m_TargetTile = null;
+            var original = agent.m_ActiveBehavior = new() { Id = "Idle" };
+            switch (guard)
+            {
+                case "illegal": attack.Skill.Legal = false; break;
+                case "ammo": attack.Skill.Out = true; break;
+                case "ap": attack.Skill.Affordable = false; break;
+                case "pinned": attack.Skill.Usable = false; break;
+                case "friendly": TacticalManager.Get().Map.Add(21, 20).Occupant = new(); break;
+                case "nan": attack.m_Candidates[0] = new() { Target = target, Score = float.NaN }; break;
+                case "zero": attack.m_Candidates[0] = new() { Target = target, Score = 0 }; break;
+                case "setup": attack.m_SetupBeforeExecuting = true; break;
+                case "already-executed": attack.m_IsExecuted = true; break;
+            }
+            ExecuteSelection(agent);
+            Check(agent.m_ActiveBehavior == original && attack.m_TargetTile == null, guard + " prevents candidate recovery");
+        }
+        foreach (string guard in new[] { "worker", "busy", "executing", "evaluating", "done", "deactivated", "skipped", "emergency" })
+        {
+            var (agent, attack, _) = Fixture();
+            var original = agent.m_ActiveBehavior = new() { Id = guard == "emergency" ? "Confusion" : "Idle" };
+            switch (guard)
+            {
+                case "busy": TacticalManager.Busy = true; break;
+                case "executing": agent.CurrentState = Agent.State.Executing; break;
+                case "evaluating": agent.CurrentState = Agent.State.EvaluatingBehaviors; break;
+                case "done": agent.IsTurnDone = true; break;
+                case "deactivated": agent.FlaggedForDeactivation = true; break;
+            }
+            if (guard == "worker") Task.Run(() => ExecuteSelection(agent)).GetAwaiter().GetResult();
+            else ExecuteSelection(agent, guard != "skipped");
+            Check(agent.m_ActiveBehavior == original && attack.Skill.Checks == 0,
+                guard + " cannot interrupt or replace native action");
+        }
         for (int duration = 2; duration <= 4; duration++)
         {
             var (agent, attack, target) = Fixture();

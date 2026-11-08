@@ -6,7 +6,11 @@ using Il2CppMenace.Tactical.Skills;
 // Managed stand-ins only: these tests do not load Harmony or native IL2CPP.
 namespace HarmonyLib
 {
-    public class Harmony { public void Patch(MethodInfo method, HarmonyMethod postfix) { } }
+    public class Harmony
+    {
+        public readonly List<string> Targets = new();
+        public void Patch(MethodInfo method, HarmonyMethod? prefix = null, HarmonyMethod? postfix = null) => Targets.Add(method.Name);
+    }
     public class HarmonyMethod { public HarmonyMethod(Type type, string name) { } }
     public static class AccessTools
     {
@@ -41,6 +45,8 @@ namespace Il2CppMenace.Tactical
     public class TacticalManager
     {
         public static TacticalManager Current = new();
+        public static bool Busy;
+        public static bool IsSkillBusy() => Busy;
         public int m_Round = 10;
         public Map Map = new();
         public static TacticalManager Get() => Current;
@@ -84,6 +90,10 @@ namespace Il2CppMenace.Tactical.AI
     public class AIFaction { public bool Allied; public bool IsAlliedWithPlayer() => Allied; }
     public class Agent : Native
     {
+        public enum State { None, EvaluatingTiles, EvaluatingBehaviors, ReadyToExecute, Executing }
+        public State CurrentState = State.ReadyToExecute;
+        public Behavior? m_ActiveBehavior;
+        public bool IsTurnDone, FlaggedForDeactivation;
         public Actor Actor = new();
         public AIFaction Faction = new();
         public bool Sleeping, Deployment;
@@ -93,12 +103,15 @@ namespace Il2CppMenace.Tactical.AI
         public bool IsSleeping() => Sleeping;
         public bool IsDeploymentPhase() => Deployment;
         public List<Behavior> GetBehaviors() => Behaviors;
+        public State GetState() => CurrentState;
+        public bool Execute() => true;
         private Behavior? PickBehavior() => null;
     }
     public class Behavior : Native
     {
         public string Id = "Idle";
-        public int Score;
+        public int m_Score;
+        public int Score { get => m_Score; set => m_Score = value; }
         public Agent Agent = null!;
         public int GetScore() => Score;
         public string GetID() => Id;

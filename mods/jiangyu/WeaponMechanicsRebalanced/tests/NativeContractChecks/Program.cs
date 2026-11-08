@@ -68,6 +68,19 @@ const string agent = "Il2CppMenace.Tactical.AI.Agent";
 Method(aiAttack, "OnEvaluate", "Int32", "Actor");
 Method(aiAttack, "OnExecute", "Boolean", "Actor");
 Method(agent, "PickBehavior", "Behavior");
+Method(agent, "Execute", "Boolean");
+Method(agent, "GetState", "State");
+Member(agent, "m_ActiveBehavior", "Behavior", true);
+Member(agent, "IsTurnDone", "Boolean", false);
+Member(agent, "FlaggedForDeactivation", "Boolean", false);
+Member(behavior, "m_Score", "Int32", true);
+Check(reader.GetTypeDefinition(types["Il2CppMenace.Tactical.TacticalManager"]).GetMethods().Any(h =>
+{
+    var m = reader.GetMethodDefinition(h);
+    var s = m.DecodeSignature(names, (object?)null);
+    return reader.GetString(m.Name) == "IsSkillBusy" && m.Attributes.HasFlag(MethodAttributes.Static)
+        && s.ReturnType == "Boolean" && s.ParameterTypes.Length == 0;
+}), "TacticalManager.IsSkillBusy static guard");
 Method(agent, "GetBehaviors", "List<Behavior>");
 Method(agent, "GetActor", "Actor");
 Method(agent, "GetFaction", "AIFaction");

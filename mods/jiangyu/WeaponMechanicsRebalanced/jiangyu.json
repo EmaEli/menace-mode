@@ -1,6 +1,6 @@
 {
   "name": "WeaponMechanicsRebalanced",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "author": "Luca",
   "description": "Weapon gameplay mechanics separated from WRR: optional default-on sustained enemy mortar AI, mortar action economy, caliber-based HE and smoke dispersion, range/visibility-based bullseye accuracy, suppression and cumulative mortar ranging, plus fire-mode economy. Jiangyu port of the legacy GameplaySuite module; options live in the MenaceModSettings window (F9).",
   "depends": [

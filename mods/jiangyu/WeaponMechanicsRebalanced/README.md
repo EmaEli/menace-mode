@@ -1,4 +1,6 @@
-# Weapon Mechanics Rebalanced 0.6.0
+# Weapon Mechanics Rebalanced 0.6.1
+
+**0.6.1 correction (#59; gameplay re-test pending):** apply mortar priority and target memory on the main thread immediately before native execution, rather than skipping worker-thread evaluations. Recover legal positive native candidates even when their integer utility left no target selected. Native action execution, AP/ammo and emergency decisions remain authoritative. The 0.6.0 gameplay test did not sustain fire beyond one round; build/install success alone is not gameplay acceptance.
 
 **0.6.0 sustained enemy mortar AI (#59; gameplay check pending):** F9 → Weapon Mechanics Rebalanced → Enemy mortar AI has a default-ON option to prefer HE mortar fire over movement/Idle. Native-scored legal targets receive 6× priority with a floor of 250; a ready mortar is preferred to Move/Idle. Fire missions last **3 rounds by default**, configurable from **2–4**, including the acquisition round. During that window, keep shelling the saved tile even after contact is lost; never track a hidden unit's new position. Blind fire does not extend the window. New maps, round rollback, disabling the option or disabling WMR clear memory. Native AP, ammo, deployment, rotation and skill legality still apply; friendly units inside the conservative scatter/AoE area prevent blind fire. Other weapons, smoke mortar decisions and player AI are unchanged. This is a preference, not a guarantee of a shot when the mortar cannot legally fire. Fire-mission memory is session-only, not saved.
 

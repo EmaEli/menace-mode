@@ -5,9 +5,9 @@ using Menace.SDK;
 using MenaceModSuite.Shared;
 using UnityEngine;
 
-[assembly: AssemblyVersion("0.6.0.0")]
-[assembly: AssemblyFileVersion("0.6.0.0")]
-[assembly: AssemblyInformationalVersion("0.6.0")]
+[assembly: AssemblyVersion("0.6.1.0")]
+[assembly: AssemblyFileVersion("0.6.1.0")]
+[assembly: AssemblyInformationalVersion("0.6.1")]
 
 namespace MenaceWeaponMechanicsRebalanced;
 
@@ -15,7 +15,7 @@ namespace MenaceWeaponMechanicsRebalanced;
 public sealed partial class Plugin : IHostedPlugin
 {
     private const string SettingsGroup = "Weapon Mechanics Rebalanced";
-    private const string Version = "0.6.0";
+    private const string Version = "0.6.1";
 
     private sealed class MortarSkillSpec
     {
