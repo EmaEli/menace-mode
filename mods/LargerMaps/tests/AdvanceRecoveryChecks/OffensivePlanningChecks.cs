@@ -119,6 +119,8 @@ internal static class OffensivePlanningChecks
         check(f.Front.UtilityScore > AIConfig.WEIGHTS.UtilityThreshold && f.Back.UtilityScore == 0,
             "no-shot advance is directional immediately, not an Idle-only rescue");
         check(f.Front.UtilityByAttacksScore == 0 && f.Front.SafetyScore == 156, "mission progress is not a fake shot or edited safety");
+        f = new(); f.Enemy.Detected = false; f.Agent.Behaviors.Add(new Behavior { ID = "Buff", Score = 3 }); f.Plan();
+        check(f.Front.UtilityScore == 0, "positive native support action blocks blind advance even without tile utility");
         foreach (string context in new[] { "hold", "mixed", "inside", "no-order", "ignored-zone", "existing-support" })
         {
             f = new(); f.Enemy.Detected = false;

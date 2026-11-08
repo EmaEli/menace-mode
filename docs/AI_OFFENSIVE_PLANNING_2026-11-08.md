@@ -54,7 +54,7 @@ AP reserve, idempotence, finite/legality/state guards, hidden/mission targets, l
 direction/multi-order allocation, native-failure rollback and concurrent hard budgets.
 Metadata-only native contract checks cover the additional methods and writable fields.
 Four exact-native phase/flag/reserve checks pass; these are not native execution tests.
-Final local totals: 12,951 production-linked checks, 30 planning checks, 156 native metadata
+Final local totals: 12,952 production-linked checks, 30 planning checks, 156 native metadata
 contracts, 207 Suite Python tests, 153 LargerMaps Python tests (eight skips), and 18,009
 scoped shared behavior/artifact checks. The shared fixture build reports existing nullable
 warnings; the production AI build has zero warnings/errors.

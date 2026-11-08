@@ -254,6 +254,12 @@ internal static class OffensivePlanningRuntime
     private static void Advance(Agent agent, TileScores tiles, Tile current, float support, Func<TileScore, Edit> edit)
     {
         if (!Positive(agent.GetRole().ZoneImportanceWeight)) return;
+        foreach (var behavior in agent.GetBehaviors())
+        {
+            if (behavior == null) return;
+            string id = behavior.GetID().ToString();
+            if (id != "Idle" && id != "Move" && behavior.GetScore() > 0) return;
+        }
         if (!AdvanceRecoveryRuntime.TryReadAdvanceOrders(agent, agent.GetActor(), out var zone, out _)) return;
         int distance = RectIntExtensions.GetDistanceTo(zone.Area, current);
         float threshold = AIConfig.WEIGHTS.UtilityThreshold * agent.GetRole().UtilityThresholdScale;
