@@ -5,7 +5,7 @@ Squaddie Veterancy 1.10.4
 - Reject delayed native movement when its Unity mover, element or actor has died, including explosions during the movement delay.
 - Break Contact waits for native skills to finish and attempts the normal Extinguish Fire skill once before retreating. Small, medium and big vehicle fires are supported; native usability and AP costs still apply.
 - Retreat uses remaining AP and the existing native pathfinder. Destroyed vehicles are not moved or given AP updates.
-- Managed regression and native metadata checks do not establish in-game acceptance. Windows build/install and gameplay testing remain pending.
+- Local regression and native metadata checks passed. The canonical Windows BuildOnly passed all 115 native checks; installation is deferred while MENACE is running. In-game acceptance remains pending.
 
 Squaddie Veterancy 1.10
 
