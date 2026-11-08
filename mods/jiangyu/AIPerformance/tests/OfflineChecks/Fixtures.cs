@@ -12,6 +12,9 @@ namespace AIPerformance
         private static void ContactConvergenceReset() { }
         private static bool _missionCivilianPriorityEnabled { get; set; }
         private static void PatchMissionCivilianPriority(HarmonyLib.Harmony harmony) { }
+        private static bool _offensivePlanningEnabled { get; set; }
+        private static void PatchOffensivePlanning(HarmonyLib.Harmony harmony) { }
+        private static void OffensivePlanningReset() { }
     }
 }
 

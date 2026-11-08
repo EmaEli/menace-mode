@@ -79,6 +79,9 @@ namespace Il2CppMenace.Tactical.AI
     {
         public Tactical.Actor Actor;
         public Tactical.Actor GetActor() => Actor;
+        public Il2CppSystem.Collections.Generic.Dictionary<Tactical.Tile, Data.TileScore> Tiles = new();
+        public Il2CppSystem.Collections.Generic.Dictionary<Tactical.Tile, Data.TileScore> GetTiles() => Tiles;
+        private void PostProcessTileScores() { }
         private Behavior PickBehavior() => Behaviors[0];
         public IntPtr Pointer = (IntPtr)20;
         public AIFaction Faction = new();
@@ -119,6 +122,8 @@ namespace Il2CppMenace.Tactical.AI
         public T TryCast<T>() where T : class => this as T;
         public List<Opponent> Opponents = new();
         public List<Opponent> GetOpponents() => Opponents;
+        public List<Tactical.Actor> Actors = new();
+        public List<Tactical.Actor> GetActors() => Actors;
         public void OnOpponentSighted(Tactical.Actor actor, int ttl) { }
         public void OnTurnStart() { }
     }
@@ -133,6 +138,7 @@ namespace Il2CppMenace.Tactical.AI
     public class Weights
     {
         public float DistanceToZones = 2, DistanceToAdvanceZones = 3, UtilityThreshold = 10;
+        public float InflictDamageFromTile = 5, IncludeAttacksAgainstAllOpponentsMult = 1;
     }
 }
 namespace Il2CppMenace.Tactical.AI.Behaviors
@@ -157,11 +163,54 @@ namespace Il2CppMenace.Tactical.AI.Behaviors
     }
     public class InflictDamage : Attack
     {
-        protected float GetTargetValue(bool immediate, Il2CppMenace.Tactical.Skills.Skill skill,
-            Tactical.Tile target, Tactical.Tile from, Tactical.Tile aimedAt) => 10;
+        public Il2CppMenace.Tactical.Skills.Skill Skill = new();
+        public Il2CppMenace.Tactical.Skills.Skill GetSkill() => Skill;
+        public Func<Tactical.Tile, Tactical.Tile, float> Value = (_, _) => 10;
+        public int ValuesRead;
+        public float GetTargetValue(bool immediate, Il2CppMenace.Tactical.Skills.Skill skill,
+            Tactical.Tile target, Tactical.Tile from, Tactical.Tile aimedAt)
+        {
+            if (immediate) throw new Exception("positioning must use non-immediate native damage value");
+            ValuesRead++; return Value(target, from);
+        }
     }
 }
-namespace Il2CppMenace.Tactical.Skills { public class Skill { } }
+namespace Il2CppMenace.Tactical.Skills
+{
+    public struct TargetUsageParams
+    {
+        public bool IncludeDeploymentAndAngle, IncludeUses, IncludeTargetFaction;
+        public static TargetUsageParams IGNORE_DEPLOYMENT_AND_ANGLE => new() { IncludeUses = true, IncludeTargetFaction = true };
+    }
+    public class SkillTemplate
+    {
+        public string name = "active.fixture";
+        public bool IsAttack = true, IsTargeted = true, IsLineOfFireNeeded = true;
+        public bool IsDeploymentRequired, IsWeaponSetupRequired;
+        public int AoEType;
+        public Profile AIConfig = new();
+    }
+    public class Profile { public float ScoreMult = 1; }
+    public class Skill
+    {
+        public SkillTemplate Template = new();
+        public bool Limited, Empty, Applicable = true, Teleport;
+        public int Cost = 20, Probes;
+        public Func<Tactical.Tile, Tactical.Tile, bool> Usable = (_, _) => true;
+        public SkillTemplate GetTemplate() => Template;
+        public bool HasLimitedUses() => Limited;
+        public bool IsOutOfUses() => Empty;
+        public int GetActionPointCost() => Cost;
+        public bool IsUsableOn(Tactical.Tile target, Tactical.Tile origin, TargetUsageParams parameters)
+        {
+            if (!parameters.IncludeUses || !parameters.IncludeTargetFaction || parameters.IncludeDeploymentAndAngle)
+                throw new Exception("changed native positioning legality parameters");
+            Probes++; return Usable(target, origin);
+        }
+        public bool IsApplicableTo(Tactical.Tile target, Tactical.Entity entity) => Applicable;
+        public Tactical.Tile GetFinalUserTile(Tactical.Tile origin, Tactical.Tile target) => Teleport ? target : origin;
+    }
+}
 namespace Il2CppMenace.Strategy
 {
     public class Mission { public Tactical.Objectives.ObjectiveManager Objectives = new(); }
@@ -236,6 +285,7 @@ namespace Il2CppMenace.Tactical.AI.Data
         public float SafetyScore = 123, UtilityScoreScaled = 456;
         public object Path = new();
         public int APCost;
+        public int MinimumUtilityAPCost = 1024; // Exact native TileScore.Reset sentinel.
     }
 }
 namespace Il2CppMenace.Tools

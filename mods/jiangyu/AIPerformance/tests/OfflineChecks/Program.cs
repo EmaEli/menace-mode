@@ -24,6 +24,7 @@ Check(ModSettings.Values[("AI Performance", "RecoverStalledAdvance")] is true, "
 Check(ModSettings.Values[("AI Performance", "DiagnoseAdvanceRecovery")] is false, "Recovery diagnostics default OFF");
 Check(ModSettings.Values[("AI Performance", "ConvergeOnLastKnownContacts")] is false, "Experimental convergence defaults OFF");
 Check(ModSettings.Values[("AI Performance", "DiagnoseContactConvergence")] is false, "Contact diagnostics default OFF");
+Check(ModSettings.Values[("AI Performance", "OffensiveCombatPlanning")] is true, "Bounded offensive planning defaults ON");
 var action = new Il2CppSystem.Action();
 object[] taskArgs = { action, null };
 Check(!(bool)harmony.Prefix.Invoke(null, taskArgs), "Skip detached wrapper");

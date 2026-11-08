@@ -29,11 +29,13 @@ public sealed partial class Plugin
             settings.AddToggle("ConvergeOnLastKnownContacts", "Unassigned infantry approach recent contacts (0.7.18)", false);
             settings.AddToggle("DiagnoseContactConvergence", "Log bounded contact approaches", false);
             settings.AddToggle("PrioritizeMissionCivilians", "Prioritize visible civilian mission targets (0.7.18)", true);
+            settings.AddToggle("OffensiveCombatPlanning", "Bounded firing positions and attack-first choices (pirate/Rogue)", true);
         });
         PatchAiTaskLifetime(harmony);
         PatchAdvanceRecovery(harmony);
         PatchContactConvergence(harmony);
         PatchMissionCivilianPriority(harmony);
+        PatchOffensivePlanning(harmony);
     }
 
     public void OnSceneLoaded(int buildIndex, string sceneName)
@@ -52,6 +54,7 @@ public sealed partial class Plugin
             RestoreLocalTacticalRouting();
             AdvanceRecoveryReset();
             ContactConvergenceReset();
+            OffensivePlanningReset();
         }
     }
 
@@ -59,6 +62,7 @@ public sealed partial class Plugin
     {
         _contactConvergenceEnabled = false;
         _missionCivilianPriorityEnabled = false;
+        _offensivePlanningEnabled = false; OffensivePlanningReset();
         RestoreSimplifiedCombatPlanning(); RestoreLocalTacticalRouting(); AdvanceRecoveryReset(); ContactConvergenceReset();
     }
 

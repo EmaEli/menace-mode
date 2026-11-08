@@ -1,7 +1,7 @@
 {
   "name": "AIPerformance",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "author": "Luca",
-  "description": "Independent fast AI planning, continuous guarded mission advances and visible mission-civilian target priority. Optional recent-contact approaches for unassigned pirate/Rogue infantry on reviewed 0.7.18. Native pathfinding, attack legality and AP retained; no LargerMaps dependency.",
+  "description": "Fast AI planning with bounded native direct-fire positioning, attack-first choices, nearby-support incentives and directional mission advances for pirate/Rogue forces on reviewed 0.7.18. Visible mission-civilian priority; native pathfinding, visibility, legality and AP retained. No LargerMaps dependency.",
   "depends": ["Jiangyu >= 1.4.8", "MenaceModSettings >= 0.2.0"]
 }

@@ -1,4 +1,34 @@
-# AI Performance 1.4.0
+# AI Performance 1.5.0
+
+## Bounded offensive planning (0.7.18)
+
+Default-ON `OffensiveCombatPlanning` addresses the missing firing-position evaluation
+under fast planning, not merely stalled/Idle units. Scope: non-allied, organic pirate
+and Rogue forces; alien/machine/drone AI and severe suppression/morale emergencies
+retain their previous behavior.
+
+- Prefer an already-positive native InflictDamage action over Move/Idle. This does not
+  execute attacks directly or change weapon uses, AP, friendly-fire or targeting rules.
+- Before native score normalization, inspect at most eight existing local origins,
+  four currently detected targets and two unlimited-use, targeted, direct-fire weapons.
+  Native usability, applicability and expected damage decide whether a shot is useful.
+  Setup/deployment weapons, AoE, indirect and limited-use attacks keep native handling.
+- Hard limits: 24 native probes per evaluation, 48 per actor/round, 256 actor records;
+  stop starting probes after a soft 20 ms budget. An individual native call cannot be
+  interrupted, so this is **not** a guaranteed 20 ms frame-time bound. No map-wide
+  firing search, additional path search, task or skill execution is introduced.
+- One/two ready companions within 12 tiles add 25/50% projected offensive utility
+  before native scaling. This rewards local support, not omniscient enemy counts.
+- With no native attack/support utility, already-assigned exclusively AdvanceTowards
+  orders get immediate directional progress utility, including when cover is worse.
+  Preserve native multi-order allocation, arrival, defense orders, safety and AP/path
+  processing. This is separate from the old two-idle-round recovery fallback.
+- Visible ProtectUnit/RescueUnit/Collateral mission targets can influence positioning;
+  hidden actors never provide coordinates. Native immediate civilian priority is retained.
+
+Disable `OffensiveCombatPlanning` and restart to compare with 1.4-style behavior.
+Automated checks do not establish improved aggressiveness or turn time in MENACE;
+the new policy needs gameplay acceptance (#2/#17).
 
 Independent AI DLL; Larger Maps is optional and no longer installs it automatically.
 Requires Jiangyu and MenaceModSettings. The Suite explicitly includes both modules.

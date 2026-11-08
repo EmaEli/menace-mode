@@ -264,7 +264,7 @@ internal static class AdvanceRecoveryRuntime
         return valid;
     }
 
-    private static bool TryReadAdvanceOrders(Agent agent, Actor actor, out Zone selected, out AdvanceRecoveryOrder order)
+    internal static bool TryReadAdvanceOrders(Agent agent, Actor actor, out Zone selected, out AdvanceRecoveryOrder order)
     {
         selected = null; order = default;
         var zones = agent?.GetZones();

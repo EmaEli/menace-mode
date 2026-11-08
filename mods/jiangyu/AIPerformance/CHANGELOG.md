@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.5.0 — 8 November 2026
+
+- Restore bounded native direct-fire positioning under fast planning for organic
+  pirate/Rogue forces, rather than re-enabling the full map-wide firing search.
+- Prefer already-valid native damage actions over movement/Idle; preserve other useful
+  native actions, emergency states, weapon/AP rules and native execution.
+- Reward nearby support with capped projected utility and immediately value progress
+  toward allocated advancing mission orders when no useful attack/support is present.
+  Unlike stalled recovery, advancing tiles need not be equally safe as the current tile.
+- Use native-detected mission civilians for positioning without hidden coordinates,
+  generic civilian hostility or fabricated immediate attacks.
+- Bound work to 24 probes/evaluation, 48/actor/round and a soft 20 ms probe-start limit.
+  Keep paths/safety native; roll back partial utility/reserve writes on managed failure.
+- Default-ON `OffensiveCombatPlanning`; reviewed 0.7.18 only. Automated/native-contract
+  and installation evidence are distinct from gameplay acceptance (#2/#17).
+
 ## 1.4.0 — 8 November 2026
 
 - Continue a recovered advance in the next round after actual progress toward the same

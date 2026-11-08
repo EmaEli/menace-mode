@@ -46,6 +46,8 @@ Check(faction.GetMethods().Count(h =>
 var template = Type("Il2CppMenace.Tactical.Skills.SkillTemplate");
 Property(template, "IsAttack", "Boolean");
 Property(template, "IsLineOfFireNeeded", "Boolean");
+foreach (string member in new[] { "IsTargeted", "IsDeploymentRequired", "IsWeaponSetupRequired" }) Property(template, member, "Boolean");
+Property(template, "AoEType", "SkillAoEType");
 Property(template, "AIConfig", "SkillBehavior");
 Property(Type("Il2CppMenace.Tactical.AI.Data.SkillBehavior"), "InfluencesPositioning", "Boolean", true);
 var config = Type("Il2CppMenace.Tactical.AI.AIConfig");
@@ -55,6 +57,7 @@ Property(weights, "NearTileLimit", "Int32", true);
 Property(weights, "CullTilesDistances", "Int32", true);
 foreach (string member in new[] { "DistanceToZones", "DistanceToAdvanceZones", "UtilityThreshold" })
     Property(weights, member, "Single");
+foreach (string member in new[] { "InflictDamageFromTile", "IncludeAttacksAgainstAllOpponentsMult" }) Property(weights, member, "Single");
 void Method(TypeDefinition type, string member, string result, params string[] parameters)
 {
     Check(type.GetMethods().Count(h =>
@@ -67,6 +70,8 @@ void Method(TypeDefinition type, string member, string result, params string[] p
 }
 var agent = Type("Il2CppMenace.Tactical.AI.Agent");
 Method(agent, "PickBehavior", "Behavior");
+Method(agent, "PostProcessTileScores", "Void");
+Method(agent, "GetTiles", "Dictionary<Tile,TileScore>");
 Method(agent, "GetZones", "List<Zone>");
 Method(agent, "GetActor", "Actor");
 Method(agent, "GetRole", "RoleData");
@@ -98,6 +103,15 @@ Type("Il2CppMenace.Tactical.Objectives.RescueUnit");
 Method(Type("Il2CppMenace.Tactical.Objectives.Collateral"), "FulfillsConditions", "Boolean", "Entity");
 Method(Type("Il2CppMenace.Tactical.Tile"), "GetEntity", "Entity");
 Method(Type("Il2CppMenace.Tactical.AI.Behaviors.InflictDamage"), "GetTargetValue", "Single", "Boolean", "Skill", "Tile", "Tile", "Tile");
+Method(Type("Il2CppMenace.Tactical.AI.SkillBehavior"), "GetSkill", "Skill");
+var skill = Type("Il2CppMenace.Tactical.Skills.Skill");
+Method(skill, "IsUsableOn", "Boolean", "Tile", "Tile", "TargetUsageParams");
+Method(skill, "IsApplicableTo", "Boolean", "Tile", "Entity");
+Method(skill, "GetFinalUserTile", "Tile", "Tile", "Tile");
+Method(skill, "GetActionPointCost", "Int32");
+Method(skill, "HasLimitedUses", "Boolean");
+Method(skill, "IsOutOfUses", "Boolean");
+Property(Type("Il2CppMenace.Tactical.Skills.TargetUsageParams"), "IGNORE_DEPLOYMENT_AND_ANGLE", "TargetUsageParams");
 var actor = Type("Il2CppMenace.Tactical.Actor");
 Method(actor, "SetDetectedByFaction", "Void", "Int32");
 Method(actor, "IsDetectedByFaction", "Boolean", "Int32");
@@ -108,6 +122,8 @@ Method(entity, "HasTag", "Boolean", "TagType");
 Method(entity, "IsInfantry", "Boolean");
 Method(entity, "IsVehicle", "Boolean");
 Method(Type("Il2CppMenace.Tactical.AI.BaseFaction"), "IsAlliedWith", "Boolean", "Int32");
+Method(Type("Il2CppMenace.Tactical.AI.BaseFaction"), "GetActors", "List<Actor>");
+Method(faction, "GetOpponents", "List<Opponent>");
 Check(manager.GetMethods().Count(h =>
 {
     var method = reader.GetMethodDefinition(h);
@@ -129,7 +145,8 @@ Property(score, "Tile", "Tile");
 Property(score, "DistanceScore", "Single", true);
 Property(score, "UtilityScore", "Single", true);
 foreach (string member in new[] { "SafetyScore", "UtilityByAttacksScore", "UtilityByAttacksScoreCandidate" })
-    Property(score, member, "Single");
+    Property(score, member, "Single", member == "UtilityByAttacksScore");
+Property(score, "MinimumUtilityAPCost", "Int32", true);
 Property(Type("Il2CppMenace.Tactical.AI.Behaviors.Attack"), "m_Candidates");
 var geometry = Type("Il2CppMenace.Tools.RectIntExtensions");
 Method(geometry, "GetDistanceTo", "Int32", "RectInt", "Tile");

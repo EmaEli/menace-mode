@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Version>1.4.0</Version>
+    <Version>1.5.0</Version>
     <AssemblyName>AIPerformance</AssemblyName>
     <RootNamespace>AIPerformance</RootNamespace>
     <ImplicitUsings>disable</ImplicitUsings>
@@ -13,6 +13,7 @@
     <Compile Include="$(SharedSourceDir)/LocalTacticalRouting.cs" Link="LocalTacticalRouting.cs" />
     <Compile Include="$(SharedSourceDir)/KnownCombatSkillIds.cs" Link="KnownCombatSkillIds.cs" />
     <Reference Include="0Harmony" HintPath="$(MelonLoaderDir)/0Harmony.dll" Private="false" />
+    <Reference Include="Il2CppSirenix.Serialization" HintPath="$(GameAssembliesDir)/Il2CppSirenix.Serialization.dll" Private="false" />
     <Reference Include="MenaceModSettings" HintPath="$(MenaceModSettingsPath)" Condition="'$(MenaceModSettingsPath)' != ''" Private="false" />
     <Reference Include="MenaceModSettings" HintPath="../../MenaceModSettings/compiled/code/MenaceModSettings.dll" Condition="'$(MenaceModSettingsPath)' == ''" Private="false" />
   </ItemGroup>

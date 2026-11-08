@@ -27,8 +27,17 @@ internal static class MissionCivilianPriorityRuntime
         int kind = (int)civilian.GetFaction();
         if ((kind != 3 && kind != 4) || faction.IsAlliedWith(kind) || civilian.IsDying() ||
             civilian.IsContainedWithinAnotherEntity()) return nativeValue;
+        if (!MatchesObjective(civilian, objectives)) return nativeValue;
+        float priority = nativeValue * 2;
+        return float.IsFinite(priority) ? priority : nativeValue;
+    }
+
+    // Call only after native detection/alliance checks; never discover an unseen actor here.
+    internal static bool MatchesObjective(Actor civilian, ObjectiveManager objectives)
+    {
+        if (civilian == null || objectives == null) return false;
         var list = objectives.m_Objectives;
-        if (list == null || list.Length < 1 || list.Length > 32) return nativeValue;
+        if (list == null || list.Length < 1 || list.Length > 32) return false;
         foreach (var objective in list)
         {
             if (objective == null || !objective.IsOngoing()) continue;
@@ -44,10 +53,9 @@ internal static class MissionCivilianPriorityRuntime
                 matches = collateral != null && collateral.FulfillsConditions(civilian);
             }
             if (!matches) continue;
-            float priority = nativeValue * 2;
-            return float.IsFinite(priority) ? priority : nativeValue;
+            return true;
         }
-        return nativeValue;
+        return false;
     }
 }
 

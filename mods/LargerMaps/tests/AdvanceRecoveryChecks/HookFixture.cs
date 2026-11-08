@@ -28,6 +28,16 @@ namespace AIPerformance
         private const int ZoneReferenceSize = 64;
         private static readonly FixtureLog _log = new();
         private static bool ReadBool(string key, bool fallback) => fallback;
+        private static bool _combatPlanningActive = true;
+        private static readonly HashSet<string> _simplifiedAttackIds = new() { "active.fixture" };
+        internal static void BeginOffensiveFixture()
+        {
+            _offensiveBudget.Reset(); _offensivePlanningEnabled = true; _missionCivilianPriorityEnabled = true;
+        }
+        internal static void OffensiveScoresFixture(Agent agent) => OffensivePlanningScores(agent);
+        internal static Behavior OffensiveChoiceFixture(Agent agent, Behavior choice)
+        { OffensivePlanningChoice(agent, ref choice); return choice; }
+        internal static bool OffensiveEnabled => _offensivePlanningEnabled;
         private sealed class FixtureLog
         {
             public void Msg(string message)

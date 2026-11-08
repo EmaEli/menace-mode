@@ -19,6 +19,7 @@ public sealed partial class Plugin
     }
 
     private static readonly List<SkillPlanningRestore> _combatPlanningRestores = new();
+    private static readonly HashSet<string> _simplifiedAttackIds = new(StringComparer.Ordinal);
     private static bool _combatPlanningActive;
     private static bool _combatPlanningWarned;
 
@@ -176,7 +177,7 @@ public sealed partial class Plugin
 
             _combatPlanningRestores.Add(new SkillPlanningRestore { Config = config, Original = true });
             wrote = false; // Scene-scoped restore now owns this native flag.
-            if (isAttack) attacks++;
+            if (isAttack) { attacks++; _simplifiedAttackIds.Add(templateId); }
             else buffs++;
         }
         catch
@@ -197,6 +198,7 @@ public sealed partial class Plugin
             catch { /* Never block tactical scene exit. */ }
         }
         _combatPlanningRestores.Clear();
+        _simplifiedAttackIds.Clear();
         _combatPlanningActive = false;
     }
 
