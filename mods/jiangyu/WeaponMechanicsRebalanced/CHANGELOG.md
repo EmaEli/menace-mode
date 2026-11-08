@@ -3,7 +3,7 @@
 - Add default-ON HE mortar fire priority and a 2–4-round fire mission setting (default 3, acquisition round included).
 - Boost native-scored targets and prefer a ready mortar over Move/Idle. Retain the target tile through lost contact until expiry, without reading hidden opponent coordinates or renewing missions from blind shots.
 - Retain native action/deployment/rotation/AP/ammunition checks. Reject blind fire near friendly actors; clear memory on scene changes, round rollback and disable. Do not alter player, smoke or unrelated weapon AI.
-- Add executable production-hook/lifecycle checks with managed stand-ins and extend the native metadata gate. Automated validation and canonical PC deployment are recorded separately; gameplay acceptance pending.
+- Add executable production-hook/lifecycle checks with managed stand-ins and extend the native metadata gate. Validation: 207 Python tests, 67 enemy-mortar production-hook assertions, 18,009 scoped offline/artifact checks, clean extracted-source Release build, 139 native metadata checks and 38 binary type references pass. Canonical Windows BuildOnly/install passed on 0.7.18+22828 with SDK 10.0.113, zero WMR warnings/errors, manifest/assembly/file 0.6.0/0.6.0.0/0.6.0.0 verified and 1,437 unrelated Mods/UserData files unchanged. Previous WMR 0.5.0 retained under `_MENACE_Backups/20261108-142036-f26c871873094c7285c4dd387ed89fa4`. Startup/gameplay acceptance remains pending.
 
 ## 0.5.1 — caliber-based smoke mortar dispersion (#59)
 
