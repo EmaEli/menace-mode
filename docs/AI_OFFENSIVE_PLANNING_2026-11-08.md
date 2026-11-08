@@ -62,7 +62,33 @@ contracts, 207 Suite Python tests, 153 LargerMaps Python tests (eight skips), an
 scoped shared behavior/artifact checks. The shared fixture build reports existing nullable
 warnings; the production AI build has zero warnings/errors.
 
-Windows canonical BuildOnly/install and installed hashes are recorded below when completed.
-No 1.5.0 startup, native dispatch, combat acceptance or turn-time comparison has been run.
-Keep #2/#17 open. Do not request another identical twenty-turn replay: first check a short
-engagement for direct-fire use, coherent advance and any new delay, then inspect the fresh log.
+## Verified Windows test installation
+
+Source commits 08c60d6 (policy), 741b790 (positive support guard) and e629959 (worker ID
+safety) are pushed to dev. Final canonical kit: 60 inventoried files, SHA256
+`d2eff1c904c6d0443c63091ac8749a768cc7d9879943b4e147aa8f460313b038`.
+Its gitBaseRevision is e629959; inventoried shared installer files include pre-existing
+working-tree changes, preserved and not committed as AI work. The hash identifies the
+actual complete kit, not a claim that the whole original worktree was clean.
+
+Clean extracted-source build and canonical Windows BuildOnly/install pass on MENACE
+0.7.18+22828 with .NET SDK 10.0.113: zero production warnings/errors; 161 metadata,
+31 planning and 12,953 linked production checks pass again on Windows. All 119 local
+proxy hashes match the current PC. No native game methods were executed by these checks.
+
+- Installed manifest/assembly/file: **1.5.0 / 1.5.0.0 / 1.5.0.0**.
+- Installed DLL SHA256: `3045357b697acc8dd3a9fa0b4795d1a7ff226c07c96a4ec23fbe09f1581fa6a8`.
+- Affected-only backup/journal outside Mods:
+  `_MENACE_Backups/20261108-223940-d7f067e0086e4868b2a10d83a91a6572`.
+  Original 1.4.0, all original/installed file hashes and journal scope verified.
+- **1,563 protected Mods/UserData/proxy files unchanged**; settings/loader reused.
+  No saves, settings or unrelated mod files changed. Game remained closed.
+- Stage: `E:\MENACE-Work\Builds\AIPerformance-1.5.0-offensive-20261108-f68c-r2`.
+  Complete canonical logs retained there as buildonly.log and install.log; standard
+  current installer log is `E:\MENACE-Work\Temp\MENACE-install.log`.
+
+**Startup/native dispatch, direct-fire behavior and real turn-time comparison remain
+unverified.** #2/#17 stay open. Next: a short direct-fire engagement, watching whether
+infantry shoot when able and use coherent firing/mission positions without long turns.
+Retrieve fresh Latest.log after the user's feedback; do not prescribe another identical
+twenty-turn waiting test as evidence of a fix.

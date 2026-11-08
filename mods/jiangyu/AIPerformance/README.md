@@ -29,6 +29,8 @@ retain their previous behavior.
 Disable `OffensiveCombatPlanning` and restart to compare with 1.4-style behavior.
 Automated checks do not establish improved aggressiveness or turn time in MENACE;
 the new policy needs gameplay acceptance (#2/#17).
+Canonical 1.5.0 Windows BuildOnly/install and on-disk versions/hashes are verified;
+see [policy/install evidence](../../../docs/AI_OFFENSIVE_PLANNING_2026-11-08.md).
 
 Independent AI DLL; Larger Maps is optional and no longer installs it automatically.
 Requires Jiangyu and MenaceModSettings. The Suite explicitly includes both modules.
