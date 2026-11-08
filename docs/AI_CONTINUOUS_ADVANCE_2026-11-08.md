@@ -36,5 +36,29 @@ This follows the rejected slow-cadence [1.3.1 test](AI_MULTI_ORDER_FEEDBACK_2026
 - Real-reference Release build succeeded. All 119 local proxies match fresh PC SHA256 values;
   exact native hash `494c9e212d411d898b3abafb4ad233f7a39a22648d713a86b9641d698b2d12e9`.
 - Transfer round trip hash-verified; PC closed, installed AI 1.3.1 baseline confirmed.
-- Windows canonical BuildOnly/install, final package checks and gameplay remain pending.
-  No claim of live behavior or better turn timings until tested. #2/#17 remain open.
+- Python: 207 Suite checks and 149 LargerMaps checks (8 skips) pass. Scoped shared
+  runtime/artifact runner: 18,009 checks pass. Existing nullable fixture warnings remain;
+  production builds have zero warnings/errors.
+
+## Canonical Windows installation
+
+- Source `7cdf906` committed/pushed to `dev`; unrelated worktree changes preserved.
+- Canonical one-module installed-settings BuildKit: **56 inventoried files**, SHA256
+  `a115c7afb03bc9ad1c6845e84817a0dffeff99349360c9636e94f10a1cd3a16f`.
+  ZIP inventory and clean extracted-source build/real DLL metadata checks passed locally.
+- Windows canonical BuildOnly and standalone install both passed with private SDK 10.0.113
+  on MENACE 0.7.18+22828. Each build had zero warnings/errors and reran 125 metadata,
+  29 planning and 12,885 recovery/contact/objective checks before staging.
+- Verified on disk: manifest **1.4.0**, assembly/file **1.4.0.0**. DLL SHA256:
+  `8ed977a85b6d88518d7b1ee1bcf5f98c6dcd2e0b9dcfe944ea3e9f7369d1ae5f`.
+- Affected-only backup outside Mods:
+  `_MENACE_Backups/20261108-195145-0505a7fbc8f647f580e6bb541a2d1eb9`.
+  Journal targets are only AIPerformance and its legacy root DLL conflict. Original 1.3.1
+  DLL hash and every backup/live file hash match the journal. Settings and loader reused.
+- All **1,562 protected Mods/UserData/proxy files** match preflight hashes; saves untouched.
+  Game closed throughout. Script transfer round trip, archive and inventory hashes verified.
+- PC stage/logs: `E:\MENACE-Work\Builds\AIPerformance-1.4.0-continuous-20261108`.
+  Stable canonical log: `E:\MENACE-Work\Temp\MENACE-install.log`.
+- Startup/native dispatch, actual battle behavior and turn timings **not yet tested**.
+  No claim of a live targeting or movement fix. #2/#17 remain open; retrieve fresh Latest.log
+  after the user's next gameplay feedback. Do not request another identical twenty-turn run.
