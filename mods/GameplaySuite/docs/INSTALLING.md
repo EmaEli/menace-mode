@@ -76,7 +76,7 @@ two), 80 AP per action, stationary progress and mortar-style tile markers. Its c
 runs managed production-hook/marker tests and metadata-only native contracts before staging.
 Use `-UseInstalledSettings` to validate/reuse both MenaceModSettings and Jiangyu.Loader without
 replacing either. Windows/gameplay acceptance remains separate from these automated checks.
-LargerMaps 2.6.2 and AIPerformance 1.3.0 are independent standalone selections (#2/#93).
+LargerMaps 2.6.2 and AIPerformance 1.3.1 are independent standalone selections (#2/#93).
 Neither requires or silently bundles the other; the default Suite explicitly selects both.
 Each supports `--use-installed-settings` / `-UseInstalledSettings` to preserve settings/loader.
 AIPerformance 1.3.0 adds a separate OFF-by-default experimental recent-contact approach
@@ -86,6 +86,10 @@ Three responders per faction maximum; no artillery targeting changes in this fir
 AIPerformance owns conditional recovery (reviewed 0.7.17/0.7.18, actual maps above 64x64)
 and runs managed recovery/planning and native proxy metadata checks before staging.
 Its simplified planning remains ON; old Larger Maps AI settings are not migrated.
+Version 1.3.1 also covers up to eight exclusively AdvanceTowards zones: the native
+Entity.ID allocation chooses the zone, multi-zone distance scores are left unchanged,
+and the entire ordered zone context is revalidated before utility/choice. Mixed or
+defensive orders and arrival remain excluded.
 Optional candidate limits and recovery diagnostics remain OFF. The exact scoped 0.7.18 hash
 has a reviewed 28-site native pathfinding plan, including its inlined map-generator
 grid fill (#94). Unknown hashes/conflicting instructions still fall back to 64x64.

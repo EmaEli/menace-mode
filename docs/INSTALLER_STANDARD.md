@@ -133,9 +133,11 @@ Managed checks exercise the production retreat lifecycle, but do not prove IL2CP
 or gameplay. Suite/Camera products remain blocked on the scoped hash.
 LargerMaps 2.6.2 is standalone: never expand its module selection to include
 AIPerformance. The Suite explicitly lists both independent packages; neither manifest
-requires the other (#2/#93). AIPerformance 1.1.0 owns stalled-advance recovery and runs
+requires the other (#2/#93). AIPerformance 1.3.1 owns stalled-advance recovery and runs
 managed recovery/planning and proxy metadata checks before staging. Installed-settings
 mode supports either standalone without replacing settings/loader. On the reviewed 0.7.18 hash,
+multi-advance recovery uses native Entity.ID allocation without reconstructing native
+multi-zone distance weights; mixed/defensive orders still fail closed. On that same hash,
 LargerMaps 2.6.1 now supports the 28-site native plan, including both inlined node-grid
 fill bounds (#94). Earlier builds retain their original plans; unknown hashes and
 instruction conflicts still force 64x64. This is not in-game acceptance.
