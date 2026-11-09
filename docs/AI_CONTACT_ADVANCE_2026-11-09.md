@@ -59,11 +59,23 @@ that every zero attack score was caused by simplified future-position search.
 - Exact reviewed native hash is pinned by the existing byte-contract tests. `SetSleeping`
   at RVA `0x4D5ED0` is `88 51 51 C3`: only the sleeping flag is assigned, no AP/action call.
   The new setter contract joins the existing native phase/path/setup contracts.
-- Broader checks and canonical one-module packaging are recorded below when complete.
+- Broader regressions: 208 Suite Python tests passed; LargerMaps ran 156 tests with
+  eight expected unavailable-fixture skips and no failures. One initial Suite failure
+  exposed the stale source inventory row; that row was corrected and all 208 reran cleanly.
+- Canonical installed-companion one-module BuildKit: 78 inventoried files; local clean
+  extracted-source build and real manifest/assembly/file versions 1.9.0/1.9.0.0/1.9.0.0
+  verified; 17,986 scoped shared offline checks passed. Production compile: zero
+  warnings/errors. Existing nullability warnings occur only in the shared test harness.
+- Committed/pushed implementation: `e017a2c40389b47f05ca757286d51e363bcb2115` on `dev`.
+  All 73 tracked source payloads in the kit exactly match that commit; no unrelated
+  pending gameplay, installer or logging changes are bundled. Settings/loader are reused.
+- Candidate: `.tmp/ai190-source.u_4h4xt3/AIPerformance-1.9.0.zip` (local, not a release).
+  SHA256: `57eec5baa309531147e25fb01b00d0c236204e512a620f0cac392fb4374f5794`.
 
 ## Deployment blocker and next test
 
-`ssh menace-pc` currently fails with **No route to host** at the configured LAN address.
+`ssh menace-pc` currently fails with **No route to host** at the configured LAN address;
+`DESKTOP-H4PILPA.local` also fails local hostname discovery.
 No current game-closed check, Windows BuildOnly, installation, backup or gameplay check
 was possible. No PC saves, settings, installed mod files or unrelated mods were changed.
 The prior verified PC version remains 1.8.1; it has not been freshly audited here.
