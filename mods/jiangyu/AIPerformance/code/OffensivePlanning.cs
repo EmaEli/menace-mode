@@ -43,12 +43,13 @@ public sealed partial class Plugin
         try
         {
             var manager = TacticalManager.Get(); var map = manager?.GetMap();
+            bool unresolvedDanger = false;
             if (map != null && _combinedArmsEnabled)
             {
                 try
                 {
                     int flanks = CombinedArmsThreatRuntime.Flank(__instance, __instance.GetTiles(), _supportThreats,
-                        _offensiveBudget, map, manager.m_Round);
+                        _offensiveBudget, map, manager.m_Round, out unresolvedDanger);
                     if (flanks > 0)
                     {
                         CombinedArmsDiagnostic(manager.m_Round, __instance.GetFaction().Pointer.ToInt64(),
@@ -57,12 +58,16 @@ public sealed partial class Plugin
                     }
                     if (CombinedArmsRuntime.Plan(__instance, __instance.GetTiles(), _combinedArms, _offensiveBudget,
                         map, manager.m_Round, _combinedArmsDiagnostics)) return;
+                    if (unresolvedDanger)
+                        CombinedArmsDiagnostic(manager.m_Round, __instance.GetFaction().Pointer.ToInt64(),
+                            __instance.GetActor().Pointer.ToInt64(), "flank", "result=unresolved objective-advance=blocked");
                 }
                 catch (Exception ex) { CombinedArmsDisable(ex); return; }
             }
             if (map != null && _offensivePlanningEnabled) OffensivePlanningRuntime.Plan(__instance, __instance.GetTiles(),
                 _missionCivilianPriorityEnabled ? manager.GetMission()?.Objectives : null,
-                _offensiveBudget, map.Pointer.ToInt64(), manager.m_Round, id => _simplifiedAttackIds.Contains(id));
+                _offensiveBudget, map.Pointer.ToInt64(), manager.m_Round, id => _simplifiedAttackIds.Contains(id),
+                suppressAdvance: unresolvedDanger);
         }
         catch (Exception ex) { OffensivePlanningDisable(ex); }
     }

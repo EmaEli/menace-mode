@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.7.1 — 9 November 2026
+
+- Observe armed, detected threats to advance-ordered infantry independently of that
+  soldier's suppression/readiness; retain native detection, applicability, range and LOS
+  checks. Allow one bounded retry after an incomplete observation, without hidden reads.
+- When a remembered firing lane still threatens the planner and no safe covered flank can
+  be seeded, omit only mod-generated objective-advance utility for that pass. Native shots,
+  emergency actions and ordinary no-threat advances remain available.
+- Add production-hook regression checks for suppressed victims, retry-after-range-miss,
+  exposed advance suppression, direct-fire preservation and the no-threat fallback.
+- Managed tests do not establish Windows installation or in-game acceptance.
+
 ## 1.7.0 — 9 November 2026
 
 - Remove rear-gap incentives for vehicle withdrawals: hold near infantry, catch up only

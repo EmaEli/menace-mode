@@ -1,6 +1,7 @@
 using AIPerformance;
 using Il2CppMenace.Tactical;
 using Il2CppMenace.Tactical.AI;
+using Il2CppMenace.Tactical.AI.Behaviors;
 using Il2CppMenace.Tactical.AI.Data;
 using Il2CppMenace.Tactical.Skills;
 
@@ -21,8 +22,11 @@ internal static class CombinedArmsThreatChecks
         check(enemy.PositionReads == 0 && memory.Get(1, 1, 30).Length == 0, "never observed enemy supplies no position or weapons");
         enemy.Detected = true;
         enemy.Tile.Sees = t => t.GetZ() == 10;
+        infantry.Suppression = .5f;
         CombinedArmsThreatRuntime.Observe(faction, enemy, memory, map, 1);
-        check(memory.Get(1, 1, 30).Single().X == 25, "visible ranged threat to advancing infantry is remembered");
+        check(memory.Get(1, 1, 30).Single().X == 25,
+            "visible ranged threat to advancing infantry is remembered even when its victim is suppressed");
+        infantry.Suppression = 0;
         int reads = enemy.PositionReads;
         enemy.Detected = false; enemy.Tile = map.GetTile(60, 60);
         memory.Advance(1, 2);
@@ -49,21 +53,56 @@ internal static class CombinedArmsThreatChecks
             "late callbacks cannot rewind or replace the mission");
         memory.Advance(1, 3); check(memory.Get(1, 3, 30).Length == 1, "two-round uncertain contact survives");
         memory.Advance(1, 4); check(memory.Get(1, 4, 30).Length == 0, "unrefreshed contact expires");
-        check(memory.BeginObservation(1, 4, 30, 500) && !memory.BeginObservation(1, 4, 30, 500),
-            "repeated native detection callbacks cannot repeat expensive observation work");
+        check(memory.BeginObservation(1, 4, 30, 500) && memory.BeginObservation(1, 4, 30, 500) &&
+            !memory.BeginObservation(1, 4, 30, 500),
+            "one bounded retry is allowed, then repeated detection callbacks stop");
         memory.Reset(); check(memory.Advance(2, 1), "mission reset permits a new map");
         // A visible but unarmed enemy must not be classified as a firing threat.
         memory.Reset(); memory.Advance(1, 1); enemy.Detected = true; enemy.Attacks.Clear();
         CombinedArmsThreatRuntime.Observe(faction, enemy, memory, map, 1);
         check(memory.Get(1, 1, 30).Length == 0, "visible unarmed actor creates no firing-threat memory");
+        memory.Reset(); memory.Advance(1, 1);
+        var retrySkill = new Skill { MaxRange = 10 };
+        retrySkill.Range = (target, origin) => Math.Abs(target.GetX() - origin.GetX()) <= 10;
+        enemy.Attacks.Add(retrySkill); infantry.Tile = map.GetTile(10, 10); enemy.Tile = map.GetTile(25, 10);
+        enemy.PositionReads = 0;
+        CombinedArmsThreatRuntime.Observe(faction, enemy, memory, map, 1);
+        infantry.Tile = map.GetTile(20, 10);
+        CombinedArmsThreatRuntime.Observe(faction, enemy, memory, map, 1);
+        enemy.Tile = map.GetTile(30, 10);
+        CombinedArmsThreatRuntime.Observe(faction, enemy, memory, map, 1);
+        check(enemy.PositionReads == 2 && memory.Get(1, 1, 30).Single().X == 25,
+            "an out-of-range first observation can retry after movement and then stops without refreshing hidden coordinates");
         // Run the linked production faction/detection/scoring hooks, not just the helper.
-        enemy.Attacks.Add(new Skill()); enemy.Tile = map.GetTile(25, 10);
+        infantry.Tile = map.GetTile(10, 10); enemy.Attacks.Add(new Skill()); enemy.Tile = map.GetTile(25, 10);
         faction.Opponents.Add(new() { Actor = enemy }); TacticalManager.Instance.Faction = faction;
         flank.UtilityScore = 0; Plugin.BeginCombinedFixture(faction);
         enemy.Detected = false; reads = enemy.PositionReads;
         Plugin.CombinedDetectedFixture(enemy, 9); Plugin.OffensiveScoresFixture(infantry.Agent);
         check(flank.UtilityScore > 0 && enemy.PositionReads == reads && Plugin.CombinedEnabled,
             "production hooks remember a turn-start sighting and flank without hidden reads after contact loss");
+        // An exposed progress tile must not receive generic advance utility when a known
+        // threat has line of fire and no safe local candidate breaks that lane.
+        infantry.Tile = map.GetTile(10, 10); infantry.Agent.Zones[0].Area = new(40, 10, 3, 3);
+        infantry.Agent.Tiles.Clear();
+        TileScore AddTile(int x, int z) { var score = new TileScore { Tile = map.GetTile(x, z), SafetyScore = 10 }; infantry.Agent.Tiles[score.Tile] = score; return score; }
+        AddTile(10, 10); var exposedProgress = AddTile(14, 10); AddTile(12, 13);
+        enemy.Detected = true; enemy.Tile = map.GetTile(20, 10); enemy.Tile.Sees = _ => true;
+        foreach (var skill in enemy.Attacks) { skill.MaxRange = 30; skill.Range = (_, _) => true; }
+        TacticalManager.Instance.m_Round = 1; Plugin.BeginCombinedFixture(faction); enemy.Detected = false;
+        Plugin.OffensiveScoresFixture(infantry.Agent);
+        check(exposedProgress.UtilityScore == 0 && exposedProgress.UtilityByAttacksScore == 0,
+            "unresolved remembered danger blocks generic objective-advance utility on exposed tiles");
+        var nativeShot = new InflictDamage { Owner = infantry.Agent };
+        infantry.Agent.Behaviors.Add(nativeShot); enemy.Detected = true;
+        Plugin.CombinedDetectedFixture(enemy, 9); Plugin.OffensiveScoresFixture(infantry.Agent);
+        check(exposedProgress.UtilityByAttacksScore > 0,
+            "unresolved danger does not suppress an otherwise valid native direct-fire opportunity");
+        foreach (var score in infantry.Agent.Tiles.Values)
+        { score.UtilityScore = 0; score.UtilityByAttacksScore = 0; score.UtilityByAttacksScoreCandidate = 0; }
+        enemy.Detected = false; Plugin.BeginCombinedFixture(faction); Plugin.OffensiveScoresFixture(infantry.Agent);
+        check(exposedProgress.UtilityScore > AIConfig.WEIGHTS.UtilityThreshold,
+            "ordinary objective advance remains available when no remembered threat exists");
         // Exhausted budgets and emergency/defensive contexts cannot get flank utility.
         memory.Observe(1, 1, 30, new(500, 25, 10, 30, 1));
         var emptyBudget = new OffensivePlanningBudget();

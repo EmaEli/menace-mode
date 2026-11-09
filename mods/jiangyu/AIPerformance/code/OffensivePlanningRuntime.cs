@@ -60,7 +60,7 @@ internal static class OffensivePlanningRuntime
     }
 
     internal static void Plan(Agent agent, TileScores tiles, ObjectiveManager objectives,
-        OffensivePlanningBudget budget, long map, int round, Func<string, bool> simplified)
+        OffensivePlanningBudget budget, long map, int round, Func<string, bool> simplified, bool suppressAdvance = false)
     {
         if (!Eligible(agent) || tiles == null || tiles.Count < 2 || tiles.Count > 4096) return;
         var actor = agent.GetActor();
@@ -134,7 +134,9 @@ internal static class OffensivePlanningRuntime
             }
         }
     Finished:
-        if (!useful) Advance(agent, tiles, current, support, GetEdit);
+        // Preserve real shot planning, but do not add blind mission-progress utility when
+        // a remembered firing lane currently threatens this unit and no cover seed exists.
+        if (!useful && !suppressAdvance) Advance(agent, tiles, current, support, GetEdit);
         bool committed = false;
         try
         {

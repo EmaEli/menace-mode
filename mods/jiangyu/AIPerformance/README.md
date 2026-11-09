@@ -37,9 +37,16 @@ game (`CombinedArmsSupport`, OFF by default). Fast planning must remain enabled.
   retained threats, isolated by faction/mission. A local flank uses at most 16 shared probes
   and a soft 5 ms start limit, preserves native safety and never creates attack utility.
   Four flank seeds at most; no global route search or guaranteed squad-level maneuver.
+- Threat observation is independent of the potential victim's suppression/readiness, but
+  still requires an advance-ordered infantry target and a detected armed enemy with native
+  applicability, range and line of sight. Failed observations get at most one retry per
+  target/round; successful sightings are not polled again that round.
+- If a remembered threat remains in a possible firing lane and no safe local flank is
+  available, suppress only the generic objective-advance score for that AI pass. Native
+  direct-fire scoring, emergency choices and no-threat advance behavior are retained.
 
 Mortar/HE, smoke and suppression responses to uncertain contacts are **not added** in
-1.7.0: their native behavior remains unchanged. This candidate implements the local
+1.7.1: their native behavior remains unchanged. This candidate implements the local
 flanking alternative, not a complete combined-arms director or a safe indirect-fire policy.
 
 This is a first-stage positioning/setup-aware firing policy, **not** proven gameplay

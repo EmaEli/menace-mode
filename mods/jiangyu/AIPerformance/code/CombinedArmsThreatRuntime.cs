@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using Il2CppMenace.Tags;
 using Il2CppMenace.Tactical;
 using Il2CppMenace.Tactical.AI;
 using Il2CppMenace.Tactical.AI.Data;
+using Il2CppMenace.Tools;
 using Il2CppTactical;
 using TileScores = Il2CppSystem.Collections.Generic.Dictionary<Il2CppMenace.Tactical.Tile, Il2CppMenace.Tactical.AI.Data.TileScore>;
 
@@ -13,7 +15,7 @@ internal static class CombinedArmsThreatRuntime
 {
     internal static void Observe(AIFaction faction, Actor enemy, CombinedArmsThreatState memory, Map map, int round)
     {
-        if (!ContactConvergenceRuntime.EligibleFaction(faction) || enemy == null ||
+        if (!ContactConvergenceRuntime.EligibleFaction(faction) || enemy == null || memory == null || map == null ||
             !enemy.IsDetectedByFaction((int)faction.GetFactionType())) return;
         int kind = (int)enemy.GetFaction();
         if ((kind != 1 && kind != 2) || faction.IsAlliedWith(kind)) return;
@@ -26,9 +28,14 @@ internal static class CombinedArmsThreatRuntime
         int probes = 0; long started = Stopwatch.GetTimestamp();
         foreach (var ally in allies)
         {
-            var request = CombinedArmsRuntime.Snapshot(ally?.GetAgent(), true);
-            if (request is not { Kind: SupportKind.Infantry }) continue;
+            var agent = ally?.GetAgent(); var actor = agent?.GetActor(); var role = agent?.GetRole();
+            if (actor == null || role == null || !actor.IsInfantry() || actor.HasTag(TagType.MACHINE) ||
+                actor.HasTag(TagType.INDIRECT_FIRE) || actor.HasTag(TagType.WEAPONS_TEAM) || role.AvoidOpponents ||
+                !(role.Move > 0 && float.IsFinite(role.Move)) ||
+                !(role.ZoneImportanceWeight > 0 && float.IsFinite(role.ZoneImportanceWeight)) ||
+                !AdvanceRecoveryRuntime.TryReadAdvanceOrders(agent, actor, out var zone, out _)) continue;
             var tile = ally.GetTile();
+            if (tile == null || RectIntExtensions.IsInside(zone.Area, tile)) continue;
             foreach (var skill in attacks)
             {
                 if (++probes > 32 || (Stopwatch.GetTimestamp() - started) * 1000.0 / Stopwatch.Frequency > 5) return;
@@ -46,10 +53,15 @@ internal static class CombinedArmsThreatRuntime
     }
 
     internal static int Flank(Agent agent, TileScores tiles, CombinedArmsThreatState memory,
-        OffensivePlanningBudget budget, Map map, int round)
+        OffensivePlanningBudget budget, Map map, int round) => Flank(agent, tiles, memory, budget, map, round, out _);
+
+    internal static int Flank(Agent agent, TileScores tiles, CombinedArmsThreatState memory,
+        OffensivePlanningBudget budget, Map map, int round, out bool unresolvedDanger)
     {
+        unresolvedDanger = false;
         var request = CombinedArmsRuntime.Snapshot(agent, false);
-        if (request is not { Kind: SupportKind.Infantry } || !CombinedArmsRuntime.Ready(agent) || tiles == null ||
+        if (request is not { Kind: SupportKind.Infantry } || !CombinedArmsRuntime.Ready(agent) || memory == null ||
+            budget == null || map == null || tiles == null ||
             tiles.Count < 2 || tiles.Count > 4096) return 0;
         var behaviors = agent.GetBehaviors();
         if (behaviors == null || behaviors.Count > 128) return 0;
@@ -79,21 +91,23 @@ internal static class CombinedArmsThreatRuntime
         if (!float.IsFinite(threshold) || threshold <= 0) return 0;
         var edits = new List<(TileScore Score, float Before, float After)>();
         int probes = 0; long started = Stopwatch.GetTimestamp();
+        bool threatened = false, threatUnverified = false;
         foreach (var threat in threats)
         {
             if (threat.X >= map.Width || threat.Z >= map.Height) continue;
             int uncertainty = 3 + (round - threat.SeenRound) * 2;
             if (CombinedArmsRuntime.Distance2(current, threat.X, threat.Z) > (threat.Range + uncertainty) * (threat.Range + uncertainty)) continue;
             var origin = map.GetTile(threat.X, threat.Z);
-            if (!Spend()) break;
+            if (!Spend()) { threatUnverified = true; break; }
             if (!origin.HasLineOfSightTo(current, LineOfSightFlags.Default)) continue;
+            threatened = true;
             foreach (var candidate in candidates)
             {
                 if (!Spend()) break;
                 var score = candidate.Score;
                 if (CombinedArmsRuntime.Distance2(score.Tile, threat.X, threat.Z) <= uncertainty * uncertainty ||
                     origin.HasLineOfSightTo(score.Tile, LineOfSightFlags.Default)) continue;
-                edits.Add((score, score.UtilityScore, Math.Max(score.UtilityScore, threshold * 1.5f)));
+                edits.Add((score, score.UtilityScore, System.Math.Max(score.UtilityScore, threshold * 1.5f)));
                 if (edits.Count == 4) break;
             }
             if (edits.Count > 0) break; // One local threat response per evaluation.
@@ -101,6 +115,7 @@ internal static class CombinedArmsThreatRuntime
         bool done = false;
         try { foreach (var edit in edits) edit.Score.UtilityScore = edit.After; done = true; }
         finally { if (!done) foreach (var edit in edits) edit.Score.UtilityScore = edit.Before; }
+        unresolvedDanger = edits.Count == 0 && (threatened || threatUnverified);
         return edits.Count;
 
         bool Spend()
