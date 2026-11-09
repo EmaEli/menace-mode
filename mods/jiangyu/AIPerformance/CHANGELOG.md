@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.6.1 — 9 November 2026
+
+- Add opt-in `DiagnoseCombinedArmsSupport` traces for snapshot rejection, candidate
+  matching/slot contention, support scoring/probe gates, claims and final native choice.
+- Emit at most 256 deduplicated records per mission; the option defaults OFF and requires
+  restart. No support policy, native action, task order, safety, setup, fire or AP changed.
+- Extend managed checks for diagnostic budget and candidate counts; logs are not gameplay
+  acceptance evidence.
+
 ## 1.6.0 — 9 November 2026
 
 - Optional OFF-by-default infantry-led support positions for narrowly recognized

@@ -12,6 +12,13 @@ namespace AIPerformance;
 internal static class SupportProjection
 {
     internal readonly record struct Result(float Value, float Attack, int Cost);
+    internal struct DiagnosticCounts
+    {
+        internal int TargetsConsidered, TargetUsable, TargetApplicable, TargetOriginMatches, PositiveDamage;
+        internal int LaneSamples, LaneInRange, LaneClear;
+        internal bool BudgetStopped;
+    }
+
     internal static List<Tile> DetectedTargets(AIFaction faction)
     {
         var result = new List<Tile>(); var seen = new HashSet<long>(); var opponents = faction.GetOpponents();
@@ -31,8 +38,10 @@ internal static class SupportProjection
     }
 
     internal static Result Evaluate(Agent agent, TileScore origin, SupportUnit request,
-        List<InflictDamage> weapons, List<Tile> targets, OffensivePlanningBudget budget, Map map, int round, ref int probes, long started)
+        List<InflictDamage> weapons, List<Tile> targets, OffensivePlanningBudget budget, Map map, int round,
+        ref int probes, long started, bool collectDiagnostics, out DiagnosticCounts diagnostics)
     {
+        diagnostics = default;
         var actor = agent.GetActor(); var faction = agent.GetFaction();
         bool moving = origin.Tile.Pointer != actor.GetTile()?.Pointer;
         float best = 0, attack = 0; int reserve = 1024;
@@ -47,12 +56,22 @@ internal static class SupportProjection
                 {
                     if (target == null || CombinedArmsRuntime.Distance2(target, request.X, request.Z) > 400) continue;
                     if (++considered > 2) break;
-                    if (!Spend(agent, budget, map, round, 4, ref probes, started)) return new(best, attack, reserve);
-                    if (!skill.IsUsableOn(target, origin.Tile, TargetUsageParams.IGNORE_DEPLOYMENT_AND_ANGLE) ||
-                        !skill.IsApplicableTo(target, null) || skill.GetFinalUserTile(origin.Tile, target)?.Pointer != origin.Tile.Pointer) continue;
+                    if (!Spend(agent, budget, map, round, 4, ref probes, started))
+                    {
+                        if (collectDiagnostics) diagnostics.BudgetStopped = true;
+                        return new(best, attack, reserve);
+                    }
+                    if (collectDiagnostics) diagnostics.TargetsConsidered++;
+                    if (!skill.IsUsableOn(target, origin.Tile, TargetUsageParams.IGNORE_DEPLOYMENT_AND_ANGLE)) continue;
+                    if (collectDiagnostics) diagnostics.TargetUsable++;
+                    if (!skill.IsApplicableTo(target, null)) continue;
+                    if (collectDiagnostics) diagnostics.TargetApplicable++;
+                    if (skill.GetFinalUserTile(origin.Tile, target)?.Pointer != origin.Tile.Pointer) continue;
+                    if (collectDiagnostics) diagnostics.TargetOriginMatches++;
                     float value = damage.GetTargetValue(false, skill, target, origin.Tile, target) *
                         template.AIConfig.ScoreMult * AIConfig.WEIGHTS.InflictDamageFromTile;
                     if (!float.IsFinite(value) || value <= 0) continue;
+                    if (collectDiagnostics) diagnostics.PositiveDamage++;
                     attack = Math.Max(attack, value); best = Math.Max(best, value); reserve = Math.Min(reserve, cost);
                 }
             if (attack > 0) continue;
@@ -69,9 +88,16 @@ internal static class SupportProjection
                 if (x < 0 || z < 0 || x >= map.Width || z >= map.Height) continue;
                 var lane = map.GetTile(x, z);
                 if (lane == null) continue;
-                if (!Spend(agent, budget, map, round, 2, ref probes, started)) return new(best, attack, reserve);
-                if (!skill.IsInRange(lane, origin.Tile, false) ||
-                    !origin.Tile.HasLineOfSightTo(lane, Il2CppTactical.LineOfSightFlags.Default)) continue;
+                if (!Spend(agent, budget, map, round, 2, ref probes, started))
+                {
+                    if (collectDiagnostics) diagnostics.BudgetStopped = true;
+                    return new(best, attack, reserve);
+                }
+                if (collectDiagnostics) diagnostics.LaneSamples++;
+                if (!skill.IsInRange(lane, origin.Tile, false)) continue;
+                if (collectDiagnostics) diagnostics.LaneInRange++;
+                if (!origin.Tile.HasLineOfSightTo(lane, Il2CppTactical.LineOfSightFlags.Default)) continue;
+                if (collectDiagnostics) diagnostics.LaneClear++;
                 best = Math.Max(best, 1); reserve = Math.Min(reserve, cost);
                 break; // One clear sample is sufficient; it does not manufacture attack value.
             }

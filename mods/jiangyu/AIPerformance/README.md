@@ -1,4 +1,4 @@
-# AI Performance 1.6.0
+# AI Performance 1.6.1
 
 ## Experimental infantry-led support (0.7.18)
 
@@ -34,6 +34,15 @@ coordination. Stationary pre-deployment toward empty ground, explicit facing, in
 wait-for-support and Overwatch integration are deferred: no verified native action is
 fabricated to claim them. Native setup still executes only when native Move/Attack
 selects it. See [scope and evidence](../../../docs/AI_COMBINED_ARMS_2026-11-09.md).
+
+## Bounded diagnostics (1.6.1)
+
+For a diagnostic run, enable **Log bounded combined-arms planning diagnostics** together with
+**Infantry-led vehicle and heavy-weapon support (0.7.18)**, then restart. `CA-DIAG` lines
+in `Latest.log` report snapshot rejects, request matching/occupied slots, support
+candidate filters and score/probe outcomes, assignment claims/releases, and the native
+versus final selected behavior. At most 256 unique phase records are logged per mission;
+the diagnostic option is OFF by default. These traces do not establish gameplay success.
 
 ## Bounded offensive planning (0.7.18)
 

@@ -12,7 +12,9 @@ namespace AIPerformance;
 public sealed partial class Plugin
 {
     private static readonly CombinedArmsState _combinedArms = new();
+    private static readonly CombinedArmsDiagnosticBudget _combinedArmsDiagnosticBudget = new();
     private static volatile bool _combinedArmsEnabled;
+    private static volatile bool _combinedArmsDiagnostics;
     private static int _combinedArmsThread;
 
     private static void PatchCombinedArms(Harmony harmony)
@@ -30,7 +32,8 @@ public sealed partial class Plugin
             if (turn == null || before == null || after == null || death == null || movement == null || reset == null)
                 throw new MissingMethodException("support lifecycle");
             _combinedArmsThread = Thread.CurrentThread.ManagedThreadId;
-            foreach (var type in new[] { typeof(CombinedArmsState), typeof(CombinedArmsRuntime), typeof(SupportProjection), typeof(SupportUnit) })
+            foreach (var type in new[] { typeof(CombinedArmsState), typeof(CombinedArmsRuntime), typeof(SupportProjection),
+                typeof(SupportUnit), typeof(CombinedArmsDiagnosticBudget) })
             {
                 foreach (var method in type.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static |
                     BindingFlags.Instance | BindingFlags.DeclaredOnly)) RuntimeHelpers.PrepareMethod(method.MethodHandle);
@@ -45,14 +48,17 @@ public sealed partial class Plugin
                 }
             }
             foreach (string name in new[] { nameof(CombinedArmsTurn), nameof(CombinedArmsRefresh), nameof(CombinedArmsReset),
-                nameof(CombinedArmsDeath), nameof(CombinedArmsMovement) })
+                nameof(CombinedArmsDeath), nameof(CombinedArmsMovement), nameof(CombinedArmsDiagnostic) })
                 RuntimeHelpers.PrepareMethod(typeof(Plugin).GetMethod(name, BindingFlags.NonPublic | BindingFlags.Static).MethodHandle);
             var warmAsset = new SupportUnit(1, 2, SupportKind.Vehicle, 0, 0, default, false, 0, 0);
             var warmRequest = new SupportUnit(3, 4, SupportKind.Infantry, 6, 0, default, true, 10, 0);
+            var warmDiagnostics = new CombinedArmsDiagnosticBudget();
+            warmDiagnostics.TryAcquire(1, 1, 1, "warmup"); warmDiagnostics.Reset();
             _combinedArms.Publish(1, 1, 1, new[] { warmAsset, warmRequest });
             _combinedArms.Candidates(1, 1, 1, warmAsset); _combinedArms.Claim(1, 1, 1, warmAsset, warmRequest);
             _combinedArms.Refresh(1, 1, 1, warmRequest.Actor, null); _combinedArms.Release(1, 1, 1, warmAsset.Actor);
             _combinedArms.Reset();
+            _combinedArmsDiagnostics = ReadBool("DiagnoseCombinedArmsSupport", false);
             harmony.Patch(turn, postfix: new HarmonyMethod(typeof(Plugin), nameof(CombinedArmsTurn)));
             harmony.Patch(before, prefix: new HarmonyMethod(typeof(Plugin), nameof(CombinedArmsRefresh)));
             harmony.Patch(after, postfix: new HarmonyMethod(typeof(Plugin), nameof(CombinedArmsRefresh)));
@@ -61,6 +67,8 @@ public sealed partial class Plugin
             harmony.Patch(reset, postfix: new HarmonyMethod(typeof(Plugin), nameof(CombinedArmsReset)));
             _combinedArmsEnabled = true;
             _log.Msg($"{ModName}: experimental combined-arms support enabled; pirate/Rogue rear support, native setup/fire; no reaction-fire changes.");
+            if (_combinedArmsDiagnostics)
+                _log.Msg($"{ModName}: combined-arms diagnostics enabled; at most {CombinedArmsDiagnosticBudget.MaxLines} deduplicated lines per mission.");
         }
         catch (Exception ex) { CombinedArmsDisable(ex); }
     }
@@ -72,15 +80,43 @@ public sealed partial class Plugin
         {
             if (!ContactConvergenceRuntime.EligibleFaction(__instance)) return;
             var manager = TacticalManager.Get(); var map = manager?.GetMap(); var actors = __instance.GetActors();
-            if (map == null || actors == null || actors.Count > CombinedArmsState.MaxUnits) return;
+            if (map == null || actors == null) return;
+            long factionId = __instance.Pointer.ToInt64();
+            if (actors.Count > CombinedArmsState.MaxUnits)
+            {
+                if (_combinedArmsDiagnostics)
+                    CombinedArmsDiagnostic(manager.m_Round, factionId, 0, "publish",
+                        $"result=actor-limit actors={actors.Count} limit={CombinedArmsState.MaxUnits}");
+                return;
+            }
             if (!_combinedArms.NeedsPublish(map.Pointer.ToInt64(), manager.m_Round, __instance.Pointer.ToInt64())) return;
             var units = new List<SupportUnit>();
+            int[] rejected = _combinedArmsDiagnostics ? new int[(int)SupportSnapshotReason.Count] : null;
             foreach (var actor in actors)
             {
-                var unit = CombinedArmsRuntime.Snapshot(actor?.GetAgent(), true);
+                var unit = CombinedArmsRuntime.Snapshot(actor?.GetAgent(), true, out var reason);
                 if (unit != null) units.Add(unit);
+                else if (rejected != null) rejected[(int)reason]++;
             }
-            _combinedArms.Publish(map.Pointer.ToInt64(), manager.m_Round, __instance.Pointer.ToInt64(), units);
+            bool published = _combinedArms.Publish(map.Pointer.ToInt64(), manager.m_Round, factionId, units);
+            if (rejected != null)
+            {
+                int infantry = 0, vehicles = 0, heavy = 0, ordered = 0;
+                foreach (var unit in units)
+                {
+                    if (unit.Kind == SupportKind.Infantry) infantry++;
+                    else if (unit.Kind == SupportKind.Vehicle) vehicles++;
+                    else heavy++;
+                    if (unit.HasOrder) ordered++;
+                }
+                var reasons = new List<string>();
+                for (int i = 1; i < rejected.Length; i++)
+                    if (rejected[i] > 0) reasons.Add($"{(SupportSnapshotReason)i}:{rejected[i]}");
+                CombinedArmsDiagnostic(manager.m_Round, factionId, 0, "publish",
+                    $"result={(published ? "published" : "rejected")} actors={actors.Count} eligible={units.Count} " +
+                    $"infantry={infantry} vehicles={vehicles} heavy={heavy} advancing={ordered} " +
+                    $"rejected=[{string.Join(",", reasons)}]");
+            }
         }
         catch (Exception ex) { CombinedArmsDisable(ex); }
     }
@@ -118,7 +154,22 @@ public sealed partial class Plugin
         catch (Exception ex) { CombinedArmsDisable(ex); }
     }
 
-    private static void CombinedArmsReset() => _combinedArms.Reset();
+    private static void CombinedArmsReset()
+    {
+        _combinedArms.Reset();
+        _combinedArmsDiagnosticBudget.Reset();
+    }
+
+    internal static void CombinedArmsDiagnostic(int round, long faction, long actor, string phase, string details)
+    {
+        try
+        {
+            if (_combinedArmsDiagnostics && _combinedArmsDiagnosticBudget.TryAcquire(round, faction, actor, phase))
+                _log.Msg($"{ModName}: CA-DIAG round={round} faction={faction:X} actor={actor:X} phase={phase} {details}");
+        }
+        catch { } // Optional diagnostics must never disable gameplay.
+    }
+
     private static void CombinedArmsDisable(Exception ex)
     {
         _combinedArmsEnabled = false; _combinedArms.Reset();

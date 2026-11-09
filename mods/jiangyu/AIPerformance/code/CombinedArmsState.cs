@@ -116,19 +116,46 @@ internal sealed class CombinedArmsState
     }
 
     internal SupportUnit[] Candidates(long map, int round, long faction, SupportUnit asset)
+        => Candidates(map, round, faction, asset, false, out _);
+
+    internal SupportUnit[] Candidates(long map, int round, long faction, SupportUnit asset,
+        bool collectDiagnostics, out SupportCandidateDiagnostics diagnostics)
     {
+        diagnostics = default;
         lock (_gate)
         {
-            if (_map != map || !_groups.TryGetValue(faction, out var group) || group.Round != round ||
-                !group.Units.TryGetValue(asset.Actor, out var known) || known.Agent != asset.Agent ||
-                known.Order != asset.Order || asset.Kind == SupportKind.Infantry) return Array.Empty<SupportUnit>();
+            Group group = null;
+            SupportCandidateGate gate = SupportCandidateGate.Ready;
+            if (_map != map) gate = SupportCandidateGate.MapMismatch;
+            else if (!_groups.TryGetValue(faction, out group)) gate = SupportCandidateGate.FactionNotPublished;
+            else if (group.Round != round) gate = SupportCandidateGate.RoundMismatch;
+            else if (!group.Units.TryGetValue(asset.Actor, out var known)) gate = SupportCandidateGate.AssetNotPublished;
+            else if (known.Agent != asset.Agent) gate = SupportCandidateGate.AgentMismatch;
+            else if (known.Order != asset.Order) gate = SupportCandidateGate.OrderMismatch;
+            else if (asset.Kind == SupportKind.Infantry) gate = SupportCandidateGate.AssetIsInfantry;
+            if (gate != SupportCandidateGate.Ready)
+            {
+                if (collectDiagnostics) diagnostics = new(gate, 0, 0, 0, 0, 0, 0);
+                return Array.Empty<SupportUnit>();
+            }
             var list = new List<SupportUnit>();
+            int nearby = 0, compatible = 0, slotBusy = 0;
             int cx = asset.X / CellSize, cz = asset.Z / CellSize;
             for (int x = cx - 3; x <= cx + 3; x++)
             for (int z = cz - 3; z <= cz + 3; z++)
                 if (group.Cells.TryGetValue((x, z), out var entries))
                     foreach (var request in entries)
-                        if (Compatible(asset, request) && Available(group, asset, request.Actor)) list.Add(request);
+                    {
+                        if (collectDiagnostics) nearby++;
+                        if (!Compatible(asset, request)) continue;
+                        if (collectDiagnostics) compatible++;
+                        if (!Available(group, asset, request.Actor))
+                        {
+                            if (collectDiagnostics) slotBusy++;
+                            continue;
+                        }
+                        list.Add(request);
+                    }
             group.Assignments.TryGetValue(asset.Actor, out var assigned);
             list.Sort((a, b) =>
             {
@@ -137,7 +164,11 @@ internal sealed class CombinedArmsState
                 int distance = Distance2(asset, a).CompareTo(Distance2(asset, b));
                 return distance != 0 ? distance : a.Actor.CompareTo(b.Actor);
             });
+            int truncated = Math.Max(0, list.Count - 4);
             if (list.Count > 4) list.RemoveRange(4, list.Count - 4);
+            if (collectDiagnostics)
+                diagnostics = new(SupportCandidateGate.Ready, nearby, compatible, slotBusy,
+                    list.Count, truncated, assigned.Request);
             return list.ToArray();
         }
     }

@@ -1,4 +1,23 @@
-# AI Performance 1.6.0: first-stage combined-arms support
+# AI Performance 1.6.1: combined-arms diagnostics follow-up
+
+Version 1.6.1 adds optional tracing to the 1.6.0 policy below; it does not change
+eligibility, support assignments, tile scores, reservations, native action choice,
+movement, setup/fire or AP. The policy remains experimental and OFF by default.
+
+## Opt-in diagnostic trace (1.6.1)
+
+Enable **Log bounded combined-arms planning diagnostics** and **Infantry-led vehicle and
+heavy-weapon support (0.7.18)**, then restart. `CA-DIAG` lines in `Latest.log` include:
+
+- Faction snapshot publication counts and rejection reasons; per-asset eligibility gates.
+- Nearby/compatible support requests, occupied slots, truncation and assignment outcomes.
+- Candidate-origin filters, detected-target/probe counters, lane/damage results, budget
+  stops, score seeds and the native versus final selected behavior.
+- At most 256 deduplicated records per mission, keyed by round/faction/actor/phase.
+
+The trace reports counts for detected targets and reads coordinates only after the existing
+native detection gate. It is opt-in, bounded and diagnostic only; it makes no gameplay or
+turn-time claim.
 
 Tracking: [#17](https://github.com/EmaEli/menace-mode/issues/17),
 [#2](https://github.com/EmaEli/menace-mode/issues/2),

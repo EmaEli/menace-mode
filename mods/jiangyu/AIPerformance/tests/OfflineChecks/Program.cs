@@ -26,6 +26,46 @@ Check(ModSettings.Values[("AI Performance", "ConvergeOnLastKnownContacts")] is f
 Check(ModSettings.Values[("AI Performance", "DiagnoseContactConvergence")] is false, "Contact diagnostics default OFF");
 Check(ModSettings.Values[("AI Performance", "OffensiveCombatPlanning")] is true, "Bounded offensive planning defaults ON");
 Check(ModSettings.Values[("AI Performance", "CombinedArmsSupport")] is false, "Combined-arms support defaults OFF pending gameplay trial");
+Check(ModSettings.Values[("AI Performance", "DiagnoseCombinedArmsSupport")] is false, "Combined-arms diagnostics default OFF");
+var diagnosticBudget = new CombinedArmsDiagnosticBudget();
+Check(!diagnosticBudget.TryAcquire(0, 1, 1, "plan"), "Combined-arms diagnostics reject invalid rounds");
+Check(diagnosticBudget.TryAcquire(1, 1, 10, "plan"), "First diagnostic record accepted");
+Check(!diagnosticBudget.TryAcquire(1, 1, 10, "plan"), "Repeated actor/round/phase diagnostic is deduplicated");
+Check(diagnosticBudget.TryAcquire(1, 1, 10, "choice"), "Distinct diagnostic phases are retained");
+var boundedDiagnostics = new CombinedArmsDiagnosticBudget();
+for (int i = 0; i < CombinedArmsDiagnosticBudget.MaxLines; i++)
+    Check(boundedDiagnostics.TryAcquire(i + 1, 1, i + 1, "plan"), "Diagnostic budget accepts records up to its cap");
+Check(!boundedDiagnostics.TryAcquire(CombinedArmsDiagnosticBudget.MaxLines + 1, 1, 999, "plan"), "Diagnostic budget stops at its mission cap");
+boundedDiagnostics.Reset();
+Check(boundedDiagnostics.TryAcquire(1, 1, 999, "plan"), "Mission reset reopens the diagnostic budget");
+var supportState = new CombinedArmsState();
+var supportOrder = new AdvanceRecoveryOrder(30, 30, 4, 4, 1f);
+var supportUnits = new List<SupportUnit>
+{
+    new(100, 1000, SupportKind.Vehicle, 20, 20, supportOrder, true, 30, 30),
+    new(101, 1001, SupportKind.Vehicle, 21, 20, supportOrder, true, 30, 30)
+};
+for (int i = 0; i < 6; i++)
+    supportUnits.Add(new SupportUnit(200 + i, 2000 + i, SupportKind.Infantry, 22 + i, 20,
+        supportOrder, true, 30, 30));
+supportUnits.Add(new SupportUnit(300, 3000, SupportKind.Infantry, 28, 20,
+    new AdvanceRecoveryOrder(40, 40, 4, 4, 1f), true, 40, 40));
+supportUnits.Add(new SupportUnit(301, 3001, SupportKind.Infantry, 29, 20, default, false, 29, 20));
+Check(supportState.Publish(1, 1, 5, supportUnits), "Combined-arms diagnostics fixture published");
+var firstAsset = supportUnits[0]; var secondAsset = supportUnits[1];
+var candidateSet = supportState.Candidates(1, 1, 5, firstAsset, true, out var candidateCounts);
+Check(candidateCounts.Gate == SupportCandidateGate.Ready && candidateCounts.Nearby == 8,
+    "Candidate diagnostics count nearby support requests");
+Check(candidateCounts.Compatible == 6 && candidateCounts.Returned == 4 && candidateCounts.Truncated == 2,
+    $"Candidate diagnostics separate compatibility from the four-request cap ({candidateCounts.Compatible}/{candidateCounts.Returned}/{candidateCounts.Truncated})");
+Check(supportState.Claim(1, 1, 5, firstAsset, candidateSet[0]), "Combined-arms fixture claims a vehicle slot");
+var secondCandidates = supportState.Candidates(1, 1, 5, secondAsset, true, out var secondCounts);
+Check(secondCounts.SlotBusy == 1 && secondCounts.Returned == 4 && secondCounts.Truncated == 1,
+    "Candidate diagnostics report occupied kind-specific slots");
+supportState.Candidates(2, 1, 5, secondAsset, true, out var mapMismatch);
+Check(mapMismatch.Gate == SupportCandidateGate.MapMismatch, "Candidate diagnostics identify a stale map");
+supportState.Candidates(1, 2, 5, secondAsset, true, out var roundMismatch);
+Check(roundMismatch.Gate == SupportCandidateGate.RoundMismatch, "Candidate diagnostics identify a stale round");
 var action = new Il2CppSystem.Action();
 object[] taskArgs = { action, null };
 Check(!(bool)harmony.Prefix.Invoke(null, taskArgs), "Skip detached wrapper");

@@ -33,7 +33,14 @@ internal static class OffensivePlanningRuntime
 
     internal static Behavior PreferShot(Agent agent, Behavior chosen, bool combinedArms = false, bool organic = true)
     {
-        bool support = combinedArms && CombinedArmsRuntime.Snapshot(agent, false) is { Kind: not SupportKind.Infantry };
+        return PreferShot(agent, chosen, combinedArms, organic, out _);
+    }
+
+    internal static Behavior PreferShot(Agent agent, Behavior chosen, bool combinedArms, bool organic,
+        out SupportUnit supportAsset)
+    {
+        supportAsset = combinedArms ? CombinedArmsRuntime.Snapshot(agent, false) : null;
+        bool support = supportAsset is { Kind: not SupportKind.Infantry };
         if (((!organic || !Eligible(agent)) && !support) || chosen == null) return chosen;
         string id = chosen.GetID().ToString();
         // Never interrupt execution, flee, smoke, healing or other useful native actions.

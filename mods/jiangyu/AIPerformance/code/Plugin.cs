@@ -31,6 +31,7 @@ public sealed partial class Plugin
             settings.AddToggle("PrioritizeMissionCivilians", "Prioritize visible civilian mission targets (0.7.18)", true);
             settings.AddToggle("OffensiveCombatPlanning", "Bounded firing positions and attack-first choices (pirate/Rogue)", true);
             settings.AddToggle("CombinedArmsSupport", "Infantry-led vehicle and heavy-weapon support (0.7.18)", false);
+            settings.AddToggle("DiagnoseCombinedArmsSupport", "Log bounded combined-arms planning diagnostics", false);
         });
         PatchAiTaskLifetime(harmony);
         PatchAdvanceRecovery(harmony);

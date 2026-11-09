@@ -47,7 +47,8 @@ public sealed partial class Plugin
             {
                 try
                 {
-                    if (CombinedArmsRuntime.Plan(__instance, __instance.GetTiles(), _combinedArms, _offensiveBudget, map, manager.m_Round)) return;
+                    if (CombinedArmsRuntime.Plan(__instance, __instance.GetTiles(), _combinedArms, _offensiveBudget,
+                        map, manager.m_Round, _combinedArmsDiagnostics)) return;
                 }
                 catch (Exception ex) { CombinedArmsDisable(ex); return; }
             }
@@ -61,7 +62,25 @@ public sealed partial class Plugin
     private static void OffensivePlanningChoice(Agent __instance, ref Behavior __result)
     {
         if (!_offensivePlanningEnabled && !_combinedArmsEnabled) return;
-        try { __result = OffensivePlanningRuntime.PreferShot(__instance, __result, _combinedArmsEnabled, _offensivePlanningEnabled); }
+        try
+        {
+            var nativeChoice = __result;
+            __result = OffensivePlanningRuntime.PreferShot(__instance, __result, _combinedArmsEnabled,
+                _offensivePlanningEnabled, out var supportAsset);
+            if (_combinedArmsDiagnostics && supportAsset != null)
+            {
+                try
+                {
+                    var faction = __instance.GetFaction(); var manager = TacticalManager.Get();
+                    string nativeId = nativeChoice == null ? "null" : nativeChoice.GetID().ToString();
+                    string selectedId = __result == null ? "null" : __result.GetID().ToString();
+                    CombinedArmsDiagnostic(manager?.m_Round ?? 0, faction?.Pointer.ToInt64() ?? 0,
+                        supportAsset.Actor, "choice",
+                        $"kind={supportAsset.Kind} tile=({supportAsset.X},{supportAsset.Z}) native={nativeId} selected={selectedId}");
+                }
+                catch { } // Choice diagnostics must not change the native selection.
+            }
+        }
         catch (Exception ex) { OffensivePlanningDisable(ex); }
     }
 

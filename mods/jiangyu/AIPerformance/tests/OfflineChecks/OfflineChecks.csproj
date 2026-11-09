@@ -7,6 +7,9 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="../../code/Plugin.cs" Link="Plugin.cs" />
+    <Compile Include="../../code/CombinedArmsDiagnostics.cs" Link="CombinedArmsDiagnostics.cs" />
+    <Compile Include="../../code/AdvanceRecoveryState.cs" Link="AdvanceRecoveryState.cs" />
+    <Compile Include="../../code/CombinedArmsState.cs" Link="CombinedArmsState.cs" />
     <Compile Include="../../code/TaskLifetime.cs" Link="TaskLifetime.cs" />
     <Compile Include="../../../../LargerMaps/src/LargerMaps/SimplifiedCombatPlanning.cs" Link="SimplifiedCombatPlanning.cs" />
     <Compile Include="../../../../LargerMaps/src/LargerMaps/LocalTacticalRouting.cs" Link="LocalTacticalRouting.cs" />
