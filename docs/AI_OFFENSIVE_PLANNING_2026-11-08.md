@@ -92,3 +92,13 @@ unverified.** #2/#17 stay open. Next: a short direct-fire engagement, watching w
 infantry shoot when able and use coherent firing/mission positions without long turns.
 Retrieve fresh Latest.log after the user's feedback; do not prescribe another identical
 twenty-turn waiting test as evidence of a fix.
+
+## Gameplay feedback — 9 November 2026
+
+User reports **some improvement**, with vehicles still timid; caution around spotted
+anti-tank weapons is explicitly desired. This is partial positive gameplay feedback,
+not full acceptance of #2/#17 or proof of specific native hook dispatch/turn timings.
+No fresh log retrieved: the PC was shut down at the user's request.
+Next requested work is **planning**, not deployment: infantry-led vehicle/heavy-weapon
+support, rear vehicle spacing of 3–10 tiles and heavy weapons covering the advance.
+See the [combined-arms proposal](AI_COMBINED_ARMS_PLAN_2026-11-09.md), tracked in #13/#17.
