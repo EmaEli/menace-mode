@@ -1,4 +1,39 @@
-# AI Performance 1.5.0
+# AI Performance 1.6.0
+
+## Experimental infantry-led support (0.7.18)
+
+Enable **Infantry-led vehicle and heavy-weapon support (0.7.18)** and restart the
+game (`CombinedArmsSupport`, OFF by default). Fast planning must remain enabled.
+
+- Nearby infantry with exclusively advancing mission orders supplies the direction.
+  Vehicles/heavy teams keep their own compatible advance order, or have no order;
+  defense, retreat, arrival and emergency restrictions are not replaced.
+- Recognized human-crewed Rogue walkers/tanks and pirate guntrucks can support despite
+  their MACHINE tag. Constructs, alien machines, drones, artillery and indirect/AoE
+  attacks do not receive a broad MACHINE exemption. A direct-fire weapons team can
+  support infantry while accounting for its native deployment/setup skills.
+- Prefer rear covering positions, roughly 3–10 tiles from the squad (six ideal), or
+  safe catch-up positions. Require actual weapon range and a clear sampled lane, or a
+  useful native damage evaluation against a currently detected opponent. Empty ground
+  receives positioning utility only, never fake attack candidates or reaction fire.
+- Native threat costs, including AT threats, remain unchanged. Added support utility
+  is restricted to existing nearby candidates no more dangerous than the current tile.
+  Native Move owns actual reachability, paths, movement/packing costs and execution;
+  reserve real stance/setup/fire AP. Prefer a ready position over needless setup churn.
+- A main-thread faction snapshot and small spatial index find at most four partners.
+  Each squad has one vehicle and one heavy-team slot. Short leases expire after two
+  rounds; no advance, changed orders, arrival, movement/death callbacks and mission reset
+  release or refresh evidence. Infantry is not held waiting for support in this version.
+- At most eight local origins, two weapons and four detected targets. Support shares
+  the existing 24-token evaluation / 48-token actor-round budget; all planning also
+  shares 512 tokens per faction-round. Lane samples cost two tokens and setup-aware
+  damage samples four. Stop starting probes after a soft 20 ms; not a frame-time guarantee.
+
+This is a first-stage positioning/setup-aware firing policy, **not** proven gameplay
+coordination. Stationary pre-deployment toward empty ground, explicit facing, infantry
+wait-for-support and Overwatch integration are deferred: no verified native action is
+fabricated to claim them. Native setup still executes only when native Move/Attack
+selects it. See [scope and evidence](../../../docs/AI_COMBINED_ARMS_2026-11-09.md).
 
 ## Bounded offensive planning (0.7.18)
 

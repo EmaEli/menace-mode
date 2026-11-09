@@ -150,6 +150,23 @@ foreach (string member in new[] { "SafetyScore", "UtilityByAttacksScore", "Utili
     Property(score, member, "Single", member == "UtilityByAttacksScore");
 Property(score, "MinimumUtilityAPCost", "Int32", true);
 Property(Type("Il2CppMenace.Tactical.AI.Behaviors.Attack"), "m_Candidates");
+var skillBehavior = Type("Il2CppMenace.Tactical.AI.SkillBehavior");
+Property(skillBehavior, "m_DeployedStanceSkill", "Skill");
+Property(skillBehavior, "m_SetupWeaponSkill", "Skill");
+Property(movement, "m_UseSkillAfter", "List<Skill>");
+Method(faction, "OnTurnStart", "Void");
+Method(agent, "OnBeforeProcessing", "Void");
+Method(agent, "OnAfterProcessing", "Void");
+Method(actor, "OnDeath", "Void");
+Method(actor, "OnMovementFinished", "Void");
+Method(actor, "IsStunned", "Boolean");
+Method(entity, "GetTemplate", "EntityTemplate");
+Method(skill, "IsEnabled", "Boolean");
+Method(skill, "HasExecutingElements", "Boolean");
+Method(skill, "IsInRange", "Boolean", "Tile", "Tile", "Boolean");
+Method(template, "IsDeploymentRequirementSatisfied", "Boolean", "Actor");
+Method(template, "IsSetupRequirementSatisfied", "Boolean", "Actor");
+Method(Type("Il2CppMenace.Tactical.Tile"), "HasLineOfSightTo", "Boolean", "Tile", "LineOfSightFlags");
 var geometry = Type("Il2CppMenace.Tools.RectIntExtensions");
 Method(geometry, "GetDistanceTo", "Int32", "RectInt", "Tile");
 Method(geometry, "IsInside", "Boolean", "RectInt", "Tile");
@@ -172,6 +189,8 @@ if (args.Length == 2)
         "recovery runtime belongs to AIPerformance.dll");
     Check(metadata.TypeDefinitions.Any(h => metadata.GetString(metadata.GetTypeDefinition(h).Name) == "ContactConvergenceRuntime"),
         "contact runtime included in AIPerformance.dll");
+    foreach (string expected in new[] { "CombinedArmsState", "CombinedArmsRuntime", "SupportProjection" })
+        Check(metadata.TypeDefinitions.Any(h => metadata.GetString(metadata.GetTypeDefinition(h).Name) == expected), expected + " included");
 }
 Console.WriteLine($"PASS: {checks} AI performance native metadata contracts; no native methods executed.");
 

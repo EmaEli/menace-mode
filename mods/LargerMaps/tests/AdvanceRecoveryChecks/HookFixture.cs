@@ -30,9 +30,18 @@ namespace AIPerformance
         private static bool ReadBool(string key, bool fallback) => fallback;
         private static bool _combatPlanningActive = true;
         private static readonly HashSet<string> _simplifiedAttackIds = new() { "active.fixture" };
+        internal static void BeginCombinedFixture(AIFaction faction)
+        {
+            BeginFixture(); BeginOffensiveFixture(); _combinedArms.Reset(); _combinedArmsEnabled = true;
+            _combinedArmsThread = Thread.CurrentThread.ManagedThreadId;
+            CombinedArmsTurn(faction);
+        }
+        internal static void CombinedRefreshFixture(Agent agent) => CombinedArmsRefresh(agent);
+        internal static bool CombinedEnabled => _combinedArmsEnabled;
         internal static void BeginOffensiveFixture()
         {
             _offensiveBudget.Reset(); _offensivePlanningEnabled = true; _missionCivilianPriorityEnabled = true;
+            _combinedArmsEnabled = false; _combinedArms.Reset();
         }
         internal static void OffensiveScoresFixture(Agent agent) => OffensivePlanningScores(agent);
         internal static Behavior OffensiveChoiceFixture(Agent agent, Behavior choice)

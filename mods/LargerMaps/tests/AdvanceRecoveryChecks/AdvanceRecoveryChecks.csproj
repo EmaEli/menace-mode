@@ -16,5 +16,7 @@
     <Compile Include="../../../jiangyu/AIPerformance/code/ContactConvergence.cs" Link="ContactConvergence.cs" />
     <Compile Include="../../../jiangyu/AIPerformance/code/MissionCivilianPriority.cs" Link="MissionCivilianPriority.cs" />
     <Compile Include="../../../jiangyu/AIPerformance/code/OffensivePlanning*.cs" />
+    <Compile Include="../../../jiangyu/AIPerformance/code/CombinedArms*.cs" />
+    <Compile Include="../../../jiangyu/AIPerformance/code/SupportProjection.cs" />
   </ItemGroup>
 </Project>

@@ -17,6 +17,9 @@ namespace Il2CppMenace.Tactical
         public int GetZ() => z;
         public Entity Entity;
         public Entity GetEntity() => Entity;
+        public Func<Tile, bool> Sees = _ => true;
+        public int LaneProbes;
+        public bool HasLineOfSightTo(Tile other, Il2CppTactical.LineOfSightFlags flags) { LaneProbes++; return Sees(other); }
     }
     public class Entity
     {
@@ -29,7 +32,10 @@ namespace Il2CppMenace.Tactical
         public AI.Agent Agent = new();
         public Tile Tile = new(0, 0);
         public int AP = 100, TilesMovedThisTurn, ID = 10;
-        public bool Moving, Dying, Contained;
+        public bool Moving, Dying, Contained, Stunned, Deployed, WeaponSetup;
+        public EntityTemplate Template = new();
+        public EntityTemplate GetTemplate() => Template;
+        public bool IsStunned() => Stunned;
         public float Suppression, Morale = 1;
         public bool Detected, RejectHiddenReads, Infantry = true, Vehicle;
         public int FactionKind = 1, PositionReads;
@@ -58,6 +64,18 @@ namespace Il2CppMenace.Tactical
     {
         public IntPtr Pointer = (IntPtr)1;
         public int Width = 96, Height = 96;
+        private Dictionary<(int, int), Tile> _tiles = new();
+        public Tile GetTile(int x, int z)
+        {
+            if (x < 0 || z < 0 || x >= Width || z >= Height) throw new Exception("out-of-bounds map read");
+            if (!_tiles.TryGetValue((x,z), out var tile)) _tiles[(x,z)] = tile = new(x,z);
+            return tile;
+        }
+    }
+    public class EntityTemplate
+    {
+        public string m_ID = "enemy.rogue_army_infantry";
+        public string GetID() => m_ID;
     }
     public sealed class TacticalManager
     {
@@ -165,6 +183,7 @@ namespace Il2CppMenace.Tactical.AI.Behaviors
     {
         public Il2CppMenace.Tactical.Skills.Skill Skill = new();
         public Il2CppMenace.Tactical.Skills.Skill GetSkill() => Skill;
+        public Il2CppMenace.Tactical.Skills.Skill m_DeployedStanceSkill, m_SetupWeaponSkill;
         public Func<Tactical.Tile, Tactical.Tile, float> Value = (_, _) => 10;
         public int ValuesRead;
         public float GetTargetValue(bool immediate, Il2CppMenace.Tactical.Skills.Skill skill,
@@ -185,17 +204,24 @@ namespace Il2CppMenace.Tactical.Skills
     public class SkillTemplate
     {
         public string m_ID = "active.fixture";
+        public string GetID() => m_ID;
         public string name => throw new InvalidOperationException("Unity name access is forbidden on worker probes");
         public bool IsAttack = true, IsTargeted = true, IsLineOfFireNeeded = true;
         public bool IsDeploymentRequired, IsWeaponSetupRequired;
         public int AoEType;
         public Profile AIConfig = new();
+        public bool IsDeploymentRequirementSatisfied(Tactical.Actor actor) => !IsDeploymentRequired || actor.Deployed;
+        public bool IsSetupRequirementSatisfied(Tactical.Actor actor) => !IsWeaponSetupRequired || actor.WeaponSetup;
     }
     public class Profile { public float ScoreMult = 1; }
     public class Skill
     {
         public SkillTemplate Template = new();
-        public bool Limited, Empty, Applicable = true, Teleport;
+        public bool Limited, Empty, Applicable = true, Teleport, Enabled = true, ExecutingElements = true;
+        public bool IsEnabled() => Enabled;
+        public bool HasExecutingElements() => ExecutingElements;
+        public Func<Tactical.Tile, Tactical.Tile, bool> Range = (_, _) => true;
+        public bool IsInRange(Tactical.Tile target, Tactical.Tile origin, bool angle) => Range(target, origin);
         public int Cost = 20, Probes;
         public Func<Tactical.Tile, Tactical.Tile, bool> Usable = (_, _) => true;
         public SkillTemplate GetTemplate() => Template;
@@ -307,3 +333,4 @@ namespace Il2CppMenace.Tags
 {
     public enum TagType { MACHINE, XENO, DRONE, INDIRECT_FIRE, WEAPONS_TEAM }
 }
+namespace Il2CppTactical { public enum LineOfSightFlags { Default } }

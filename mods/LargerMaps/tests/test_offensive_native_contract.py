@@ -47,3 +47,16 @@ class OffensiveNativeContract(unittest.TestCase):
 
     def test_exact_native_minimum_attack_ap_sentinel(self):
         self.assertEqual(self.code(0x7E2954, 7), bytes.fromhex("c7 43 44 00 04 00 00"))
+
+    def test_native_setup_rechecks_skills_costs_and_resources(self):
+        self.assertEqual(self.call_target(0x7CB4FB), 0x769E90)  # deployment IsUsable
+        self.assertEqual(self.call_target(0x7CB517), 0x763690)  # deployment AP
+        self.assertEqual(self.call_target(0x7CB5D7), 0x7697F0)  # setup uses
+        self.assertEqual(self.call_target(0x7CB5F3), 0x768C90)  # executing elements
+        self.assertEqual(self.call_target(0x7CB717), 0x763690)  # setup AP + shot AP
+
+    def test_native_move_owns_postmove_deployment_and_setup_queue(self):
+        self.assertEqual(self.code(0x7DF20F, 7), bytes.fromhex("49 8b 8f 80 00 00 00"))
+        self.assertEqual(self.code(0x7DF226, 4), bytes.fromhex("49 8b 57 58"))
+        self.assertEqual(self.code(0x7DF2BD, 7), bytes.fromhex("49 8b 8f 80 00 00 00"))
+        self.assertEqual(self.code(0x7DF2D0, 4), bytes.fromhex("49 8b 57 68"))

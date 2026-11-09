@@ -15,6 +15,9 @@ namespace AIPerformance
         private static bool _offensivePlanningEnabled { get; set; }
         private static void PatchOffensivePlanning(HarmonyLib.Harmony harmony) { }
         private static void OffensivePlanningReset() { }
+        private static bool _combinedArmsEnabled { get; set; }
+        private static void PatchCombinedArms(HarmonyLib.Harmony harmony) { }
+        private static void CombinedArmsReset() { }
     }
 }
 

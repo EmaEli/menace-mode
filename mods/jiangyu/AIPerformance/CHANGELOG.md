@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.6.0 — 9 November 2026
+
+- Optional OFF-by-default infantry-led support positions for narrowly recognized
+  crewed pirate/Rogue vehicles and direct-fire weapons teams on reviewed 0.7.18.
+- Main-thread advancing-infantry snapshots, bounded nearby matching, separate vehicle/
+  heavy-team slots and short assignments with movement/death/order/mission invalidation.
+- Prefer safe rear covering lanes and real detected-target damage positions. Preserve
+  native threat/AT costs, movement/path decisions, useful actions and execution; reserve
+  deployment, setup and firing AP without forcing flags or executing skills directly.
+- Share probe accounting with organic offensive planning, including a hard 512-token
+  faction-round cap. Roll back partial score/reserve writes and reject stale identities.
+- Keep stationary anticipatory deployment, explicit facing, infantry waiting and
+  Overwatch integration deferred; the first stage does not manufacture these actions.
+- Managed, native-layout and proxy-contract checks are distinct from gameplay acceptance.
+
 ## 1.5.0 — 8 November 2026
 
 - Restore bounded native direct-fire positioning under fast planning for organic

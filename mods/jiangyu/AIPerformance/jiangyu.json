@@ -1,7 +1,7 @@
 {
   "name": "AIPerformance",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "author": "Luca",
-  "description": "Fast AI planning with bounded native direct-fire positioning, attack-first choices, nearby-support incentives and directional mission advances for pirate/Rogue forces on reviewed 0.7.18. Visible mission-civilian priority; native pathfinding, visibility, legality and AP retained. No LargerMaps dependency.",
+  "description": "Fast AI planning with bounded firing positions and mission advances. Optional infantry-led crewed-vehicle/heavy-weapon rear support on reviewed 0.7.18; native safety, setup, firing, pathfinding and AP retained. No LargerMaps dependency or reaction-fire changes.",
   "depends": ["Jiangyu >= 1.4.8", "MenaceModSettings >= 0.2.0"]
 }

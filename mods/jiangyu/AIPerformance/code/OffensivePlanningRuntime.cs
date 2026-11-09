@@ -31,9 +31,10 @@ internal static class OffensivePlanningRuntime
             !actor.HasTag(TagType.MACHINE) && !actor.HasTag(TagType.XENO) && !actor.HasTag(TagType.DRONE);
     }
 
-    internal static Behavior PreferShot(Agent agent, Behavior chosen)
+    internal static Behavior PreferShot(Agent agent, Behavior chosen, bool combinedArms = false, bool organic = true)
     {
-        if (!Eligible(agent) || chosen == null) return chosen;
+        bool support = combinedArms && CombinedArmsRuntime.Snapshot(agent, false) is { Kind: not SupportKind.Infantry };
+        if (((!organic || !Eligible(agent)) && !support) || chosen == null) return chosen;
         string id = chosen.GetID().ToString();
         // Never interrupt execution, flee, smoke, healing or other useful native actions.
         if (id != "Idle" && id != "Move") return chosen;
@@ -102,7 +103,7 @@ internal static class OffensivePlanningRuntime
             {
                 if (probes >= OffensivePlanningBudget.PerEvaluation ||
                     (Stopwatch.GetTimestamp() - started) * 1000.0 / Stopwatch.Frequency >= 20 ||
-                    !budget.Spend(map, round, actor.Pointer.ToInt64(), agent.Pointer.ToInt64())) goto Finished;
+                    !budget.Spend(map, round, actor.Pointer.ToInt64(), agent.Pointer.ToInt64(), agent.GetFaction().Pointer.ToInt64())) goto Finished;
                 probes++;
                 // Exact native positioning parameters: ignore only deployment/angle, not
                 // range, LoF, uses or target faction. No skill execution or path search.

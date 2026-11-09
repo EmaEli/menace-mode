@@ -14,7 +14,7 @@ public sealed partial class Plugin
 
     private static void PatchOffensivePlanning(Harmony harmony)
     {
-        if (!ReadBool("OffensiveCombatPlanning", true)) return;
+        if (!ReadBool("OffensiveCombatPlanning", true) && !_combinedArmsEnabled) return;
         try
         {
             if (!ContactConvergenceBuild.IsCurrentSupported()) throw new NotSupportedException("reviewed 0.7.18 required");
@@ -31,19 +31,27 @@ public sealed partial class Plugin
             harmony.Patch(scores, prefix: new HarmonyMethod(typeof(Plugin), nameof(OffensivePlanningScores)));
             harmony.Patch(choice, postfix: new HarmonyMethod(typeof(Plugin), nameof(OffensivePlanningChoice)));
             harmony.Patch(reset, postfix: new HarmonyMethod(typeof(Plugin), nameof(OffensivePlanningReset)));
-            _offensivePlanningEnabled = true;
+            _offensivePlanningEnabled = ReadBool("OffensiveCombatPlanning", true);
             _log.Msg($"{ModName}: bounded offensive planning enabled; native direct-fire probes, shot-first choices and mission advances (pirate/Rogue).");
         }
-        catch (Exception ex) { OffensivePlanningDisable(ex); }
+        catch (Exception ex) { OffensivePlanningDisable(ex); if (_combinedArmsEnabled) CombinedArmsDisable(ex); }
     }
 
     private static void OffensivePlanningScores(Agent __instance)
     {
-        if (!_offensivePlanningEnabled || !_combatPlanningActive) return;
+        if ((!_offensivePlanningEnabled && !_combinedArmsEnabled) || !_combatPlanningActive) return;
         try
         {
             var manager = TacticalManager.Get(); var map = manager?.GetMap();
-            if (map != null) OffensivePlanningRuntime.Plan(__instance, __instance.GetTiles(),
+            if (map != null && _combinedArmsEnabled)
+            {
+                try
+                {
+                    if (CombinedArmsRuntime.Plan(__instance, __instance.GetTiles(), _combinedArms, _offensiveBudget, map, manager.m_Round)) return;
+                }
+                catch (Exception ex) { CombinedArmsDisable(ex); return; }
+            }
+            if (map != null && _offensivePlanningEnabled) OffensivePlanningRuntime.Plan(__instance, __instance.GetTiles(),
                 _missionCivilianPriorityEnabled ? manager.GetMission()?.Objectives : null,
                 _offensiveBudget, map.Pointer.ToInt64(), manager.m_Round, id => _simplifiedAttackIds.Contains(id));
         }
@@ -52,8 +60,8 @@ public sealed partial class Plugin
 
     private static void OffensivePlanningChoice(Agent __instance, ref Behavior __result)
     {
-        if (!_offensivePlanningEnabled) return;
-        try { __result = OffensivePlanningRuntime.PreferShot(__instance, __result); }
+        if (!_offensivePlanningEnabled && !_combinedArmsEnabled) return;
+        try { __result = OffensivePlanningRuntime.PreferShot(__instance, __result, _combinedArmsEnabled, _offensivePlanningEnabled); }
         catch (Exception ex) { OffensivePlanningDisable(ex); }
     }
 
