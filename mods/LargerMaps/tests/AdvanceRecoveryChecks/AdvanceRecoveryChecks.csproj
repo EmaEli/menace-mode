@@ -14,6 +14,7 @@
     <Compile Include="../../../jiangyu/AIPerformance/code/ContactConvergenceRuntime.cs" Link="ContactConvergenceRuntime.cs" />
     <Compile Include="../../../jiangyu/AIPerformance/code/ContactConvergenceBuild.cs" Link="ContactConvergenceBuild.cs" />
     <Compile Include="../../../jiangyu/AIPerformance/code/ContactConvergence.cs" Link="ContactConvergence.cs" />
+    <Compile Include="../../../jiangyu/AIPerformance/code/ContactAdvance*.cs" />
     <Compile Include="../../../jiangyu/AIPerformance/code/MissionCivilianPriority.cs" Link="MissionCivilianPriority.cs" />
     <Compile Include="../../../jiangyu/AIPerformance/code/OffensivePlanning*.cs" />
     <Compile Include="../../../jiangyu/AIPerformance/code/CombinedArms*.cs" />

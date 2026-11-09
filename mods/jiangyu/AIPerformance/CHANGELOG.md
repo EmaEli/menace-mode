@@ -1,5 +1,22 @@
 # Changelog
 
+## 1.9.0 — 9 November 2026
+
+- Replace brief three-responder approaches with faction contact-led alert and persistent
+  range closing under the existing OffensiveCombatPlanning setting. Unassigned infantry,
+  direct-fire teams and recognized crewed vehicles can react to a legitimate sighting;
+  explicit defense, deployment, emergency, morale/suppression and faction guards remain.
+- Approach the known area over multiple turns with modest lateral spread. Cover-only
+  stops cannot replace progress while no firing lane is available. Currently detected
+  targets allow bounded range/LOS/setup-aware firing-cover checks; native Move/Attack
+  still own paths, legal setup, ammunition and execution. No attack utility is fabricated.
+- Native suppression-fire candidates can win over Move/Idle, not just damage attacks.
+  Geometric staging survives the shared expensive-probe limit and fresh score resets.
+- Request existing equipped smoke through Smoke Overhaul 0.9.0 when the approach is
+  exposed within observed enemy range and lacks a usable own firing lane. No grants.
+- Last-known areas expire after 12 rounds or arrival; hidden positions are not refreshed.
+  Local checks are not in-game acceptance. Windows deployment remains a separate gate.
+
 ## 1.8.1 — 9 November 2026
 
 - Fix vehicle threat-response staging disappearing before Execute after repeated native

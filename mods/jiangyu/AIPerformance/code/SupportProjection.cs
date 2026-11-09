@@ -105,7 +105,7 @@ internal static class SupportProjection
         return new(best, attack, reserve);
     }
 
-    internal static int Reserve(InflictDamage damage, Actor actor, bool moving)
+    internal static int Reserve(Il2CppMenace.Tactical.AI.SkillBehavior damage, Actor actor, bool moving)
     {
         var skill = damage.GetSkill(); var template = skill.GetTemplate();
         long cost = skill.GetActionPointCost();

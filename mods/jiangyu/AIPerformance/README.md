@@ -1,4 +1,37 @@
-# AI Performance 1.8.1
+# AI Performance 1.9.0
+
+## Contact-led alert, advance and firing cover (0.7.18)
+
+The existing **Contact-led alert, advance and firing positions (pirate/Rogue)** option
+(`OffensiveCombatPlanning`, default ON, restart required) now supplies the main policy.
+No new setting or equipment is needed. This deliberately changes the rejected passive
+1.8.1 behavior; the sections below describe older fallbacks, not an obligation to hold.
+
+- A legitimate faction sighting alerts eligible unassigned or advance-ordered infantry,
+  direct-fire teams and recognized crewed vehicles. This is not limited to three scouts.
+  Explicit defensive/mixed orders, deployment and non-human/drone/artillery roles remain native.
+- Keep closing toward the observed area across turns, with five modest lateral approach
+  preferences. A hidden opponent is only a last-known area: no hidden position/weapon
+  refresh, no automatic fire at remembered ground. Stop searching on arrival; expire an
+  unrefreshed area after 12 rounds. This is not an exact sector/formation director.
+- Favor covered origins within actual own range and sampled line of sight; account for
+  real deployment/setup/fire AP. When no useful firing lane is available, cover-only
+  movement utility cannot end the advance. Native safety values, reachability, clipped
+  paths, attacks, resources and emergency actions remain owned by MENACE.
+- Already-positive native damage **or suppression-fire** candidates win over Move/Idle.
+  No fabricated attack candidates or attack utility. Fast planning remains enabled.
+- With installed **Smoke Overhaul 0.9.0**, exposed infantry can request an equipped,
+  affordable, legal smoke throw inside observed enemy weapon range while lacking its
+  own firing lane. Existing defensive smoke remains available. No smoke merely because
+  the destination is distant; no free grenades/AP or replacement grenade executor.
+- Scan only existing native local candidates (at most 4,096, within ten tiles); at most
+  two direct-fire profiles and 16 range/LOS lane checks per evaluation, with a soft 10 ms
+  probe-start limit. Damage/usability samples share 24/48/512 evaluation/actor/faction
+  token limits; cheap geometric staging survives exhausted damage budgets. These are
+  bounded checks, not a guaranteed frame-time bound or a new global pathfinder.
+
+Local regression/build checks do not establish native AI dispatch, actual smoke throws,
+successful shooting or turn-time performance. **Windows installation/gameplay pending.**
 
 ## Experimental threat-driven support (0.7.18)
 

@@ -47,7 +47,17 @@ namespace AIPerformance
         {
             _offensiveBudget.Reset(); _offensivePlanningEnabled = true; _missionCivilianPriorityEnabled = true;
             _combinedArmsEnabled = false; _combinedArms.Reset();
+            _contactAdvance.Reset(); _contactAdvanceEnabled = false;
         }
+        internal static void BeginAdvanceFixture(AIFaction faction)
+        {
+            BeginOffensiveFixture(); _contactAdvanceEnabled = true; _contactAdvanceThread = Environment.CurrentManagedThreadId;
+            TacticalManager.Instance.Faction = faction; ContactAdvanceTurn(faction);
+        }
+        internal static void AdvanceSightFixture(Actor actor, int faction) => ContactAdvanceDetected(actor, faction);
+        internal static void AdvanceBeforeFixture(Agent agent) => ContactAdvanceBefore(agent);
+        internal static void AdvanceResetFixture() => OffensivePlanningReset();
+        internal static bool ContactAdvanceOn => _contactAdvanceEnabled;
         internal static void OffensiveScoresFixture(Agent agent) => OffensivePlanningScores(agent);
         internal static Behavior OffensiveChoiceFixture(Agent agent, Behavior choice)
         { OffensivePlanningChoice(agent, ref choice); return choice; }

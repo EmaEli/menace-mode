@@ -121,6 +121,7 @@ namespace Il2CppMenace.Tactical.AI
         public List<Behavior> GetBehaviors() => Behaviors;
         public bool IsDeploymentPhase() => Deployment;
         public bool IsSleeping() => Sleeping;
+        public void SetSleeping(bool sleeping) => Sleeping = sleeping;
     }
     public class Behavior
     {
@@ -153,6 +154,12 @@ namespace Il2CppMenace.Tactical.AI
         public void OnOpponentSighted(Tactical.Actor actor, int ttl) { }
         public void OnTurnStart() { }
     }
+    public class SkillBehavior : Behavior
+    {
+        public Il2CppMenace.Tactical.Skills.Skill Skill;
+        public Il2CppMenace.Tactical.Skills.Skill GetSkill() => Skill;
+        public Il2CppMenace.Tactical.Skills.Skill m_DeployedStanceSkill, m_SetupWeaponSkill;
+    }
     public sealed class Opponent { public Tactical.Actor Actor; }
     public class Zone
     {
@@ -183,16 +190,14 @@ namespace Il2CppMenace.Tactical.AI.Behaviors
         public bool HasUtility(Il2CppSystem.Collections.Generic.Dictionary<Tactical.Tile, Data.TileScore> tiles)
             => tiles.Values.Any(t => t.UtilityScore >= GetUtilityThreshold());
     }
-    public class Attack : Behavior
+    public class Attack : SkillBehavior
     {
         public List<object> m_Candidates = new();
         public Attack() { ID = "InflictDamage"; }
     }
     public class InflictDamage : Attack
     {
-        public Il2CppMenace.Tactical.Skills.Skill Skill = new();
-        public Il2CppMenace.Tactical.Skills.Skill GetSkill() => Skill;
-        public Il2CppMenace.Tactical.Skills.Skill m_DeployedStanceSkill, m_SetupWeaponSkill;
+        public InflictDamage() { Skill = new(); }
         public Func<Tactical.Tile, Tactical.Tile, float> Value = (_, _) => 10;
         public int ValuesRead;
         public float GetTargetValue(bool immediate, Il2CppMenace.Tactical.Skills.Skill skill,
@@ -201,6 +206,12 @@ namespace Il2CppMenace.Tactical.AI.Behaviors
             if (immediate) throw new Exception("positioning must use non-immediate native damage value");
             ValuesRead++; return Value(target, from);
         }
+    }
+    public class InflictSuppression : Attack
+    {
+        public InflictSuppression() { ID = "InflictSuppression"; Skill = new(); }
+        public float GetTargetValue(bool immediate, Il2CppMenace.Tactical.Skills.Skill skill,
+            Tactical.Tile target, Tactical.Tile from, Tactical.Tile aimedAt) => 10;
     }
 }
 namespace Il2CppMenace.Tactical.Skills

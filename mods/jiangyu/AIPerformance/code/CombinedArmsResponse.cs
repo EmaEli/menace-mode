@@ -34,6 +34,16 @@ public sealed partial class Plugin
     // This is a request, not a grenade grant or a second skill-execution owner.
     public static int[] GetSupportSmokeThreat(Agent agent)
     {
+        if (_contactAdvanceEnabled && _offensivePlanningEnabled && Environment.CurrentManagedThreadId == _contactAdvanceThread)
+        {
+            try
+            {
+                var manager = TacticalManager.Get();
+                var threat = ContactAdvanceRuntime.SmokeThreat(agent, _contactAdvance, manager?.GetMap(), manager?.m_Round ?? 0);
+                if (threat != null) return threat;
+            }
+            catch { } // The equipped-grenade executor remains owned by Smoke Overhaul.
+        }
         if (!_combinedArmsEnabled || Environment.CurrentManagedThreadId != _combinedArmsThread) return null;
         try
         {

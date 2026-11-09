@@ -48,6 +48,9 @@ class OffensiveNativeContract(unittest.TestCase):
     def test_exact_native_minimum_attack_ap_sentinel(self):
         self.assertEqual(self.code(0x7E2954, 7), bytes.fromhex("c7 43 44 00 04 00 00"))
 
+    def test_contact_alert_setter_changes_only_the_sleep_flag(self):
+        self.assertEqual(self.code(0x4D5ED0, 4), bytes.fromhex("88 51 51 c3"))
+
     def test_native_setup_rechecks_skills_costs_and_resources(self):
         self.assertEqual(self.call_target(0x7CB4FB), 0x769E90)  # deployment IsUsable
         self.assertEqual(self.call_target(0x7CB517), 0x763690)  # deployment AP

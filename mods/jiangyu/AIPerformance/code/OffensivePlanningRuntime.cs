@@ -37,20 +37,20 @@ internal static class OffensivePlanningRuntime
     }
 
     internal static Behavior PreferShot(Agent agent, Behavior chosen, bool combinedArms, bool organic,
-        out SupportUnit supportAsset)
+        out SupportUnit supportAsset, bool contactAdvance = false)
     {
         supportAsset = combinedArms ? CombinedArmsRuntime.Snapshot(agent, false) : null;
         bool support = supportAsset is { Kind: not SupportKind.Infantry };
-        if (((!organic || !Eligible(agent)) && !support) || chosen == null) return chosen;
+        if (((!organic || (!Eligible(agent) && !(contactAdvance && ContactAdvanceRuntime.Ready(agent)))) && !support) || chosen == null) return chosen;
         string id = chosen.GetID().ToString();
         // Never interrupt execution, flee, smoke, healing or other useful native actions.
         if (id != "Idle" && id != "Move") return chosen;
         var list = agent.GetBehaviors();
         if (list == null || list.Count > 128) return chosen;
-        InflictDamage best = null;
+        Attack best = null;
         foreach (var behavior in list)
         {
-            var damage = behavior?.TryCast<InflictDamage>();
+            var damage = behavior?.TryCast<Attack>();
             if (damage != null && damage.GetScore() > 0 && damage.m_Candidates != null &&
                 damage.m_Candidates.Count > 0 && damage.m_Candidates.Count <= 256 &&
                 (best == null || damage.GetScore() > best.GetScore())) best = damage;

@@ -48,6 +48,7 @@ public sealed partial class Plugin
             BindSupportSmoke();
             _offensivePlanningEnabled = ReadBool("OffensiveCombatPlanning", true);
             _log.Msg($"{ModName}: bounded offensive planning enabled; native direct-fire probes, shot-first choices and mission advances (pirate/Rogue).");
+            PatchContactAdvance(harmony);
         }
         catch (Exception ex) { OffensivePlanningDisable(ex); if (_combinedArmsEnabled) CombinedArmsDisable(ex); }
     }
@@ -59,6 +60,14 @@ public sealed partial class Plugin
         {
             var manager = TacticalManager.Get(); var map = manager?.GetMap();
             bool unresolvedDanger = false;
+            if (map != null && _contactAdvanceEnabled && _offensivePlanningEnabled)
+            {
+                try
+                {
+                    if (ContactAdvanceRuntime.Plan(__instance, __instance.GetTiles(), _contactAdvance, _offensiveBudget, map, manager.m_Round)) return;
+                }
+                catch (Exception ex) { ContactAdvanceDisable(ex); }
+            }
             if (map != null && _combinedArmsEnabled)
             {
                 try
@@ -96,7 +105,7 @@ public sealed partial class Plugin
         {
             var nativeChoice = __result;
             __result = OffensivePlanningRuntime.PreferShot(__instance, __result, _combinedArmsEnabled,
-                _offensivePlanningEnabled, out var supportAsset);
+                _offensivePlanningEnabled, out var supportAsset, _contactAdvanceEnabled);
             if (_combinedArmsEnabled && supportAsset is { Kind: SupportKind.Vehicle })
             {
                 var manager = TacticalManager.Get(); var map = manager?.GetMap();
@@ -110,8 +119,12 @@ public sealed partial class Plugin
                 if (map != null)
                 {
                     var before = __result;
-                    __result = CombinedArmsResponseRuntime.GuardAdvance(__instance, __result,
-                        _supportThreats, map, manager.m_Round, SupportSmokeCover);
+                    // Contact-led closing replaces the old indefinite wait-for-support rule.
+                    // Native emergency actions and shot-first selection above still take precedence.
+                    if (!_contactAdvanceEnabled || !_offensivePlanningEnabled || !ContactAdvanceRuntime.Ready(__instance) ||
+                        !ContactAdvanceRuntime.TryAim(__instance, _contactAdvance, map, manager.m_Round, out _))
+                        __result = CombinedArmsResponseRuntime.GuardAdvance(__instance, __result,
+                            _supportThreats, map, manager.m_Round, SupportSmokeCover);
                     if (_combinedArmsDiagnostics && before?.Pointer != __result?.Pointer)
                         CombinedArmsDiagnostic(manager.m_Round, __instance.GetFaction().Pointer.ToInt64(),
                             __instance.GetActor().Pointer.ToInt64(), "response-hold", "reason=exposed-native-route result=wait-for-cover-fire-or-smoke");
@@ -134,10 +147,10 @@ public sealed partial class Plugin
         catch (Exception ex) { OffensivePlanningDisable(ex); }
     }
 
-    private static void OffensivePlanningReset() => _offensiveBudget.Reset();
+    private static void OffensivePlanningReset() { _offensiveBudget.Reset(); _contactAdvance.Reset(); }
     private static void OffensivePlanningDisable(Exception ex)
     {
-        _offensivePlanningEnabled = false; _offensiveBudget.Reset();
+        _offensivePlanningEnabled = false; _offensiveBudget.Reset(); _contactAdvanceEnabled = false; _contactAdvance.Reset();
         _log.Warning($"{ModName}: offensive planning disabled ({ex.GetType().Name}); native/recovery behavior retained.");
     }
 }
