@@ -99,6 +99,8 @@ advancing infantry takes a covered side route after losing an observed ranged th
 Native AT avoidance may still retreat; no flank is promised where no covered local
 candidate exists. Mortar/smoke uncertain-contact coordination is still not implemented.
 
-No fresh 1.7.0 startup, native hook dispatch, gameplay or turn-time acceptance yet.
-Retrieve Latest.log after the user's result. No issue is closed and no gameplay
-improvement is claimed from compilation/installation alone.
+At installation, startup/native hook dispatch, gameplay and turn-time acceptance were
+still pending. The subsequent user test **rejects the intended gameplay improvement**:
+vehicles remain ineffective and infantry exposes itself to a fixed MG. See the
+[hash-verified 1.7.0 feedback and three reproduced policy gaps](AI_SUPPORT_FEEDBACK_2026-11-09.md).
+Startup is now confirmed; adequate threat response is not. No issue is closed.
