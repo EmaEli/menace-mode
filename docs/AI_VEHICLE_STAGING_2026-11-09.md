@@ -35,7 +35,7 @@ it does not prove every observed stall had that cause or that native paths will 
 ## Local verification
 
 - New regression first failed against unmodified 1.8.0 at evaluation four.
-- Corrected linked AI/recovery checks pass, including fresh-score repetition, unchanged
+- 13,118 corrected linked AI/recovery checks pass, including fresh-score repetition, unchanged
   native probe caps/reset, faction exhaustion, no hidden reads/fake shots, fresh danger,
   movement/setup/fire AP, empty weapons, changed defensive orders, morale/suppression,
   actual movement and expired memory.
@@ -57,6 +57,34 @@ Build from an archived committed `dev` snapshot so unrelated pre-existing workin
 edits do not enter the one-module kit. Reuse the canonical builder/verifier and installer
 with installed-settings mode; never copy individual outputs into live Mods.
 
-Clean kit verification, Windows BuildOnly/install, installed metadata/backups and
-startup/gameplay remain separate pending gates at this source checkpoint.
-Issues #17/#13 remain open; automated reproduction is not gameplay acceptance.
+## Verified candidate and install
+
+- Published gameplay source: `383807e3b156e784e499c8c967988476f77335a4` on `dev`.
+- One-module BuildKit: 73 inventoried files; all 68 tracked source files match that
+  commit byte-for-byte. ZIP SHA256:
+  `0a0c544eead58103bee3108230d5607c6c194d153010a28fb92ead7dd7b1b28f`.
+- Canonical kit generation and clean extracted-source Release rebuild pass, including
+  17,986 selected shared/artifact checks, 302 AI behavior, 13,118 linked AI checks and
+  193 native contracts. These totals overlap; do not add them together.
+- The local archive needed a temporary .NET 10 SDK selection to override the scratch
+  parent's SDK 6 pin. That config is excluded from the kit; published source is unchanged.
+  The shared offline harness emits existing nullable warnings; the production DLL has
+  zero warnings/errors in local clean builds and both Windows runs.
+- Hash-matched transfer, extracted inventory and canonical Windows **BuildOnly** pass
+  with no live changes. The canonical **Install** then passes on private SDK 10.0.113,
+  rerunning 193 native, 302 behavior and 13,118 linked checks before deployment.
+- Installed `Mods\AIPerformance`: manifest **1.8.1**, assembly/file **1.8.1.0**.
+  DLL SHA256: `BF10A3E9FC70DB75F2CBA2D14E97E99E3106579A10CEDA564DFDC7C61E14C41B`.
+- Backup/journal: `_MENACE_Backups\20261109-195006-7e847dd70242466e8908770926052a5d`.
+  Only AIPerformance is affected. Old backup and new installed inventories are hash-verified;
+  the previous version is recoverable through the retained canonical rollback journal.
+- All **1,450** protected files retain their count/hash, including SmokeOverhaul,
+  LargerMaps, settings companion, loader and UserData. No settings or saves changed.
+- Logs: `E:\MENACE-Work\Temp\MENACE-install.log`, plus
+  `AIPerformance-BuildOnly.log` / `AIPerformance-Install.log` in the staging directory.
+  Local SSH transcripts are `windows-buildonly.log` / `windows-install.log`.
+
+Startup/native dispatch and useful support in the original encounter have **not** been
+tested on 1.8.1. Replay that encounter and check executed movement/firing, not merely
+provisional choices. Retrieve the fresh Latest.log after the user's result. Issues
+#17/#13 remain open; automated reproduction and successful install are not gameplay acceptance.

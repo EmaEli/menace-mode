@@ -14,7 +14,9 @@ Changed AP, weapon availability, orders, readiness and expired threats still can
 
 The 1.8.0 replay showed inadequate support despite verified installation; see
 [feedback evidence](../../../docs/AI_THREAT_RESPONSE_FEEDBACK_2026-11-09.md).
-1.8.1 build/install and gameplay acceptance are separate gates.
+Canonical 1.8.1 Windows BuildOnly/install and affected-only backup are verified; all
+1,450 protected Mods/UserData files are unchanged. Startup/gameplay acceptance is pending.
+See [regression and installation evidence](../../../docs/AI_VEHICLE_STAGING_2026-11-09.md).
 
 **1.8.0 response:** a legitimately observed ranged threat can direct nearby crewed
 vehicles ahead of infantry, including after the infantry anchor dies. Up to four existing
