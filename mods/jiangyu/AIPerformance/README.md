@@ -5,6 +5,10 @@
 Enable **Threat-driven vehicle, fire and smoke support (0.7.18)** and restart the
 game (`CombinedArmsSupport`, OFF by default). Fast planning must remain enabled.
 
+Canonical 1.8.0 Windows BuildOnly/install and affected-only backups are verified;
+1,445 unrelated Mods/UserData files unchanged. Gameplay acceptance is still pending.
+See [test evidence](../../../docs/AI_THREAT_RESPONSE_2026-11-09.md).
+
 **1.8.0 response:** a legitimately observed ranged threat can direct nearby crewed
 vehicles ahead of infantry, including after the infantry anchor dies. Up to four existing
 local origins and eight setup-aware weapon probes share the existing faction/actor budget

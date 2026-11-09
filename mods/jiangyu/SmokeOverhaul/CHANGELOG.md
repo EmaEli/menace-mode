@@ -9,6 +9,10 @@
   cannot authorize smoke-protected advance. Smoke is not invulnerability.
 - Add linked-runtime request/throw/legality/failure tests. Canonical standalone mode can
   preserve installed settings/loader; gameplay acceptance remains separate.
+- Canonical Windows BuildOnly/install passed on 0.7.18+22828 / SDK 10.0.113 with zero
+  production warnings/errors, 49 native contracts/12 hooks and 21 smoke-runtime checks.
+  Installed 0.9.0/0.9.0.0/0.9.0.0 metadata and affected-only backup verified; settings,
+  loader and all 1,445 protected files unchanged. Startup/gameplay acceptance pending.
 
 ## 0.8.4
 

@@ -76,7 +76,7 @@ two), 80 AP per action, stationary progress and mortar-style tile markers. Its c
 runs managed production-hook/marker tests and metadata-only native contracts before staging.
 Use `-UseInstalledSettings` to validate/reuse both MenaceModSettings and Jiangyu.Loader without
 replacing either. Windows/gameplay acceptance remains separate from these automated checks.
-LargerMaps 2.6.2 and AIPerformance 1.3.1 are independent standalone selections (#2/#93).
+LargerMaps 2.6.2 and AIPerformance 1.8.0 are independent standalone selections (#2/#93).
 Neither requires or silently bundles the other; the default Suite explicitly selects both.
 Each supports `--use-installed-settings` / `-UseInstalledSettings` to preserve settings/loader.
 AIPerformance 1.3.0 adds a separate OFF-by-default experimental recent-contact approach
@@ -94,6 +94,15 @@ Optional candidate limits and recovery diagnostics remain OFF. The exact scoped 
 has a reviewed 28-site native pathfinding plan, including its inlined map-generator
 grid fill (#94). Unknown hashes/conflicting instructions still fall back to 64x64.
 Native gameplay acceptance remains pending; no whole-suite compatibility is implied.
+The 1.7.1 gameplay retest still showed weak support. AIPerformance 1.8.0 adds
+threat-directed vehicle origins independent of infantry survival, positive native attack/
+artillery priority and guarded infantry route choices. Optional SmokeOverhaul 0.9.0
+answers equipped-grenade requests through its existing executor. Each module supports
+standalone `-UseInstalledSettings`; only that module is replaced, not settings/loader.
+Smoke also runs linked runtime checks before staging. Canonical Windows BuildOnly/install
+of both candidates passed on 9 November with zero production warnings/errors; affected-only
+backups/installed versions verified and 1,445 protected files unchanged. Gameplay acceptance
+is pending; [evidence](../../../docs/AI_THREAT_RESPONSE_2026-11-09.md).
 
 The console stays open on success/failure. Diagnostic log: `%TEMP%\MENACE-install.log`.
 Failures open the log in Notepad. Backups and the rollback journal live under the game's
