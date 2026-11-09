@@ -38,6 +38,12 @@ namespace Il2CppMenace.Tactical
         public bool IsStunned() => Stunned;
         public float Suppression, Morale = 1;
         public bool Detected, RejectHiddenReads, Infantry = true, Vehicle;
+        public List<Skills.Skill> Attacks = new();
+        public List<Skills.Skill> GetAllAttacks()
+        {
+            if (RejectHiddenReads && !Detected) throw new Exception("hidden weapon read");
+            return Attacks;
+        }
         public int FactionKind = 1, PositionReads;
         public HashSet<Il2CppMenace.Tags.TagType> Tags = new();
         public AI.Agent GetAgent() => Agent;
@@ -223,6 +229,8 @@ namespace Il2CppMenace.Tactical.Skills
         public Func<Tactical.Tile, Tactical.Tile, bool> Range = (_, _) => true;
         public bool IsInRange(Tactical.Tile target, Tactical.Tile origin, bool angle) => Range(target, origin);
         public int Cost = 20, Probes;
+        public int MaxRange = 30;
+        public int GetMaxRange() => MaxRange;
         public Func<Tactical.Tile, Tactical.Tile, bool> Usable = (_, _) => true;
         public SkillTemplate GetTemplate() => Template;
         public bool HasLimitedUses() => Limited;

@@ -56,11 +56,11 @@ var firstAsset = supportUnits[0]; var secondAsset = supportUnits[1];
 var candidateSet = supportState.Candidates(1, 1, 5, firstAsset, true, out var candidateCounts);
 Check(candidateCounts.Gate == SupportCandidateGate.Ready && candidateCounts.Nearby == 8,
     "Candidate diagnostics count nearby support requests");
-Check(candidateCounts.Compatible == 6 && candidateCounts.Returned == 4 && candidateCounts.Truncated == 2,
+Check(candidateCounts.Compatible == 7 && candidateCounts.Returned == 4 && candidateCounts.Truncated == 3,
     $"Candidate diagnostics separate compatibility from the four-request cap ({candidateCounts.Compatible}/{candidateCounts.Returned}/{candidateCounts.Truncated})");
 Check(supportState.Claim(1, 1, 5, firstAsset, candidateSet[0]), "Combined-arms fixture claims a vehicle slot");
 var secondCandidates = supportState.Candidates(1, 1, 5, secondAsset, true, out var secondCounts);
-Check(secondCounts.SlotBusy == 1 && secondCounts.Returned == 4 && secondCounts.Truncated == 1,
+Check(secondCounts.SlotBusy == 1 && secondCounts.Returned == 4 && secondCounts.Truncated == 2,
     "Candidate diagnostics report occupied kind-specific slots");
 supportState.Candidates(2, 1, 5, secondAsset, true, out var mapMismatch);
 Check(mapMismatch.Gate == SupportCandidateGate.MapMismatch, "Candidate diagnostics identify a stale map");

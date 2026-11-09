@@ -49,7 +49,7 @@ internal static class SupportProjection
         {
             var skill = damage.GetSkill(); var template = skill.GetTemplate();
             int cost = Reserve(damage, actor, moving);
-            if (cost <= 0 || cost > actor.GetActionPoints()) continue;
+            if (cost <= 0 || origin.APCost < 0 || (long)cost + origin.APCost > actor.GetActionPoints()) continue;
             // Only detected opponents provide coordinates. A mission lane is geometry, not a sighting.
             int considered = 0;
             foreach (var target in targets)

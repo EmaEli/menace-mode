@@ -47,6 +47,14 @@ public sealed partial class Plugin
             {
                 try
                 {
+                    int flanks = CombinedArmsThreatRuntime.Flank(__instance, __instance.GetTiles(), _supportThreats,
+                        _offensiveBudget, map, manager.m_Round);
+                    if (flanks > 0)
+                    {
+                        CombinedArmsDiagnostic(manager.m_Round, __instance.GetFaction().Pointer.ToInt64(),
+                            __instance.GetActor().Pointer.ToInt64(), "flank", $"uncertain-position seeds={flanks}");
+                        return;
+                    }
                     if (CombinedArmsRuntime.Plan(__instance, __instance.GetTiles(), _combinedArms, _offensiveBudget,
                         map, manager.m_Round, _combinedArmsDiagnostics)) return;
                 }
@@ -67,6 +75,12 @@ public sealed partial class Plugin
             var nativeChoice = __result;
             __result = OffensivePlanningRuntime.PreferShot(__instance, __result, _combinedArmsEnabled,
                 _offensivePlanningEnabled, out var supportAsset);
+            if (_combinedArmsEnabled && supportAsset is { Kind: SupportKind.Vehicle })
+            {
+                var manager = TacticalManager.Get(); var map = manager?.GetMap();
+                if (map != null) __result = CombinedArmsRuntime.PreventSpacingRetreat(__instance, __result,
+                    _combinedArms, map, manager.m_Round);
+            }
             if (_combinedArmsDiagnostics && supportAsset != null)
             {
                 try

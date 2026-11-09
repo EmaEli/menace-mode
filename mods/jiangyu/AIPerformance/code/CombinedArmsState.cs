@@ -214,6 +214,7 @@ internal sealed class CombinedArmsState
     private static bool Compatible(SupportUnit asset, SupportUnit request) => asset.Actor != request.Actor &&
         request.Kind == SupportKind.Infantry && request.HasOrder && asset.Kind != SupportKind.Infantry &&
         Distance2(asset, request) <= Radius * Radius && (!asset.HasOrder ||
-        (asset.Order.X == request.Order.X && asset.Order.Z == request.Order.Z &&
-         asset.Order.Width == request.Order.Width && asset.Order.Height == request.Order.Height));
+        (Math.Abs((long)asset.AimX - request.AimX) + Math.Abs((long)asset.AimZ - request.AimZ) <= Radius &&
+         (long)(asset.AimX - asset.X) * (request.AimX - request.X) +
+         (long)(asset.AimZ - asset.Z) * (request.AimZ - request.Z) > 0));
 }

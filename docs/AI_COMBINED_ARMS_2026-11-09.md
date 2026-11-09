@@ -79,6 +79,8 @@ No turn-time, real deployment, support coordination or reaction-fire improvement
 
 ## PC validation
 
+### 1.6.0 first-stage install (historical baseline)
+
 Transfer roundtrip and remote script hashes passed; game closed; canonical E: build/temp
 environment active. Reviewed game hash and all 119 installed proxy DLL hashes match the
 local build references. Pre-install AIPerformance remains 1.5.0, DLL SHA256
@@ -106,7 +108,40 @@ Installed manifest/assembly/file: **1.6.0 / 1.6.0.0 / 1.6.0.0**; DLL SHA256:
 - New support remains OFF by default. Enable **Infantry-led vehicle and heavy-weapon
   support (0.7.18)** in AI Performance, leave fast planning enabled, then restart.
 
-Startup, native hook dispatch, actual setup/fire behavior, coordination and turn-time
-acceptance remain **untested**. A short pirate/Rogue engagement is the next check;
-retrieve fresh Latest.log after the user's result. No repeated 20-turn identical replay
-is prescribed and no issue is closed on the build/install result.
+### 1.6.1 diagnostic follow-up — canonical test install (9 November)
+
+Source `d3caab9` on `dev`; this patch adds only bounded, default-OFF combined-arms
+diagnostics. The experimental support policy and action selection are unchanged. The
+single-module 66-file BuildKit passed inventory and clean extracted-source verification;
+18,009 scoped shared-artifact checks, 17,984 offline C# regressions, 302 behavior checks,
+13,002 recovery checks, 185 native metadata contracts, 34 distribution tests and 10
+migration-contract tests passed. Production builds had zero warnings/errors.
+
+Transferred archive hash and 66-file inventory matched the local candidate. Canonical
+Windows BuildOnly and standalone installation passed on MENACE 0.7.18+22828 with private
+.NET SDK 10.0.113. The Windows build reran the 185 metadata, 302 behavior
+and 13,002 recovery checks with zero production warnings/errors. Installed manifest /
+assembly / file versions are **1.6.1 / 1.6.1.0 / 1.6.1.0**; installed DLL SHA256:
+`CF839A5CA1A531CE2265C2B1171AFE512E537E2AB40ACFA6780185B95380CA58`.
+
+- Affected-only backup and journal:
+  `_MENACE_Backups/20261109-133445-018f2c85293b412fbbb3441eba1be951`. All three
+  retained AIPerformance 1.6.0 files match the journal; the original DLL hash is
+  `83acb611ec7b752a4f40ea6c30a5061778384b90d39bb99546aceb0cd2ba4400`. The only other
+  journal target was the expected loose `AIPerformance.dll` conflict; it was absent and
+  not moved or installed.
+- MenaceModSettings remained **0.8.2**, SHA256
+  `990CE86D5DE3E06BD2C6D2897F8505D227E690C9ABB56CD642F171DB62344CB7`; settings and
+  Jiangyu.Loader were reused. The game remained closed. No other install target was
+  changed and no saves were touched.
+- Staging/logs: `E:/MENACE-Work/Builds/AIPerformance-1.6.1-diagnostics-d3caab9/`;
+  canonical installer log: `E:/MENACE-Work/Temp/MENACE-install.log`.
+
+### In-game acceptance still pending
+
+On the next test, enable **Log bounded combined-arms planning diagnostics** and
+**Infantry-led vehicle and heavy-weapon support (0.7.18)**, restart, then try a short
+pirate/Rogue engagement. Retrieve a fresh Latest.log after the user's result. Startup,
+native hook dispatch, actual setup/fire behavior, coordination and turn-time acceptance
+remain **untested**; 1.6.1 adds diagnostics, not a gameplay fix. No repeated 20-turn
+identical replay is prescribed and no issue is closed on build/install evidence alone.

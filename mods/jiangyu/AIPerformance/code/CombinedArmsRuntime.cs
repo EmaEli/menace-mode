@@ -228,6 +228,11 @@ internal static class CombinedArmsRuntime
                         $"result=policy-owned gate=invalid-utility request={request.Actor:X} probes={probes}");
                     return true;
                 }
+                bool moving = origin.Tile.Pointer != current.Pointer;
+                // Empty-lane geometry may justify catching up, never repositioning to an ideal rear gap.
+                if (moving && projection.Attack <= 0 &&
+                    (Distance2(current, request.X, request.Z) <= 36 ||
+                     Distance2(origin.Tile, request.X, request.Z) >= Distance2(current, request.X, request.Z))) continue;
                 float desired = Math.Max(projection.Value, utility * (1 + SupportQuality(origin.Tile, request)));
                 edits.Add(new(origin, desired, projection.Attack, projection.Cost));
                 if (diagnostics)
@@ -298,18 +303,20 @@ internal static class CombinedArmsRuntime
                 continue;
             }
             int x = score.Tile.GetX(), z = score.Tile.GetZ();
+            if (score.Tile.Pointer != here.Tile.Pointer && !Forward(here.Tile, score.Tile, request)) continue;
             if ((x - cx) * (x - cx) + (z - cz) * (z - cz) > 36)
             {
                 if (collectDiagnostics) diagnostics.TooFar++;
                 continue;
             }
-            if ((long)(x - request.X) * (request.AimX - request.X) +
+            if (score.Tile.Pointer != here.Tile.Pointer && (long)(x - request.X) * (request.AimX - request.X) +
                 (long)(z - request.Z) * (request.AimZ - request.Z) > 0)
             {
                 if (collectDiagnostics) diagnostics.Ahead++;
                 continue;
             }
-            if ((x - request.X) * (x - request.X) + (z - request.Z) * (z - request.Z) < 9)
+            if (score.Tile.Pointer != here.Tile.Pointer &&
+                (x - request.X) * (x - request.X) + (z - request.Z) * (z - request.Z) < 9)
             {
                 if (collectDiagnostics) diagnostics.TooClose++;
                 continue;
@@ -330,6 +337,33 @@ internal static class CombinedArmsRuntime
     internal static bool Behind(Tile tile, SupportUnit request) =>
         (long)(tile.GetX() - request.X) * (request.AimX - request.X) +
         (long)(tile.GetZ() - request.Z) * (request.AimZ - request.Z) <= 0;
+    internal static bool Forward(Tile current, Tile next, SupportUnit request) =>
+        (long)(next.GetX() - current.GetX()) * (request.AimX - request.X) +
+        (long)(next.GetZ() - current.GetZ()) * (request.AimZ - request.Z) >= 0;
+
+    internal static Behavior PreventSpacingRetreat(Agent agent, Behavior chosen, CombinedArmsState state, Map map, int round)
+    {
+        var asset = Snapshot(agent, false);
+        var move = chosen?.TryCast<Move>();
+        if (asset is not { Kind: SupportKind.Vehicle } || move == null ||
+            Readiness(agent, true) != SupportSnapshotReason.Eligible) return chosen;
+        var requests = state.Candidates(map.Pointer.ToInt64(), round, agent.GetFaction().Pointer.ToInt64(), asset);
+        if (requests.Length == 0) return chosen;
+        var target = move.GetTargetTile(); var current = agent.GetActor().GetTile(); var tiles = agent.GetTiles();
+        if (!Finite(target) || current == null || tiles == null || !tiles.TryGetValue(current, out var here) || !Finite(here)) return chosen;
+        // Leave genuine native danger avoidance and a better firing position alone.
+        if (target.SafetyScore < here.SafetyScore) return chosen;
+        // Preprocessing sees APCost=0 on fresh native scores. Recheck the real clipped path
+        // at choice time as well; never promise a firing reserve from the pre-path estimate.
+        bool reserveLost = target.APCost > 0 && target.MinimumUtilityAPCost > 0 && target.MinimumUtilityAPCost < 1024 &&
+            (long)target.APCost + target.MinimumUtilityAPCost > agent.GetActor().GetActionPoints();
+        if (!reserveLost && (Forward(current, target.Tile, requests[0]) ||
+            target.UtilityByAttacksScore > here.UtilityByAttacksScore ||
+            target.UtilityByAttacksScoreCandidate > here.UtilityByAttacksScoreCandidate)) return chosen;
+        foreach (var behavior in agent.GetBehaviors())
+            if (behavior != null && behavior.GetID().ToString() == "Idle") return behavior;
+        return chosen;
+    }
     internal static float SupportQuality(Tile tile, SupportUnit request)
         => Quality(tile.GetX(), tile.GetZ(), request);
     private static float Quality(int x, int z, SupportUnit request)

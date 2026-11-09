@@ -108,6 +108,51 @@ internal static class CombinedArmsChecks
         f = new(); f.Gun.Score = 10; f.Gun.m_Candidates.Add(new());
         check(ReferenceEquals(OffensivePlanningRuntime.PreferShot(f.Vehicle.Agent, f.Vehicle.Agent.Behaviors[1], false), f.Vehicle.Agent.Behaviors[1]),
             "combined-arms OFF leaves MACHINE-vehicle shot selection native");
+        // Regressions for the observed 1.6.1 spacing-only withdrawals.
+        f = new(); f.Vehicle.Tile = new(10, 10); f.Vehicle.Agent.Tiles.Clear();
+        var hold = new TileScore { Tile = f.Vehicle.Tile, SafetyScore = 10 };
+        f.Vehicle.Agent.Tiles[hold.Tile] = hold; f.Vehicle.Agent.Tiles[f.Rear.Tile] = f.Rear;
+        Plugin.BeginCombinedFixture(f.Faction); f.Plan();
+        check(hold.UtilityScore > 0 && f.Rear.UtilityScore == 0, "near infantry: hold instead of backing up to the six-tile gap");
+        var move = (Move)f.Vehicle.Agent.Behaviors[1]; move.TargetTile = f.Rear;
+        check(Plugin.OffensiveChoiceFixture(f.Vehicle.Agent, move).GetID() == "Idle", "native spacing-only withdrawal is held");
+        f.Rear.SafetyScore = 5;
+        check(ReferenceEquals(Plugin.OffensiveChoiceFixture(f.Vehicle.Agent, move), move), "genuine native danger reduction retained");
+        f.Rear.SafetyScore = 10; f.Rear.UtilityByAttacksScore = 20;
+        check(ReferenceEquals(Plugin.OffensiveChoiceFixture(f.Vehicle.Agent, move), move), "better real firing position retained");
+        f.Rear.UtilityByAttacksScore = 0; f.Gun.Score = 10; f.Gun.m_Candidates.Add(new());
+        check(ReferenceEquals(Plugin.OffensiveChoiceFixture(f.Vehicle.Agent, move), f.Gun), "visible legal shot wins over withdrawal");
+        f = new(); f.Rear.APCost = 81; f.Plan();
+        check(f.Rear.UtilityScore == 0, "known movement cost cannot consume the twenty-AP firing reserve");
+        f = new(); f.Rear.APCost = 80; f.Plan();
+        check(f.Rear.UtilityScore > 0, "exact movement-plus-shot budget is accepted");
+        move = (Move)f.Vehicle.Agent.Behaviors[1]; move.TargetTile = f.Rear;
+        f.Rear.APCost = 81;
+        check(Plugin.OffensiveChoiceFixture(f.Vehicle.Agent, move).GetID() == "Idle",
+            "native path computed after scoring cannot silently spend the firing reserve");
+        f.Rear.APCost = 80;
+        check(ReferenceEquals(Plugin.OffensiveChoiceFixture(f.Vehicle.Agent, move), move),
+            "native clipped path retaining exactly the reserve may execute");
+        f = new(); f.Vehicle.Agent.Zones[0].Area = new(41, 11, 3, 3); Plugin.BeginCombinedFixture(f.Faction); f.Plan();
+        check(f.Rear.UtilityScore > 0, "neighboring native advance allocations share a support corridor");
+        f = new(); f.Vehicle.Agent.Zones[0].Area = new(0, 10, 1, 1); Plugin.BeginCombinedFixture(f.Faction); f.Plan();
+        check(f.Rear.UtilityScore == 0, "opposite explicit advance orders cannot be reassigned");
+        foreach (var sample in new[] { (83, 70, 81, 72, 41, 54, 87, 71), (19, 51, 18, 37, 60, 50, 14, 49) })
+        {
+            f = new(); var sampleMap = TacticalManager.Instance.GetMap();
+            f.Vehicle.Tile = sampleMap.GetTile(sample.Item1, sample.Item2);
+            f.Infantry.Tile = sampleMap.GetTile(sample.Item3, sample.Item4);
+            f.Vehicle.Agent.Zones[0].Area = f.Infantry.Agent.Zones[0].Area = new(sample.Item5, sample.Item6, 3, 3);
+            f.Vehicle.Agent.Tiles.Clear();
+            hold = new() { Tile = f.Vehicle.Tile, SafetyScore = 10 };
+            var loggedRetreat = new TileScore { Tile = sampleMap.GetTile(sample.Item7, sample.Item8), SafetyScore = 10 };
+            f.Vehicle.Agent.Tiles[hold.Tile] = hold; f.Vehicle.Agent.Tiles[loggedRetreat.Tile] = loggedRetreat;
+            Plugin.BeginCombinedFixture(f.Faction); f.Plan();
+            check(loggedRetreat.UtilityScore == 0, "captured 1.6.1 East/West withdrawal receives no new support seed");
+            move = (Move)f.Vehicle.Agent.Behaviors[1]; move.TargetTile = loggedRetreat;
+            check(Plugin.OffensiveChoiceFixture(f.Vehicle.Agent, move).GetID() == "Idle",
+                "captured zero-attack-utility withdrawal is held unless native safety improves");
+        }
         f = new(); int otherRefreshes = 0;
         Task.Run(() => { f.Infantry.Dying = true; Plugin.CombinedRefreshFixture(f.Infantry.Agent); Interlocked.Increment(ref otherRefreshes); }).GetAwaiter().GetResult();
         f.Plan(); check(otherRefreshes == 1 && f.Rear.UtilityScore > 0, "worker callbacks cannot mutate the main-thread ally snapshot");

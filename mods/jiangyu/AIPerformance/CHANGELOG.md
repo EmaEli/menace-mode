@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.7.0 — 9 November 2026
+
+- Remove rear-gap incentives for vehicle withdrawals: hold near infantry, catch up only
+  forward/laterally, and preserve native danger reduction and useful firing positions.
+- Match neighboring advance allocations in a shared forward corridor, not only identical
+  zone rectangles. Opposite/defensive orders remain excluded.
+- Check known movement plus fire costs and recheck the actual clipped-path reserve at
+  choice time. Native Move still calculates paths/AP; no extra path search is introduced.
+- Remember observed, armed threats to advancing infantry for two rounds. Favor existing
+  local, no-more-dangerous forward flanks outside their possible firing lane. Lost contacts
+  never refresh hidden positions/weapons; uncertainty grows and records expire.
+- Bound observations and share the existing combat probe budget. Optional diagnostics
+  add a `flank` phase. No synthetic mortar, smoke, suppression or reaction-fire actions;
+  those retain native handling. Windows install and gameplay evidence are separate.
+
 ## 1.6.1 — 9 November 2026
 
 - Add opt-in `DiagnoseCombinedArmsSupport` traces for snapshot rejection, candidate

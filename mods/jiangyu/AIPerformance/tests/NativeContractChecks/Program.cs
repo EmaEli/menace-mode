@@ -117,6 +117,8 @@ Property(Type("Il2CppMenace.Tactical.Skills.TargetUsageParams"), "IGNORE_DEPLOYM
 var actor = Type("Il2CppMenace.Tactical.Actor");
 Method(actor, "SetDetectedByFaction", "Void", "Int32");
 Method(actor, "IsDetectedByFaction", "Boolean", "Int32");
+Method(actor, "GetAllAttacks", "List<Skill>");
+Method(skill, "GetMaxRange", "Int32");
 var entity = Type("Il2CppMenace.Tactical.Entity");
 Property(entity, "ID", "Int32");
 Method(entity, "GetFaction", "FactionType");
@@ -149,6 +151,7 @@ Property(score, "UtilityScore", "Single", true);
 foreach (string member in new[] { "SafetyScore", "UtilityByAttacksScore", "UtilityByAttacksScoreCandidate" })
     Property(score, member, "Single", member == "UtilityByAttacksScore");
 Property(score, "MinimumUtilityAPCost", "Int32", true);
+Property(score, "APCost", "Int32");
 Property(Type("Il2CppMenace.Tactical.AI.Behaviors.Attack"), "m_Candidates");
 var skillBehavior = Type("Il2CppMenace.Tactical.AI.SkillBehavior");
 Property(skillBehavior, "m_DeployedStanceSkill", "Skill");

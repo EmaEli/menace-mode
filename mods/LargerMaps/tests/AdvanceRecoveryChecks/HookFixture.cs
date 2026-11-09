@@ -32,11 +32,12 @@ namespace AIPerformance
         private static readonly HashSet<string> _simplifiedAttackIds = new() { "active.fixture" };
         internal static void BeginCombinedFixture(AIFaction faction)
         {
-            BeginFixture(); BeginOffensiveFixture(); _combinedArms.Reset(); _combinedArmsEnabled = true;
+            BeginFixture(); BeginOffensiveFixture(); _combinedArms.Reset(); _supportThreats.Reset(); _combinedArmsEnabled = true;
             _combinedArmsThread = Thread.CurrentThread.ManagedThreadId;
             CombinedArmsTurn(faction);
         }
         internal static void CombinedRefreshFixture(Agent agent) => CombinedArmsRefresh(agent);
+        internal static void CombinedDetectedFixture(Actor actor, int faction) => CombinedArmsDetected(actor, faction);
         internal static bool CombinedEnabled => _combinedArmsEnabled;
         internal static void BeginOffensiveFixture()
         {

@@ -1,4 +1,4 @@
-# AI Performance 1.6.1
+# AI Performance 1.7.0
 
 ## Experimental infantry-led support (0.7.18)
 
@@ -12,14 +12,17 @@ game (`CombinedArmsSupport`, OFF by default). Fast planning must remain enabled.
   their MACHINE tag. Constructs, alien machines, drones, artillery and indirect/AoE
   attacks do not receive a broad MACHINE exemption. A direct-fire weapons team can
   support infantry while accounting for its native deployment/setup skills.
-- Prefer rear covering positions, roughly 3–10 tiles from the squad (six ideal), or
-  safe catch-up positions. Require actual weapon range and a clear sampled lane, or a
+- Hold near infantry; never move backward merely to restore a six-tile gap. Forward/lateral
+  catch-up and useful firing positions can receive support utility; genuine native danger
+  reduction is retained. Nearby distinct advance zones qualify when their directions agree.
+  Require actual weapon range and a clear sampled lane, or a
   useful native damage evaluation against a currently detected opponent. Empty ground
   receives positioning utility only, never fake attack candidates or reaction fire.
 - Native threat costs, including AT threats, remain unchanged. Added support utility
   is restricted to existing nearby candidates no more dangerous than the current tile.
   Native Move owns actual reachability, paths, movement/packing costs and execution;
-  reserve real stance/setup/fire AP. Prefer a ready position over needless setup churn.
+  reserve stance/setup/fire AP and recheck its real clipped cost before choosing movement.
+  Prefer a ready position over needless setup churn.
 - A main-thread faction snapshot and small spatial index find at most four partners.
   Each squad has one vehicle and one heavy-team slot. Short leases expire after two
   rounds; no advance, changed orders, arrival, movement/death callbacks and mission reset
@@ -28,6 +31,16 @@ game (`CombinedArmsSupport`, OFF by default). Fast planning must remain enabled.
   the existing 24-token evaluation / 48-token actor-round budget; all planning also
   shares 512 tokens per faction-round. Lane samples cost two tokens and setup-aware
   damage samples four. Stop starting probes after a soft 20 ms; not a frame-time guarantee.
+- Record only detected armed enemies with range/line of sight to advancing infantry.
+  Keep managed last-seen coordinates for two rounds, with a 3/5/7-tile uncertainty radius;
+  no hidden-position or hidden-weapon refresh. At most 32 observations per round and 32
+  retained threats, isolated by faction/mission. A local flank uses at most 16 shared probes
+  and a soft 5 ms start limit, preserves native safety and never creates attack utility.
+  Four flank seeds at most; no global route search or guaranteed squad-level maneuver.
+
+Mortar/HE, smoke and suppression responses to uncertain contacts are **not added** in
+1.7.0: their native behavior remains unchanged. This candidate implements the local
+flanking alternative, not a complete combined-arms director or a safe indirect-fire policy.
 
 This is a first-stage positioning/setup-aware firing policy, **not** proven gameplay
 coordination. Stationary pre-deployment toward empty ground, explicit facing, infantry
