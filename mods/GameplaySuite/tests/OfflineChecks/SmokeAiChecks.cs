@@ -4,6 +4,9 @@ internal static class SmokeAiChecks
 {
     public static void Run(Action<bool, string> check)
     {
+        check(SmokeAiRules.Chance(false, false, true) == 100, "equipped infantry answers a coordinated smoke request without repeated random waiting");
+        check(SmokeAiRules.Chance(true, false, true) == 60 && SmokeAiRules.Chance(false, true, true) == 45,
+            "support request does not change native emergency smoke probabilities");
         foreach (bool pinned in new[] { false, true })
         foreach (bool suppressed in new[] { false, true })
         {

@@ -78,7 +78,7 @@ try {
         $selected = @('MenaceModSettings') + @($Modules | Where-Object { $_ -ne 'MenaceModSettings' } | Select-Object -Unique)
     }
     if ($UseInstalledSettings) {
-        $supportedCompanionModules = @('SquaddieFieldPromotions', 'SquaddieVeterancy', 'TacticalRoundCheckpoint', 'CoordinatedFire', 'WeaponMechanicsRebalanced', 'InfantrySandbagCover', 'LargerMaps', 'AIPerformance')
+        $supportedCompanionModules = @('SquaddieFieldPromotions', 'SquaddieVeterancy', 'TacticalRoundCheckpoint', 'CoordinatedFire', 'WeaponMechanicsRebalanced', 'InfantrySandbagCover', 'LargerMaps', 'AIPerformance', 'SmokeOverhaul')
         if ($Product -ne 'Standalone' -or $Modules.Count -ne 1 -or $supportedCompanionModules -notcontains $Modules[0]) {
             throw 'UseInstalledSettings is unsupported for this product/module selection.'
         }
@@ -147,6 +147,7 @@ try {
         }
         if ($name -eq 'SmokeOverhaul') {
             Invoke-Dotnet @('run', '--project', (Join-Path $root 'tests\NativeContractChecks\NativeContractChecks.csproj'), '-c', 'Release', '--', (Join-Path $refs 'Assembly-CSharp.dll'), (Join-Path $source 'mods\GameplaySuite\src\SmokeOverhaul\Plugin.cs'))
+            Invoke-Dotnet @('run', '--project', (Join-Path $root 'tests\SupportChecks\SupportChecks.csproj'), '-c', 'Release')
         }
         if ($name -eq 'AIPerformance') {
             Invoke-Dotnet @('run', '--project', (Join-Path $root 'tests\NativeContractChecks\NativeContractChecks.csproj'), '-c', 'Release', '--', (Join-Path $refs 'Assembly-CSharp.dll'), $dll)

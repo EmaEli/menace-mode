@@ -68,7 +68,7 @@ def compile_clean(files, game, sdk, dotnet):
             build_args = [dotnet, "build", str(project), "-c", "Release", "--nologo", "-v", "quiet",
                           f"-p:GameDir={game}", f"-p:GameAssembliesDir={refs}", f"-p:MelonLoaderDir={runtime}",
                           f"-p:JiangyuSdkDir={sdk}", "-p:JiangyuDev=false"]
-            if module in {"SquaddieFieldPromotions", "SquaddieVeterancy", "CoordinatedFire", "WeaponMechanicsRebalanced", "InfantrySandbagCover", "LargerMaps", "AIPerformance"} and "MenaceModSettings" not in modules:
+            if module in {"SquaddieFieldPromotions", "SquaddieVeterancy", "CoordinatedFire", "WeaponMechanicsRebalanced", "InfantrySandbagCover", "LargerMaps", "AIPerformance", "SmokeOverhaul"} and "MenaceModSettings" not in modules:
                 settings_dll = game / "Mods/MenaceModSettings/code/MenaceModSettings.dll"
                 if not settings_dll.is_file():
                     settings_dll = ROOT / "mods/jiangyu/MenaceModSettings/compiled/code/MenaceModSettings.dll"
@@ -92,6 +92,12 @@ def compile_clean(files, game, sdk, dotnet):
                 subprocess.run([dotnet, "run", "--project", str(root / "tests/OfflineChecks/OfflineChecks.csproj"),
                                 "-c", "Release"], check=True, cwd=source)
                 subprocess.run([dotnet, "run", "--project", str(source / "mods/LargerMaps/tests/AdvanceRecoveryChecks/AdvanceRecoveryChecks.csproj"),
+                                "-c", "Release"], check=True, cwd=source)
+            if module == "SmokeOverhaul":
+                subprocess.run([dotnet, "run", "--project", str(root / "tests/NativeContractChecks/NativeContractChecks.csproj"),
+                                "-c", "Release", "--", str(refs / "Assembly-CSharp.dll"),
+                                str(source / "mods/GameplaySuite/src/SmokeOverhaul/Plugin.cs")], check=True, cwd=source)
+                subprocess.run([dotnet, "run", "--project", str(root / "tests/SupportChecks/SupportChecks.csproj"),
                                 "-c", "Release"], check=True, cwd=source)
         if "CinematicActionCamera" in modules:
             camera = source / "mods/ThirdPersonCamera/ThirdPersonCamera.csproj"

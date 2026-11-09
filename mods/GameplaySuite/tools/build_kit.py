@@ -38,13 +38,13 @@ def collect(root, module=None, use_installed_settings=False):
         raise ValueError("Unknown requested module")
     installed_companion_modules = {
         "SquaddieFieldPromotions", "SquaddieVeterancy", "TacticalRoundCheckpoint",
-        "CoordinatedFire", "WeaponMechanicsRebalanced", "InfantrySandbagCover", "LargerMaps", "AIPerformance",
+        "CoordinatedFire", "WeaponMechanicsRebalanced", "InfantrySandbagCover", "LargerMaps", "AIPerformance", "SmokeOverhaul",
     }
     if use_installed_settings and module not in installed_companion_modules:
         raise ValueError(
             "Installed-companion mode is supported only by SquaddieFieldPromotions, "
             "SquaddieVeterancy, TacticalRoundCheckpoint, CoordinatedFire and "
-            "WeaponMechanicsRebalanced, InfantrySandbagCover, LargerMaps and AIPerformance"
+            "WeaponMechanicsRebalanced, InfantrySandbagCover, LargerMaps, AIPerformance and SmokeOverhaul"
         )
     if module == "SquaddieFieldPromotions" and not use_installed_settings:
         raise ValueError("Experimental preview requires --use-installed-settings; do not replace an existing companion")

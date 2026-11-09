@@ -59,6 +59,14 @@ class DistributionTests(unittest.TestCase):
         self.assertNotIn("$compatibilityModules += 'AIPerformance'", installer)
         self.assertNotIn("+ @('AIPerformance', 'LargerMaps')", installer)
 
+    def test_smoke_support_reuses_installed_companions_and_bundles_runtime_checks(self):
+        payload, versions = BUILDER.collect(ROOT, "SmokeOverhaul", True)
+        self.assertEqual(set(versions), {"SmokeOverhaul"})
+        self.assertFalse(any("/MenaceModSettings/" in path for path in payload))
+        self.assertIn(b"-Modules SmokeOverhaul -UseInstalledSettings", payload["INSTALL-SmokeOverhaul.cmd"])
+        self.assertIn("source/mods/jiangyu/SmokeOverhaul/tests/SupportChecks/Program.cs", payload)
+        self.assertIn("tests\\SupportChecks\\SupportChecks.csproj", (TOOLS / "Install-IntegratedSuite.ps1").read_text())
+
     def fixture(self, root):
         def write(name, content):
             path = root / name

@@ -184,6 +184,11 @@ the companion's project XML as metadata alongside its manifests/DLL. Otherwise t
 artifact checker misidentifies it as a data-only package. Copy it only after selected
 builds; do not rebuild, bundle or install that external companion (regression #83).
 
+SmokeOverhaul 0.9.0 also supports `--use-installed-settings` / `-UseInstalledSettings`.
+Its project accepts the verified external companion path; the canonical installer runs
+both smoke native contracts and linked smoke-support runtime checks before staging.
+Only SmokeOverhaul is replaced in this mode; settings and loader are verified/preserved.
+
 Explicit `-BuildOnly` may read installed game references while MENACE is running;
 its lock/SDK stay inside the kit and outputs/staging use temporary build directories,
 not the game directory.

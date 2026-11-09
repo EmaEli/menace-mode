@@ -1,6 +1,13 @@
-# Smoke Overhaul 0.8.4 — test build
+# Smoke Overhaul 0.9.0 — coordinated smoke test candidate
 
 Smoke Overhaul makes smoke fully obstruct line of sight when it lies between units, while a unit standing in smoke receives half-tile aim exposure. It also extends smoke duration and gives smoke-delivery systems distinct tactical footprints.
+
+**0.9.0:** optional AIPerformance 1.8.0 support requests let ordinary advance-ordered rifle
+infantry use an equipped grenade toward an observed threat, even without a flamethrower.
+The existing main-thread smoke executor validates ammo, AP and target legality; it attempts
+at most once per actor turn. No equipment is granted. Successful smoke can allow a guarded
+forward step; this is concealment, not invulnerability. Native shots and emergency actions
+are not replaced by the request. Without AIPerformance, existing behavior is unchanged.
 
 **0.8.4:** carries forward the fix disabling all native `effect.smoke` stat changes, not only Accuracy: no concealment, accuracy, defense, damage, suppression or vision buffs/debuffs. Uses native casts and supports the legacy scalar and 0.7.18 property-array layouts. Smoke tile effects and VFX are preserved. Only the configured shot-chance rule remains: -20 percentage points per intervening smoke tile and -10 per smoke-occupied shooter/target tile by default. Mortar spawn/cooldown discovery now also uses native casts. This is a scoped 0.7.18 test candidate, not whole-suite or gameplay acceptance.
 

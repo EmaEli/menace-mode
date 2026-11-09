@@ -37,6 +37,7 @@ class LightweightSmokeTests(unittest.TestCase):
                          "target.IsEmpty()", "target.IsValidMovementDestination()", "TileHasSmoke(origin)", "TileHasSmoke(target)"):
             self.assertIn(required, AI)
         self.assertIn("if (!smoke.Use(target, UsageParameter.AutoAudioVolume)) return false;", AI)
+        self.assertIn("!carriesFlamethrower && !supportAdvance", AI)
         self.assertIn("if (!__runOriginal || !Plugin.TryAiSmokeAction(__instance)) return true;", AI)
 
     def test_once_per_actor_turn_and_only_after_native_legality_roll(self):
@@ -66,7 +67,7 @@ class LightweightSmokeTests(unittest.TestCase):
     def test_original_probabilities_are_not_rebalanced(self):
         for constant in ("PinnedChance = 60", "SuppressedChance = 45", "FlamethrowerChance = 30"):
             self.assertIn(constant, RULES)
-        self.assertIn("SmokeAiRules.Chance(pinned, suppressed)", AI)
+        self.assertIn("SmokeAiRules.Chance(pinned, suppressed, supportAdvance)", AI)
         self.assertIn("SmokeAiRules.TryGetLocalOffset(", AI)
 
     def test_late_prefix_respects_assault_and_worker_fallback(self):

@@ -1,3 +1,15 @@
+## 0.9.0
+
+- Answer optional AIPerformance 1.8.0 observed-threat smoke requests for ordinary
+  advance-ordered rifle infantry, not just flamethrower carriers. Prefer adjacent forward
+  smoke and use the existing main-thread executor/one-attempt-per-turn guard.
+- Equipped grenade, remaining uses, AP, native target legality and successful Use are
+  required. No grants or defensive-direction changes; emergency smoke retains its odds.
+- Expose real smoke presence for guarded forward movement; disabling its aim penalty
+  cannot authorize smoke-protected advance. Smoke is not invulnerability.
+- Add linked-runtime request/throw/legality/failure tests. Canonical standalone mode can
+  preserve installed settings/loader; gameplay acceptance remains separate.
+
 ## 0.8.4
 
 - Carries forward 0.8.3's all-stat neutralization for a scoped MENACE 0.7.18 test candidate; no whole-suite compatibility claim.
