@@ -1,13 +1,20 @@
-# AI Performance 1.8.0
+# AI Performance 1.8.1
 
 ## Experimental threat-driven support (0.7.18)
 
 Enable **Threat-driven vehicle, fire and smoke support (0.7.18)** and restart the
 game (`CombinedArmsSupport`, OFF by default). Fast planning must remain enabled.
 
-Canonical 1.8.0 Windows BuildOnly/install and affected-only backups are verified;
-1,445 unrelated Mods/UserData files unchanged. Gameplay acceptance is still pending.
-See [test evidence](../../../docs/AI_THREAT_RESPONSE_2026-11-09.md).
+**1.8.1 correction:** fresh native score collections no longer lose safe vehicle staging
+when the target-query budget runs out before Execute. Last-known geometric approaches
+do not spend live-target probe tokens; when those tokens are exhausted, only freshly
+no-more-dangerous, affordable staging is re-seeded. Real shot checks retain their existing
+caps. No cached native scores/attacks, new aggression multiplier, smoke or terrain changes.
+Changed AP, weapon availability, orders, readiness and expired threats still cancel staging.
+
+The 1.8.0 replay showed inadequate support despite verified installation; see
+[feedback evidence](../../../docs/AI_THREAT_RESPONSE_FEEDBACK_2026-11-09.md).
+1.8.1 build/install and gameplay acceptance are separate gates.
 
 **1.8.0 response:** a legitimately observed ranged threat can direct nearby crewed
 vehicles ahead of infantry, including after the infantry anchor dies. Up to four existing
@@ -25,7 +32,8 @@ reduced or the route waypoints have cover/smoke. Inspection is bounded to 16 nat
 With **Smoke Overhaul 0.9.0**, ordinary rifle infantry can request one equipped, affordable,
 native-legal smoke throw toward the threat, preferring the adjacent forward tile. Existing
 successful smoke can enable a step forward; smoke is concealment, not invulnerability.
-No grenade or ammo is granted. Without that optional companion, cover/fire remain available
+The bridge grants no grenade or ammo; Smoke Overhaul's separate free-grenade setting can.
+Without that optional companion, cover/fire remain available
 but an unsafe advance is not authorized by imaginary smoke. Useful attacks/emergencies win.
 
 The older nearby-infantry support fallback remains below when no threat response is seeded:

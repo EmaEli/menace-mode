@@ -1,6 +1,6 @@
 {
   "name": "AIPerformance",
-  "version": "1.8.0",
+  "version": "1.8.1",
   "author": "Luca",
   "description": "Fast AI planning with optional threat-directed vehicle response, native attack/artillery priority, guarded infantry routes and equipped-grenade smoke requests via Smoke Overhaul. Observed contacts expire; no hidden tracking, fabricated shots, free equipment or extra path search. Reviewed 0.7.18 test candidate, not gameplay-accepted.",
   "depends": ["Jiangyu >= 1.4.8", "MenaceModSettings >= 0.2.0"]

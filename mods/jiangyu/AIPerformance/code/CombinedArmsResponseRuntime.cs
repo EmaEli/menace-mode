@@ -79,15 +79,21 @@ internal static class CombinedArmsResponseRuntime
             {
                 int cost = SupportProjection.Reserve(damage, actor, score.Tile.Pointer != current.Pointer);
                 if (cost <= 0 || (long)score.APCost + cost > actor.GetActionPoints()) continue;
-                if (++probes > 8 || (Stopwatch.GetTimestamp() - started) * 1000.0 / Stopwatch.Frequency > 10 ||
-                    !budget.Spend(map.Pointer.ToInt64(), round, asset.Actor, asset.Agent, agent.GetFaction().Pointer.ToInt64(), 4)) goto Finished;
-                var skill = damage.GetSkill();
-                if (detected && skill.IsUsableOn(target, score.Tile, TargetUsageParams.IGNORE_DEPLOYMENT_AND_ANGLE) &&
-                    skill.IsApplicableTo(target, null) && skill.GetFinalUserTile(score.Tile, target)?.Pointer == score.Tile.Pointer)
+                // Only live-target queries spend the shared probe budget. Native scores can
+                // be recreated several times before Execute; budget exhaustion must not erase
+                // a still-safe geometric approach that needs no speculative target query.
+                if (detected && probes < 8 && (Stopwatch.GetTimestamp() - started) * 1000.0 / Stopwatch.Frequency <= 10 &&
+                    budget.Spend(map.Pointer.ToInt64(), round, asset.Actor, asset.Agent, agent.GetFaction().Pointer.ToInt64(), 4))
                 {
-                    float value = damage.GetTargetValue(false, skill, target, score.Tile, target) *
-                        skill.GetTemplate().AIConfig.ScoreMult * AIConfig.WEIGHTS.InflictDamageFromTile;
-                    if (float.IsFinite(value) && value > 0) { shot = Math.Max(shot, value); reserve = Math.Min(reserve, cost); }
+                    probes++;
+                    var skill = damage.GetSkill();
+                    if (skill.IsUsableOn(target, score.Tile, TargetUsageParams.IGNORE_DEPLOYMENT_AND_ANGLE) &&
+                        skill.IsApplicableTo(target, null) && skill.GetFinalUserTile(score.Tile, target)?.Pointer == score.Tile.Pointer)
+                    {
+                        float value = damage.GetTargetValue(false, skill, target, score.Tile, target) *
+                            skill.GetTemplate().AIConfig.ScoreMult * AIConfig.WEIGHTS.InflictDamageFromTile;
+                        if (float.IsFinite(value) && value > 0) { shot = Math.Max(shot, value); reserve = Math.Min(reserve, cost); }
+                    }
                 }
                 // Staging is allowed toward a last-known threat, but cannot fabricate a shot
                 // or increase danger. A real shot competes against UNCHANGED native safety.
@@ -100,7 +106,6 @@ internal static class CombinedArmsResponseRuntime
             edits.Add((score, score.UtilityScore, score.UtilityByAttacksScore, score.MinimumUtilityAPCost,
                 utility, Math.Max(score.UtilityByAttacksScore, shot), Math.Min(score.MinimumUtilityAPCost, reserve)));
         }
-    Finished:
         bool done = false;
         try
         {

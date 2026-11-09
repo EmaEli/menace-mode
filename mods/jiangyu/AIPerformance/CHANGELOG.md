@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.8.1 — 9 November 2026
+
+- Fix vehicle threat-response staging disappearing before Execute after repeated native
+  tile-score resets. Geometric staging no longer spends unused live-target query tokens;
+  exhausted query budgets still permit only freshly safe, affordable forward staging.
+- Preserve target-probe/faction limits, native safety/path/attack ownership and setup/fire
+  AP reserves. Do not cache stale attacks/positions, add aggression, or change smoke/terrain.
+- Add fresh-score, exhausted-budget and context-change regression checks. The original
+  production method reproduces destination loss on evaluation four; gameplay remains a
+  separate acceptance gate.
+
 ## 1.8.0 — 9 November 2026
 
 - Add bounded threat-directed vehicle positions independent of a surviving/ready infantry

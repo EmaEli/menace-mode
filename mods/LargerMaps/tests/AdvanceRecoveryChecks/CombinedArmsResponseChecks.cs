@@ -8,6 +8,7 @@ internal static class CombinedArmsResponseChecks
 {
     internal static void Run(Action<bool, string> check)
     {
+        CombinedArmsStagingChecks.Run(check);
         TacticalManager.Instance = new(); AIConfig.WEIGHTS = new();
         var map = TacticalManager.Instance.GetMap(); var faction = new AIFaction { Kind = 9 };
         TacticalManager.Instance.Faction = faction;
@@ -56,8 +57,9 @@ internal static class CombinedArmsResponseChecks
         vehicle.Agent.Zones[0].Order = 1;
         var exhausted = new OffensivePlanningBudget();
         for (int i = 0; i < 12; i++) exhausted.Spend(1, 1, 200, 201, faction.Pointer.ToInt64(), 4);
-        check(!CombinedArmsResponseRuntime.PlanVehicle(vehicle.Agent, vehicle.Agent.Tiles, memory, exhausted, map, 1, false),
-            "threat response cannot escape the shared per-actor planning budget");
+        check(CombinedArmsResponseRuntime.PlanVehicle(vehicle.Agent, vehicle.Agent.Tiles, memory, exhausted, map, 1, false) &&
+            front.UtilityScore > 0 && front.UtilityByAttacksScore == 0,
+            "exhausted target-probe budget does not erase freshly safe last-known staging");
         front.UtilityScore = 0; TileScore.UtilityWritesBeforeThrow = 0;
         bool rolledBack = false;
         try { CombinedArmsResponseRuntime.PlanVehicle(vehicle.Agent, vehicle.Agent.Tiles, memory, new(), map, 1, false); }
