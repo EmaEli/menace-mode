@@ -14,6 +14,7 @@ MissionCivilianChecks.Run(Check);
 OffensivePlanningChecks.Run(Check);
 CombinedArmsChecks.Run(Check);
 CombinedArmsThreatChecks.Run(Check);
+CombinedArmsResponseChecks.Run(Check);
 Check(AdvanceRecoveryBuild.IsSupported("871b4c3468c68dae3d75e7b5e29fcc9b0a8a253fcebf64045af348f0aec75111"), "reviewed 0.7.17");
 Check(AdvanceRecoveryBuild.IsSupported("494C9E212D411D898B3ABAFB4AD233F7A39A22648D713A86B9641D698B2D12E9"), "reviewed 0.7.18, case insensitive");
 foreach (string hash in new[] { null, "", "0.7.18+22828", new string('0',64), "877622dd02ed79f6a3a37580b5cd9be12e29012bbd6f15a9c80cf917af1373db" })

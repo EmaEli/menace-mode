@@ -39,6 +39,10 @@ namespace AIPerformance
         internal static void CombinedRefreshFixture(Agent agent) => CombinedArmsRefresh(agent);
         internal static void CombinedDetectedFixture(Actor actor, int faction) => CombinedArmsDetected(actor, faction);
         internal static bool CombinedEnabled => _combinedArmsEnabled;
+        internal static void BindSmokeFixture(Func<Tile, bool> cover) => _supportSmokeCover = cover;
+        internal static float ThreatValueFixture(Il2CppMenace.Tactical.AI.Behaviors.InflictDamage behavior, Tile target, float value, bool immediate = true)
+        { CombinedArmsThreatValue(behavior, immediate, target, ref value); return value; }
+        private static Type FindType(string name) => null;
         internal static void BeginOffensiveFixture()
         {
             _offensiveBudget.Reset(); _offensivePlanningEnabled = true; _missionCivilianPriorityEnabled = true;

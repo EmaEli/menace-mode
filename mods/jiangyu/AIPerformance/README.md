@@ -1,9 +1,30 @@
-# AI Performance 1.7.0
+# AI Performance 1.8.0
 
-## Experimental infantry-led support (0.7.18)
+## Experimental threat-driven support (0.7.18)
 
-Enable **Infantry-led vehicle and heavy-weapon support (0.7.18)** and restart the
+Enable **Threat-driven vehicle, fire and smoke support (0.7.18)** and restart the
 game (`CombinedArmsSupport`, OFF by default). Fast planning must remain enabled.
+
+**1.8.0 response:** a legitimately observed ranged threat can direct nearby crewed
+vehicles ahead of infantry, including after the infantry anchor dies. Up to four existing
+local origins and eight setup-aware weapon probes share the existing faction/actor budget
+(soft 10 ms start limit). Real detected shots compete against unchanged native danger;
+uncertain-position staging cannot increase it. Native Move still chooses paths and spends AP.
+
+Already-positive native immediate attacks, including artillery, receive 2x priority at the
+observed threat tile while currently detected. This is not a new artillery executor: native
+spotting, blast/friendly-fire evaluation, range, deployment and firing remain mandatory.
+Forward infantry choices into remembered firing lanes are held unless native danger is
+reduced or the route waypoints have cover/smoke. Inspection is bounded to 16 native waypoints,
+32 LOS probes and a soft 5 ms; this is not proof of an exposure-free interpolated route.
+
+With **Smoke Overhaul 0.9.0**, ordinary rifle infantry can request one equipped, affordable,
+native-legal smoke throw toward the threat, preferring the adjacent forward tile. Existing
+successful smoke can enable a step forward; smoke is concealment, not invulnerability.
+No grenade or ammo is granted. Without that optional companion, cover/fire remain available
+but an unsafe advance is not authorized by imaginary smoke. Useful attacks/emergencies win.
+
+The older nearby-infantry support fallback remains below when no threat response is seeded:
 
 - Nearby infantry with exclusively advancing mission orders supplies the direction.
   Vehicles/heavy teams keep their own compatible advance order, or have no order;
@@ -26,7 +47,7 @@ game (`CombinedArmsSupport`, OFF by default). Fast planning must remain enabled.
 - A main-thread faction snapshot and small spatial index find at most four partners.
   Each squad has one vehicle and one heavy-team slot. Short leases expire after two
   rounds; no advance, changed orders, arrival, movement/death callbacks and mission reset
-  release or refresh evidence. Infantry is not held waiting for support in this version.
+  release or refresh evidence. Threat-free infantry is not held waiting for support.
 - At most eight local origins, two weapons and four detected targets. Support shares
   the existing 24-token evaluation / 48-token actor-round budget; all planning also
   shares 512 tokens per faction-round. Lane samples cost two tokens and setup-aware
@@ -45,13 +66,12 @@ game (`CombinedArmsSupport`, OFF by default). Fast planning must remain enabled.
   available, suppress only the generic objective-advance score for that AI pass. Native
   direct-fire scoring, emergency choices and no-threat advance behavior are retained.
 
-Mortar/HE, smoke and suppression responses to uncertain contacts are **not added** in
-1.7.1: their native behavior remains unchanged. This candidate implements the local
-flanking alternative, not a complete combined-arms director or a safe indirect-fire policy.
+Indirect fire at hidden/uncertain contacts is **not injected**. Only existing positive
+native attacks against a currently detected observed threat receive the priority bonus.
 
 This is a first-stage positioning/setup-aware firing policy, **not** proven gameplay
-coordination. Stationary pre-deployment toward empty ground, explicit facing, infantry
-wait-for-support and Overwatch integration are deferred: no verified native action is
+coordination. Stationary pre-deployment toward empty ground, explicit facing and
+Overwatch integration are deferred: no verified native action is
 fabricated to claim them. Native setup still executes only when native Move/Attack
 selects it. See [scope and evidence](../../../docs/AI_COMBINED_ARMS_2026-11-09.md).
 

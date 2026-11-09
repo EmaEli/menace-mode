@@ -106,7 +106,7 @@ internal static class CombinedArmsThreatRuntime
                 if (!Spend()) break;
                 var score = candidate.Score;
                 if (CombinedArmsRuntime.Distance2(score.Tile, threat.X, threat.Z) <= uncertainty * uncertainty ||
-                    origin.HasLineOfSightTo(score.Tile, LineOfSightFlags.Default)) continue;
+                    (origin.HasLineOfSightTo(score.Tile, LineOfSightFlags.Default) && !Plugin.SupportSmokeCover(score.Tile))) continue;
                 edits.Add((score, score.UtilityScore, System.Math.Max(score.UtilityScore, threshold * 1.5f)));
                 if (edits.Count == 4) break;
             }

@@ -17,6 +17,7 @@ public sealed partial class Plugin
     private static readonly HashSet<IntPtr> _smokeActedThisTurn = new();
     private const int MaxSmokeThreatChecks = 24;
     private static int _aiSmokeMainThreadId;
+    private static Func<Agent, int[]?>? _supportSmokeThreat;
     internal static bool AiSmokeOnMainThread => Environment.CurrentManagedThreadId == _aiSmokeMainThreadId;
     private static bool _pinnedSmokeErrorLogged, _aiSmokeActionErrorLogged;
     private static int _aiSmokeExecutions, _aiSmokeEligible, _aiSmokeSkillsAvailable,
@@ -85,6 +86,7 @@ public sealed partial class Plugin
     private static void AiSmokeSceneChanged(string sceneName)
     {
         _smokeActedThisTurn.Clear();
+        BindSupportSmokeRequest();
         if (!string.Equals(sceneName, "Tactical", StringComparison.OrdinalIgnoreCase))
         {
             if (RuntimeSettings.DebugLogging && _aiSmokeExecutions > 0)
@@ -127,8 +129,11 @@ public sealed partial class Plugin
             bool pinned = pressure == SuppressionState.PinnedDown;
             bool suppressed = pressure == SuppressionState.Suppressed;
             if (pinned && !RuntimeSettings.AllowSmokeWhilePinnedDown) return false;
+            int[]? supportThreat = !pinned && !suppressed ? _supportSmokeThreat?.Invoke(agent) : null;
+            bool supportAdvance = supportThreat is { Length: 2 };
             bool advance = !pinned && !suppressed && origin.GetCoverMask() == 0 &&
                 (agent.GetNumThreatsFaced() > 0 || agent.GetFaction()?.HasKnownOpponent() == true);
+            advance |= supportAdvance;
             if (!pinned && !suppressed && !advance) return false;
 
             // Record the decision before skill lookup/legality/chance: no rerolls this turn.
@@ -152,16 +157,19 @@ public sealed partial class Plugin
                 }
                 catch { }
             }
-            if (smoke == null || (advance && !carriesFlamethrower)) return false;
+            if (smoke == null || (advance && !carriesFlamethrower && !supportAdvance)) return false;
             _aiSmokeSkillsAvailable++;
-            if (!TryGetDetectedSmokeThreat(agent, actor, origin, pinned || suppressed, out int dx, out int dz)) return false;
+            int dx, dz;
+            if (supportAdvance) { dx = supportThreat![0] - origin.GetX(); dz = supportThreat[1] - origin.GetZ(); }
+            else if (!TryGetDetectedSmokeThreat(agent, actor, origin, pinned || suppressed, out dx, out dz)) return false;
             Map? map = TacticalManager.Get()?.GetMap();
             if (map == null) return false;
             for (int reachIndex = 0; reachIndex < 2; reachIndex++)
             {
                 for (int candidate = 0; candidate < 3; candidate++)
                 {
-                    if (!SmokeAiRules.TryGetLocalOffset(dx, dz, advance, reachIndex, candidate, out int offsetX, out int offsetZ)) continue;
+                    // Coordinated crossing starts with adjacent smoke, not a two-tile exposed gap.
+                    if (!SmokeAiRules.TryGetLocalOffset(dx, dz, advance && !supportAdvance, reachIndex, candidate, out int offsetX, out int offsetZ)) continue;
                     int x = origin.GetX() + offsetX, z = origin.GetZ() + offsetZ;
                     if (!map.IsInBounds(x, z)) continue;
                     Tile? target = map.GetTile(x, z);
@@ -169,7 +177,7 @@ public sealed partial class Plugin
                         (advance && !target.IsValidMovementDestination())) continue;
                     if (!smoke.IsUsableOn(target, origin)) continue;
                     _aiSmokeValidTargets++;
-                    if (System.Random.Shared.Next(100) >= SmokeAiRules.Chance(pinned, suppressed))
+                    if (System.Random.Shared.Next(100) >= SmokeAiRules.Chance(pinned, suppressed, supportAdvance))
                     {
                         _aiSmokeChanceSkipped++;
                         return false;
@@ -195,6 +203,27 @@ public sealed partial class Plugin
         }
         return false; // Native MENACE AI remains the fallback, including failed Use.
     }
+
+    private static void BindSupportSmokeRequest()
+    {
+        _supportSmokeThreat = null;
+        try
+        {
+            foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                var method = assembly.GetType("AIPerformance.Plugin", false)?.GetMethod("GetSupportSmokeThreat",
+                    System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+                if (method == null) continue;
+                _supportSmokeThreat = (Func<Agent, int[]?>)Delegate.CreateDelegate(typeof(Func<Agent, int[]>), method);
+                break;
+            }
+        }
+        catch { } // Optional integration; existing defensive smoke remains independent.
+    }
+
+    public static bool HasSupportSmokeCover(Tile tile)
+        => RuntimeSettings.Enabled && RuntimeSettings.AccuracyPenaltyPerTile > 0 &&
+            RuntimeSettings.MaximumAccuracyPenalty > 0 && tile != null && TileHasSmoke(tile);
 
     private static bool TryGetDetectedSmokeThreat(Agent agent, Actor actor, Tile origin,
         bool defensive, out int dx, out int dz)

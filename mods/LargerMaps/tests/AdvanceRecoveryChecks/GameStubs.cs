@@ -6,6 +6,7 @@ namespace Il2CppSystem.Collections.Generic
 namespace UnityEngine
 {
     public record struct RectInt(int xMin, int yMin, int width, int height);
+    public record struct Vector3(float x, float y, float z);
 }
 namespace Il2CppMenace.Tactical
 {
@@ -70,6 +71,7 @@ namespace Il2CppMenace.Tactical
     {
         public IntPtr Pointer = (IntPtr)1;
         public int Width = 96, Height = 96;
+        public Tile GetTileAtPos(UnityEngine.Vector3 point) => GetTile((int)point.x, (int)point.z);
         private Dictionary<(int, int), Tile> _tiles = new();
         public Tile GetTile(int x, int z)
         {
@@ -170,6 +172,7 @@ namespace Il2CppMenace.Tactical.AI.Behaviors
     public class Move : Behavior
     {
         public Data.TileScore TargetTile;
+        public List<UnityEngine.Vector3> m_Path = new();
         public bool Done, Moved, Delaying, Inert;
         public bool IsMovementDone() => Done;
         public bool HasMovedThisTurn() => Moved;

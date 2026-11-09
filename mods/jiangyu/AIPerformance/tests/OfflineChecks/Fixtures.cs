@@ -5,6 +5,7 @@ namespace AIPerformance
 {
     public sealed partial class Plugin
     {
+        private static void BindSupportSmoke() { }
         private static void PatchAdvanceRecovery(HarmonyLib.Harmony harmony) { }
         private static void AdvanceRecoveryReset() { }
         private static bool _contactConvergenceEnabled { get; set; }

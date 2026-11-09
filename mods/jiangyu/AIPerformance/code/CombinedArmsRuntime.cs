@@ -341,7 +341,8 @@ internal static class CombinedArmsRuntime
         (long)(next.GetX() - current.GetX()) * (request.AimX - request.X) +
         (long)(next.GetZ() - current.GetZ()) * (request.AimZ - request.Z) >= 0;
 
-    internal static Behavior PreventSpacingRetreat(Agent agent, Behavior chosen, CombinedArmsState state, Map map, int round)
+    internal static Behavior PreventSpacingRetreat(Agent agent, Behavior chosen, CombinedArmsState state, Map map, int round,
+        SupportThreat? response = null)
     {
         var asset = Snapshot(agent, false);
         var move = chosen?.TryCast<Move>();
@@ -357,7 +358,9 @@ internal static class CombinedArmsRuntime
         // at choice time as well; never promise a firing reserve from the pre-path estimate.
         bool reserveLost = target.APCost > 0 && target.MinimumUtilityAPCost > 0 && target.MinimumUtilityAPCost < 1024 &&
             (long)target.APCost + target.MinimumUtilityAPCost > agent.GetActor().GetActionPoints();
-        if (!reserveLost && (Forward(current, target.Tile, requests[0]) ||
+        bool responseApproach = response is { } threat &&
+            Distance2(target.Tile, threat.X, threat.Z) < Distance2(current, threat.X, threat.Z);
+        if (!reserveLost && (responseApproach || Forward(current, target.Tile, requests[0]) ||
             target.UtilityByAttacksScore > here.UtilityByAttacksScore ||
             target.UtilityByAttacksScoreCandidate > here.UtilityByAttacksScoreCandidate)) return chosen;
         foreach (var behavior in agent.GetBehaviors())

@@ -85,6 +85,8 @@ Method(behavior, "GetUtilityThreshold", "Single");
 var movement = Type("Il2CppMenace.Tactical.AI.Behaviors.Move");
 Method(movement, "HasUtility", "Boolean", "Dictionary<Tile,TileScore>");
 Method(movement, "GetTargetTile", "TileScore");
+Property(movement, "m_Path", "List<Vector3>");
+Method(Type("Il2CppMenace.Tactical.Map"), "GetTileAtPos", "Tile", "Vector3");
 foreach (string member in new[] { "IsMovementDone", "HasMovedThisTurn", "IsDelayingMovement", "IsInsideContainerAndInert" })
     Method(movement, member, "Boolean");
 Method(faction, "HasKnownOpponent", "Boolean");

@@ -9,7 +9,7 @@
   -->
   <PropertyGroup>
     <!-- Keep in step with jiangyu.json so the DLL metadata identifies the shipped build. -->
-    <Version>0.8.4</Version>
+    <Version>0.9.0</Version>
     <AssemblyName>SmokeOverhaul</AssemblyName>
     <RootNamespace>SmokeOverhaul</RootNamespace>
     <Nullable>enable</Nullable>
@@ -41,7 +41,8 @@
       so the loader has already loaded it into the default context when this DLL binds.
     -->
     <Reference Include="MenaceModSettings">
-      <HintPath>../../MenaceModSettings/compiled/code/MenaceModSettings.dll</HintPath>
+      <HintPath Condition="'$(MenaceModSettingsPath)' != ''">$(MenaceModSettingsPath)</HintPath>
+      <HintPath Condition="'$(MenaceModSettingsPath)' == ''">../../MenaceModSettings/compiled/code/MenaceModSettings.dll</HintPath>
       <Private>false</Private>
     </Reference>
   </ItemGroup>

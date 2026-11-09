@@ -1,7 +1,7 @@
 {
   "name": "AIPerformance",
-  "version": "1.7.1",
+  "version": "1.8.0",
   "author": "Luca",
-  "description": "Fast AI planning with bounded firing positions and mission advances. Optional infantry-led support without spacing-only vehicle withdrawals and short observed-threat memory for local flanking on reviewed 0.7.18. Readiness-independent threat observations use bounded retries; unresolved firing lanes block only generic advance utility. Native safety, firing and paths retained; no hidden-position tracking, mortar/smoke injection or reaction-fire changes.",
+  "description": "Fast AI planning with optional threat-directed vehicle response, native attack/artillery priority, guarded infantry routes and equipped-grenade smoke requests via Smoke Overhaul. Observed contacts expire; no hidden tracking, fabricated shots, free equipment or extra path search. Reviewed 0.7.18 test candidate, not gameplay-accepted.",
   "depends": ["Jiangyu >= 1.4.8", "MenaceModSettings >= 0.2.0"]
 }

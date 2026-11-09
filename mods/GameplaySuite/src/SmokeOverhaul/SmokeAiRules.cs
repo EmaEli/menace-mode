@@ -7,8 +7,8 @@ internal static class SmokeAiRules
     internal const int SuppressedChance = 45;
     internal const int FlamethrowerChance = 30;
 
-    internal static int Chance(bool pinned, bool suppressed)
-        => pinned ? PinnedChance : suppressed ? SuppressedChance : FlamethrowerChance;
+    internal static int Chance(bool pinned, bool suppressed, bool supportAdvance = false)
+        => pinned ? PinnedChance : suppressed ? SuppressedChance : supportAdvance ? 100 : FlamethrowerChance;
 
     internal static bool TryGetLocalOffset(int dx, int dz, bool advance, int reachIndex,
         int candidate, out int x, out int z)

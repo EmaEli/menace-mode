@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.8.0 — 9 November 2026
+
+- Add bounded threat-directed vehicle positions independent of a surviving/ready infantry
+  anchor. Existing local origins may be ahead of infantry; actual detected shots retain
+  native danger penalties, while last-known staging cannot increase native danger.
+- Double only positive native immediate damage valuations at an observed, currently
+  detected threat tile, including native artillery evaluations. No fabricated candidates,
+  hidden-coordinate fire, new bombardment executor or bypass of native legality.
+- Guard forward infantry Move choices against remembered firing lanes and exposed native
+  route waypoints. Preserve native danger reduction, attacks and emergency behaviors.
+- Optional Smoke Overhaul 0.9.0 integration requests equipped, legal smoke toward the
+  remembered threat for ordinary rifle infantry; real smoke can enable a forward step.
+  No equipment grants, second grenade scheduler or custom path search.
+- Add linked production behavior/smoke checks and clipped-path metadata contracts.
+  Windows deployment and gameplay acceptance are separate gates.
+
 ## 1.7.1 — 9 November 2026
 
 - Observe armed, detected threats to advance-ordered infantry independently of that

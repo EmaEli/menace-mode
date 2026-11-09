@@ -22,15 +22,30 @@ public sealed partial class Plugin
             var choice = AccessTools.Method(typeof(Agent), "PickBehavior", Type.EmptyTypes);
             var reset = AccessTools.Method(typeof(TacticalManager), "OnInit");
             if (scores == null || choice == null || reset == null) throw new MissingMethodException("offensive planning hooks");
-            foreach (var type in new[] { typeof(OffensivePlanningRuntime), typeof(OffensivePlanningBudget) })
+            foreach (var type in new[] { typeof(OffensivePlanningRuntime), typeof(OffensivePlanningBudget), typeof(CombinedArmsResponseRuntime) })
+            {
                 foreach (var method in type.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static |
                     BindingFlags.Instance | BindingFlags.DeclaredOnly)) RuntimeHelpers.PrepareMethod(method.MethodHandle);
+                foreach (var nested in type.GetNestedTypes(BindingFlags.Public | BindingFlags.NonPublic))
+                {
+                    foreach (var method in nested.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static |
+                        BindingFlags.Instance | BindingFlags.DeclaredOnly)) RuntimeHelpers.PrepareMethod(method.MethodHandle);
+                    foreach (var constructor in nested.GetConstructors(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance))
+                        RuntimeHelpers.PrepareMethod(constructor.MethodHandle);
+                }
+            }
             foreach (string name in new[] { nameof(OffensivePlanningScores), nameof(OffensivePlanningChoice), nameof(OffensivePlanningReset) })
                 RuntimeHelpers.PrepareMethod(typeof(Plugin).GetMethod(name, BindingFlags.Static | BindingFlags.NonPublic).MethodHandle);
             _offensiveBudget.Spend(1, 1, 1, 1); _offensiveBudget.Reset();
             harmony.Patch(scores, prefix: new HarmonyMethod(typeof(Plugin), nameof(OffensivePlanningScores)));
             harmony.Patch(choice, postfix: new HarmonyMethod(typeof(Plugin), nameof(OffensivePlanningChoice)));
             harmony.Patch(reset, postfix: new HarmonyMethod(typeof(Plugin), nameof(OffensivePlanningReset)));
+            var value = AccessTools.Method(typeof(Il2CppMenace.Tactical.AI.Behaviors.InflictDamage), "GetTargetValue",
+                new[] { typeof(bool), typeof(Il2CppMenace.Tactical.Skills.Skill), typeof(Tile), typeof(Tile), typeof(Tile) });
+            if (value == null) throw new MissingMethodException("native threat valuation");
+            RuntimeHelpers.PrepareMethod(typeof(Plugin).GetMethod(nameof(CombinedArmsThreatValue), BindingFlags.Static | BindingFlags.NonPublic).MethodHandle);
+            harmony.Patch(value, postfix: new HarmonyMethod(typeof(Plugin), nameof(CombinedArmsThreatValue)));
+            BindSupportSmoke();
             _offensivePlanningEnabled = ReadBool("OffensiveCombatPlanning", true);
             _log.Msg($"{ModName}: bounded offensive planning enabled; native direct-fire probes, shot-first choices and mission advances (pirate/Rogue).");
         }
@@ -48,6 +63,8 @@ public sealed partial class Plugin
             {
                 try
                 {
+                    if (CombinedArmsResponseRuntime.PlanVehicle(__instance, __instance.GetTiles(), _supportThreats,
+                        _offensiveBudget, map, manager.m_Round, _combinedArmsDiagnostics)) return;
                     int flanks = CombinedArmsThreatRuntime.Flank(__instance, __instance.GetTiles(), _supportThreats,
                         _offensiveBudget, map, manager.m_Round, out unresolvedDanger);
                     if (flanks > 0)
@@ -84,7 +101,21 @@ public sealed partial class Plugin
             {
                 var manager = TacticalManager.Get(); var map = manager?.GetMap();
                 if (map != null) __result = CombinedArmsRuntime.PreventSpacingRetreat(__instance, __result,
-                    _combinedArms, map, manager.m_Round);
+                    _combinedArms, map, manager.m_Round,
+                    CombinedArmsResponseRuntime.Threat(__instance, _supportThreats, map, manager.m_Round));
+            }
+            if (_combinedArmsEnabled)
+            {
+                var manager = TacticalManager.Get(); var map = manager?.GetMap();
+                if (map != null)
+                {
+                    var before = __result;
+                    __result = CombinedArmsResponseRuntime.GuardAdvance(__instance, __result,
+                        _supportThreats, map, manager.m_Round, SupportSmokeCover);
+                    if (_combinedArmsDiagnostics && before?.Pointer != __result?.Pointer)
+                        CombinedArmsDiagnostic(manager.m_Round, __instance.GetFaction().Pointer.ToInt64(),
+                            __instance.GetActor().Pointer.ToInt64(), "response-hold", "reason=exposed-native-route result=wait-for-cover-fire-or-smoke");
+                }
             }
             if (_combinedArmsDiagnostics && supportAsset != null)
             {
