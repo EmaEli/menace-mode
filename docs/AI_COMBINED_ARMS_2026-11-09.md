@@ -65,5 +65,29 @@ environment active. Reviewed game hash and all 119 installed proxy DLL hashes ma
 local build references. Pre-install AIPerformance remains 1.5.0, DLL SHA256
 `3045357b697acc8dd3a9fa0b4795d1a7ff226c07c96a4ec23fbe09f1581fa6a8`.
 
-Canonical BuildOnly, installation and final installed hashes are pending at this checkpoint.
-Startup/gameplay acceptance remains pending even after those gates pass.
+Source `5b1ce76` is committed/pushed on `dev`; unrelated dirty work is preserved.
+The 65-file single-module BuildKit and clean extracted-source rebuild passed:
+ZIP SHA256 `af53bbac07d50e30d3165bc60599a585b23fcb323115f8355aff5dd6daf50f7e`.
+Scoped shared artifact checks: 18,009; linked hook checks: 13,002; planning/settings: 32;
+proxy metadata: 185. Suite Python: 207; LargerMaps Python: 155 (eight explicit skips),
+including six exact native phase/setup/movement byte-contract tests. Production builds
+have zero warnings/errors; the shared offline runner retains existing nullable warnings.
+
+Canonical Windows BuildOnly and standalone installation passed on 0.7.18+22828 with
+private SDK 10.0.113, zero production warnings/errors and the same 185/32/13,002 checks.
+Installed manifest/assembly/file: **1.6.0 / 1.6.0.0 / 1.6.0.0**; DLL SHA256:
+`83acb611ec7b752a4f40ea6c30a5061778384b90d39bb99546aceb0cd2ba4400`.
+
+- Affected-only backup: `_MENACE_Backups/20261109-112950-e67d342d461a48d594f13f019eee6796`.
+  Journal originals match the retained 1.5.0 baseline; all installed-file hashes verified.
+- **1,564 protected Mods/UserData/proxy files unchanged**. Settings and Jiangyu.Loader
+  were reused, not replaced. No saves, unrelated mods or UserData were modified.
+- Retained stage/logs: `E:/MENACE-Work/Builds/AIPerformance-1.6.0-combined-20261109/`;
+  canonical persistent log: `E:/MENACE-Work/Temp/MENACE-install.log`.
+- New support remains OFF by default. Enable **Infantry-led vehicle and heavy-weapon
+  support (0.7.18)** in AI Performance, leave fast planning enabled, then restart.
+
+Startup, native hook dispatch, actual setup/fire behavior, coordination and turn-time
+acceptance remain **untested**. A short pirate/Rogue engagement is the next check;
+retrieve fresh Latest.log after the user's result. No repeated 20-turn identical replay
+is prescribed and no issue is closed on the build/install result.
