@@ -93,6 +93,7 @@ foreach (string member in new[] { "IsMovementDone", "HasMovedThisTurn", "IsDelay
 Method(faction, "HasKnownOpponent", "Boolean");
 var zones = Type("Il2CppMenace.Tactical.AI.Behaviors.Criterions.ConsiderZones");
 Method(zones, "PostProcess", "Void", "Actor", "Dictionary<Tile,TileScore>");
+Method(zones, "Evaluate", "Void", "Actor", "TileScore");
 var manager = Type("Il2CppMenace.Tactical.TacticalManager");
 Method(manager, "GetFaction", "BaseFaction", "Int32");
 Method(manager, "GetMission", "Mission");

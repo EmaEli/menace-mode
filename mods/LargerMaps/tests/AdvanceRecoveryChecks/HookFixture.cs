@@ -8,7 +8,9 @@ namespace HarmonyLib
     public sealed class HarmonyMethod
     {
         public HarmonyMethod(Type type, string method) { }
+        public int priority = -1;
     }
+    public static class Priority { public const int First = 800; }
     public sealed class Harmony
     {
         public void Patch(MethodInfo target, HarmonyMethod postfix = null, HarmonyMethod prefix = null) { }
@@ -58,6 +60,11 @@ namespace AIPerformance
         internal static void AdvanceBeforeFixture(Agent agent) => ContactAdvanceBefore(agent);
         internal static void AdvanceResetFixture() => OffensivePlanningReset();
         internal static bool ContactAdvanceOn => _contactAdvanceEnabled;
+        internal static bool ZoneEnterFixture(Actor actor) { ContactAdvanceZoneEnter(actor, out bool state); return state; }
+        internal static void ZoneExitFixture(bool state) => ContactAdvanceZoneExit(state);
+        internal static void ZoneDoneFixture(bool state) => ContactAdvanceZoneDone(state);
+        internal static bool KnownOpponentFixture(AIFaction faction)
+        { bool result = default; return ContactAdvanceKnownOpponent(ref result) ? faction.HasKnownOpponent() : result; }
         internal static void OffensiveScoresFixture(Agent agent) => OffensivePlanningScores(agent);
         internal static Behavior OffensiveChoiceFixture(Agent agent, Behavior choice)
         { OffensivePlanningChoice(agent, ref choice); return choice; }

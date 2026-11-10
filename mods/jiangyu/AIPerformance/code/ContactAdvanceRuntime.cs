@@ -26,6 +26,11 @@ internal static partial class ContactAdvanceRuntime
         float.IsFinite(agent.GetActor().GetMoralePct()) && agent.GetActor().GetMoralePct() >= .75f &&
         float.IsFinite(agent.GetActor().GetSuppressionPct()) && agent.GetActor().GetSuppressionPct() <= .25f;
 
+    // Native advance zones stay active after contact only for ready units without a useful shot.
+    internal static bool KeepAdvanceZones(Agent agent) => agent != null && Ready(agent) &&
+        AdvanceRecoveryRuntime.TryReadAdvanceOrders(agent, agent.GetActor(), out _, out _) &&
+        !CombinedArmsResponseRuntime.HasUsefulAction(agent);
+
     internal static void Observe(AIFaction faction, Actor enemy, ContactAdvanceState memory, Map map, int round)
     {
         // Detection before any enemy position, weapon, death or faction reads.

@@ -29,6 +29,9 @@ public sealed partial class Plugin
                     RuntimeHelpers.PrepareMethod(constructor.MethodHandle);
             }
         }
+        foreach (string name in new[] { nameof(ContactAdvanceZoneEnter), nameof(ContactAdvanceZoneExit), nameof(ContactAdvanceZoneDone),
+            nameof(ContactAdvanceKnownOpponent), nameof(ContactAdvanceZoneReset) })
+            RuntimeHelpers.PrepareMethod(typeof(Plugin).GetMethod(name, BindingFlags.Static | BindingFlags.NonPublic).MethodHandle);
         _contactAdvance.Observe(1, 1, 1, new(2, 30, 30, 1, 20));
         _contactAdvance.TryAim(1, 1, 1, 0, 0, out _); _contactAdvance.BeginTurn(1, 1, 1); _contactAdvance.Reset();
         var turn = AccessTools.Method(typeof(AIFaction), "OnTurnStart", Type.EmptyTypes);
@@ -38,6 +41,7 @@ public sealed partial class Plugin
         harmony.Patch(turn, prefix: new HarmonyMethod(typeof(Plugin), nameof(ContactAdvanceTurn)));
         harmony.Patch(before, prefix: new HarmonyMethod(typeof(Plugin), nameof(ContactAdvanceBefore)));
         harmony.Patch(detection, postfix: new HarmonyMethod(typeof(Plugin), nameof(ContactAdvanceDetected)));
+        PatchContactAdvanceZones(harmony);
         _contactAdvanceEnabled = true;
     }
 
@@ -46,6 +50,7 @@ public sealed partial class Plugin
         if (!_contactAdvanceEnabled || !_offensivePlanningEnabled || Environment.CurrentManagedThreadId != _contactAdvanceThread) return;
         try
         {
+            ContactAdvanceZoneReset();
             var manager = TacticalManager.Get(); var map = manager?.GetMap();
             if (map == null || !ContactConvergenceRuntime.EligibleFaction(__instance)) return;
             ContactAdvanceRuntime.Refresh(__instance, _contactAdvance, map, manager.m_Round);
@@ -61,6 +66,7 @@ public sealed partial class Plugin
         if (!_contactAdvanceEnabled || !_offensivePlanningEnabled || Environment.CurrentManagedThreadId != _contactAdvanceThread) return;
         try
         {
+            ContactAdvanceZoneReset();
             var manager = TacticalManager.Get(); var map = manager?.GetMap();
             if (map == null || __instance == null) return;
             ContactAdvanceRuntime.Refresh(__instance.GetFaction(), _contactAdvance, map, manager.m_Round);
@@ -84,7 +90,7 @@ public sealed partial class Plugin
 
     private static void ContactAdvanceDisable(Exception ex)
     {
-        _contactAdvanceEnabled = false; _contactAdvance.Reset();
+        _contactAdvanceEnabled = false; _contactAdvance.Reset(); ContactAdvanceZoneReset();
         _log.Warning($"{ModName}: contact advance disabled ({ex.GetType().Name}); native AI retained.");
     }
 }

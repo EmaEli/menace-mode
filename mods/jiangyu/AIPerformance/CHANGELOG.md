@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.10.0 — 10 November 2026
+
+- Keep native `AdvanceTowards` zones active after contact. Reviewed 0.7.18
+  `ConsiderZones.Evaluate/PostProcess` skip advance zones for the whole faction once
+  `AIFaction.HasKnownOpponent()` is true, which stopped the 1.9.0 mission's enemies from
+  pushing once any squad saw the player. The faction flag now reads false only inside
+  those two native calls, on the AI thread, for ready pirate/Rogue infantry, direct-fire
+  teams and recognized crewed vehicles holding advance orders without a useful native
+  attack/suppression candidate. Engaged units, explicit defense, deployment, indirect
+  fire, drones/xenos, morale/suppression guards and all other `HasKnownOpponent` readers
+  (including advance recovery) remain native. Scoring magnitudes are the game's own.
+- Local checks only; in-game escalation is not verified by this release.
+
 ## 1.9.0 — 9 November 2026
 
 - Replace brief three-responder approaches with faction contact-led alert and persistent

@@ -1,4 +1,4 @@
-# AI Performance 1.9.0
+# AI Performance 1.10.0
 
 ## Contact-led alert, advance and firing cover (0.7.18)
 
@@ -7,6 +7,11 @@ The existing **Contact-led alert, advance and firing positions (pirate/Rogue)** 
 No new setting or equipment is needed. This deliberately changes the rejected passive
 1.8.1 behavior; the sections below describe older fallbacks, not an obligation to hold.
 
+- Native mission advance zones (`AdvanceTowards`) keep pulling eligible units forward after
+  contact. MENACE drops them for the whole faction once any squad has a known opponent,
+  which left the 1.9.0 test's reserves in cover. Only inside the native zone scoring, for
+  ready advance-ordered units that have no useful attack or suppression shot, the faction
+  flag reads as "no known opponent"; engaged units and every other reader stay native.
 - A legitimate faction sighting alerts eligible unassigned or advance-ordered infantry,
   direct-fire teams and recognized crewed vehicles. This is not limited to three scouts.
   Explicit defensive/mixed orders, deployment and non-human/drone/artillery roles remain native.

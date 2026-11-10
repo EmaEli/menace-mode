@@ -149,6 +149,43 @@ internal static class ContactAdvanceChecks
         memory.TryAim(1, 3, 6, 0, 0, out _);
         check(!memory.TryAim(1, 2, 6, 0, 0, out _), "old worker cannot rewind contact memory");
         memory.Reset(); check(!memory.TryAim(2, 1, 6, 0, 0, out _), "mission reset clears all known areas");
-        Plugin.BeginOffensiveFixture();
+
+        // Scoped advance-zone override: native ConsiderZones skips AdvanceTowards zones on faction contact.
+        f = new Fixture(); f.Unit.Agent.Zones.Add(new());
+        check(Plugin.KnownOpponentFixture(f.Faction), "outside ConsiderZones the faction contact flag stays native");
+        bool state = Plugin.ZoneEnterFixture(f.Unit);
+        check(!state && !Plugin.KnownOpponentFixture(f.Faction), "ready advance-ordered unit without a useful shot keeps native advance zones after contact");
+        Plugin.ZoneExitFixture(state);
+        check(Plugin.KnownOpponentFixture(f.Faction), "override ends with the ConsiderZones call");
+        f.Gun.Score = 5; Plugin.ZoneEnterFixture(f.Unit);
+        check(!Plugin.KnownOpponentFixture(f.Faction), "eligibility is read once per scoring pass");
+        Plugin.ZoneDoneFixture(false); Plugin.ZoneEnterFixture(f.Unit);
+        check(Plugin.KnownOpponentFixture(f.Faction), "unit with a positive native attack holds and fires; no override");
+        Plugin.ZoneDoneFixture(false);
+        var tank = new Fixture(vehicle: true); tank.Unit.Agent.Zones.Add(new()); Plugin.ZoneEnterFixture(tank.Unit);
+        check(!Plugin.KnownOpponentFixture(tank.Faction), "crewed vehicles with advance orders push too");
+        Plugin.ZoneDoneFixture(false);
+        foreach (string guard in new[] { "no-zones", "defend", "suppressed", "broken", "spent", "drone", "allied", "deployment", "indirect" })
+        {
+            f = new Fixture(); if (guard != "no-zones") f.Unit.Agent.Zones.Add(new());
+            if (guard == "defend") f.Unit.Agent.Zones[0].Order = 2;
+            if (guard == "suppressed") f.Unit.Suppression = .5f;
+            if (guard == "broken") f.Unit.Morale = .5f;
+            if (guard == "spent") f.Unit.AP = 0;
+            if (guard == "drone") f.Unit.Tags.Add(TagType.DRONE);
+            if (guard == "allied") f.Faction.Allied = true;
+            if (guard == "deployment") f.Unit.Agent.Deployment = true;
+            if (guard == "indirect") f.Unit.Tags.Add(TagType.INDIRECT_FIRE);
+            Plugin.ZoneEnterFixture(f.Unit);
+            check(Plugin.KnownOpponentFixture(f.Faction), guard + " keeps the native contact flag");
+            Plugin.ZoneDoneFixture(false);
+        }
+        f = new Fixture(); f.Unit.Agent.Zones.Add(new());
+        Task.Run(() => Plugin.ZoneEnterFixture(f.Unit)).GetAwaiter().GetResult();
+        check(Plugin.KnownOpponentFixture(f.Faction), "worker-thread scoring cannot arm the override");
+        Plugin.ZoneEnterFixture(f.Unit); Plugin.AdvanceBeforeFixture(f.Unit.Agent);
+        check(Plugin.KnownOpponentFixture(f.Faction), "agent processing start clears a stale scope");
+        Plugin.ZoneEnterFixture(f.Unit); Plugin.AdvanceResetFixture(); Plugin.BeginOffensiveFixture();
+        check(Plugin.KnownOpponentFixture(f.Faction), "disabled contact advance never overrides the native flag");
     }
 }

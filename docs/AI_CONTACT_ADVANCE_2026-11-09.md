@@ -90,3 +90,42 @@ squads/vehicles should close over several turns, seek a firing position, use nat
 setup/fire, and request smoke only when equipped and legally executable. Retrieve the
 fresh `MelonLoader/Latest.log` after the user reports the in-game result. Keep the
 relevant gameplay issues open until then.
+
+## 1.9.0 gameplay feedback and 1.10.0 follow-up — 10 November 2026
+
+The 1.9.0 mission was played to the end. Enemies used smoke sensibly (fire first, smoke
+with spare AP, or when suppressed) and the units that were met fought well, but vehicles
+and infantry only moved to cover: nobody pushed or flanked, and most of the map's enemies
+never joined. Battle escalation came only from the player side.
+
+Log analysis (`.tmp/latest-20261110-ai190.log`) and the 0.7.18 disassembly explain it:
+
+- Native `ConsiderZones.Evaluate` adds a per-tile `DistanceScore` term for `AdvanceTowards`
+  zones (`DistanceToZones` 1.0 × `DistanceToAdvanceZones` 2.0 × zone importance × priority),
+  scaled by `TileScore.DistanceScale = 50`: about 100 points per tile toward the zone.
+  That gradient produced the 3–5 tile advances of rounds 1–4 (`targetDistanceScore`
+  2131/3350 in `AI ROUTE MOVE-EVAL`).
+- Both `ConsiderZones.Evaluate` and `ConsiderZones.PostProcess` skip `AdvanceTowards`
+  zones entirely when `AIFaction.HasKnownOpponent()` is true. The flag is per faction: one
+  squad seeing the player removes the advance objective from everyone. From round 5 on,
+  `knownOpponents` was non-zero on every agent-start snapshot and `targetDistanceScore`
+  was 0 for all evaluated moves; the 1.9.0 tile utilities (+12..72) cannot replace a lost
+  ~100/tile gradient, so cover/threat criteria won and units stayed put.
+
+1.10.0 reuses the native mechanism instead of out-scoring it: `ContactAdvanceZones.cs`
+adds a Harmony prefix on `AIFaction.HasKnownOpponent` that returns false only while a
+`[ThreadStatic]` scope is open. The scope is opened by `Priority.First` prefixes on
+`ConsiderZones.Evaluate(Actor, TileScore)` and `PostProcess(Actor, Dictionary<Tile,
+TileScore>)` on the AI thread and closed by their postfixes, so the advance recovery
+postfix and every other reader still see the native value. Eligibility
+(`ContactAdvanceRuntime.KeepAdvanceZones`) is read once per actor pass: `Ready` (human
+non-indirect pirate/Rogue infantry or recognized crewed vehicle, role not
+`AvoidOpponents`, morale ≥ 75 %, suppression ≤ 25 %), advance orders present
+(`AdvanceRecoveryRuntime.TryReadAdvanceOrders`), and no useful native attack/suppression
+candidate (`CombinedArmsResponseRuntime.HasUsefulAction`). Engaged units therefore hold
+and shoot while reserves converge. The scope is reset on turn start, before-processing
+and on any disable; exceptions disable the contact advance feature and retain native AI.
+
+Checks: 13,248 advance recovery checks (18 new scope/eligibility checks), native contract
+checks for the three patched signatures, and the shared offline/Python suites. Windows
+build/install evidence is recorded below once the canonical run completes.

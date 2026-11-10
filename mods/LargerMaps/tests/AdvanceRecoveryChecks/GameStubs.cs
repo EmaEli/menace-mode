@@ -292,6 +292,7 @@ namespace Il2CppMenace.Tactical.AI.Behaviors.Criterions
 {
     public sealed class ConsiderZones
     {
+        public void Evaluate(Tactical.Actor actor, Data.TileScore tile) { }
         public void PostProcess(Tactical.Actor actor, Il2CppSystem.Collections.Generic.Dictionary<Tactical.Tile, Data.TileScore> tiles) { }
     }
 }
