@@ -69,21 +69,24 @@ that every zero attack score was caused by simplified future-position search.
 - Committed/pushed implementation: `e017a2c40389b47f05ca757286d51e363bcb2115` on `dev`.
   All 73 tracked source payloads in the kit exactly match that commit; no unrelated
   pending gameplay, installer or logging changes are bundled. Settings/loader are reused.
-- Candidate: `.tmp/ai190-source.u_4h4xt3/AIPerformance-1.9.0.zip` (local, not a release).
-  SHA256: `57eec5baa309531147e25fb01b00d0c236204e512a620f0cac392fb4374f5794`.
+- Windows build/install on menace-pc (10 November): canonical standalone
+  `AIPerformance -UseInstalledSettings` BuildOnly and install both passed against
+  MENACE 0.7.18+22828 and the exact allowlisted native SHA256. Windows production build
+  had zero warnings/errors; 196 metadata, 302 managed planning, and 13,230 advance
+  recovery checks passed. On disk, manifest/assembly/file versions are 1.9.0/1.9.0.0/
+  1.9.0.0; installed DLL SHA256 `4647a44163ee983ace724b09833c4acb151503e8ab6497cdea0133706afe440a`
+  matches the canonical Windows build output. Settings 0.8.2 and the pinned Jiangyu
+  loader were preserved. Affected-only backup/journal:
+  `M:\SteamLibrary\steamapps\common\Menace\_MENACE_Backups\20261110-081616-3058aa2e2da14c33b193fd32843b62e7`;
+  only `AIPerformance` and `AIPerformance.dll` were targeted. Candidate ZIP SHA256:
+  `57eec5baa309531147e25fb01b00d0c236204e512a620f0cac392fb4374f5794`.
 
-## Deployment blocker and next test
+## Next test and limits
 
-`ssh menace-pc` currently fails with **No route to host** at the configured LAN address;
-`DESKTOP-H4PILPA.local` also fails local hostname discovery.
-No current game-closed check, Windows BuildOnly, installation, backup or gameplay check
-was possible. No PC saves, settings, installed mod files or unrelated mods were changed.
-The prior verified PC version remains 1.8.1; it has not been freshly audited here.
-
-When the PC is available, run the canonical one-module BuildOnly/install with the game
-closed, reuse settings/loader and verify affected-only backup, installed versions/hashes
-and protected files. Then test a short pirate/Rogue engagement: distant squads/vehicles
-should close over several turns, choose cover that permits fire, use native setup/fire,
-and throw smoke only when equipped and legally executable. Retrieve fresh Latest.log.
-Actual dispatch, shots, smoke, route quality and AI turn-time remain unverified; keep
-the issues open. No Nexus release or gameplay acceptance is claimed.
+The game was left closed after installation. Startup, native hook dispatch, movement,
+setup/fire, smoke, route quality and AI turn-time remain unverified; no gameplay
+acceptance or Nexus release is claimed. Launch a pirate/Rogue engagement: distant
+squads/vehicles should close over several turns, seek a firing position, use native
+setup/fire, and request smoke only when equipped and legally executable. Retrieve the
+fresh `MelonLoader/Latest.log` after the user reports the in-game result. Keep the
+relevant gameplay issues open until then.
