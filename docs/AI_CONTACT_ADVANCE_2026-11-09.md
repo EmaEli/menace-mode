@@ -126,6 +126,24 @@ candidate (`CombinedArmsResponseRuntime.HasUsefulAction`). Engaged units therefo
 and shoot while reserves converge. The scope is reset on turn start, before-processing
 and on any disable; exceptions disable the contact advance feature and retain native AI.
 
-Checks: 13,248 advance recovery checks (18 new scope/eligibility checks), native contract
-checks for the three patched signatures, and the shared offline/Python suites. Windows
-build/install evidence is recorded below once the canonical run completes.
+Checks: 197 native metadata contracts (three patched signatures added), 13,248 advance
+recovery checks (18 new scope/eligibility checks), 302 behavior checks, 17,986 scoped
+offline checks, 208 Suite and 156 LargerMaps Python tests, clean extracted-source kit
+rebuild against the 0.7.18 proxies and the pinned Jiangyu 1.4.10 SDK. Implementation
+commit: `ed27176b3cb16093bb652b15f37d16547561193b` on `dev`; all 74 tracked payloads of
+the 79-file one-module kit match it. Candidate ZIP SHA256
+`cb0b16346c5c683a16ef6e4dcf65d1d5de863dcb6eb9d6105a7151aa5cd193dd`.
+
+Windows (menace-pc, 10 November): transfer round-trip verified; preflight confirmed the
+game closed, native SHA256 `494c9e21…2d12e9`, `Assembly-CSharp.dll` `aee30124…c80be`
+(identical to the local build refs) and the installed 1.9.0 DLL
+`4647a441…fe440a`. Canonical standalone `AIPerformance -UseInstalledSettings` BuildOnly
+and Install both passed with zero warnings/errors and the same 197/302/13,248 checks.
+Installed manifest/assembly/file versions 1.10.0/1.10.0.0/1.10.0.0; installed DLL SHA256
+`63030dcfc651f4b5259fcc0d63e40d22fb26bce0f7c528e89ca56e106b90f46b`. Settings 0.8.2 and
+the pinned loader were reused; 1,455 protected Mods/UserData files unchanged.
+Affected-only backup/journal:
+`M:\SteamLibrary\steamapps\common\Menace\_MENACE_Backups\20261110-101643-61b85d68c1064609b6feb21d270a6fe4`
+(only `AIPerformance` / `AIPerformance.dll` targeted; prior DLL hash verified inside it).
+The game was left closed. Startup, hook dispatch and the intended post-contact push
+remain unverified in-game.
