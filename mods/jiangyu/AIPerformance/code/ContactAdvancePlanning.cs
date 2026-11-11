@@ -23,7 +23,7 @@ internal static partial class ContactAdvanceRuntime
         {
             var attack = behavior?.TryCast<Attack>(); var skill = attack?.GetSkill(); var template = skill?.GetTemplate();
             if (attack == null || (attack.TryCast<InflictDamage>() == null && attack.TryCast<InflictSuppression>() == null) ||
-                template == null || !template.IsAttack || !template.IsTargeted || !template.IsLineOfFireNeeded ||
+                template == null || !template.IsAttack || !template.IsTargeted ||
                 skill.IsOutOfUses() || !skill.IsEnabled() || !skill.HasExecutingElements() ||
                 skill.GetMaxRange() < 1 || skill.GetMaxRange() > 128 || skill.GetActionPointCost() <= 0) continue;
             result.Add(attack);
@@ -49,7 +49,7 @@ internal static partial class ContactAdvanceRuntime
         if (!Ready(agent) || !TryAim(agent, memory, map, round, out var contact) ||
             CombinedArmsResponseRuntime.HasUsefulAction(agent) || tiles == null || tiles.Count < 2 || tiles.Count > 4096) return false;
         var actor = agent.GetActor(); var current = actor.GetTile(); var weapons = Weapons(agent);
-        if (current == null || weapons.Count == 0 || !tiles.TryGetValue(current, out var here) || here?.Tile == null ||
+        if (current == null || !tiles.TryGetValue(current, out var here) || here?.Tile == null ||
             here.Tile.Pointer != current.Pointer || !float.IsFinite(here.UtilityByAttacksScore) ||
             here.UtilityByAttacksScore > 0) return false;
         var target = DetectedTarget(agent, contact);
@@ -60,7 +60,8 @@ internal static partial class ContactAdvanceRuntime
         if (target == null && distance <= 3 + Math.Min(6, round - contact.SeenRound)) return false;
         float threshold = AIConfig.WEIGHTS.UtilityThreshold * agent.GetRole().UtilityThresholdScale;
         if (!(threshold > 0) || !float.IsFinite(threshold) || !float.IsFinite(threshold * 64)) return false;
-        int range = weapons[0].GetSkill().GetMaxRange();
+        // Melee, creatures and machines do not need a human direct-fire weapon to mobilize.
+        int range = weapons.Count == 0 ? 0 : weapons[0].GetSkill().GetMaxRange();
         var candidates = new List<Candidate>();
         foreach (var pair in tiles)
         {

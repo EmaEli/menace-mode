@@ -57,7 +57,7 @@ public sealed partial class Plugin
             foreach (string name in new[] { nameof(CombinedArmsTurn), nameof(CombinedArmsRefresh), nameof(CombinedArmsReset),
                 nameof(CombinedArmsDeath), nameof(CombinedArmsMovement), nameof(CombinedArmsDiagnostic), nameof(CombinedArmsDetected),
                 nameof(AdvanceGroupSkillUsed), nameof(AdvanceGroupChoice), nameof(TryAdvanceGroup), nameof(PublishAdvanceGroups),
-                nameof(HasFeasibleSmokeAdvance), nameof(TraceMortarCapability) })
+                nameof(HasFeasibleSmokeAdvance), nameof(TraceMortarCapability), nameof(ContactSupportSnapshot) })
                 RuntimeHelpers.PrepareMethod(typeof(Plugin).GetMethod(name, BindingFlags.NonPublic | BindingFlags.Static).MethodHandle);
             var warmAsset = new SupportUnit(1, 2, SupportKind.Vehicle, 0, 0, default, false, 0, 0);
             var warmRequest = new SupportUnit(3, 4, SupportKind.Infantry, 6, 0, default, true, 10, 0);
@@ -96,6 +96,9 @@ public sealed partial class Plugin
         try
         {
             if (!ContactConvergenceRuntime.EligibleFaction(__instance)) return;
+            // Both hooks are postfixes. Ensure fresh native visibility/alerts before roster
+            // publication regardless of Harmony's ordering of the two independent callbacks.
+            ContactAdvanceTurn(__instance);
             var manager = TacticalManager.Get(); var map = manager?.GetMap(); var actors = __instance.GetActors();
             if (map == null || actors == null) return;
             if (!_supportThreats.Advance(map.Pointer.ToInt64(), manager.m_Round)) return;
@@ -113,7 +116,7 @@ public sealed partial class Plugin
             foreach (var actor in actors)
             {
                 TraceMortarCapability(actor, manager.m_Round, factionId);
-                var unit = CombinedArmsRuntime.Snapshot(actor?.GetAgent(), true, out var reason);
+                var unit = ContactSupportSnapshot(actor?.GetAgent(), map, manager.m_Round, true, out var reason);
                 if (unit != null) units.Add(unit);
                 else if (rejected != null) rejected[(int)reason]++;
             }
@@ -163,7 +166,7 @@ public sealed partial class Plugin
             var faction = __instance?.GetFaction();
             if (map != null && actor != null && faction != null)
             {
-                var snapshot = CombinedArmsRuntime.Snapshot(__instance, true);
+                var snapshot = ContactSupportSnapshot(__instance, map, manager.m_Round, true, out _);
                 _combinedArms.Refresh(map.Pointer.ToInt64(), manager.m_Round, faction.Pointer.ToInt64(), actor.Pointer.ToInt64(),
                     snapshot);
                 if (snapshot != null || !actor.IsMoving())

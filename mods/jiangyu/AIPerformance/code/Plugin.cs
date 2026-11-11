@@ -30,7 +30,7 @@ public sealed partial class Plugin
             settings.AddToggle("DiagnoseContactConvergence", "Log bounded contact approaches", false);
             settings.AddToggle("DiagnoseContactAdvance", "Log bounded contact/advance hook decisions", false);
             settings.AddToggle("PrioritizeMissionCivilians", "Prioritize visible civilian mission targets (0.7.18)", true);
-            settings.AddToggle("OffensiveCombatPlanning", "Contact-led alert, advance and firing positions (pirate/Rogue)", true);
+            settings.AddToggle("OffensiveCombatPlanning", "Faction alert, contact convergence and firing positions (all hostiles)", true);
             settings.AddToggle("CombinedArmsSupport", "Threat-driven vehicle, fire and smoke support (0.7.18)", false);
             settings.AddToggle("DiagnoseCombinedArmsSupport", "Log bounded combined-arms planning diagnostics", false);
         });

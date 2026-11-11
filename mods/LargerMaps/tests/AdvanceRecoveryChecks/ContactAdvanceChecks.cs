@@ -127,14 +127,13 @@ internal static class ContactAdvanceChecks
         check(f.Here.UtilityScore == 0 && f.Forward.UtilityScore > 0,
             "a projected current-origin lane with no native shot cannot park the unit or cause cover shuffling");
 
-        foreach (string guard in new[] { "no-contact", "defend", "deployment", "allied", "drone", "broken", "emergency" })
+        foreach (string guard in new[] { "no-contact", "defend", "deployment", "allied", "broken", "emergency" })
         {
             f = new Fixture();
             if (guard == "no-contact") Plugin.AdvanceResetFixture();
             if (guard == "defend") f.Unit.Agent.Zones.Add(new() { Order = 0 });
             if (guard == "deployment") f.Unit.Agent.Deployment = true;
             if (guard == "allied") f.Faction.Allied = true;
-            if (guard == "drone") f.Unit.Tags.Add(TagType.DRONE);
             if (guard == "broken") f.Unit.Morale = .1f;
             if (guard == "emergency") f.Unit.Agent.Behaviors.Add(new() { ID = "Flee", Score = 10 });
             f.Plan(); check(f.Forward.UtilityScore == 0, guard + " retains native decisions");
@@ -171,17 +170,15 @@ internal static class ContactAdvanceChecks
         var tank = new Fixture(vehicle: true); tank.Unit.Agent.Zones.Add(new()); Plugin.ZoneEnterFixture(tank.Unit);
         check(!Plugin.KnownOpponentFixture(tank.Faction), "crewed vehicles with advance orders push too");
         Plugin.ZoneDoneFixture(false);
-        foreach (string guard in new[] { "no-zones", "defend", "suppressed", "broken", "spent", "drone", "allied", "deployment", "indirect" })
+        foreach (string guard in new[] { "no-zones", "defend", "suppressed", "broken", "spent", "allied", "deployment" })
         {
             f = new Fixture(); if (guard != "no-zones") f.Unit.Agent.Zones.Add(new());
             if (guard == "defend") f.Unit.Agent.Zones[0].Order = 2;
             if (guard == "suppressed") f.Unit.Suppression = .5f;
             if (guard == "broken") f.Unit.Morale = .5f;
             if (guard == "spent") f.Unit.AP = 0;
-            if (guard == "drone") f.Unit.Tags.Add(TagType.DRONE);
             if (guard == "allied") f.Faction.Allied = true;
             if (guard == "deployment") f.Unit.Agent.Deployment = true;
-            if (guard == "indirect") f.Unit.Tags.Add(TagType.INDIRECT_FIRE);
             Plugin.ZoneEnterFixture(f.Unit);
             check(Plugin.KnownOpponentFixture(f.Faction), guard + " keeps the native contact flag");
             Plugin.ZoneDoneFixture(false);

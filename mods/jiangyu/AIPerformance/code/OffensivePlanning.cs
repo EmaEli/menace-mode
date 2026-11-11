@@ -54,7 +54,7 @@ public sealed partial class Plugin
 
     private static void OffensivePlanningScores(Agent __instance)
     {
-        if ((!_offensivePlanningEnabled && !_combinedArmsEnabled) || !_combatPlanningActive) return;
+        if (!_offensivePlanningEnabled && !_combinedArmsEnabled) return;
         try
         {
             var manager = TacticalManager.Get(); var map = manager?.GetMap();
@@ -69,6 +69,8 @@ public sealed partial class Plugin
                 }
                 catch (Exception ex) { ContactAdvanceDisable(ex); }
             }
+            // Faction mobilization is gameplay, not conditional on simplified skill profiles.
+            if (!_combatPlanningActive) return;
             if (map != null && _combinedArmsEnabled)
             {
                 try

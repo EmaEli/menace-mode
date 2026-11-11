@@ -36,6 +36,15 @@ string Property(TypeDefinition type, string member, string? expected = null, boo
     return result;
 }
 var faction = Type("Il2CppMenace.Tactical.AI.AIFaction");
+var factionTypes = Type("Il2CppMenace.Tactical.FactionType");
+foreach (var (name, value) in new[] { ("Neutral", 0), ("Player", 1), ("PlayerAI", 2), ("Civilian", 3),
+    ("AlliedLocalForces", 4), ("EnemyLocalForces", 5), ("Pirates", 6), ("Wildlife", 7), ("Constructs", 8), ("RogueArmy", 9) })
+{
+    var field = factionTypes.GetFields().Select(reader.GetFieldDefinition).Single(f => reader.GetString(f.Name) == name);
+    var constant = reader.GetConstant(field.GetDefaultValue());
+    Check(constant.TypeCode == ConstantTypeCode.Int32 && reader.GetBlobReader(constant.Value).ReadInt32() == value,
+        "FactionType." + name + " native value");
+}
 Check(faction.GetMethods().Count(h =>
 {
     var method = reader.GetMethodDefinition(h);
@@ -168,6 +177,9 @@ Property(skillBehavior, "m_DeployedStanceSkill", "Skill");
 Property(skillBehavior, "m_SetupWeaponSkill", "Skill");
 Property(movement, "m_UseSkillAfter", "List<Skill>");
 Method(faction, "OnTurnStart", "Void");
+Method(faction, "OnOpponentSighted", "Void", "Actor", "Int32");
+Method(actor, "OnDiscovered", "Void", "Actor");
+Method(Type("Il2CppMenace.Tactical.AI.BaseFaction"), "IsAlliedWithPlayer", "Boolean");
 Method(agent, "OnBeforeProcessing", "Void");
 Method(agent, "OnAfterProcessing", "Void");
 Method(actor, "OnDeath", "Void");

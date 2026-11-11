@@ -351,3 +351,69 @@ vehicle screening and turn-time behavior remain untested in MENACE. Next trial s
 check whether smoke is followed by real advance, support fires before a shared push,
 and vehicles avoid going ahead alone. Pull the fresh log when the player reports back;
 do not equate test/build success with acceptance of #17 or #13.
+
+### First 1.11.0 gameplay log (11 November)
+
+- Captured after game exit from `MelonLoader/Latest.log`, 7,174,296 bytes,
+  SHA256 `ac4ac9fdcf7571784d8ea8ec04c3febf4915eef0658fe4cca640707cd8e8d121`.
+  Capture time 14:22:30+01:00. Installed manifest/assembly/DLL still match
+  1.11.0 / 1.11.0.0 / the deployed `d51dd9...4346c94` hash.
+- This log contains two separate tactical missions. The later mission (map
+  `1FA95DA2AB0`) runs rounds 1–9 and starts round 10; the game quits during round
+  10, so that round has no complete enemy end-state. The first mission separately
+  runs rounds 1–8. Do not merge these as one continuous battle.
+- Clear improvement signal in the later mission: there are 18 hostile actors at
+  round-1 actor-end, 16 still present through round 9 (two fewer); every one of
+  those 16 has changed tile between round 1 and round 9. Each completed round 1–9
+  shows 8–18 hostiles moving at least once (rounds 1–5: 18,16,17,16,13; rounds
+  6–9: 8,9,11,8). This is strong evidence against the previous whole-force
+  immobility, but not proof every move was tactically good or caused by 1.11.0.
+- Combat is active too: the native route log records 29 accepted hostile skills
+  marked as attacks across rounds 5–10, including rifles/MG, 10 mortar launches,
+  two walker laser calls and grenades. These are accepted action records, not
+  confirmed hits/kills; some round-10 data is partial. Five MG calls explicitly
+  target civilian faction 3 (one in round 6, two each in rounds 8 and 9); this
+  collateral concern should not be hidden by the movement improvement.
+- SmokeOverhaul records seven hostile smoke-grenade throws in this mission:
+  four `advance`, three `defensive`. Thus advance smoke is being used, but the log
+  does not establish that the throwing infantry subsequently moved behind that
+  smoke. No `group-signal result=smoke-used` was recorded. One Rogue mortar's
+  bounded capability observation says `fragEquipped=False`,
+  `recognizedSmokeEquipped=False`, `smokeEnabledWithUses=False`; this is actor-
+  specific and does not contradict SmokeOverhaul's separate startup message
+  about granting a skill to an 80mm medium mortar.
+- The coordinated group path did execute: round 9 shows one group (`infantry=3,
+  support=2`) staged twice in `Rally`, and a separate one-infantry/two-support
+  group allowed to advance. Actual allied fire at `(68,58)` is recorded later
+  that round; round 10 then logs that latter group in `Cross` with `result=advance`.
+  This is encouraging evidence for the fire-to-crossing transition, though the
+  incomplete round prevents confirming completion. No vehicle-specific group
+  choice appears in the evidence, so vehicle screening remains unverified.
+- Contacts refreshed as zero through round 8; only one legitimate contact is
+  visible from round 9 onward. The new coordinator therefore only had a narrow,
+  late opportunity to run. `scope-eligibility` records show worker threads
+  opening eligible scopes across rounds; no hook exception or default-off
+  diagnostic omission is evident in this capture.
+- Not a turn-time acceptance result: round 9 takes about 45 seconds of wall-clock
+  log time, and a hostile actor activation is recorded at 10.7 seconds; all
+  observed worker queues report pending=0/droppedTasks=0. Existing LargerMaps
+  route caps still log 57 limit warnings on the later map. No `[ERROR]` or
+  `NullReferenceException` entries were found.
+- Separate known warning: 124 `WeaponMechanicsRebalanced` mortar suppression
+  outer-ring failures say `Structure` cannot be cast to `Actor`; this is the
+  existing #96 issue, not an AIPerformance hook failure. The log also records
+  accepted mortar actions. Keep #96 open for its separate fix.
+
+Conclusion: user impression of improvement is supported by strong movement,
+attack, smoke and one promising support-fire/group-crossing sequence. It is not
+yet full coordinated-combat acceptance: the contact window was late, civilians
+were targeted, the final round is partial, vehicle screening and smoke follow-
+through are not confirmed, and performance needs the player's assessment.
+
+**Superseding player feedback later on 11 November:** the player clarifies that
+these attacks were reactive to their own approach, not evidence of hostile
+initiative. A new pirate map fails mobilization outright: 45 initial enemies,
+zero native zones, zero coordinator contact entries through 19 rounds and no
+group records. The positive activity counts above are **not gameplay acceptance**.
+See [pirate mobilization failure](AI_PIRATE_MOBILIZATION_FEEDBACK_2026-11-11.md)
+for the hash-verified evidence and concrete unordered/sleeping-unit policy gap.

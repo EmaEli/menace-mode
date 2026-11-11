@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.12.0 — 11 November 2026
+
+- Fix missed native sightings: observe AIFaction.OnOpponentSighted because normal
+  Actor.OnDiscovered writes detection inline rather than calling SetDetectedByFaction.
+  Refresh faction memory after native turn-start visibility, not before it.
+- Mobilize all hostile factions, including wildlife, bugs and constructs, from legitimate
+  contact reports; remove human/rifle/crewed-template and pre-existing-order prerequisites.
+  Preserve useful native actions, explicit defense, deployment, movement and resource guards.
+- Share stable two-round contact-sector objectives among nearby units, with bounded
+  per-faction memory, assignment capacity, duplicate-report work and mission cleanup.
+- Allow unordered pirate/Rogue infantry into existing optional local support groups through
+  managed contact objectives; native zones are untouched. Keep combined-arms class guards.
+- Keep mobilization active independently of simplified skill-positioning profiles.
+  Production-linked 45-unit/all-faction regressions and real proxy contracts pass;
+  Windows installation and gameplay acceptance are recorded separately.
+
 ## 1.11.0 — 11 November 2026
 
 - Fix native advance-zone scopes on AI worker threads, with thread-local eligibility,

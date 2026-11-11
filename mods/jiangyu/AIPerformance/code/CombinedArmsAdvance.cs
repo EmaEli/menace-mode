@@ -12,6 +12,22 @@ public sealed partial class Plugin
     private static readonly CombinedArmsAdvanceState _advanceGroups = new();
     private static readonly HashSet<long> _mortarCapabilityTraced = new();
 
+    // Contact objectives are managed snapshots, never new native mission orders.
+    // Keep the reviewed human combined-arms guards; only its missing-order rejection changes.
+    private static SupportUnit ContactSupportSnapshot(Agent agent, Map map, int round, bool primeIds, out SupportSnapshotReason reason)
+    {
+        var unit = CombinedArmsRuntime.Snapshot(agent, primeIds, out reason);
+        if (!_contactAdvanceEnabled || !_offensivePlanningEnabled ||
+            (unit == null && reason != SupportSnapshotReason.InfantryWithoutAdvanceOrder) || unit?.HasOrder == true ||
+            !ContactAdvanceRuntime.TryAim(agent, _contactAdvance, map, round, out var contact)) return unit;
+        var actor = agent.GetActor(); var current = actor.GetTile();
+        int x = contact.X / 8 * 8, z = contact.Z / 8 * 8;
+        var order = new AdvanceRecoveryOrder(x, z, Math.Min(8, map.Width - x), Math.Min(8, map.Height - z), 1);
+        reason = SupportSnapshotReason.Eligible;
+        return new(actor.Pointer.ToInt64(), agent.Pointer.ToInt64(), unit?.Kind ?? SupportKind.Infantry,
+            current.GetX(), current.GetZ(), order, true, contact.X, contact.Z);
+    }
+
     private static void TraceMortarCapability(Actor actor, int round, long faction)
     {
         if (!_contactAdvanceDiagnostics || actor == null || _mortarCapabilityTraced.Count >= 128) return;
@@ -41,7 +57,7 @@ public sealed partial class Plugin
         if (!_contactAdvanceEnabled || !_offensivePlanningEnabled) return;
         var members = new List<AdvanceGroupMember>();
         foreach (var unit in units)
-            if (_contactAdvance.TryAim(map, round, faction, unit.X, unit.Z, out var contact)) members.Add(new(unit, contact));
+            if (_contactAdvance.TryAssign(map, round, faction, unit.Actor, unit.X, unit.Z, out var contact)) members.Add(new(unit, contact));
         _advanceGroups.Publish(map, round, faction, members);
     }
 
@@ -50,7 +66,7 @@ public sealed partial class Plugin
         plan = default;
         return _combinedArmsEnabled && _contactAdvanceEnabled && _offensivePlanningEnabled && map != null &&
             _advanceGroups.TryGet(map.Pointer.ToInt64(), round, agent.GetFaction().Pointer.ToInt64(),
-                CombinedArmsRuntime.Snapshot(agent, false), exposed, out plan);
+                ContactSupportSnapshot(agent, map, round, false, out _), exposed, out plan);
     }
 
     // Observes successful native actions; it never executes a skill or grants equipment/AP/ammo.

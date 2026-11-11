@@ -1,4 +1,30 @@
-# AI Performance 1.11.0
+# AI Performance 1.12.0
+
+## Faction mobilization and shared contact objectives (0.7.18 test candidate)
+
+The existing default-ON `OffensiveCombatPlanning` now covers all five hostile AI factions,
+including wildlife, bugs/aliens and constructs. It remains independent of simplified combat
+positioning; no new setting or player configuration change is required.
+
+- Observe native `AIFaction.OnOpponentSighted`, not just `Actor.SetDetectedByFaction`:
+  normal map visibility calls `Actor.OnDiscovered`, which writes the detection bit inline.
+  A sighting still needs native faction detection before enemy position/weapon reads.
+- Refresh after native faction-turn visibility, alert eligible sleeping units and assign
+  stable two-round objectives toward reported contact sectors. Nearby units share a sector;
+  this is not knowledge-sharing between different hostile factions or hidden tracking.
+- Movement no longer requires human infantry, a crewed template, a rifle or a pre-existing
+  mission advance order. Creatures/machines do not need a human morale percentage. Native useful
+  actions, emergency behavior, deployment, explicit defense and movement-disabled roles win.
+- Pirate/Rogue infantry without orders can join the existing opt-in combined-arms groups
+  using managed contact objectives. No native mission zone is created or rewritten.
+- Contact storage is bounded per faction; lost reports expire after 12 rounds. Assignment
+  lookups are cached and bounded, repeated reports avoid repeated weapon scans, and no new
+  pathfinder, faction-wide per-unit scan, attack scheduler, AP, ammunition or skill is added.
+
+Managed regressions include 45 unordered units per hostile faction, simultaneous faction
+memory, missed native sighting, stable assignments, hidden-read guards, native attack
+priority and actual production group publication/refresh. Gameplay acceptance is pending.
+See [scope and evidence](../../../docs/AI_FACTION_CONVERGENCE_2026-11-11.md); #17 remains open.
 
 ## Shared local advance windows (0.7.18 test candidate)
 

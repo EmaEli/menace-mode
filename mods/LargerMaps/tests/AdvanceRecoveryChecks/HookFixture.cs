@@ -49,7 +49,7 @@ namespace AIPerformance
         internal static void BeginOffensiveFixture()
         {
             _offensiveBudget.Reset(); _offensivePlanningEnabled = true; _missionCivilianPriorityEnabled = true;
-            _combinedArmsEnabled = false; _combinedArms.Reset();
+            _combinedArmsEnabled = false; _combinedArms.Reset(); _supportThreats.Reset();
             _advanceGroups.Reset();
             _contactAdvance.Reset(); _contactAdvanceEnabled = false; _contactAdvanceDiagnostics = false;
             ContactAdvanceDiagnosticReset(); ContactAdvanceZoneReset(); CombinedArmsResponseRuntime.ResetGuard();
@@ -61,13 +61,14 @@ namespace AIPerformance
             TacticalManager.Instance.Faction = faction; ContactAdvanceTurn(faction);
         }
         internal static void AdvanceSightFixture(Actor actor, int faction) => ContactAdvanceDetected(actor, faction);
+        internal static void AdvanceNativeSightFixture(AIFaction faction, Actor actor)
+            => ContactAdvanceSighted(faction, actor);
+        internal static void CombatSimplificationFixture(bool enabled) => _combatPlanningActive = enabled;
         internal static void AdvanceBeforeFixture(Agent agent) => ContactAdvanceBefore(agent);
         internal static void PublishGroupsFixture(AIFaction faction)
         {
             _combinedArmsEnabled = true; _combinedArmsThread = Environment.CurrentManagedThreadId;
-            var units = faction.Actors.Select(a => CombinedArmsRuntime.Snapshot(a.Agent, true)).Where(u => u != null).ToList();
-            PublishAdvanceGroups(TacticalManager.Instance.Map.Pointer.ToInt64(), TacticalManager.Instance.m_Round,
-                faction.Pointer.ToInt64(), units);
+            CombinedArmsTurn(faction);
         }
         internal static void GroupUsedFixture(Il2CppMenace.Tactical.Skills.Skill skill, Tile target, bool accepted)
             => AdvanceGroupSkillUsed(skill, target, accepted);
