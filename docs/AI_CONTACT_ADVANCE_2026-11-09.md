@@ -320,3 +320,34 @@ Closed-PC preflight: transfer round-trip hashes match; current native binary and
 hashes match the reviewed 0.7.18 references. Existing combined-arms gameplay/diagnostic
 flags are ON; no settings edits required. Captured 1,458 protected Mods/UserData files,
 177 runtime/proxy references and three affected 1.10.1 files for later verification.
+
+### Canonical 1.11.0 deployment
+
+- Source commit `f7e201bebb234f143ee059ddfa1f12d6298303e9` published on `dev`.
+  The 84-file, one-module BuildKit has SHA256
+  `9d6f81f5d5e581bd9e3d7586aa58ce018a554cdbb4a71ea3f567b792a9ea0798`;
+  all 79 tracked source payloads exactly match that commit. Clean extracted-source
+  build and real manifest/assembly/file metadata validation pass with no production
+  warnings/errors. Unrelated pending gameplay/installer changes are excluded.
+- menace-pc: canonical standalone `AIPerformance -UseInstalledSettings` BuildOnly
+  and Install passed on MENACE 0.7.18+22828 with private SDK 10.0.113. Both runs
+  have zero production warnings/errors and repeat 208 native/artifact contracts,
+  303 AI behavior checks and 13,442 linked checks. BuildOnly left live files unchanged.
+- Installed manifest/assembly/file versions: `1.11.0` / `1.11.0.0` / `1.11.0.0`.
+  DLL SHA256 `d51dd9ed985a2dd4fb1c4019b32750f8a2c0d1031a033ecbb1ec955ad4346c94`.
+  Installed payload exactly matches the validated Windows stage/journal inventory.
+- Backup: `_MENACE_Backups/20261111-131223-a3eb8dd8e1364b8ba161f3ab718f64e5`.
+  Journal targets only `AIPerformance` / `AIPerformance.dll`; all three original
+  1.10.1 files hash-match the preflight snapshot. Settings/loader are reused.
+- All 1,458 unrelated Mods/UserData files, 177 runtime/proxy references and native
+  game binary are unchanged. Existing combined-arms support and diagnostics are ON;
+  contact/group tracing now follows that opt-in without any UserData modification.
+- Stage/logs: `E:\MENACE-Work\Builds\AI1110-crossing-20261111`; canonical installer
+  log `E:\MENACE-Work\Temp\MENACE-install.log`. Hash-verified harmless transfer
+  round-trip, helper/archive transfer checks and extracted inventory all pass.
+
+Game left closed. Startup, real hook dispatch, group fire/crossing, mortar capability,
+vehicle screening and turn-time behavior remain untested in MENACE. Next trial should
+check whether smoke is followed by real advance, support fires before a shared push,
+and vehicles avoid going ahead alone. Pull the fresh log when the player reports back;
+do not equate test/build success with acceptance of #17 or #13.
