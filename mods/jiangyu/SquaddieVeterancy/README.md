@@ -1,4 +1,10 @@
-Squaddie Veterancy 1.10.4
+Squaddie Veterancy 1.10.5
+
+1.10.5 NEW-GAME CRASH SAFETY (#99)
+
+- Validate the real native Element type before reading a SetSquaddieId hook receiver; IL2CPP shares this setter with unrelated types.
+- Remove the raw native parent-field fallback. Missing parents remain unresolved and can be retried later without scanning native field metadata.
+- Fourteen managed production-hook assertions, 121 native metadata checks, 18,011 scoped offline checks and clean-source rebuild passed. Canonical Windows BuildOnly/install and installed 1.10.5 versions/hashes verified on MENACE 0.7.18+22828; all 1,457 protected files unchanged. New-game loading/gameplay acceptance remains pending.
 
 1.10.4 BURNING VEHICLE / BREAK CONTACT SAFETY (#97)
 

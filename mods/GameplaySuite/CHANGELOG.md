@@ -1,3 +1,9 @@
+## Squaddie Veterancy 1.10.5 — new-game crash safety (#99)
+
+- Validate the native receiver before reading Element fields in the shared SetSquaddieId detour.
+- Remove raw native parent-field lookup; unresolved parents are retried through the native wrapper only.
+- Add managed production-hook regression coverage and Element metadata contracts. Canonical Windows BuildOnly/install and versions/hashes passed; new-game loading/gameplay verification pending (#99).
+
 ## Overwatch 0.35.1.0 — #25 open-top passenger detection fix (candidate)
 
 - The 0.35.0.0 game log confirmed passenger reservations but no queued shots. Native Actor.HasLineOfSightTo unconditionally rejects actor-contained observers before its detection calculation.
