@@ -17,7 +17,7 @@ var types = reader.TypeDefinitions.Where(h => reader.GetTypeDefinition(h).GetDec
 int checks = 0;
 void Check(bool ok, string label)
 {
-    if (!ok) throw new Exception("Vehicle retreat native contract mismatch: " + label);
+    if (!ok) throw new Exception("Veterancy native contract mismatch: " + label);
     checks++;
 }
 void Method(string type, string name, string result, bool isStatic, params string[] parameters)
@@ -46,6 +46,9 @@ const string skills = tactical + "Skills.";
 Method(tactical + "PathMover", "StartMovement", "Void", false, "Path", "MovementAction", "Boolean");
 Member(tactical + "PathMover", "m_Element", "Element");
 Member(tactical + "PathMover", "m_Actor", "Actor");
+Method(tactical + "Element", "SetSquaddieId", "Void", false, "Int32");
+Method(tactical + "Element", "GetElementIndex", "Int32", false);
+Method(tactical + "Element", "GetEntity", "Entity", false);
 Method(tactical + "Element", "IsAlive", "Boolean", false);
 Method(tactical + "Entity", "IsAlive", "Boolean", false);
 Method(tactical + "Entity", "GetSkills", "SkillContainer", false);
@@ -72,7 +75,7 @@ foreach (var handle in binary.TypeReferences)
     nativeReferences++;
 }
 Check(nativeReferences > 0, "veterancy native references present");
-Console.WriteLine($"PASS: {checks} vehicle retreat native metadata checks; {nativeReferences} binary type references; no native code executed.");
+Console.WriteLine($"PASS: {checks} veterancy native metadata checks; {nativeReferences} binary type references; no native code executed.");
 
 sealed class SignatureNames : ISignatureTypeProvider<string, object?>
 {

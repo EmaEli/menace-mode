@@ -1908,6 +1908,11 @@ internal sealed class ProbeRuntime : IDisposable
         if (c == null || !Valid(__instance) || _id <= 0) return;
         try
         {
+            // IL2CPP shares this setter's native body with unrelated types (0.7.18:
+            // RVA 0x5F39E0). A managed Element wrapper alone does not prove identity.
+            Element? element = __instance.TryCast<Element>();
+            if (element == null) return;
+            __instance = element;
             long ptr = Key(__instance);
             if (!c._liveElements.TryGetValue(ptr, out var state))
             {
@@ -3544,20 +3549,14 @@ internal sealed class ProbeRuntime : IDisposable
     {
         try
         {
-            long ptr = Key(element);
-            if (ptr == 0) return 0;
+            if (!Valid(element)) return 0;
+            Element? actual = element.TryCast<Element>();
+            if (actual == null) return 0;
 
-            // Prefer the native Element.GetEntity() wrapper over raw field reads.
-            try
-            {
-                long managedPtr = Key(element.GetEntity());
-                if (managedPtr != 0) return managedPtr;
-            }
-            catch { }
-
-            // Fallback: Element.m_Entity is at +0x30 (verified MENACE 0.7.14-0.7.17).
-            var obj = new GameObj(new IntPtr(ptr));
-            return obj.ReadPtr("m_Entity", 0x30).ToInt64();
+            // Unowned/preview elements may legitimately have no Entity yet. Leave
+            // them unresolved so the existing tactical lookup can retry later.
+            // Never fall back to GameObj.FieldOffset/raw memory on this path (#99).
+            return Key(actual.GetEntity());
         }
         catch { return 0; }
     }
