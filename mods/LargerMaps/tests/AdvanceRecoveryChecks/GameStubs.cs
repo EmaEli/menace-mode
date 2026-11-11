@@ -92,7 +92,8 @@ namespace Il2CppMenace.Tactical
     public sealed class TacticalManager
     {
         public static TacticalManager Instance = new();
-        public static TacticalManager Get() => Instance;
+        public static int GetCalls;
+        public static TacticalManager Get() { GetCalls++; return Instance; }
         public Map Map = new();
         public int m_Round = 1;
         public Map GetMap() => Map;
@@ -126,6 +127,7 @@ namespace Il2CppMenace.Tactical.AI
         public bool IsDeploymentPhase() => Deployment;
         public bool IsSleeping() => Sleeping;
         public void SetSleeping(bool sleeping) => Sleeping = sleeping;
+        public void OnBeforeProcessing() { }
     }
     public class Behavior
     {

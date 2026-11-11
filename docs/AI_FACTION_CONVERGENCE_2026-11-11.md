@@ -1,5 +1,10 @@
 # All-hostile faction mobilization — AIPerformance 1.12.0
 
+**Superseded startup status:** the first 1.12.0 player trial crashed before the menu.
+The exception-thread stack identifies contact-helper eager JIT preparation, not tactical
+AI or a save load. See [#100 crash and patch evidence](AI_STARTUP_CRASH_2026-11-11.md).
+The canonical build/install evidence below is historical and is not startup acceptance.
+
 Tracking: [#17](https://github.com/EmaEli/menace-mode/issues/17),
 [#13](https://github.com/EmaEli/menace-mode/issues/13),
 [#2](https://github.com/EmaEli/menace-mode/issues/2).

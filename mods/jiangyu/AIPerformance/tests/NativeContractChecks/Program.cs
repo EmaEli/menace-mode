@@ -217,6 +217,7 @@ if (args.Length == 2)
     foreach (string expected in new[] { "CombinedArmsState", "CombinedArmsRuntime", "CombinedArmsResponseRuntime",
         "CombinedArmsGuardState", "ContactAdvanceDiagnosticBudget", "SupportProjection" })
         Check(metadata.TypeDefinitions.Any(h => metadata.GetString(metadata.GetTypeDefinition(h).Name) == expected), expected + " included");
+    StartupContracts.Check(built, metadata, Check);
 }
 Console.WriteLine($"PASS: {checks} AI performance native metadata contracts; no native methods executed.");
 

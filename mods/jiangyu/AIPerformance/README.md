@@ -1,4 +1,13 @@
-# AI Performance 1.12.0
+# AI Performance 1.12.1
+
+## Startup crash correction (#100)
+
+The 1.12.0 player trial crashed before the menu in the explicit contact-helper
+`RuntimeHelpers.PrepareMethod` sweep, inside the loader's native JIT detour. Remove
+that speculative sweep; retain bounded native-free state warmup, ordinary on-demand
+compilation and the same sighting hooks/gameplay policy. A binary IL regression gate
+rejects the old startup path; managed tests cover actual initialization/registration.
+This does not prove game startup or gameplay until the player runs the corrected build.
 
 ## Faction mobilization and shared contact objectives (0.7.18 test candidate)
 

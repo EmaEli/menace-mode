@@ -7,13 +7,17 @@ namespace HarmonyLib
 {
     public sealed class HarmonyMethod
     {
-        public HarmonyMethod(Type type, string method) { }
+        public HarmonyMethod(Type type, string method) { Owner = type; Name = method; }
+        public Type Owner { get; }
+        public string Name { get; }
         public int priority = -1;
     }
     public static class Priority { public const int First = 800; }
     public sealed class Harmony
     {
-        public void Patch(MethodInfo target, HarmonyMethod postfix = null, HarmonyMethod prefix = null, HarmonyMethod finalizer = null) { }
+        public readonly List<(MethodInfo Target, HarmonyMethod Prefix, HarmonyMethod Postfix, HarmonyMethod Finalizer)> Calls = new();
+        public void Patch(MethodInfo target, HarmonyMethod postfix = null, HarmonyMethod prefix = null, HarmonyMethod finalizer = null)
+        { ArgumentNullException.ThrowIfNull(target); Calls.Add((target, prefix, postfix, finalizer)); }
     }
     public static class AccessTools
     {
@@ -63,6 +67,12 @@ namespace AIPerformance
         internal static void AdvanceSightFixture(Actor actor, int faction) => ContactAdvanceDetected(actor, faction);
         internal static void AdvanceNativeSightFixture(AIFaction faction, Actor actor)
             => ContactAdvanceSighted(faction, actor);
+        internal static void ContactSetupFixture(HarmonyLib.Harmony harmony, bool enabled)
+        {
+            BeginOffensiveFixture(); _offensivePlanningEnabled = enabled;
+            PatchContactAdvance(harmony);
+        }
+        internal static int ContactCountFixture() => _contactAdvance.Count(1, 1, 1);
         internal static void CombatSimplificationFixture(bool enabled) => _combatPlanningActive = enabled;
         internal static void AdvanceBeforeFixture(Agent agent) => ContactAdvanceBefore(agent);
         internal static void PublishGroupsFixture(AIFaction faction)

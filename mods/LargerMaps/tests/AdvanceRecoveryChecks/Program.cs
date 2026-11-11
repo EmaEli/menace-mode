@@ -8,6 +8,7 @@ using Scores = Il2CppSystem.Collections.Generic.Dictionary<Il2CppMenace.Tactical
 
 int checks = 0;
 void Check(bool value, string label) { checks++; if (!value) throw new Exception(label); }
+ContactStartupChecks.Run(Check);
 FactionConvergenceChecks.Run(Check);
 ContactConvergenceChecks.Run(Check);
 MultiOrderChecks.Run(Check);

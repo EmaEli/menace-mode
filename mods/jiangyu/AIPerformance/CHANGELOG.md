@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.12.1 — 11 November 2026
+
+- Remove speculative contact-helper PrepareMethod sweep: the actual 1.12.0 startup
+  stack enters it through MonoMod's native JIT detour and crashes before the menu (#100).
+  Keep bounded native-free state warmup, normal compilation, all sighting hooks and AI policy.
+- Add a real production-binary IL startup gate (rejects 1.12.0) and managed initialization/
+  hook-registration tests. Build checks are not native dispatch or startup acceptance.
+
 ## 1.12.0 — 11 November 2026
 
 - Fix missed native sightings: observe AIFaction.OnOpponentSighted because normal

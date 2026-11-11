@@ -1,6 +1,4 @@
 using System;
-using System.Reflection;
-using System.Runtime.CompilerServices;
 using System.Threading;
 using HarmonyLib;
 using Il2CppMenace.Tactical;
@@ -25,25 +23,9 @@ public sealed partial class Plugin
         _contactAdvanceDiagnostics = ReadBool("DiagnoseContactAdvance", false) || ReadBool("DiagnoseCombinedArmsSupport", false);
         _contactAdvanceDiagnosticBudget.Reset();
         _contactAdvanceRound = 0;
-        foreach (var type in new[] { typeof(ContactAdvanceState), typeof(ContactAdvanceRuntime), typeof(AdvanceContact),
-            typeof(ContactAdvanceDiagnosticBudget) })
-        {
-            foreach (var method in type.GetMethods(BindingFlags.Static | BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly))
-                RuntimeHelpers.PrepareMethod(method.MethodHandle);
-            foreach (var nested in type.GetNestedTypes(BindingFlags.Public | BindingFlags.NonPublic))
-            {
-                foreach (var method in nested.GetMethods(BindingFlags.Static | BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly))
-                    RuntimeHelpers.PrepareMethod(method.MethodHandle);
-                foreach (var constructor in nested.GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
-                    RuntimeHelpers.PrepareMethod(constructor.MethodHandle);
-            }
-        }
-        foreach (string name in new[] { nameof(ContactAdvanceZoneEnter), nameof(ContactAdvanceZoneEvaluateEnter),
-            nameof(ContactAdvanceZoneEnterCore), nameof(ContactAdvanceZonePostEnter), nameof(ContactAdvanceZoneExit),
-            nameof(ContactAdvanceZoneExitCore), nameof(ContactAdvanceZoneEvaluateExit), nameof(ContactAdvanceZoneDone),
-            nameof(ContactAdvanceZoneDoneCore), nameof(ContactAdvanceZonePostDone), nameof(ContactAdvanceKnownOpponent),
-            nameof(ContactAdvanceZoneReset), nameof(ContactAdvanceZoneFinally), nameof(ContactAdvanceDiagnostic), nameof(ContactAdvanceSighted) })
-            RuntimeHelpers.PrepareMethod(typeof(Plugin).GetMethod(name, BindingFlags.Static | BindingFlags.NonPublic).MethodHandle);
+        // #100: PrepareMethod's speculative sweep crashed inside the loader's native
+        // JIT detour before the menu. Keep only bounded, native-free state warmup;
+        // let the runtime compile gameplay helpers normally when they are needed.
         _contactAdvance.Observe(1, 1, 1, new(2, 30, 30, 1, 20));
         _contactAdvance.TryAim(1, 1, 1, 0, 0, out _); _contactAdvance.TryAssign(1, 1, 1, 10, 0, 0, out _);
         _contactAdvance.TryRead(1, 1, 1, 2, out _); _contactAdvance.BeginTurn(1, 1, 1); _contactAdvance.Reset();
