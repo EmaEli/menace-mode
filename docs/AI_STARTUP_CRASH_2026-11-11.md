@@ -54,4 +54,40 @@ startup safety. Corrected native startup and gameplay still require the player t
 - 210 GameplaySuite Python tests and 156 LargerMaps Python tests pass (8 expected skips).
 - Real-reference production Release build: zero warnings/errors. Main is already
   included in dev; unrelated working-tree changes are preserved.
-- Canonical packaging, Windows build/install and player startup results follow separately.
+- Canonical packaging and Windows build/install results follow below; player startup
+  remains pending.
+
+## Canonical candidate and Windows installation
+
+- Source `65fa7e53761018c9c493e0d149169953165f75ce` is pushed to dev. Isolated archive
+  from that commit excludes unrelated local edits. Matching generated AI/settings
+  artifacts seed the standard installed-companion BuildKit; no installer changes.
+- One package, 89 inventoried files. ZIP SHA256:
+  `d0bf34ab689518fc62f566039309fa5e15fb6d2c431b38b0bbf598183456a17d`.
+  New files include the two startup test helpers and generated AIPerformance.deps.json.
+- Isolated packaging passes 17,986 shared/303 behavior/19,705 linked checks. Clean
+  extracted-source compilation and real DLL metadata verification pass; the current
+  verifier's 18,011 shared checks also pass. Existing nullable fixture warnings remain.
+  Local SDK10.0.402; a snapshot-local pin avoids an unrelated parent temp SDK6 pin.
+- Closed-game PC preflight verifies the original 1.12.0 crash DLL, reviewed native hash
+  and all 177 local compiler/proxy files against the PC. The game remains 0.7.18+22828.
+- Standard PowerShell5.1 BuildOnly and installed-companion standalone install pass with
+  pinned private SDK10.0.113, zero production warnings/errors, 224 metadata/303 behavior/
+  19,705 production-linked checks. BuildOnly leaves the original live AI unchanged.
+- Installed manifest/assembly/file: 1.12.1/1.12.1.0/1.12.1.0. DLL SHA256:
+  `8ae34b655c1301281cf80341dfe3a29019a8241cd7c10efaea555e26c42bc44f`.
+- Journal/backup outside Mods:
+  `_MENACE_Backups/20261111-170843-679259cdc5d240c19fe24290b90c63f7`.
+  Both original 1.12.0 files match the preflight hashes; installed files match the
+  validated Windows stage. Only AIPerformance was replaced; the loose-DLL conflict
+  target was absent and untouched. Settings companion and Jiangyu.Loader were reused.
+- All 1,462 protected unrelated Mods/UserData/save files and 177 references remain
+  unchanged; native game hash unchanged; game closed during final verification.
+- PC archive/evidence: `E:/MENACE-Work/Builds/AI1121-startup-20261111`.
+  Canonical build logs: `E:/MENACE-Work/Temp/MENACE-install.log`; captured BuildOnly,
+  install and final journal verification outputs are retained locally.
+
+No corrected game startup, native on-demand AI dispatch, mission behavior or turn-time
+acceptance has been performed. Player should launch to the menu first, then load a
+mission if successful; retrieve the fresh Latest.log after their result. #100 and #17
+stay open. No Nexus/release/Downloads package was requested or published.
