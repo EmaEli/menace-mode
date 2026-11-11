@@ -13,15 +13,18 @@ public sealed partial class Plugin
 {
     // Reviewed native ConsiderZones.Evaluate/PostProcess skip AdvanceTowards zones for the whole
     // faction once AIFaction.HasKnownOpponent() is true. The override is scoped to those two
-    // calls, on the AI thread, for eligible units without a useful native action.
+    // calls, including native AI workers, for eligible units without a useful native action.
     [ThreadStatic] private static bool _advanceZoneScope;
     [ThreadStatic] private static bool _advanceZoneKnownObserved;
     [ThreadStatic] private static long _advanceZoneScopeFaction;
     [ThreadStatic] private static long _advanceZoneScopeActor;
     [ThreadStatic] private static int _advanceZoneScopeRound;
     [ThreadStatic] private static string _advanceZoneScopePhase;
-    private static long _advanceZoneActor;
-    private static bool _advanceZoneEligible;
+    [ThreadStatic] private static long _advanceZoneActor;
+    [ThreadStatic] private static bool _advanceZoneEligible;
+    [ThreadStatic] private static int _advanceZoneCachedGeneration;
+    [ThreadStatic] private static int _advanceZoneScopeGeneration;
+    private static int _advanceZoneGeneration;
 
     private static void PatchContactAdvanceZones(Harmony harmony)
     {
@@ -34,8 +37,9 @@ public sealed partial class Plugin
         var evaluateExit = new HarmonyMethod(typeof(Plugin), nameof(ContactAdvanceZoneEvaluateExit)) { priority = Priority.First };
         var postEnter = new HarmonyMethod(typeof(Plugin), nameof(ContactAdvanceZonePostEnter)) { priority = Priority.First };
         var postDone = new HarmonyMethod(typeof(Plugin), nameof(ContactAdvanceZonePostDone)) { priority = Priority.First };
-        harmony.Patch(evaluate, prefix: evaluateEnter, postfix: evaluateExit);
-        harmony.Patch(post, prefix: postEnter, postfix: postDone);
+        var cleanup = new HarmonyMethod(typeof(Plugin), nameof(ContactAdvanceZoneFinally));
+        harmony.Patch(evaluate, prefix: evaluateEnter, postfix: evaluateExit, finalizer: cleanup);
+        harmony.Patch(post, prefix: postEnter, postfix: postDone, finalizer: cleanup);
         harmony.Patch(known, prefix: new HarmonyMethod(typeof(Plugin), nameof(ContactAdvanceKnownOpponent)));
     }
 
@@ -52,36 +56,36 @@ public sealed partial class Plugin
     {
         __state = _advanceZoneScope;
         if (!_contactAdvanceEnabled || !_offensivePlanningEnabled || __0 == null) return;
-        if (Environment.CurrentManagedThreadId != _contactAdvanceThread)
-        {
-            if (_contactAdvanceDiagnostics)
-                ContactAdvanceDiagnostic(Volatile.Read(ref _contactAdvanceRound), 0, 0, "scope-thread",
-                    $"result=thread-mismatch phase={phase} actor={__0.Pointer.ToInt64():X} thread={Environment.CurrentManagedThreadId} expected={_contactAdvanceThread}");
-            return;
-        }
         try
         {
+            int generation = Volatile.Read(ref _advanceZoneGeneration);
             long id = __0.Pointer.ToInt64();
             var agent = __0.GetAgent();
-            if (_advanceZoneActor != id)
+            if (_advanceZoneActor != id || _advanceZoneCachedGeneration != generation)
             {
                 _advanceZoneEligible = ContactAdvanceRuntime.KeepAdvanceZones(agent, out var gate);
                 _advanceZoneActor = id;
+                _advanceZoneCachedGeneration = generation;
                 if (_contactAdvanceDiagnostics)
                     ContactAdvanceDiagnostic(Volatile.Read(ref _contactAdvanceRound), agent?.GetFaction()?.Pointer.ToInt64() ?? 0, 0,
                         "scope-eligibility", $"result={(_advanceZoneEligible ? "open" : "closed")} gate={gate} actor={id:X} thread={Environment.CurrentManagedThreadId}");
             }
             _advanceZoneScope = _advanceZoneEligible;
+            _advanceZoneScopeFaction = agent?.GetFaction()?.Pointer.ToInt64() ?? 0;
+            _advanceZoneScopeGeneration = generation;
             if (_contactAdvanceDiagnostics)
             {
                 _advanceZoneKnownObserved = false;
-                _advanceZoneScopeFaction = agent?.GetFaction()?.Pointer.ToInt64() ?? 0;
                 _advanceZoneScopeActor = id;
                 _advanceZoneScopeRound = Volatile.Read(ref _contactAdvanceRound);
                 _advanceZoneScopePhase = phase;
             }
         }
-        catch (Exception ex) { _advanceZoneScope = false; ContactAdvanceDisable(ex); }
+        catch
+        {
+            // Native worker failures must not clear main-thread contact memory mid-evaluation.
+            _advanceZoneScope = false; _advanceZoneActor = 0;
+        }
     }
 
     private static void ContactAdvanceZoneEvaluateExit(bool __state) => ContactAdvanceZoneExitCore(__state, "evaluate");
@@ -107,9 +111,17 @@ public sealed partial class Plugin
         _advanceZoneScopePhase = null;
     }
 
-    private static bool ContactAdvanceKnownOpponent(ref bool __result)
+    private static void ContactAdvanceZoneFinally(Exception __exception, bool __state)
     {
-        if (!_advanceZoneScope || !_contactAdvanceEnabled) return true;
+        if (__exception == null) return;
+        _advanceZoneScope = __state; _advanceZoneActor = 0;
+    }
+
+    private static bool ContactAdvanceKnownOpponent(AIFaction __instance, ref bool __result)
+    {
+        if (!_advanceZoneScope || !_contactAdvanceEnabled || !_offensivePlanningEnabled ||
+            _advanceZoneScopeGeneration != Volatile.Read(ref _advanceZoneGeneration) ||
+            __instance == null || __instance.Pointer.ToInt64() != _advanceZoneScopeFaction) return true;
         if (_contactAdvanceDiagnostics)
         {
             _advanceZoneKnownObserved = true;
@@ -123,6 +135,7 @@ public sealed partial class Plugin
 
     private static void ContactAdvanceZoneReset()
     {
+        Interlocked.Increment(ref _advanceZoneGeneration);
         _advanceZoneScope = false; _advanceZoneKnownObserved = false; _advanceZoneActor = 0;
         _advanceZoneEligible = false; _advanceZoneScopeFaction = _advanceZoneScopeActor = 0;
         _advanceZoneScopeRound = 0; _advanceZoneScopePhase = null;

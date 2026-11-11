@@ -34,6 +34,17 @@ public sealed partial class Plugin
     // This is a request, not a grenade grant or a second skill-execution owner.
     public static int[] GetSupportSmokeThreat(Agent agent)
     {
+        if (_combinedArmsEnabled && _contactAdvanceEnabled && _offensivePlanningEnabled &&
+            Environment.CurrentManagedThreadId == _contactAdvanceThread)
+        {
+            try
+            {
+                var manager = TacticalManager.Get(); var map = manager?.GetMap();
+                if (TryAdvanceGroup(agent, map, manager?.m_Round ?? 0, false, out var plan) &&
+                    !HasFeasibleSmokeAdvance(agent, plan)) return null;
+            }
+            catch { return null; } // Do not waste a grenade when the crossing cannot be checked.
+        }
         if (_contactAdvanceEnabled && _offensivePlanningEnabled && Environment.CurrentManagedThreadId == _contactAdvanceThread)
         {
             try

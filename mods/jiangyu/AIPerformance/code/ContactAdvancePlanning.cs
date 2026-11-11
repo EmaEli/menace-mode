@@ -44,7 +44,7 @@ internal static partial class ContactAdvanceRuntime
     }
 
     internal static bool Plan(Agent agent, TileScores tiles, ContactAdvanceState memory,
-        OffensivePlanningBudget budget, Map map, int round)
+        OffensivePlanningBudget budget, Map map, int round, AdvanceGroupPlan? coordinated = null, Func<Tile, bool> smoke = null)
     {
         if (!Ready(agent) || !TryAim(agent, memory, map, round, out var contact) ||
             CombinedArmsResponseRuntime.HasUsefulAction(agent) || tiles == null || tiles.Count < 2 || tiles.Count > 4096) return false;
@@ -117,28 +117,40 @@ internal static partial class ContactAdvanceRuntime
                     if (useful) { lanes[candidate.Score.Tile.Pointer.ToInt64()] = reserve; break; }
                 }
             }
-        bool firingHere = lanes.ContainsKey(current.Pointer.ToInt64());
         var changes = new List<Change>(); bool forward = false;
         int sector = (int)((uint)actor.ID % 5) - 2;
         foreach (var c in candidates)
         {
             float utility; int cost = c.Score.MinimumUtilityAPCost;
-            if (lanes.TryGetValue(c.Score.Tile.Pointer.ToInt64(), out int reserve))
+            int remaining = Math.Max(Math.Abs(c.X - tx), Math.Abs(c.Z - tz));
+            bool nearThreat = distance <= contact.Range + 6 && round - contact.SeenRound <= 2;
+            bool outpaces = coordinated is { } group && nearThreat &&
+                (actor.IsVehicle() ? group.Phase != AdvanceGroupPhase.Fallback && group.Infantry > 0 && remaining < group.FrontDistance + 2 :
+                    group.Phase == AdvanceGroupPhase.Rally && group.Infantry > 1 && remaining < group.RearDistance - 6);
+            // A predicted lane at our current origin is not a native executable shot.
+            // Do not let geometry keep a no-shot unit parked or shuffling forever.
+            if (c.Progress > 0 && !outpaces && smoke != null && smoke(c.Score.Tile))
+            {
+                utility = threshold * 32; cost = 0; // Pure movement: native APCost still pays for the path.
+            }
+            else if (c.Progress > 0 && !outpaces && lanes.TryGetValue(c.Score.Tile.Pointer.ToInt64(), out int reserve))
             {
                 utility = threshold * 24; cost = Math.Min(cost, reserve);
             }
             else if (c.Score.UtilityByAttacksScore > 0 || c.Score.UtilityByAttacksScoreCandidate > 0) continue;
-            else if (!firingHere && c.Progress > 0)
+            else if (c.Progress > 0 && !outpaces)
             {
                 // Five modest lateral approach lanes, no three-responder/three-round stopping rule.
                 int lateral = Math.Abs(tx - cx) >= Math.Abs(tz - cz) ? c.Z - tz : c.X - tx;
                 utility = threshold * (4 + Math.Min(8, c.Progress) - Math.Min(4, Math.Abs(lateral - sector * 2)) * .1f);
+                cost = 0; // No pretend post-movement attack AP requirement (native Reset sentinel is 1024).
                 forward = true;
             }
             else utility = 0; // Cover-only utility must not win while it cannot enable engagement.
             changes.Add(new(c.Score, c.Score.UtilityScore, c.Score.MinimumUtilityAPCost, utility, cost));
+            if (utility > 0 && c.Progress > 0) forward = true;
         }
-        if (!forward && lanes.Count == 0) return false;
+        if (!forward) return false;
         bool committed = false;
         try
         {

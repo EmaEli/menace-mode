@@ -1,4 +1,33 @@
-# AI Performance 1.10.1
+# AI Performance 1.11.0
+
+## Shared local advance windows (0.7.18 test candidate)
+
+With the existing opt-in `CombinedArmsSupport` and default-ON `OffensiveCombatPlanning`:
+
+- Nearby compatible advance-ordered infantry and support share small groups (up to four
+  infantry/two support units), a known contact, cohesion limits and one crossing deadline.
+  Publication is once per faction turn, with a bounded spatial lookup; no global pathfinding.
+- Exposed lead infantry can stage for support; vehicles retain an infantry screen instead
+  of independently rushing ahead. Actual accepted native fire at the contact sector opens
+  a shared one-turn/next-turn advance window. Proximity or projected utility is not firing.
+- Equipped smoke requests require affordable native movement afterward. Accepted forward
+  smoke is shared, but must actually materialize before authorizing exposed crossing.
+  Real smoked forward tiles get movement preference. No repeated smoke at the same place
+  until the group's infantry has progressed three tiles. No mortar smoke skill/ammo is
+  invented; equipped hostile mortar-smoke availability remains unverified.
+- Waiting expires after two rounds; leader loss, regrouping or changing contacts do not
+  renew spent waiting time. Native attacks/emergencies and defensive orders still win.
+- Native zone scopes now work on AI workers, with thread/faction isolation, stale-generation
+  invalidation and exception cleanup. A geometric lane with no native shot cannot park a
+  unit forever. Pure movement clears the native 1024 post-utility AP sentinel without
+  changing the real path cost or granting AP.
+
+Both diagnostic options remain OFF by default. The existing explicit combined-arms logging
+opt-in now includes contact/group traces, so no additional settings edit is needed for that
+test setup. The 256-line contact budget reserves half for group fire/smoke/choice evidence;
+repeated group choices are sampled to avoid consuming it in the opening rounds.
+
+Managed checks and native metadata checks are not gameplay acceptance. #17 remains open.
 
 ## Contact-led alert, advance and firing cover (0.7.18)
 

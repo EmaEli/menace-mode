@@ -53,6 +53,8 @@ internal static class ContactAdvanceChecks
         check(f.Forward.UtilityScore > 0 && f.Here.UtilityScore == 0 && f.Back.UtilityScore == 0,
             "far contact: advance instead of stopping in current/backward high-utility cover");
         check(f.Forward.UtilityByAttacksScore == 0 && f.Forward.SafetyScore == 30, "range closing does not fabricate attack value or erase safety");
+        check(f.Forward.MinimumUtilityAPCost == 0 && f.Forward.APCost == 30,
+            "pure closing clears the 1024 post-utility sentinel but retains the real native movement AP cost");
         for (int i = 0; i < 31; i++)
         {
             var squad = new Actor { Pointer = (IntPtr)(1000 + i), Tile = new(5 + i, 15) };
@@ -121,6 +123,10 @@ internal static class ContactAdvanceChecks
         f.Unit.Agent.Behaviors.Add(mg);
         check(Plugin.OffensiveChoiceFixture(f.Unit.Agent, f.Unit.Agent.Behaviors[0]) == mg, "positive native sustained/suppression fire takes precedence over Idle");
 
+        f = new Fixture(); f.Gun.Skill.MaxRange = 100; f.Plan();
+        check(f.Here.UtilityScore == 0 && f.Forward.UtilityScore > 0,
+            "a projected current-origin lane with no native shot cannot park the unit or cause cover shuffling");
+
         foreach (string guard in new[] { "no-contact", "defend", "deployment", "allied", "drone", "broken", "emergency" })
         {
             f = new Fixture();
@@ -181,8 +187,34 @@ internal static class ContactAdvanceChecks
             Plugin.ZoneDoneFixture(false);
         }
         f = new Fixture(); f.Unit.Agent.Zones.Add(new());
-        Task.Run(() => Plugin.ZoneEnterFixture(f.Unit)).GetAwaiter().GetResult();
-        check(Plugin.KnownOpponentFixture(f.Faction), "worker-thread scoring cannot arm the override");
+        var workerUnit = f;
+        bool workerScoped = Task.Run(() =>
+        {
+            bool previous = Plugin.ZoneEnterFixture(workerUnit.Unit);
+            bool active = !Plugin.KnownOpponentFixture(workerUnit.Faction);
+            Plugin.ZoneDoneFixture(previous);
+            return active && Plugin.KnownOpponentFixture(workerUnit.Faction);
+        }).GetAwaiter().GetResult();
+        check(workerScoped, "AI worker opens eligible native-zone scope and restores its native contact flag");
+        check(Plugin.KnownOpponentFixture(f.Faction), "worker override never leaks onto the main thread");
+        state = Plugin.ZoneEnterFixture(f.Unit);
+        check(Plugin.KnownOpponentFixture(new AIFaction { Pointer = (IntPtr)31 }), "zone scope cannot override another faction");
+        Plugin.ZoneExceptionFixture(state);
+        check(Plugin.KnownOpponentFixture(f.Faction), "native criterion exception restores contact scope");
+        using (var entered = new ManualResetEventSlim())
+        using (var reset = new ManualResetEventSlim())
+        {
+            var staleWorker = Task.Run(() =>
+            {
+                bool previous = Plugin.ZoneEnterFixture(workerUnit.Unit);
+                entered.Set(); reset.Wait();
+                bool invalidated = Plugin.KnownOpponentFixture(workerUnit.Faction);
+                Plugin.ZoneDoneFixture(previous);
+                return invalidated;
+            });
+            entered.Wait(); Plugin.AdvanceBeforeFixture(f.Unit.Agent); reset.Set();
+            check(staleWorker.GetAwaiter().GetResult(), "new processing generation invalidates a stale worker scope");
+        }
         Plugin.ZoneEnterFixture(f.Unit); Plugin.AdvanceBeforeFixture(f.Unit.Agent);
         check(Plugin.KnownOpponentFixture(f.Faction), "agent processing start clears a stale scope");
         Plugin.ZoneEnterFixture(f.Unit); Plugin.AdvanceResetFixture(); Plugin.BeginOffensiveFixture();
@@ -210,9 +242,15 @@ internal static class ContactAdvanceChecks
             line.Contains("result=not-read")), "opt-in trace distinguishes a missing native known-opponent read");
 
         f = new Fixture(diagnostics: true);
-        Task.Run(() => Plugin.ZoneEnterFixture(f.Unit)).GetAwaiter().GetResult();
-        check(Plugin.Logs.Any(line => line.Contains("phase=scope-thread") && line.Contains("result=thread-mismatch")),
-            "opt-in trace identifies zone scope calls on the wrong thread");
+        workerUnit = f;
+        Task.Run(() =>
+        {
+            bool previous = Plugin.ZoneEnterFixture(workerUnit.Unit);
+            Plugin.KnownOpponentFixture(workerUnit.Faction);
+            Plugin.ZoneDoneFixture(previous);
+        }).GetAwaiter().GetResult();
+        check(Plugin.Logs.Any(line => line.Contains("phase=scope-eligibility") && line.Contains("result=open")),
+            "opt-in trace records eligible worker scoring instead of rejecting the AI thread");
         Plugin.RejectLog = true;
         state = Plugin.ZoneEnterFixture(f.Unit); Plugin.KnownOpponentFixture(f.Faction); Plugin.ZoneExitFixture(state);
         Plugin.RejectLog = false;
@@ -221,9 +259,16 @@ internal static class ContactAdvanceChecks
         var diagnosticBudget = new ContactAdvanceDiagnosticBudget(); int accepted = 0;
         for (int i = 0; i < ContactAdvanceDiagnosticBudget.MaxLines + 20; i++)
             if (diagnosticBudget.TryAcquire(1, 1, i + 1, "bounded")) accepted++;
-        check(accepted == ContactAdvanceDiagnosticBudget.MaxLines && !diagnosticBudget.TryAcquire(1, 1, 1, "bounded"),
-            "contact diagnostics deduplicate and cap records at 256 per mission");
+        check(accepted == ContactAdvanceDiagnosticBudget.HookLines && !diagnosticBudget.TryAcquire(1, 1, 1, "bounded"),
+            "early worker/zone traces cannot consume the 128 reserved group-action records");
+        int groupLines = 0;
+        for (int i = 0; i < ContactAdvanceDiagnosticBudget.MaxLines + 20; i++)
+            if (diagnosticBudget.TryAcquire(i + 1, 1, i + 1, "group-signal")) groupLines++;
+        check(accepted + groupLines == ContactAdvanceDiagnosticBudget.MaxLines, "hook plus group diagnostics still cap at 256 per mission");
         diagnosticBudget.Reset();
         check(diagnosticBudget.TryAcquire(1, 1, 1, "bounded"), "contact diagnostic budget resets cleanly");
+        for (int i = 1; i <= 3; i++) check(diagnosticBudget.TryAcquire(20, 1, i, "group-choice"), "late group choices have their reserved budget");
+        check(!diagnosticBudget.TryAcquire(20, 1, 4, "group-choice") && diagnosticBudget.TryAcquire(20, 1, 4, "group-signal"),
+            "sample repeated group choices while retaining actual late fire/smoke receipts");
     }
 }

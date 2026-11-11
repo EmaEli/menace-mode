@@ -199,3 +199,124 @@ The hook has no diagnostics, so the log cannot distinguish them.
 Unrelated warnings in the same log: 51 Weapon Mechanics Rebalanced mortar outer-ring
 `InvalidCastException` (`Structure` to `Actor`) and 2 Garrisonable Buildings
 `Actor.GetCurrentProperties()` failures.
+
+## 1.10.1 gameplay feedback — 11 November 2026
+
+**Not accepted.** The player reports northeastern infantry arriving singly into MG fire,
+no effective vehicle support there, a western vehicle ambushed without an infantry
+screen, infantry attacking the tower mortar, and southwestern smoke/vehicle presence
+without a useful follow-through. These compass descriptions are player observations;
+log coordinates have not been independently mapped to those directions.
+
+Closed-game read-only capture: 9,564,092 bytes, 26,981 lines, SHA256
+`d66b93c44631d2e2205e44da77aaa6597349210e3c2d4f15b2a58572ddc52461`.
+Local/remote snapshot hashes and transfer-probe hashes match. Installed manifest/assembly
+1.10.1/1.10.1.0, DLL SHA256
+`85eebee89fc09f8211995477ce43ec676769eba3d5750cbab376d2909eece3e1`;
+native binary `494c9e21…2d12e9`. One 96-tile map, rounds 1–25, 18 initial Rogue units.
+
+### What the log establishes
+
+- All 18 hostiles changed round-start position during the mission. After contact in
+  round 3, 314/386 adjacent unit-round samples changed tile (81%). Movement is not
+  evidence of coordinated combat or successful expiry of this particular guard.
+- 17 distinct accepted hostile attack records: 10 mortar fragmentation and 7 sustained
+  rifle records from three conscript squads. Deduplication uses round, actor, skill,
+  target, origin and pre-use AP; these are hook records, not projectile/hit counts.
+  Only round 20 has two distinct attackers; no round has three. No attacks are logged
+  from any of the three walkers, either MG team, or the autocannon team.
+- Four accepted hand-smoke throws. One infantry squad throws from (75,41) in rounds
+  15, 17 and 19 toward adjacent tiles, then remains/shuffles around (75–76,41) through
+  round 25 without firing. The nearby walker ends at (77,40), also without firing.
+  Another conscript squad throws in round 21 and logs rifle fire in round 24; smoke
+  is therefore not universally followed by permanent inactivity.
+- Combined-arms diagnostics publish no eligible infantry in round 1 because advance
+  orders are absent, but all 11 are eligible from round 2. This is not a persistent
+  whole-mission exclusion. The 70 plan records include 43 score-seeded plans; every
+  logged seed has attack utility zero. Pairing/staging did not establish fire support.
+- Three exposed-route Move-to-Idle replacements are logged in round 9. Existing
+  combined-arms diagnostics exhaust their 256-record mission cap during round 10.
+- Native-zone distance scoring remains nearly absent after contact: only 14/858
+  hostile Move evaluations have nonzero selected-target distance score. This alone
+  does not identify which eligibility/thread/native-read boundary failed.
+
+### Limits and next step
+
+The new default-OFF `DiagnoseContactAdvance` option was not enabled for this test.
+There are zero `CONTACT-ADVANCE` records. The agent's previous test instructions
+omitted that prerequisite; neither guard expiry nor the suspected thread mismatch is
+directly verified. Do not ask the player for another identical mission as if it were.
+
+The installed Smoke Overhaul 0.9.0 integration selects equipped hand-grenade skills,
+not mortar smoke. The log does not establish that the hostile mortar had a legal
+smoke-round skill or ammunition; adding that capability requires checking the actual
+equipment/native firing contract, not granting an invented attack.
+
+Recommended follow-up: resolve the contact-advance execution boundary and add a
+bounded shared support/crossing decision for nearby infantry and support, rather than
+another isolated aggression/timeout adjustment. Smoke should protect a feasible
+crossing; fire support must be usable, not just geometrically nearby. Preserve native
+paths, legality and legitimate contact information, with bounded fallback so groups
+cannot wait forever. This is proposed work, not an implemented or accepted feature.
+No gameplay code, installed mods, settings or saves were changed during this analysis.
+
+## 1.11.0 implementation — 11 November 2026
+
+The player authorized the follow-up above. This is a materially different candidate,
+not acceptance of 1.10.1 or another request to repeat the same test.
+
+- Native zone scopes no longer require the patch-installing thread. Eligibility is cached
+  per worker/actor/processing generation; scoped faction reads are thread-local, nested
+  scopes restore their caller, and Harmony finalizers clear exceptional exits. Processing
+  and scene changes invalidate other workers' old scopes. Main-thread contact observation
+  remains main-thread-only. Managed tests exercise worker, nesting, exception and reset paths;
+  actual IL2CPP hook dispatch remains to be observed in the game.
+- Small local groups share roster/contact, cohesion, fire/smoke receipts and staging deadline.
+  Four infantry/two support maximum; bounded spatial matching, no global pathfinder or
+  native initiative/scheduler replacement. Exposed lead infantry can stage for support;
+  vehicles cannot run past their infantry screen during the coordinated window. Accepted
+  native fire at the legitimately known sector can release the group's advance. Nearby
+  artillery can contribute actual native fire without being given a fabricated attack.
+- Smoke requests require an equipped, enabled grenade with uses, its actual AP cost and
+  an existing affordable forward movement candidate afterward. Successful forward smoke
+  is shared, visible smoke must exist before exposed crossing, and forward smoked tiles
+  get movement utility. Another grenade is not requested from the same stationary group
+  until infantry makes three tiles of progress. No equipment, ammo or AP is granted.
+- Two-round waiting is shared, and regrouping, leader loss and contact changes cannot
+  restart spent waiting time. Native positive attacks/suppression and emergencies win.
+- A projected lane at the current origin no longer counts as an executable native shot
+  that can park/shuffle a no-shot unit. Movement-only utility clears the native 1024
+  post-utility AP sentinel; the separate native movement cost stays unchanged. Real firing
+  origins still reserve actual setup/fire AP. This sentinel issue is regression-tested;
+  it is not retrospectively asserted to explain the player's entire previous mission.
+- Both diagnostic settings remain OFF by default. The already enabled combined-arms trace
+  opt-in also enables contact/group evidence, without modifying settings. Half the 256-line
+  contact budget is reserved for group evidence; repeated choice sampling leaves room
+  for late actual fire/smoke receipts. A once-per-mortar opt-in capability record checks
+  the friendly equipped skills/uses on the next live mission.
+
+Catalog check: the extracted `enemy.rogue_army_mortar_weapon_team` equips
+`specialweapon.tripod_medium_mortar_80mm`, granting `active.launch_medium_mortar_frag`,
+`active.infantry_deploy_heavy_weapon` and `passive.encumbered`, with no explicit unit
+skills and only `infantry_default` skill group. Its description mentions smoke, but
+that is not an equipped smoke skill. This older extracted catalog is not proof of the
+current live modded loadout; mortar smoke automation is deliberately not implemented.
+
+Source and test changes are confined to AIPerformance, its linked advance test harness
+and this evidence/inventory. Unrelated pending gameplay/installer work is preserved and
+will not be bundled in the standalone candidate. Local/Windows checks are recorded below
+as they complete. Gameplay acceptance remains pending and #17 stays open.
+
+Local gates: production Release build has zero warnings/errors; 13,442 linked recovery,
+contact and shared-group checks, 303 AI behavior checks and 208 exact native/proxy/artifact
+contracts pass. Suite Python: 208 passed. LargerMaps Python: 156 run, eight expected
+unavailable-fixture skips. Isolated shared/package checks: 17,986 passed (existing shared
+test-fixture nullability warnings only). Initial Python inventory failure was the not-yet
+refreshed compiled manifest; after rebuilding the 1.11.0 payload, all 208 tests reran cleanly.
+The isolated snapshot initially inherited a scratch SDK6 pin; an isolated local SDK10 pin
+corrected that test setup without changing repository/global/machine SDK configuration.
+
+Closed-PC preflight: transfer round-trip hashes match; current native binary and proxy
+hashes match the reviewed 0.7.18 references. Existing combined-arms gameplay/diagnostic
+flags are ON; no settings edits required. Captured 1,458 protected Mods/UserData files,
+177 runtime/proxy references and three affected 1.10.1 files for later verification.

@@ -6,6 +6,7 @@ using System.Threading;
 using HarmonyLib;
 using Il2CppMenace.Tactical;
 using Il2CppMenace.Tactical.AI;
+using Il2CppMenace.Tactical.Skills;
 
 namespace AIPerformance;
 
@@ -31,11 +32,13 @@ public sealed partial class Plugin
             var movement = AccessTools.Method(typeof(Actor), "OnMovementFinished", Type.EmptyTypes);
             var reset = AccessTools.Method(typeof(TacticalManager), "OnInit");
             var detection = AccessTools.Method(typeof(Actor), "SetDetectedByFaction", new[] { typeof(int) });
-            if (turn == null || before == null || after == null || death == null || movement == null || reset == null || detection == null)
+            var use = AccessTools.Method(typeof(Skill), "Use", new[] { typeof(Tile), typeof(UsageParameter) });
+            if (turn == null || before == null || after == null || death == null || movement == null || reset == null || detection == null || use == null)
                 throw new MissingMethodException("support lifecycle");
             _combinedArmsThread = Thread.CurrentThread.ManagedThreadId;
             foreach (var type in new[] { typeof(CombinedArmsState), typeof(CombinedArmsRuntime), typeof(CombinedArmsResponseRuntime),
                 typeof(CombinedArmsGuardState), typeof(SupportProjection),
+                typeof(CombinedArmsAdvanceState), typeof(AdvanceGroupMember), typeof(AdvanceGroupPlan),
                 typeof(SupportUnit), typeof(CombinedArmsDiagnosticBudget), typeof(CombinedArmsThreatRuntime),
                 typeof(CombinedArmsThreatState), typeof(SupportThreat) })
             {
@@ -52,7 +55,9 @@ public sealed partial class Plugin
                 }
             }
             foreach (string name in new[] { nameof(CombinedArmsTurn), nameof(CombinedArmsRefresh), nameof(CombinedArmsReset),
-                nameof(CombinedArmsDeath), nameof(CombinedArmsMovement), nameof(CombinedArmsDiagnostic), nameof(CombinedArmsDetected) })
+                nameof(CombinedArmsDeath), nameof(CombinedArmsMovement), nameof(CombinedArmsDiagnostic), nameof(CombinedArmsDetected),
+                nameof(AdvanceGroupSkillUsed), nameof(AdvanceGroupChoice), nameof(TryAdvanceGroup), nameof(PublishAdvanceGroups),
+                nameof(HasFeasibleSmokeAdvance), nameof(TraceMortarCapability) })
                 RuntimeHelpers.PrepareMethod(typeof(Plugin).GetMethod(name, BindingFlags.NonPublic | BindingFlags.Static).MethodHandle);
             var warmAsset = new SupportUnit(1, 2, SupportKind.Vehicle, 0, 0, default, false, 0, 0);
             var warmRequest = new SupportUnit(3, 4, SupportKind.Infantry, 6, 0, default, true, 10, 0);
@@ -62,6 +67,11 @@ public sealed partial class Plugin
             _combinedArms.Candidates(1, 1, 1, warmAsset); _combinedArms.Claim(1, 1, 1, warmAsset, warmRequest);
             _combinedArms.Refresh(1, 1, 1, warmRequest.Actor, null); _combinedArms.Release(1, 1, 1, warmAsset.Actor);
             _combinedArms.Reset();
+            var warmContact = new AdvanceContact(10, 30, 30, 1, 20);
+            _advanceGroups.Publish(1, 1, 1, new[] { new AdvanceGroupMember(warmRequest, warmContact), new(warmAsset, warmContact) });
+            _advanceGroups.TryGet(1, 1, 1, warmRequest, true, out _);
+            _advanceGroups.Signal(1, 1, 1, warmAsset.Actor, 30, 30, false);
+            _advanceGroups.Reset();
             _supportThreats.Advance(1, 1); _supportThreats.Observe(1, 1, 1, new(1, 2, 2, 20, 1));
             _supportThreats.Get(1, 1, 1); _supportThreats.Reset();
             _combinedArmsDiagnostics = ReadBool("DiagnoseCombinedArmsSupport", false);
@@ -72,6 +82,7 @@ public sealed partial class Plugin
             harmony.Patch(movement, postfix: new HarmonyMethod(typeof(Plugin), nameof(CombinedArmsMovement)));
             harmony.Patch(reset, postfix: new HarmonyMethod(typeof(Plugin), nameof(CombinedArmsReset)));
             harmony.Patch(detection, postfix: new HarmonyMethod(typeof(Plugin), nameof(CombinedArmsDetected)));
+            harmony.Patch(use, postfix: new HarmonyMethod(typeof(Plugin), nameof(AdvanceGroupSkillUsed)));
             _combinedArmsEnabled = true;
             if (_combinedArmsDiagnostics)
                 _log.Msg($"{ModName}: experimental combined-arms support and diagnostics enabled; at most {CombinedArmsDiagnosticBudget.MaxLines} deduplicated lines per mission.");
@@ -101,11 +112,13 @@ public sealed partial class Plugin
             int[] rejected = _combinedArmsDiagnostics ? new int[(int)SupportSnapshotReason.Count] : null;
             foreach (var actor in actors)
             {
+                TraceMortarCapability(actor, manager.m_Round, factionId);
                 var unit = CombinedArmsRuntime.Snapshot(actor?.GetAgent(), true, out var reason);
                 if (unit != null) units.Add(unit);
                 else if (rejected != null) rejected[(int)reason]++;
             }
             bool published = _combinedArms.Publish(map.Pointer.ToInt64(), manager.m_Round, factionId, units);
+            if (published) PublishAdvanceGroups(map.Pointer.ToInt64(), manager.m_Round, factionId, units);
             // Establish legitimate observations after loading a mission too; never use TTL coordinates.
             var opponents = __instance.GetOpponents();
             if (published && opponents != null && opponents.Count <= 128)
@@ -149,8 +162,13 @@ public sealed partial class Plugin
             var manager = TacticalManager.Get(); var map = manager?.GetMap(); var actor = __instance?.GetActor();
             var faction = __instance?.GetFaction();
             if (map != null && actor != null && faction != null)
+            {
+                var snapshot = CombinedArmsRuntime.Snapshot(__instance, true);
                 _combinedArms.Refresh(map.Pointer.ToInt64(), manager.m_Round, faction.Pointer.ToInt64(), actor.Pointer.ToInt64(),
-                    CombinedArmsRuntime.Snapshot(__instance, true));
+                    snapshot);
+                if (snapshot != null || !actor.IsMoving())
+                    _advanceGroups.Refresh(map.Pointer.ToInt64(), manager.m_Round, faction.Pointer.ToInt64(), actor.Pointer.ToInt64(), snapshot);
+            }
         }
         catch (Exception ex) { CombinedArmsDisable(ex); }
     }
@@ -169,7 +187,10 @@ public sealed partial class Plugin
         {
             var manager = TacticalManager.Get(); var map = manager?.GetMap(); var faction = __instance?.GetAgent()?.GetFaction();
             if (map != null && faction != null)
+            {
                 _combinedArms.Refresh(map.Pointer.ToInt64(), manager.m_Round, faction.Pointer.ToInt64(), __instance.Pointer.ToInt64(), null);
+                _advanceGroups.Refresh(map.Pointer.ToInt64(), manager.m_Round, faction.Pointer.ToInt64(), __instance.Pointer.ToInt64(), null);
+            }
         }
         catch (Exception ex) { CombinedArmsDisable(ex); }
     }
@@ -177,6 +198,8 @@ public sealed partial class Plugin
     private static void CombinedArmsReset()
     {
         _combinedArms.Reset();
+        _advanceGroups.Reset();
+        _mortarCapabilityTraced.Clear();
         _supportThreats.Reset();
         _combinedArmsDiagnosticBudget.Reset();
         CombinedArmsResponseRuntime.ResetGuard();
@@ -208,7 +231,8 @@ public sealed partial class Plugin
 
     private static void CombinedArmsDisable(Exception ex)
     {
-        _combinedArmsEnabled = false; _combinedArms.Reset(); _supportThreats.Reset();
+        _combinedArmsEnabled = false; _combinedArms.Reset(); _supportThreats.Reset(); _advanceGroups.Reset();
+        _mortarCapabilityTraced.Clear();
         CombinedArmsResponseRuntime.ResetGuard();
         _log.Warning($"{ModName}: combined-arms support disabled ({ex.GetType().Name}); native AI retained.");
     }

@@ -18,6 +18,8 @@ namespace Il2CppMenace.Tactical
         public int GetZ() => z;
         public Entity Entity;
         public Entity GetEntity() => Entity;
+        public bool ValidDestination = true;
+        public bool IsValidMovementDestination() => ValidDestination;
         public Func<Tile, bool> Sees = _ => true;
         public int LaneProbes;
         public bool HasLineOfSightTo(Tile other, Il2CppTactical.LineOfSightFlags flags) { LaneProbes++; return Sees(other); }
@@ -48,6 +50,8 @@ namespace Il2CppMenace.Tactical
         public int FactionKind = 1, PositionReads;
         public HashSet<Il2CppMenace.Tags.TagType> Tags = new();
         public AI.Agent GetAgent() => Agent;
+        public Skills.SkillContainer Skills = new();
+        public Skills.SkillContainer GetSkills() => Skills;
         public Tile GetTile()
         {
             if (RejectHiddenReads && !Detected) throw new Exception("hidden position read");
@@ -216,6 +220,12 @@ namespace Il2CppMenace.Tactical.AI.Behaviors
 }
 namespace Il2CppMenace.Tactical.Skills
 {
+    public sealed class UsageParameter { }
+    public sealed class SkillContainer
+    {
+        public List<Skill> Skills = new();
+        public List<Skill> GetAllSkills() => Skills;
+    }
     public struct TargetUsageParams
     {
         public bool IncludeDeploymentAndAngle, IncludeUses, IncludeTargetFaction;
@@ -236,6 +246,10 @@ namespace Il2CppMenace.Tactical.Skills
     public class Profile { public float ScoreMult = 1; }
     public class Skill
     {
+        public Tactical.Entity Entity;
+        public Tactical.Entity GetEntity() => Entity;
+        public T TryCast<T>() where T : class => this as T;
+        public bool Use(Tactical.Tile target, UsageParameter parameter) => true;
         public SkillTemplate Template = new();
         public bool Limited, Empty, Applicable = true, Teleport, Enabled = true, ExecutingElements = true;
         public bool IsEnabled() => Enabled;

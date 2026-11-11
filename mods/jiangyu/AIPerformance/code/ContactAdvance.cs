@@ -21,7 +21,8 @@ public sealed partial class Plugin
     {
         if (!_offensivePlanningEnabled) return;
         _contactAdvanceThread = Environment.CurrentManagedThreadId;
-        _contactAdvanceDiagnostics = ReadBool("DiagnoseContactAdvance", false);
+        // The existing explicit combined-arms trace opt-in includes its contact/crossing path.
+        _contactAdvanceDiagnostics = ReadBool("DiagnoseContactAdvance", false) || ReadBool("DiagnoseCombinedArmsSupport", false);
         _contactAdvanceDiagnosticBudget.Reset();
         _contactAdvanceRound = 0;
         foreach (var type in new[] { typeof(ContactAdvanceState), typeof(ContactAdvanceRuntime), typeof(AdvanceContact),
@@ -41,7 +42,7 @@ public sealed partial class Plugin
             nameof(ContactAdvanceZoneEnterCore), nameof(ContactAdvanceZonePostEnter), nameof(ContactAdvanceZoneExit),
             nameof(ContactAdvanceZoneExitCore), nameof(ContactAdvanceZoneEvaluateExit), nameof(ContactAdvanceZoneDone),
             nameof(ContactAdvanceZoneDoneCore), nameof(ContactAdvanceZonePostDone), nameof(ContactAdvanceKnownOpponent),
-            nameof(ContactAdvanceZoneReset), nameof(ContactAdvanceDiagnostic) })
+            nameof(ContactAdvanceZoneReset), nameof(ContactAdvanceZoneFinally), nameof(ContactAdvanceDiagnostic) })
             RuntimeHelpers.PrepareMethod(typeof(Plugin).GetMethod(name, BindingFlags.Static | BindingFlags.NonPublic).MethodHandle);
         _contactAdvance.Observe(1, 1, 1, new(2, 30, 30, 1, 20));
         _contactAdvance.TryAim(1, 1, 1, 0, 0, out _); _contactAdvance.BeginTurn(1, 1, 1); _contactAdvance.Reset();
@@ -55,6 +56,8 @@ public sealed partial class Plugin
         harmony.Patch(detection, postfix: new HarmonyMethod(typeof(Plugin), nameof(ContactAdvanceDetected)));
         PatchContactAdvanceZones(harmony);
         _contactAdvanceEnabled = true;
+        if (_contactAdvanceDiagnostics)
+            _log.Msg($"{ModName}: bounded contact/group diagnostics enabled (contact or combined-arms opt-in).");
     }
 
     private static void ContactAdvanceTurn(AIFaction __instance)

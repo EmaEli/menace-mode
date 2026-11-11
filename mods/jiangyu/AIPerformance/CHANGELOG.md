@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.11.0 — 11 November 2026
+
+- Fix native advance-zone scopes on AI worker threads, with thread-local eligibility,
+  faction isolation, processing-generation invalidation and exception cleanup.
+- Add shared local infantry/support groups, actual native fire/forward-smoke receipts,
+  bounded staging/crossing, infantry screening and nonrenewable waiting deadlines.
+- Require equipped affordable smoke and a feasible native forward move; favor real smoked
+  forward tiles and block repeat same-position requests until infantry makes progress.
+- Do not treat current-origin geometric lanes as executable shots. Clear the native 1024
+  post-utility AP sentinel for movement-only closing; preserve actual path/setup/fire costs.
+- Existing combined-arms diagnostic opt-in includes contact/group traces, with reserved
+  late-action budget. Normal defaults remain silent. No settings, saves or equipment grants.
+- Production-linked managed regressions and exact native proxy contracts added. Gameplay
+  acceptance remains pending; hostile equipped mortar-smoke availability is not established.
+
 ## 1.10.1 — 11 November 2026
 
 - Bound the combined-arms exposed-route hold to two rounds per unit per mission. If no

@@ -63,7 +63,9 @@ public sealed partial class Plugin
             {
                 try
                 {
-                    if (ContactAdvanceRuntime.Plan(__instance, __instance.GetTiles(), _contactAdvance, _offensiveBudget, map, manager.m_Round)) return;
+                    AdvanceGroupPlan? group = TryAdvanceGroup(__instance, map, manager.m_Round, false, out var plan) ? plan : null;
+                    if (ContactAdvanceRuntime.Plan(__instance, __instance.GetTiles(), _contactAdvance, _offensiveBudget, map,
+                        manager.m_Round, group, _combinedArmsEnabled ? SupportSmokeCover : null)) return;
                 }
                 catch (Exception ex) { ContactAdvanceDisable(ex); }
             }
@@ -118,6 +120,7 @@ public sealed partial class Plugin
                 if (map != null)
                 {
                     var before = __result;
+                    __result = AdvanceGroupChoice(__instance, __result, map, manager.m_Round);
                     // Contact-led closing replaces the old indefinite wait-for-support rule.
                     // Native emergency actions and shot-first selection above still take precedence.
                     if (!_contactAdvanceEnabled || !_offensivePlanningEnabled || !ContactAdvanceRuntime.Ready(__instance) ||
@@ -149,11 +152,13 @@ public sealed partial class Plugin
     private static void OffensivePlanningReset()
     {
         _offensiveBudget.Reset(); _contactAdvance.Reset(); ContactAdvanceDiagnosticReset(); ContactAdvanceZoneReset();
+        _advanceGroups.Reset();
         CombinedArmsResponseRuntime.ResetGuard();
     }
     private static void OffensivePlanningDisable(Exception ex)
     {
         _offensivePlanningEnabled = false; _offensiveBudget.Reset(); _contactAdvanceEnabled = false; _contactAdvance.Reset();
+        _advanceGroups.Reset();
         CombinedArmsResponseRuntime.ResetGuard();
         _log.Warning($"{ModName}: offensive planning disabled ({ex.GetType().Name}); native/recovery behavior retained.");
     }

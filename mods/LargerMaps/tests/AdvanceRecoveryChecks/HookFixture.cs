@@ -13,7 +13,7 @@ namespace HarmonyLib
     public static class Priority { public const int First = 800; }
     public sealed class Harmony
     {
-        public void Patch(MethodInfo target, HarmonyMethod postfix = null, HarmonyMethod prefix = null) { }
+        public void Patch(MethodInfo target, HarmonyMethod postfix = null, HarmonyMethod prefix = null, HarmonyMethod finalizer = null) { }
     }
     public static class AccessTools
     {
@@ -50,6 +50,7 @@ namespace AIPerformance
         {
             _offensiveBudget.Reset(); _offensivePlanningEnabled = true; _missionCivilianPriorityEnabled = true;
             _combinedArmsEnabled = false; _combinedArms.Reset();
+            _advanceGroups.Reset();
             _contactAdvance.Reset(); _contactAdvanceEnabled = false; _contactAdvanceDiagnostics = false;
             ContactAdvanceDiagnosticReset(); ContactAdvanceZoneReset(); CombinedArmsResponseRuntime.ResetGuard();
         }
@@ -61,14 +62,28 @@ namespace AIPerformance
         }
         internal static void AdvanceSightFixture(Actor actor, int faction) => ContactAdvanceDetected(actor, faction);
         internal static void AdvanceBeforeFixture(Agent agent) => ContactAdvanceBefore(agent);
+        internal static void PublishGroupsFixture(AIFaction faction)
+        {
+            _combinedArmsEnabled = true; _combinedArmsThread = Environment.CurrentManagedThreadId;
+            var units = faction.Actors.Select(a => CombinedArmsRuntime.Snapshot(a.Agent, true)).Where(u => u != null).ToList();
+            PublishAdvanceGroups(TacticalManager.Instance.Map.Pointer.ToInt64(), TacticalManager.Instance.m_Round,
+                faction.Pointer.ToInt64(), units);
+        }
+        internal static void GroupUsedFixture(Il2CppMenace.Tactical.Skills.Skill skill, Tile target, bool accepted)
+            => AdvanceGroupSkillUsed(skill, target, accepted);
+        internal static Behavior GroupChoiceFixture(Agent agent, Behavior behavior)
+            => AdvanceGroupChoice(agent, behavior, TacticalManager.Instance.Map, TacticalManager.Instance.m_Round);
+        internal static bool GroupPlanFixture(Agent agent, out AdvanceGroupPlan plan)
+            => TryAdvanceGroup(agent, TacticalManager.Instance.Map, TacticalManager.Instance.m_Round, false, out plan);
         internal static void AdvanceResetFixture() => OffensivePlanningReset();
         internal static bool ContactAdvanceOn => _contactAdvanceEnabled;
         internal static bool ContactAdvanceDiagnosticsOn => _contactAdvanceDiagnostics;
         internal static bool ZoneEnterFixture(Actor actor) { ContactAdvanceZoneEnter(actor, out bool state); return state; }
         internal static void ZoneExitFixture(bool state) => ContactAdvanceZoneExit(state);
         internal static void ZoneDoneFixture(bool state) => ContactAdvanceZoneDone(state);
+        internal static void ZoneExceptionFixture(bool state) => ContactAdvanceZoneFinally(new InvalidOperationException(), state);
         internal static bool KnownOpponentFixture(AIFaction faction)
-        { bool result = default; return ContactAdvanceKnownOpponent(ref result) ? faction.HasKnownOpponent() : result; }
+        { bool result = default; return ContactAdvanceKnownOpponent(faction, ref result) ? faction.HasKnownOpponent() : result; }
         internal static void OffensiveScoresFixture(Agent agent) => OffensivePlanningScores(agent);
         internal static Behavior OffensiveChoiceFixture(Agent agent, Behavior choice)
         { OffensivePlanningChoice(agent, ref choice); return choice; }
