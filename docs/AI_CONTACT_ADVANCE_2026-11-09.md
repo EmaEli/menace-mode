@@ -147,3 +147,55 @@ Affected-only backup/journal:
 (only `AIPerformance` / `AIPerformance.dll` targeted; prior DLL hash verified inside it).
 The game was left closed. Startup, hook dispatch and the intended post-contact push
 remain unverified in-game.
+
+## 1.10.0 mission log — 11 November 2026
+
+Log evidence from the first mission played with 1.10.0 on menace-pc. This section records
+only what the log shows; the player's own assessment is tracked in the issue.
+
+Capture: `Latest.log` copied read-only with the game closed (SHA256 `1b7e58a4…f65f21`,
+9,161,710 bytes, 28 rounds, one 96-tile map, 18 Rogue units, 12 player units: 7 squads
+and 5 vehicles). Installed
+manifest/assembly 1.10.0/1.10.0.0, DLL `63030dcf…90f46b`, native `494c9e21…2d12e9`.
+Startup lines show contact convergence, combined-arms support and offensive planning all
+enabled; no AIPerformance feature disabled itself.
+
+What the log confirms:
+
+- First contact in round 5. About 51 distinct hostile attack uses were logged (the skill
+  hook writes some calls twice; counted by round/actor/skill/target/origin/AP); 45 had the
+  MG team at (68,58) as target entity. Rounds 13–17 were a converging attack: conscripts,
+  infantry, a Rogue MG team, the mortar and one walker.
+- That walker reached the adjacent tile (68,59) in round 13, used native
+  `special.vehicle_plow_through_infantry` four times in rounds 15–17, then fired its auto
+  laser in rounds 18–22 while the team fell back to (57,48). The team's suppression rose
+  to 0.39 and morale fell to 0.53. AIPerformance has no plow-through code; the skill's
+  half-cover destruction comes from CoverDestructionRebalance. Cover destruction and squad
+  strength are not logged, and the team still had activations through round 27.
+- Post-contact movement, same metrics as the 1.9.0 capture (different mission and force,
+  so indicative only): unit-rounds with a tile change 77 % (1.9.0: 53 %); median net
+  displacement per unit 13 tiles (6); units within 2 tiles of their contact position 0 (5).
+- Hostile `Evaluate` time per round: median 1.5 s, maximum 6.2 s (1.9.0 capture: 11.7 s /
+  204 s, with 26 units instead of 18). One single evaluation took 4.3 s in round 14.
+
+What the log does not confirm:
+
+- The 1.10.0 mechanism itself. Chosen-tile `targetDistanceScore` was non-zero in only 9
+  of 691 post-contact hostile move evaluations (1.9.0: 21 of 726). Three never-engaged
+  units with full AP, no suppression, full morale and two `AdvanceTowards` zones showed
+  5,000–11,000 before contact and 0 in all 23 post-contact evaluations each.
+- The advance that did happen matches the 1.9.0 contact-led utility (move score 49 or 37)
+  and is slow: 60 % of post-contact unit-rounds are a one-tile step, and 113 of 276
+  post-contact non-vehicle unit-rounds ended with 80 or more AP unspent. The west-flank
+  conscripts, MG team and officer squad needed 23 rounds to cover 15–23 tiles and never
+  fired.
+
+Unverified hypothesis: `ContactAdvanceZoneEnter` returns early unless the caller is the
+thread that applied the patches, while tile criteria are evaluated on AI worker tasks, so
+the scope never opens. The offline fixture is single-threaded and cannot show this. A
+compiler-inlined `HasKnownOpponent` read or a failing eligibility read are alternatives.
+The hook has no diagnostics, so the log cannot distinguish them.
+
+Unrelated warnings in the same log: 51 Weapon Mechanics Rebalanced mortar outer-ring
+`InvalidCastException` (`Structure` to `Actor`) and 2 Garrisonable Buildings
+`Actor.GetCurrentProperties()` failures.
