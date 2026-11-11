@@ -39,6 +39,38 @@ The native selection can therefore prefer a cheap one-square destination.
   reviewed game SHA256 `494c9e212d411d898b3abafb4ad233f7a39a22648d713a86b9641d698b2d12e9`.
 - Real proxy metadata validates the new selector, score and actor-sight signatures.
 
-Windows build/install evidence will be recorded after canonical gates pass. Startup,
-native hook dispatch, actual movement and gameplay acceptance remain untested for 1.13.0.
-No public release or promotion to main is implied.
+## Verified test installation
+
+- Source `83b117cac246370dfa30eb2b8a190e6a4f6a0242` committed/pushed to dev;
+  unrelated dirty work was not staged or shipped. All 85 tracked source payloads in the
+  isolated canonical kit match that commit; three compiled payloads are inventoried.
+- Local checks: 19,780 linked checks, 303 behavior checks, 232 real proxy/production IL
+  contracts, nine exact native-byte tests, 158 LargerMaps Python tests (eight expected
+  skips), and 210 GameplaySuite Python tests pass. Production Release: zero warnings/errors.
+- Canonical AI-only BuildKit: 90 files, one package, SHA256
+  `a488927b88337348a15b5682a68496b234b80bd1e900824690e4f5db31d34af2`.
+  Inventory, clean extracted-source Release build and 18,011 scoped shared/artifact
+  checks pass. Existing nullable warnings are confined to the shared offline harness.
+- Hash-matched SFTP upload/download and remote script/archive checks passed before use.
+  Current MENACE 0.7.18+22828 native hash and all 177 proxy/runtime references match.
+- Canonical Windows BuildOnly, then Standalone installation passed with private SDK
+  10.0.113, zero production warnings/errors and the same 232/303/19,780 checks.
+- Installed manifest/assembly/file: `1.13.0 / 1.13.0.0 / 1.13.0.0`; DLL SHA256
+  `C3E89D6CD5D8EE0396DC2B6EBC87671857D7DCC1292A0E0986AC80F8016BE057`.
+  Independent verification matches the installed files to the Windows stage/journal.
+- Affected-only backup and rollback journal under the game's `_MENACE_Backups`:
+  `20261111-202902-831f2dc8043b4ed5ba2c61ccd3bb84e9`. All three original 1.12.1
+  files match the preflight hashes. No loose duplicate was present or added.
+- All 1,464 unrelated Mods/UserData files and 177 references are unchanged. Settings
+  companion/loader reused; existing support/contact diagnostics remain ON, unedited.
+  Game closed before/after; no saves or unrelated mods were modified.
+- Retained stage: `E:\MENACE-Work\Builds\AI1130-approach-20261111`; canonical log:
+  `E:\MENACE-Work\Temp\MENACE-install.log`. Local gate logs use `.tmp/ai1130-*`.
+
+Startup, native hook dispatch, actual movement and gameplay acceptance remain untested
+for 1.13.0. Try the same 64x64 mission for a few enemy turns: observe longer approach
+moves while enemies are out of personal sight, followed by normal tactical positioning.
+Retrieve fresh Latest.log after the player's result. #17 remains open; no public release
+or promotion to main is implied.
+
+Tracking: [#17 test-install evidence](https://github.com/EmaEli/menace-mode/issues/17#issuecomment-6805338737).
