@@ -79,9 +79,38 @@ detours, demonstrate visible movement, prove real turn times or establish gamepl
 
 ## Packaging, Windows and gameplay status
 
-Canonical package/clean-source/Windows gates are pending at this point in the record.
-Do not infer installation or gameplay success from the local checks above. #17, #13 and
-#2 remain open. After a verified installation, try the unordered pirate encounter and a
-bugs/constructs encounter: one legitimate sighting should alert more than the local squad,
-and eligible enemies should keep closing on the reported sector rather than patrolling
-the map edge. Native usable attacks must still win, without tracking hidden player moves.
+Source `b32928bd6b734458234fe43795d340fa3c976870` is published on `dev`. The canonical
+one-module installed-companion kit was built from an isolated archive of that commit,
+excluding unrelated pending gameplay/installer work. All 82 tracked source payloads match
+the published commit. The 86-file inventory and a clean extracted-source rebuild pass:
+zero production warnings/errors, 223 metadata, 303 behavior, 19,680 linked and 17,986
+selected shared artifact/regression checks. Existing nullable warnings in the older shared
+managed-fixture runner are not production warnings. A temporary local SDK-selection issue
+and missing generated compiler metadata were corrected before the final successful kit.
+
+- ZIP: `AIPerformance-1.12.0-convergence-20261111.zip`.
+- ZIP SHA256: `402b2440d01c98c66787c953354a22178019a1132f58938ea23e33f767ff7e41`.
+- All 177 local IL2CPP/runtime reference hashes match the current PC; native hash above
+  matches as well. Transfer round-trip, script/archive hashes and inventory were verified.
+- Closed-game canonical Windows BuildOnly and standalone installation both passed on
+  MENACE 0.7.18+22828 / private SDK 10.0.113, with zero production warnings/errors.
+  The 223 metadata, 303 behavior and 19,680 linked checks passed again on Windows.
+- Installed manifest/assembly/file: **1.12.0 / 1.12.0.0 / 1.12.0.0**.
+- Installed DLL SHA256: `33606b1bd03fa046daf0af97dd57f185bbe2e00e8d205a2e99c3e4b5e0fd25ed`.
+- Affected-only backup beneath `Menace/_MENACE_Backups/`:
+  `20261111-163026-15d6b9241bf44e6bbf26504565919f45`.
+  All three original 1.11.0 files match preflight hashes; installed payload matches the
+  validated Windows stage/journal. The loose-DLL conflict was absent. No unrelated backup.
+- All **1,462 protected Mods/UserData files**, 177 references and native game binary are
+  unchanged. Settings/loader reused; gameplay/support/contact diagnostics were already
+  enabled. No setting/save edit. No files were manually copied into live Mods.
+- Retained stage/logs: `E:\MENACE-Work\Builds\AI1120-convergence-20261111`; local
+  `.tmp/ai1120-windows-{buildonly,install,verify}.log` and install-evidence JSON.
+
+**Startup, actual IL2CPP hook dispatch, gameplay and turn times remain untested.** #17,
+#13 and #2 stay open. Try the unordered pirate encounter, then a bugs/constructs encounter
+when convenient: one legitimate sighting should alert more than the local squad, and
+eligible enemies should keep closing on the reported sector rather than patrolling the
+edge. Native useful attacks must still win, without tracking hidden player moves. This is
+not acceptance of a complete operational director, every doctrine or artillery coordination.
+Retrieve fresh Latest.log when the player reports the result.
