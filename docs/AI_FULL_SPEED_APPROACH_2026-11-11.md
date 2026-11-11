@@ -74,3 +74,24 @@ Retrieve fresh Latest.log after the player's result. #17 remains open; no public
 or promotion to main is implied.
 
 Tracking: [#17 test-install evidence](https://github.com/EmaEli/menace-mode/issues/17#issuecomment-6805338737).
+
+## First gameplay capture
+
+- Closed-game `Latest.log` captured after the user's test: 11,012,060 bytes / 32,268
+  lines; SHA256 `9db0a12fbf2d9c4270c0321e5eb2f6b6e352db1f20bd871168a22d05ca20197d`.
+  Transfer round-trip passed. Remote manifest is 1.13.0 and DLL hash matches the
+  verified install `C3E89D6CD5D8EE0396DC2B6EBC87671857D7DCC1292A0E0986AC80F8016BE057`.
+- Log confirms 1.13.0 initialized and the enlarged map is 64×64. Round 1 had zero
+  faction-6 contacts; subsequent refreshes record 3, 4, 8 and 8 contacts in rounds
+  2–5. In round 2, 44/45 units were assigned; 43 were awakened.
+- The opt-in `march-choice` trace recorded 108 changed movement choices: 40 in round 2,
+  38 in round 3, 28 in round 4 and two in round 5. Native-cost median was 18 AP;
+  selected-path-cost median was 90 AP in rounds 2–4 (round 5: 82.5 AP, only two
+  records). Thus the implemented selector ran and preferred longer existing routes.
+- This trace records the selected native candidate and its estimated path AP cost,
+  **not proof that each move executed or its destination was reached**. It is strong
+  evidence the short-step choice was overridden, but not by itself gameplay acceptance.
+  Player's visual/behavioral verdict and any further turn evidence remain pending.
+- No startup crash observed; the game exited and the log snapshot is closed-game.
+  Capture path on PC: `E:\MENACE-Work\Builds\AI1130-approach-20261111\Latest-after-test.log`.
+- Tracking: [#17 gameplay capture](https://github.com/EmaEli/menace-mode/issues/17#issuecomment-6807278208).
