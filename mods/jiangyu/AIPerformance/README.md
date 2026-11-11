@@ -1,4 +1,22 @@
-# AI Performance 1.12.1
+# AI Performance 1.13.0
+
+## Full-speed contact approach (#17, 0.7.18 test candidate)
+
+The rejected 1.12.1 trial often moved one square with 73–82 AP left. The contact
+progress reward competed against MENACE's much stronger preference for cheap travel.
+While the unit cannot itself see an opponent, re-rank its existing native affordable
+movement candidates without that short-step preference. Keep native safety and mission
+distance scoring; do not rewrite paths, movement costs, shot reserves or resources.
+
+As soon as any faction-detected opponent passes the unit's own native sight check
+(vision, LOS and concealment), normal tactical positioning resumes. Useful shots and
+emergencies, explicit defense, deployment and morale/suppression guards still win.
+Hidden contacts remain last-known areas only. Existing opt-in diagnostics report the
+native and selected goals with actual movement AP. No new setting is required.
+
+The regression first reproduces the one-square winner under the reviewed native
+scoring formula. It then exercises the production selection hook and its guards.
+Gameplay acceptance remains pending; see [evidence](../../../docs/AI_FULL_SPEED_APPROACH_2026-11-11.md).
 
 ## Startup crash correction (#100)
 

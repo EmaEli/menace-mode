@@ -48,6 +48,22 @@ class OffensiveNativeContract(unittest.TestCase):
     def test_exact_native_minimum_attack_ap_sentinel(self):
         self.assertEqual(self.code(0x7E2954, 7), bytes.fromhex("c7 43 44 00 04 00 00"))
 
+    def test_march_ranking_removes_only_native_travel_preference(self):
+        # GetScaledScore sums scaled safety/utility, subtracts both distance fields
+        # multiplied by DistancePickScale. The mod adds back only travel-to-current.
+        self.assertEqual(self.code(0x7E2800, 5), bytes.fromhex("f3 41 0f 58 f8"))
+        self.assertEqual(self.code(0x7E280B, 5), bytes.fromhex("f3 41 0f 58 f1"))
+        self.assertEqual(self.code(0x7E2816, 9), bytes.fromhex("f3 0f 59 71 44 f3 0f 5c fe"))
+        self.assertEqual(self.call_target(0x7DBDEB), 0x7E2780)
+        self.assertEqual(self.call_target(0x7DBDF8), 0x7E2780)
+        self.assertEqual(self.call_target(0x7DE493), 0x7DBD10)
+
+    def test_march_own_sight_is_native_vision_and_concealment_not_radio_detection(self):
+        self.assertEqual(self.call_target(0x63D2D6), 0x6DBF80)  # geometric LOS
+        self.assertEqual(self.call_target(0x63D319), 0x696CD0)  # own vision
+        self.assertEqual(self.call_target(0x63D49F), 0x696190)  # own detection
+        self.assertEqual(self.call_target(0x63D4C4), 0x695FB0)  # target concealment
+
     def test_contact_alert_setter_changes_only_the_sleep_flag(self):
         self.assertEqual(self.code(0x4D5ED0, 4), bytes.fromhex("88 51 51 c3"))
 

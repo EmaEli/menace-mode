@@ -64,6 +64,7 @@ Property(config, "WEIGHTS", "AIWeightsTemplate");
 var weights = Type("Il2CppMenace.Tactical.AI.AIWeightsTemplate");
 Property(weights, "NearTileLimit", "Int32", true);
 Property(weights, "CullTilesDistances", "Int32", true);
+Property(weights, "DistancePickScale", "Single");
 foreach (string member in new[] { "DistanceToZones", "DistanceToAdvanceZones", "UtilityThreshold" })
     Property(weights, member, "Single");
 foreach (string member in new[] { "InflictDamageFromTile", "IncludeAttacksAgainstAllOpponentsMult" }) Property(weights, member, "Single");
@@ -95,6 +96,10 @@ Method(behavior, "GetUtilityThreshold", "Single");
 var movement = Type("Il2CppMenace.Tactical.AI.Behaviors.Move");
 Method(movement, "HasUtility", "Boolean", "Dictionary<Tile,TileScore>");
 Method(movement, "GetTargetTile", "TileScore");
+Method(movement, "GetHighestTileScoreScaled", "TileScore", "List<TileScore>");
+var marchScore = Type("Il2CppMenace.Tactical.AI.Data.TileScore");
+Method(marchScore, "GetScaledScore", "Single");
+Property(marchScore, "DistanceToCurrentTile", "Single");
 Property(movement, "m_Path", "List<Vector3>");
 Method(Type("Il2CppMenace.Tactical.Map"), "GetTileAtPos", "Tile", "Vector3");
 foreach (string member in new[] { "IsMovementDone", "HasMovedThisTurn", "IsDelayingMovement", "IsInsideContainerAndInert" })
@@ -131,6 +136,7 @@ Property(Type("Il2CppMenace.Tactical.Skills.TargetUsageParams"), "IGNORE_DEPLOYM
 var actor = Type("Il2CppMenace.Tactical.Actor");
 Method(actor, "SetDetectedByFaction", "Void", "Int32");
 Method(actor, "IsDetectedByFaction", "Boolean", "Int32");
+Method(actor, "HasLineOfSightTo", "Boolean", "Entity", "Tile", "Tile");
 Method(actor, "GetAllAttacks", "List<Skill>");
 Method(skill, "GetMaxRange", "Int32");
 Method(skill, "Use", "Boolean", "Tile", "UsageParameter");

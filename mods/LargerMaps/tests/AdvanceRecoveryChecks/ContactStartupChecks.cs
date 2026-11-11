@@ -21,12 +21,13 @@ internal static class ContactStartupChecks
             check(Plugin.ContactAdvanceOn, "production contact setup completes before tactical scene");
             check(TacticalManager.GetCalls == reads, "contact startup never reads tactical/native state");
             check(Plugin.ContactCountFixture() == 0, "managed warmup leaves no fictional contacts");
-            check(enabled.Calls.Count == 7, "all seven real contact/zone targets registered");
+            check(enabled.Calls.Count == 8, "all eight real contact/zone/march targets registered");
             foreach (var (owner, target, prefix, postfix) in new[] {
                 (typeof(AIFaction), "OnTurnStart", (string)null, "ContactAdvanceTurn"),
                 (typeof(Agent), "OnBeforeProcessing", "ContactAdvanceBefore", (string)null),
                 (typeof(Actor), "SetDetectedByFaction", (string)null, "ContactAdvanceDetected"),
                 (typeof(AIFaction), "OnOpponentSighted", (string)null, "ContactAdvanceSighted"),
+                (typeof(Il2CppMenace.Tactical.AI.Behaviors.Move), "GetHighestTileScoreScaled", (string)null, "ContactAdvanceMarchChoice"),
                 (typeof(ConsiderZones), "Evaluate", "ContactAdvanceZoneEvaluateEnter", "ContactAdvanceZoneEvaluateExit"),
                 (typeof(ConsiderZones), "PostProcess", "ContactAdvanceZonePostEnter", "ContactAdvanceZonePostDone"),
                 (typeof(AIFaction), "HasKnownOpponent", "ContactAdvanceKnownOpponent", (string)null) })

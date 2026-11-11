@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.13.0 — 11 November 2026
+
+- Remove the native short-step travel preference only while marching toward a legitimate
+  contact that the unit itself cannot see. Re-rank existing affordable native movement
+  candidates after path costs are known, rather than inflating attack utility or granting AP.
+- Restore normal tactical positioning as soon as any detected opponent enters the unit's
+  native vision/LOS/concealment check. Retain danger, mission distance, shot/setup reserves,
+  defensive orders, useful native actions and movement/resource guards.
+- Add an opt-in native-versus-selected destination/AP trace and a regression reproducing
+  the rejected one-square approach. Managed/native-contract checks are not gameplay acceptance.
+
 ## 1.12.1 — 11 November 2026
 
 - Remove speculative contact-helper PrepareMethod sweep: the actual 1.12.0 startup

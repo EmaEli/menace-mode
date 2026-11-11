@@ -55,6 +55,77 @@ internal static class ContactAdvanceChecks
         check(f.Forward.UtilityByAttacksScore == 0 && f.Forward.SafetyScore == 30, "range closing does not fabricate attack value or erase safety");
         check(f.Forward.MinimumUtilityAPCost == 0 && f.Forward.APCost == 30,
             "pure closing clears the 1024 post-utility sentinel but retains the real native movement AP cost");
+        // Native GetScaledScore subtracts AP-derived travel distance * DistancePickScale.
+        // Before this correction the modest progress gradient loses to a single cheap step.
+        var step = f.Add(new(11, 20), 30, 0, 18);
+        f.Forward.APCost = 90; f.Plan();
+        foreach (var score in new[] { step, f.Forward })
+        {
+            score.UtilityScoreScaled = score.UtilityScore; score.SafetyScoreScaled = 0;
+            score.DistanceToCurrentTile = score.APCost / 10f * 1.5f;
+        }
+        var march = new Il2CppSystem.Collections.Generic.List<TileScore> { step, f.Forward };
+        var move = f.Unit.Agent.Behaviors.OfType<Move>().Single();
+        check(move.GetHighestTileScoreScaled(march) == step, "native travel preference reproduces the one-square choice");
+        check(Plugin.MarchChoiceFixture(move, march) == f.Forward, "unseen-contact approach chooses full affordable progress, not a cheap one-square step");
+        object path = f.Forward.Path; float utility = f.Forward.UtilityScore;
+        check(f.Unit.AP == 100 && f.Forward.APCost == 90 && f.Forward.Path == path && f.Forward.UtilityScore == utility &&
+            f.Forward.DistanceToCurrentTile == 13.5f && f.Forward.SafetyScore == 30 && f.Forward.MinimumUtilityAPCost == 0,
+            "march re-ranks existing native paths without changing safety, scores, resources or path costs");
+        f.Unit.Sight = (_, _, _) => true;
+        check(Plugin.MarchChoiceFixture(move, march) == step, "own native vision/LOS restores ordinary tactical movement");
+        f.Unit.Sight = (_, _, _) => false;
+        var visibleOther = new Actor { Pointer = (IntPtr)901, Detected = true, Tile = new(12, 21) };
+        f.Faction.Opponents.Add(new() { Actor = visibleOther });
+        f.Unit.Sight = (enemy, _, _) => enemy == visibleOther;
+        check(Plugin.MarchChoiceFixture(move, march) == step, "seeing any opponent stops marching, not just the assigned contact");
+        f.Faction.Opponents.RemoveAt(f.Faction.Opponents.Count - 1); f.Unit.Sight = (_, _, _) => false;
+        f.Enemy.Detected = false; int hiddenReads = f.Enemy.PositionReads;
+        check(Plugin.MarchChoiceFixture(move, march) == f.Forward && f.Enemy.PositionReads == hiddenReads,
+            "last-known march never reads hidden live coordinates, vision or concealment");
+        f.Enemy.Detected = true;
+        f.Forward.SafetyScoreScaled = -1000;
+        check(Plugin.MarchChoiceFixture(move, march) == step, "native danger can still defeat a longer march");
+        f.Forward.SafetyScoreScaled = 0; f.Forward.DistanceScore = 100;
+        check(Plugin.MarchChoiceFixture(move, march) == step, "mission-distance penalties remain native");
+        f.Forward.DistanceScore = 0;
+        foreach (string guard in new[] { "ap", "reserve", "nan", "done", "delaying", "inert", "shot", "defend", "allied", "deployment", "suppressed", "off" })
+        {
+            if (guard == "ap") f.Forward.APCost = 101;
+            if (guard == "reserve") f.Forward.MinimumUtilityAPCost = 20;
+            if (guard == "nan") f.Forward.DistanceToCurrentTile = float.NaN;
+            if (guard == "done") move.Done = true;
+            if (guard == "delaying") move.Delaying = true;
+            if (guard == "inert") move.Inert = true;
+            if (guard == "shot") f.Gun.Score = 1;
+            if (guard == "defend") f.Unit.Agent.Zones.Add(new() { Order = 0 });
+            if (guard == "allied") f.Faction.Allied = true;
+            if (guard == "deployment") f.Unit.Agent.Deployment = true;
+            if (guard == "suppressed") f.Unit.Suppression = .5f;
+            if (guard == "off") Plugin.AdvanceResetFixture();
+            check(Plugin.MarchChoiceFixture(move, march) == step, guard + " prevents march replacement");
+            f.Forward.APCost = 90; f.Forward.MinimumUtilityAPCost = 0; f.Forward.DistanceToCurrentTile = 13.5f;
+            move.Done = move.Delaying = move.Inert = false; f.Gun.Score = 0; f.Unit.Agent.Zones.Clear();
+            f.Faction.Allied = false; f.Unit.Agent.Deployment = false; f.Unit.Suppression = 0;
+        }
+        Plugin.BeginAdvanceFixture(f.Faction, diagnostics: true);
+        var workerMove = move; var workerMarch = march; var far = f.Forward;
+        check(Task.Run(() => Plugin.MarchChoiceFixture(workerMove, workerMarch) == far).GetAwaiter().GetResult(),
+            "native AI worker uses full affordable contact progress");
+        check(Plugin.Logs.Any(line => line.Contains("phase=march-choice") && line.Contains("selected=(16,20) ap=90 available=100")),
+            "bounded opt-in trace records actual native versus march goal and path AP");
+        Plugin.RejectLog = true;
+        check(Plugin.MarchChoiceFixture(move, march) == f.Forward && Plugin.ContactAdvanceOn,
+            "optional trace failure neither disables contact advance nor changes the selected route");
+        Plugin.RejectLog = false;
+        foreach (int kind in Enumerable.Range(5, 5))
+        {
+            f.Faction.Kind = kind; Plugin.BeginAdvanceFixture(f.Faction);
+            for (int i = 0; i < 10; i++)
+                check(Plugin.MarchChoiceFixture(move, march) == f.Forward, kind + " repeated evaluations retain full-progress destination");
+        }
+        f = new Fixture(); // Keep subsequent fresh-score/lane checks independent of this path-ranking fixture.
+        f.Plan();
         for (int i = 0; i < 31; i++)
         {
             var squad = new Actor { Pointer = (IntPtr)(1000 + i), Tile = new(5 + i, 15) };

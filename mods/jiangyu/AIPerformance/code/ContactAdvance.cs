@@ -34,7 +34,9 @@ public sealed partial class Plugin
         var before = AccessTools.Method(typeof(Agent), "OnBeforeProcessing", Type.EmptyTypes);
         var detection = AccessTools.Method(typeof(Actor), "SetDetectedByFaction", new[] { typeof(int) });
         var sighting = AccessTools.Method(typeof(AIFaction), "OnOpponentSighted", new[] { typeof(Actor), typeof(int) });
-        if (turn == null || before == null || detection == null || sighting == null) throw new MissingMethodException("contact advance lifecycle");
+        var march = AccessTools.Method(typeof(Il2CppMenace.Tactical.AI.Behaviors.Move), "GetHighestTileScoreScaled");
+        if (turn == null || before == null || detection == null || sighting == null || march == null)
+            throw new MissingMethodException("contact advance lifecycle");
         // Native OnTurnStart rebuilds visibility; refresh only after that work, not before it.
         harmony.Patch(turn, postfix: new HarmonyMethod(typeof(Plugin), nameof(ContactAdvanceTurn)));
         harmony.Patch(before, prefix: new HarmonyMethod(typeof(Plugin), nameof(ContactAdvanceBefore)));
@@ -42,6 +44,7 @@ public sealed partial class Plugin
         // Map.UpdateVisibility -> Actor.OnDiscovered inlines the detection bit write.
         // Hooking only SetDetectedByFaction misses that normal native sighting path.
         harmony.Patch(sighting, postfix: new HarmonyMethod(typeof(Plugin), nameof(ContactAdvanceSighted)));
+        harmony.Patch(march, postfix: new HarmonyMethod(typeof(Plugin), nameof(ContactAdvanceMarchChoice)));
         PatchContactAdvanceZones(harmony);
         _contactAdvanceEnabled = true;
         if (_contactAdvanceDiagnostics)

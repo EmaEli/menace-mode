@@ -96,6 +96,12 @@ namespace AIPerformance
         internal static bool KnownOpponentFixture(AIFaction faction)
         { bool result = default; return ContactAdvanceKnownOpponent(faction, ref result) ? faction.HasKnownOpponent() : result; }
         internal static void OffensiveScoresFixture(Agent agent) => OffensivePlanningScores(agent);
+        internal static Il2CppMenace.Tactical.AI.Data.TileScore MarchChoiceFixture(Il2CppMenace.Tactical.AI.Behaviors.Move move,
+            Il2CppSystem.Collections.Generic.List<Il2CppMenace.Tactical.AI.Data.TileScore> candidates)
+        {
+            var result = move.GetHighestTileScoreScaled(candidates);
+            ContactAdvanceMarchChoice(move, candidates, ref result); return result;
+        }
         internal static Behavior OffensiveChoiceFixture(Agent agent, Behavior choice)
         { OffensivePlanningChoice(agent, ref choice); return choice; }
         internal static bool OffensiveEnabled => _offensivePlanningEnabled;

@@ -2,6 +2,7 @@
 namespace Il2CppSystem.Collections.Generic
 {
     public class Dictionary<K, V> : System.Collections.Generic.Dictionary<K, V> { }
+    public class List<T> : System.Collections.Generic.List<T> { }
 }
 namespace UnityEngine
 {
@@ -58,6 +59,8 @@ namespace Il2CppMenace.Tactical
             PositionReads++; return Tile;
         }
         public bool IsDetectedByFaction(int faction) => Detected;
+        public Func<Entity, Tile, Tile, bool> Sight = (_, _, _) => false;
+        public bool HasLineOfSightTo(Entity target, Tile from, Tile at) => Sight(target, from, at);
         public void SetDetectedByFaction(int faction) { Detected = true; }
         public int GetFaction() => FactionKind;
         public bool IsInfantry() => Infantry;
@@ -177,6 +180,7 @@ namespace Il2CppMenace.Tactical.AI
     public class Weights
     {
         public float DistanceToZones = 2, DistanceToAdvanceZones = 3, UtilityThreshold = 10;
+        public float DistancePickScale = 15;
         public float InflictDamageFromTile = 5, IncludeAttacksAgainstAllOpponentsMult = 1;
     }
 }
@@ -193,6 +197,8 @@ namespace Il2CppMenace.Tactical.AI.Behaviors
         public bool IsInsideContainerAndInert() => Inert;
         public Move() { ID = "Move"; }
         public Data.TileScore GetTargetTile() => TargetTile;
+        public Data.TileScore GetHighestTileScoreScaled(Il2CppSystem.Collections.Generic.List<Data.TileScore> tiles)
+            => tiles.MaxBy(s => s.GetScaledScore());
         public bool HasUtility(Il2CppSystem.Collections.Generic.Dictionary<Tactical.Tile, Data.TileScore> tiles)
             => tiles.Values.Any(t => t.UtilityScore >= GetUtilityThreshold());
     }
@@ -322,6 +328,8 @@ namespace Il2CppMenace.Tactical.AI.Data
     }
     public class TileScore
     {
+        private static int _next;
+        public IntPtr Pointer = (IntPtr)Interlocked.Increment(ref _next);
         public Tactical.Tile Tile;
         public static int WritesBeforeThrow = -1;
         private float _distanceScore;
@@ -349,6 +357,9 @@ namespace Il2CppMenace.Tactical.AI.Data
         }
         public float UtilityByAttacksScore, UtilityByAttacksScoreCandidate;
         public float SafetyScore = 123, UtilityScoreScaled = 456;
+        public float SafetyScoreScaled, DistanceToCurrentTile;
+        public float GetScaledScore() => SafetyScoreScaled + UtilityScoreScaled -
+            (DistanceToCurrentTile + DistanceScore) * AI.AIConfig.WEIGHTS.DistancePickScale;
         public object Path = new();
         public int APCost;
         public int MinimumUtilityAPCost = 1024; // Exact native TileScore.Reset sentinel.
