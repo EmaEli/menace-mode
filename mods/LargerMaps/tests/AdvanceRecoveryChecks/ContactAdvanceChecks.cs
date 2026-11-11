@@ -14,7 +14,7 @@ internal static class ContactAdvanceChecks
         internal AIFaction Faction = new() { Kind = 9 };
         internal InflictDamage Gun = new();
         internal TileScore Here, Forward, Back;
-        internal Fixture(bool vehicle = false, bool sleeping = false)
+        internal Fixture(bool vehicle = false, bool sleeping = false, bool diagnostics = false)
         {
             TacticalManager.Instance = new(); AIConfig.WEIGHTS = new();
             Unit.Agent.Faction = Faction; Unit.Agent.Zones.Clear(); Unit.Agent.Sleeping = sleeping;
@@ -29,7 +29,7 @@ internal static class ContactAdvanceChecks
             Gun.Skill.Usable = Gun.Skill.Range;
             Unit.Agent.Behaviors.Add(Gun); Enemy.Attacks.Add(new() { MaxRange = 40 });
             Faction.Actors.Add(Unit); Faction.Opponents.Add(new() { Actor = Enemy });
-            Scores(); Plugin.BeginAdvanceFixture(Faction);
+            Scores(); Plugin.BeginAdvanceFixture(Faction, diagnostics);
         }
         internal void Scores()
         {
@@ -187,5 +187,43 @@ internal static class ContactAdvanceChecks
         check(Plugin.KnownOpponentFixture(f.Faction), "agent processing start clears a stale scope");
         Plugin.ZoneEnterFixture(f.Unit); Plugin.AdvanceResetFixture(); Plugin.BeginOffensiveFixture();
         check(Plugin.KnownOpponentFixture(f.Faction), "disabled contact advance never overrides the native flag");
+
+        f = new Fixture(diagnostics: true);
+        check(Plugin.ContactAdvanceDiagnosticsOn && Plugin.Logs.Any(line => line.Contains("CONTACT-ADVANCE round=1") &&
+            line.Contains("phase=turn") && line.Contains("contacts=1")),
+            "opt-in turn trace reports the refreshed contact count");
+        f.Unit.Agent.Zones.Add(new());
+        state = Plugin.ZoneEnterFixture(f.Unit);
+        check(!Plugin.KnownOpponentFixture(f.Faction), "diagnostic scope still performs the scoped native override");
+        Plugin.ZoneExitFixture(state); Plugin.ZoneDoneFixture(false);
+        check(Plugin.Logs.Any(line => line.Contains("phase=scope-eligibility") && line.Contains("result=open gate=Eligible")) &&
+            Plugin.Logs.Any(line => line.Contains("phase=known-check-fixture") && line.Contains("result=overridden")),
+            "opt-in trace proves scope eligibility and native check interception");
+        f.Enemy.Detected = false; int readsBeforeUnseen = f.Enemy.PositionReads;
+        Plugin.AdvanceSightFixture(f.Enemy, 9);
+        check(f.Enemy.PositionReads == readsBeforeUnseen && Plugin.Logs.Any(line =>
+            line.Contains("phase=detection") && line.Contains("result=NotDetected")),
+            "detection trace records rejection without reading hidden position or weapons");
+        TacticalManager.Instance.m_Round = 2; Plugin.AdvanceBeforeFixture(f.Unit.Agent);
+        state = Plugin.ZoneEnterFixture(f.Unit); Plugin.ZoneExitFixture(state); Plugin.ZoneDoneFixture(false);
+        check(Plugin.Logs.Any(line => line.Contains("round=2") && line.Contains("phase=known-check-fixture") &&
+            line.Contains("result=not-read")), "opt-in trace distinguishes a missing native known-opponent read");
+
+        f = new Fixture(diagnostics: true);
+        Task.Run(() => Plugin.ZoneEnterFixture(f.Unit)).GetAwaiter().GetResult();
+        check(Plugin.Logs.Any(line => line.Contains("phase=scope-thread") && line.Contains("result=thread-mismatch")),
+            "opt-in trace identifies zone scope calls on the wrong thread");
+        Plugin.RejectLog = true;
+        state = Plugin.ZoneEnterFixture(f.Unit); Plugin.KnownOpponentFixture(f.Faction); Plugin.ZoneExitFixture(state);
+        Plugin.RejectLog = false;
+        check(Plugin.ContactAdvanceOn, "diagnostic sink failures do not disable contact advance");
+
+        var diagnosticBudget = new ContactAdvanceDiagnosticBudget(); int accepted = 0;
+        for (int i = 0; i < ContactAdvanceDiagnosticBudget.MaxLines + 20; i++)
+            if (diagnosticBudget.TryAcquire(1, 1, i + 1, "bounded")) accepted++;
+        check(accepted == ContactAdvanceDiagnosticBudget.MaxLines && !diagnosticBudget.TryAcquire(1, 1, 1, "bounded"),
+            "contact diagnostics deduplicate and cap records at 256 per mission");
+        diagnosticBudget.Reset();
+        check(diagnosticBudget.TryAcquire(1, 1, 1, "bounded"), "contact diagnostic budget resets cleanly");
     }
 }

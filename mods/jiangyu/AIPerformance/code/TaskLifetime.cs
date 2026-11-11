@@ -22,7 +22,6 @@ public sealed partial class Plugin
             throw new NotSupportedException("AI task safety: expected AIFaction.RunWithTimeout(Action, Actor) signature missing.");
         harmony.Patch(method, prefix: new HarmonyMethod(typeof(Plugin).GetMethod(
             nameof(AIFactionRunWithTimeoutPrefix), BindingFlags.Static | BindingFlags.NonPublic)));
-        _log.Msg($"{ModName}: AI task lifetime safety active (no detached work after vanilla's 12s timeout).");
     }
 
     private static bool AIFactionRunWithTimeoutPrefix(

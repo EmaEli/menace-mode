@@ -31,14 +31,27 @@ internal sealed class ContactAdvanceState
         }
     }
 
-    internal void Observe(long map, int round, long faction, AdvanceContact contact)
+    internal bool Observe(long map, int round, long faction, AdvanceContact contact)
     {
         lock (_gate)
         {
             if (!Context(map, round) || faction == 0 || contact.Target == 0 || contact.X < 0 || contact.Z < 0 ||
-                contact.SeenRound != round || contact.Range < 0 || contact.Range > 128) return;
+                contact.SeenRound != round || contact.Range < 0 || contact.Range > 128) return false;
             var key = (faction, contact.Target);
-            if (_contacts.ContainsKey(key) || _contacts.Count < MaxContacts) _contacts[key] = contact;
+            if (!_contacts.ContainsKey(key) && _contacts.Count >= MaxContacts) return false;
+            _contacts[key] = contact;
+            return true;
+        }
+    }
+
+    internal int Count(long map, int round, long faction)
+    {
+        lock (_gate)
+        {
+            if (!Context(map, round) || faction == 0) return 0;
+            int count = 0;
+            foreach (var key in _contacts.Keys) if (key.Faction == faction) count++;
+            return count;
         }
     }
 

@@ -5,6 +5,9 @@ using Il2CppMenace.Tactical.AI;
 
 namespace AIPerformance;
 
+internal enum ContactAdvanceObservation { IneligibleFaction, MissingTarget, NotDetected, NonHostile, Contained, MissingTile, Recorded, Capacity }
+internal enum AdvanceZoneGate { NotReady, NoAdvanceOrder, UsefulAction, Eligible }
+
 internal static partial class ContactAdvanceRuntime
 {
     internal static bool Mobilizable(Agent agent)
@@ -27,21 +30,31 @@ internal static partial class ContactAdvanceRuntime
         float.IsFinite(agent.GetActor().GetSuppressionPct()) && agent.GetActor().GetSuppressionPct() <= .25f;
 
     // Native advance zones stay active after contact only for ready units without a useful shot.
-    internal static bool KeepAdvanceZones(Agent agent) => agent != null && Ready(agent) &&
-        AdvanceRecoveryRuntime.TryReadAdvanceOrders(agent, agent.GetActor(), out _, out _) &&
-        !CombinedArmsResponseRuntime.HasUsefulAction(agent);
+    internal static bool KeepAdvanceZones(Agent agent) => KeepAdvanceZones(agent, out _);
 
-    internal static void Observe(AIFaction faction, Actor enemy, ContactAdvanceState memory, Map map, int round)
+    internal static bool KeepAdvanceZones(Agent agent, out AdvanceZoneGate gate)
+    {
+        if (agent == null || !Ready(agent)) { gate = AdvanceZoneGate.NotReady; return false; }
+        if (!AdvanceRecoveryRuntime.TryReadAdvanceOrders(agent, agent.GetActor(), out _, out _))
+        { gate = AdvanceZoneGate.NoAdvanceOrder; return false; }
+        if (CombinedArmsResponseRuntime.HasUsefulAction(agent))
+        { gate = AdvanceZoneGate.UsefulAction; return false; }
+        gate = AdvanceZoneGate.Eligible;
+        return true;
+    }
+
+    internal static ContactAdvanceObservation Observe(AIFaction faction, Actor enemy, ContactAdvanceState memory, Map map, int round)
     {
         // Detection before any enemy position, weapon, death or faction reads.
-        if (!ContactConvergenceRuntime.EligibleFaction(faction) || enemy == null || map == null ||
-            !enemy.IsDetectedByFaction((int)faction.GetFactionType())) return;
+        if (!ContactConvergenceRuntime.EligibleFaction(faction)) return ContactAdvanceObservation.IneligibleFaction;
+        if (enemy == null || memory == null || map == null) return ContactAdvanceObservation.MissingTarget;
+        if (!enemy.IsDetectedByFaction((int)faction.GetFactionType())) return ContactAdvanceObservation.NotDetected;
         int kind = (int)enemy.GetFaction();
-        if ((kind != 1 && kind != 2) || faction.IsAlliedWith(kind)) return;
+        if ((kind != 1 && kind != 2) || faction.IsAlliedWith(kind)) return ContactAdvanceObservation.NonHostile;
         if (enemy.IsDying() || enemy.IsContainedWithinAnotherEntity())
-        { memory.Forget(map.Pointer.ToInt64(), round, faction.Pointer.ToInt64(), enemy.Pointer.ToInt64()); return; }
+        { memory.Forget(map.Pointer.ToInt64(), round, faction.Pointer.ToInt64(), enemy.Pointer.ToInt64()); return ContactAdvanceObservation.Contained; }
         var tile = enemy.GetTile(); var attacks = enemy.GetAllAttacks();
-        if (tile == null) return;
+        if (tile == null) return ContactAdvanceObservation.MissingTile;
         int range = 0;
         if (attacks != null && attacks.Count <= 128)
             foreach (var skill in attacks)
@@ -52,8 +65,9 @@ internal static partial class ContactAdvanceRuntime
                 int r = skill.GetMaxRange();
                 if (r > range && r <= 128) range = r;
             }
-        memory.Observe(map.Pointer.ToInt64(), round, faction.Pointer.ToInt64(),
-            new(enemy.Pointer.ToInt64(), tile.GetX(), tile.GetZ(), round, range));
+        return memory.Observe(map.Pointer.ToInt64(), round, faction.Pointer.ToInt64(),
+            new(enemy.Pointer.ToInt64(), tile.GetX(), tile.GetZ(), round, range)) ?
+            ContactAdvanceObservation.Recorded : ContactAdvanceObservation.Capacity;
     }
 
     internal static void Refresh(AIFaction faction, ContactAdvanceState memory, Map map, int round)

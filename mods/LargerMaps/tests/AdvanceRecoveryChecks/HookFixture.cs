@@ -32,9 +32,10 @@ namespace AIPerformance
         private static bool ReadBool(string key, bool fallback) => fallback;
         private static bool _combatPlanningActive = true;
         private static readonly HashSet<string> _simplifiedAttackIds = new() { "active.fixture" };
-        internal static void BeginCombinedFixture(AIFaction faction)
+        internal static void BeginCombinedFixture(AIFaction faction, bool contactDiagnostics = false)
         {
             BeginFixture(); BeginOffensiveFixture(); _combinedArms.Reset(); _supportThreats.Reset(); _combinedArmsEnabled = true;
+            _contactAdvanceDiagnostics = contactDiagnostics;
             _combinedArmsThread = Thread.CurrentThread.ManagedThreadId;
             CombinedArmsTurn(faction);
         }
@@ -49,17 +50,20 @@ namespace AIPerformance
         {
             _offensiveBudget.Reset(); _offensivePlanningEnabled = true; _missionCivilianPriorityEnabled = true;
             _combinedArmsEnabled = false; _combinedArms.Reset();
-            _contactAdvance.Reset(); _contactAdvanceEnabled = false;
+            _contactAdvance.Reset(); _contactAdvanceEnabled = false; _contactAdvanceDiagnostics = false;
+            ContactAdvanceDiagnosticReset(); ContactAdvanceZoneReset(); CombinedArmsResponseRuntime.ResetGuard();
         }
-        internal static void BeginAdvanceFixture(AIFaction faction)
+        internal static void BeginAdvanceFixture(AIFaction faction, bool diagnostics = false)
         {
-            BeginOffensiveFixture(); _contactAdvanceEnabled = true; _contactAdvanceThread = Environment.CurrentManagedThreadId;
+            BeginOffensiveFixture(); _contactAdvanceDiagnostics = diagnostics;
+            _contactAdvanceEnabled = true; _contactAdvanceThread = Environment.CurrentManagedThreadId;
             TacticalManager.Instance.Faction = faction; ContactAdvanceTurn(faction);
         }
         internal static void AdvanceSightFixture(Actor actor, int faction) => ContactAdvanceDetected(actor, faction);
         internal static void AdvanceBeforeFixture(Agent agent) => ContactAdvanceBefore(agent);
         internal static void AdvanceResetFixture() => OffensivePlanningReset();
         internal static bool ContactAdvanceOn => _contactAdvanceEnabled;
+        internal static bool ContactAdvanceDiagnosticsOn => _contactAdvanceDiagnostics;
         internal static bool ZoneEnterFixture(Actor actor) { ContactAdvanceZoneEnter(actor, out bool state); return state; }
         internal static void ZoneExitFixture(bool state) => ContactAdvanceZoneExit(state);
         internal static void ZoneDoneFixture(bool state) => ContactAdvanceZoneDone(state);

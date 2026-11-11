@@ -1,6 +1,6 @@
 {
   "name": "AIPerformance",
-  "version": "1.10.0",
+  "version": "1.10.1",
   "author": "Luca",
   "description": "Contact-led alert and persistent range closing for pirate/Rogue infantry, direct-fire teams and crewed vehicles. Native advance zones stay active after contact for ready units without a useful shot. Prefer firing cover to cover-only stops; request equipped smoke through Smoke Overhaul when exposed. Preserves explicit defense, native safety, setup/AP and fog of war. Reviewed 0.7.18 test candidate, not gameplay-accepted.",
   "depends": ["Jiangyu >= 1.4.8", "MenaceModSettings >= 0.2.0"]

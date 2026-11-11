@@ -13,6 +13,10 @@ namespace AIPerformance;
 
 internal static class CombinedArmsResponseRuntime
 {
+    private static readonly CombinedArmsGuardState _advanceGuard = new();
+
+    internal static void ResetGuard() => _advanceGuard.Reset();
+
     // Threat response is independent of whether the infantry anchor survived or can still advance.
     internal static SupportThreat? Threat(Agent agent, CombinedArmsThreatState memory, Map map, int round)
     {
@@ -122,7 +126,7 @@ internal static class CombinedArmsResponseRuntime
     }
 
     internal static Behavior GuardAdvance(Agent agent, Behavior chosen, CombinedArmsThreatState memory,
-        Map map, int round, Func<Tile, bool> smoke)
+        Map map, int round, Func<Tile, bool> smoke, bool diagnostics = false)
     {
         var move = chosen?.TryCast<Move>(); var request = CombinedArmsRuntime.Snapshot(agent, false);
         if (move == null || request is not { Kind: SupportKind.Infantry } ||
@@ -157,9 +161,17 @@ internal static class CombinedArmsResponseRuntime
                 if (tile == null || (tile.Pointer != current.Pointer && Exposed(tile))) { blocked = true; break; }
             }
         if (!blocked) return chosen;
+        Behavior idle = null;
         foreach (var behavior in agent.GetBehaviors())
-            if (behavior != null && behavior.GetID().ToString() == "Idle") return behavior;
-        return chosen;
+            if (behavior != null && behavior.GetID().ToString() == "Idle") { idle = behavior; break; }
+        if (idle == null) return chosen;
+        var actor = agent.GetActor(); var faction = agent.GetFaction();
+        var decision = _advanceGuard.Decide(map.Pointer.ToInt64(), round, faction.Pointer.ToInt64(), actor.Pointer.ToInt64(),
+            out int firstRound);
+        if (diagnostics)
+            Plugin.ContactAdvanceDiagnostic(round, faction.Pointer.ToInt64(), actor.Pointer.ToInt64(), "guard",
+                $"result={decision} reason=exposed-native-route firstRound={firstRound} allowAfterRound={firstRound + CombinedArmsGuardState.HoldRounds}");
+        return decision == CombinedArmsGuardDecision.Hold ? idle : chosen;
     }
 
     private static bool Finite(TileScore score) => score?.Tile != null && float.IsFinite(score.SafetyScore) &&

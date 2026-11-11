@@ -34,7 +34,8 @@ public sealed partial class Plugin
             if (turn == null || before == null || after == null || death == null || movement == null || reset == null || detection == null)
                 throw new MissingMethodException("support lifecycle");
             _combinedArmsThread = Thread.CurrentThread.ManagedThreadId;
-            foreach (var type in new[] { typeof(CombinedArmsState), typeof(CombinedArmsRuntime), typeof(SupportProjection),
+            foreach (var type in new[] { typeof(CombinedArmsState), typeof(CombinedArmsRuntime), typeof(CombinedArmsResponseRuntime),
+                typeof(CombinedArmsGuardState), typeof(SupportProjection),
                 typeof(SupportUnit), typeof(CombinedArmsDiagnosticBudget), typeof(CombinedArmsThreatRuntime),
                 typeof(CombinedArmsThreatState), typeof(SupportThreat) })
             {
@@ -72,9 +73,8 @@ public sealed partial class Plugin
             harmony.Patch(reset, postfix: new HarmonyMethod(typeof(Plugin), nameof(CombinedArmsReset)));
             harmony.Patch(detection, postfix: new HarmonyMethod(typeof(Plugin), nameof(CombinedArmsDetected)));
             _combinedArmsEnabled = true;
-            _log.Msg($"{ModName}: experimental combined-arms support enabled; pirate/Rogue rear support, native setup/fire; no reaction-fire changes.");
             if (_combinedArmsDiagnostics)
-                _log.Msg($"{ModName}: combined-arms diagnostics enabled; at most {CombinedArmsDiagnosticBudget.MaxLines} deduplicated lines per mission.");
+                _log.Msg($"{ModName}: experimental combined-arms support and diagnostics enabled; at most {CombinedArmsDiagnosticBudget.MaxLines} deduplicated lines per mission.");
         }
         catch (Exception ex) { CombinedArmsDisable(ex); }
     }
@@ -179,6 +179,7 @@ public sealed partial class Plugin
         _combinedArms.Reset();
         _supportThreats.Reset();
         _combinedArmsDiagnosticBudget.Reset();
+        CombinedArmsResponseRuntime.ResetGuard();
     }
 
     private static void CombinedArmsDetected(Actor __instance, int __0)
@@ -208,6 +209,7 @@ public sealed partial class Plugin
     private static void CombinedArmsDisable(Exception ex)
     {
         _combinedArmsEnabled = false; _combinedArms.Reset(); _supportThreats.Reset();
+        CombinedArmsResponseRuntime.ResetGuard();
         _log.Warning($"{ModName}: combined-arms support disabled ({ex.GetType().Name}); native AI retained.");
     }
 }

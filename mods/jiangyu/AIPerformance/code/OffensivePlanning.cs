@@ -47,7 +47,6 @@ public sealed partial class Plugin
             harmony.Patch(value, postfix: new HarmonyMethod(typeof(Plugin), nameof(CombinedArmsThreatValue)));
             BindSupportSmoke();
             _offensivePlanningEnabled = ReadBool("OffensiveCombatPlanning", true);
-            _log.Msg($"{ModName}: bounded offensive planning enabled; native direct-fire probes, shot-first choices and mission advances (pirate/Rogue).");
             PatchContactAdvance(harmony);
         }
         catch (Exception ex) { OffensivePlanningDisable(ex); if (_combinedArmsEnabled) CombinedArmsDisable(ex); }
@@ -124,7 +123,7 @@ public sealed partial class Plugin
                     if (!_contactAdvanceEnabled || !_offensivePlanningEnabled || !ContactAdvanceRuntime.Ready(__instance) ||
                         !ContactAdvanceRuntime.TryAim(__instance, _contactAdvance, map, manager.m_Round, out _))
                         __result = CombinedArmsResponseRuntime.GuardAdvance(__instance, __result,
-                            _supportThreats, map, manager.m_Round, SupportSmokeCover);
+                            _supportThreats, map, manager.m_Round, SupportSmokeCover, _contactAdvanceDiagnostics);
                     if (_combinedArmsDiagnostics && before?.Pointer != __result?.Pointer)
                         CombinedArmsDiagnostic(manager.m_Round, __instance.GetFaction().Pointer.ToInt64(),
                             __instance.GetActor().Pointer.ToInt64(), "response-hold", "reason=exposed-native-route result=wait-for-cover-fire-or-smoke");
@@ -147,10 +146,15 @@ public sealed partial class Plugin
         catch (Exception ex) { OffensivePlanningDisable(ex); }
     }
 
-    private static void OffensivePlanningReset() { _offensiveBudget.Reset(); _contactAdvance.Reset(); }
+    private static void OffensivePlanningReset()
+    {
+        _offensiveBudget.Reset(); _contactAdvance.Reset(); ContactAdvanceDiagnosticReset(); ContactAdvanceZoneReset();
+        CombinedArmsResponseRuntime.ResetGuard();
+    }
     private static void OffensivePlanningDisable(Exception ex)
     {
         _offensivePlanningEnabled = false; _offensiveBudget.Reset(); _contactAdvanceEnabled = false; _contactAdvance.Reset();
+        CombinedArmsResponseRuntime.ResetGuard();
         _log.Warning($"{ModName}: offensive planning disabled ({ex.GetType().Name}); native/recovery behavior retained.");
     }
 }

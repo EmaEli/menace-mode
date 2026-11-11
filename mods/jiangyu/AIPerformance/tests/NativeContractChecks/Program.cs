@@ -197,7 +197,8 @@ if (args.Length == 2)
         "recovery runtime belongs to AIPerformance.dll");
     Check(metadata.TypeDefinitions.Any(h => metadata.GetString(metadata.GetTypeDefinition(h).Name) == "ContactConvergenceRuntime"),
         "contact runtime included in AIPerformance.dll");
-    foreach (string expected in new[] { "CombinedArmsState", "CombinedArmsRuntime", "SupportProjection" })
+    foreach (string expected in new[] { "CombinedArmsState", "CombinedArmsRuntime", "CombinedArmsResponseRuntime",
+        "CombinedArmsGuardState", "ContactAdvanceDiagnosticBudget", "SupportProjection" })
         Check(metadata.TypeDefinitions.Any(h => metadata.GetString(metadata.GetTypeDefinition(h).Name) == expected), expected + " included");
 }
 Console.WriteLine($"PASS: {checks} AI performance native metadata contracts; no native methods executed.");

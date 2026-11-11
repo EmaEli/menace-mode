@@ -48,7 +48,8 @@ public sealed partial class Plugin
             harmony.Patch(reset, postfix: new HarmonyMethod(typeof(Plugin), nameof(AdvanceRecoveryReset)));
             _advanceRecoveryDiagnostics = ReadBool("DiagnoseAdvanceRecovery", false);
             _advanceRecoveryEnabled = true;
-            _log.Msg($"{ModName}: conditional advance recovery enabled on maps above 64x64; native Move/pathfinding retained.");
+            if (_advanceRecoveryDiagnostics)
+                _log.Msg($"{ModName}: conditional advance recovery enabled on maps above 64x64; native Move/pathfinding retained.");
         }
         catch (Exception ex) { AdvanceRecoveryDisable(ex); }
     }

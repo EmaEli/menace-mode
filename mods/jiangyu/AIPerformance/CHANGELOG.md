@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.10.1 — 11 November 2026
+
+- Bound the combined-arms exposed-route hold to two rounds per unit per mission. If no
+  safer native route or smoke/fire response becomes available, the original native Move
+  is allowed again on the third round; no alternate path or attack is fabricated.
+- Add default-OFF `DiagnoseContactAdvance`, with at most 256 deduplicated records per
+  mission for contact observations, native-zone scope/thread eligibility, known-opponent
+  interception/missing reads and exposed-route guard expiry. Logging failures are isolated.
+- Add regression coverage for expiry, mission/map reset, state capacity, diagnostics and
+  the hidden-position read boundary. Gameplay behavior still requires an in-game trial.
+
 ## 1.10.0 — 10 November 2026
 
 - Keep native `AdvanceTowards` zones active after contact. Reviewed 0.7.18

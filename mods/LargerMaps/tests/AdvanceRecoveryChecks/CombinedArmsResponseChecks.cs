@@ -81,6 +81,34 @@ internal static class CombinedArmsResponseChecks
         move.m_Path.Insert(1, new(13, 0, 10));
         check(Plugin.OffensiveChoiceFixture(infantry.Agent, move).GetID() == "Idle", "smoky destination does not excuse an exposed transit waypoint");
         move.m_Path.RemoveAt(1);
+
+        Plugin.BindSmokeFixture(null); TacticalManager.Instance.m_Round = 1; exposed.SafetyScore = 10;
+        enemy.Tile.Sees = _ => true; Plugin.BeginCombinedFixture(faction, contactDiagnostics: true);
+        check(Plugin.OffensiveChoiceFixture(infantry.Agent, move).GetID() == "Idle",
+            "exposed route remains vetoed in the first grace round");
+        TacticalManager.Instance.m_Round = 2; Plugin.CombinedDetectedFixture(enemy, 9);
+        check(Plugin.OffensiveChoiceFixture(infantry.Agent, move).GetID() == "Idle",
+            "exposed route remains vetoed in the second grace round");
+        TacticalManager.Instance.m_Round = 3; Plugin.CombinedDetectedFixture(enemy, 9);
+        check(ReferenceEquals(Plugin.OffensiveChoiceFixture(infantry.Agent, move), move),
+            "expired exposure veto yields back to the native move after two rounds");
+        check(Plugin.Logs.Any(line => line.Contains("CONTACT-ADVANCE") && line.Contains("phase=guard") &&
+            line.Contains("result=Hold") && line.Contains("firstRound=1")) &&
+            Plugin.Logs.Any(line => line.Contains("round=3") && line.Contains("phase=guard") && line.Contains("result=Expired")),
+            "guard diagnostics report the initial hold and bounded expiry");
+
+        var guardState = new CombinedArmsGuardState();
+        check(guardState.Decide(1, 4, 10, 20, out int first) == CombinedArmsGuardDecision.Hold && first == 4 &&
+            guardState.Decide(1, 5, 10, 20, out first) == CombinedArmsGuardDecision.Hold && first == 4 &&
+            guardState.Decide(1, 6, 10, 20, out first) == CombinedArmsGuardDecision.Expired && first == 4,
+            "per-unit veto state expires on the third round and does not restart for the same threat");
+        for (int i = 0; i < CombinedArmsGuardState.MaxActors; i++)
+            guardState.Decide(2, 1, 10, 100 + i, out _);
+        check(guardState.Decide(2, 1, 10, 999, out _) == CombinedArmsGuardDecision.Capacity &&
+            guardState.Decide(3, 1, 10, 999, out _) == CombinedArmsGuardDecision.Hold,
+            "guard state fails open at its bound and resets on a new map");
+        TacticalManager.Instance.m_Round = 1; Plugin.BeginCombinedFixture(faction);
+
         var secondThreat = new Actor { Pointer = (IntPtr)501, Tile = map.GetTile(24, 12), Detected = true };
         secondThreat.Attacks.Add(new()); faction.Opponents.Add(new() { Actor = secondThreat });
         Plugin.CombinedDetectedFixture(secondThreat, 9);

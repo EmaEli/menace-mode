@@ -42,7 +42,8 @@ public sealed partial class Plugin
             harmony.Patch(reset, postfix: new HarmonyMethod(typeof(Plugin), nameof(ContactConvergenceReset)));
             _contactConvergenceDiagnostics = ReadBool("DiagnoseContactConvergence", false);
             _contactConvergenceEnabled = true;
-            _log.Msg($"{ModName}: experimental contact convergence enabled; unassigned pirate/Rogue infantry only, at most three responders per faction.");
+            if (_contactConvergenceDiagnostics)
+                _log.Msg($"{ModName}: experimental contact convergence enabled; unassigned pirate/Rogue infantry only, at most three responders per faction.");
         }
         catch (Exception ex) { ContactConvergenceDisable(ex); }
     }

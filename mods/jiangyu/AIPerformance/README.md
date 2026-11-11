@@ -1,10 +1,10 @@
-# AI Performance 1.10.0
+# AI Performance 1.10.1
 
 ## Contact-led alert, advance and firing cover (0.7.18)
 
 The existing **Contact-led alert, advance and firing positions (pirate/Rogue)** option
 (`OffensiveCombatPlanning`, default ON, restart required) now supplies the main policy.
-No new setting or equipment is needed. This deliberately changes the rejected passive
+No new gameplay setting or equipment is needed. This deliberately changes the rejected passive
 1.8.1 behavior; the sections below describe older fallbacks, not an obligation to hold.
 
 - Native mission advance zones (`AdvanceTowards`) keep pulling eligible units forward after
@@ -34,6 +34,14 @@ No new setting or equipment is needed. This deliberately changes the rejected pa
   probe-start limit. Damage/usability samples share 24/48/512 evaluation/actor/faction
   token limits; cheap geometric staging survives exhausted damage budgets. These are
   bounded checks, not a guaranteed frame-time bound or a new global pathfinder.
+
+The combined-arms exposed-route hold is now limited to two rounds per unit per mission.
+If exposure persists and no safe native route or smoke/fire response appears, the native
+Move choice is allowed again on round three. Enable **Log bounded contact/advance hook
+decisions** (`DiagnoseContactAdvance`, OFF by default) and restart to record contact
+observation results, native-zone scope/thread eligibility, whether the native
+`HasKnownOpponent` check was reached, and guard expiry. The trace is capped at 256
+deduplicated lines per mission and does not change gameplay policy.
 
 Local regression/build checks do not establish native AI dispatch, actual smoke throws,
 successful shooting or turn-time performance. **Windows installation/gameplay pending.**

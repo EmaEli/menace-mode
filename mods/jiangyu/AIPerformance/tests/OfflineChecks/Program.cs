@@ -24,6 +24,7 @@ Check(ModSettings.Values[("AI Performance", "RecoverStalledAdvance")] is true, "
 Check(ModSettings.Values[("AI Performance", "DiagnoseAdvanceRecovery")] is false, "Recovery diagnostics default OFF");
 Check(ModSettings.Values[("AI Performance", "ConvergeOnLastKnownContacts")] is false, "Experimental convergence defaults OFF");
 Check(ModSettings.Values[("AI Performance", "DiagnoseContactConvergence")] is false, "Contact diagnostics default OFF");
+Check(ModSettings.Values[("AI Performance", "DiagnoseContactAdvance")] is false, "Contact/advance diagnostics default OFF");
 Check(ModSettings.Values[("AI Performance", "OffensiveCombatPlanning")] is true, "Bounded offensive planning defaults ON");
 Check(ModSettings.Values[("AI Performance", "CombinedArmsSupport")] is false, "Combined-arms support defaults OFF pending gameplay trial");
 Check(ModSettings.Values[("AI Performance", "DiagnoseCombinedArmsSupport")] is false, "Combined-arms diagnostics default OFF");
