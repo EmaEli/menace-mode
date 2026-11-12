@@ -14,8 +14,8 @@ using MenaceModSettings;
 using MenaceModSuite.Shared;
 using UnityEngine;
 
-[assembly: AssemblyVersion("0.9.0.0")]
-[assembly: AssemblyFileVersion("0.9.0.0")]
+[assembly: AssemblyVersion("0.10.0.0")]
+[assembly: AssemblyFileVersion("0.10.0.0")]
 
 namespace SmokeOverhaul;
 
@@ -23,7 +23,7 @@ namespace SmokeOverhaul;
 public sealed partial class Plugin : IHostedPlugin
 {
     internal const string ModName = "Smoke Overhaul";
-    internal const string Version = "0.9.0";
+    internal const string Version = "0.10.0";
 
     private static ModLog? _log;
     private const string SmokeAccuracyEffectTemplateId = "effect.smoke";
@@ -1750,9 +1750,15 @@ internal static partial class Patches
         Plugin.FilterSmokeAoeTiles(__instance, __1, __2);
     }
 
-    public static void Skill_Use_Prefix(Skill __instance, Tile _targetTile, UsageParameter _parameters)
+    public static bool Skill_Use_Prefix(Skill __instance, Tile _targetTile, UsageParameter _parameters, ref bool __result)
     {
+        try
+        {
+            if (!Plugin.AllowPreventiveSmoke(__instance, _targetTile)) { __result = false; return false; }
+        }
+        catch { } // Optional AI policy must not break native skill execution.
         Plugin.LogAiSmokeUse(__instance, _targetTile, _parameters);
+        return true;
     }
 
     public static void SkillContainer_AddInherentSkills_Prefix(EntityTemplate _template)

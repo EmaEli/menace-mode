@@ -79,7 +79,9 @@ public sealed partial class Plugin
             var actor = __instance.GetEntity()?.TryCast<Actor>(); var agent = actor?.GetAgent();
             if (agent == null || !ContactConvergenceRuntime.EligibleFaction(agent.GetFaction())) return;
             var template = __instance.GetTemplate(); string id = template?.GetID();
-            bool smoke = id is "active.throw_smoke_grenade" or "active.throw_smoke_grenade_limited";
+            bool smoke = id is "active.throw_smoke_grenade" or "active.throw_smoke_grenade_limited" or
+                "active.launch_mortar_smoke" or "active.mod.launch_mortar_smoke_autoloader" or
+                "active.mod.twinfire.launch_mortar_smoke_autoloader";
             if (!smoke && template?.IsAttack != true) return;
             var manager = TacticalManager.Get(); var map = manager?.GetMap();
             if (map == null) return;

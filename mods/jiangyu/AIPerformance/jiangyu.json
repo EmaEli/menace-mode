@@ -1,6 +1,6 @@
 {
   "name": "AIPerformance",
-  "version": "1.13.0",
+  "version": "1.14.0",
   "author": "Luca",
   "description": "Native sighting-led faction alerts and stable contact-sector convergence for all hostile factions, including creatures and machines. Unordered pirate/Rogue infantry can join bounded local support groups through managed contact objectives, without rewriting mission zones. Native actions, defense, AP and fog of war remain authoritative. Reviewed 0.7.18 test candidate, not gameplay-accepted.",
   "depends": ["Jiangyu >= 1.4.8", "MenaceModSettings >= 0.2.0"]

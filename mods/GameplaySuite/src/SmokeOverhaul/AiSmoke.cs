@@ -18,6 +18,7 @@ public sealed partial class Plugin
     private const int MaxSmokeThreatChecks = 24;
     private static int _aiSmokeMainThreadId;
     private static Func<Agent, int[]?>? _supportSmokeThreat;
+    private static Func<Agent, int[]?>? _supportMortarSmokeThreat;
     internal static bool AiSmokeOnMainThread => Environment.CurrentManagedThreadId == _aiSmokeMainThreadId;
     private static bool _pinnedSmokeErrorLogged, _aiSmokeActionErrorLogged;
     private static int _aiSmokeExecutions, _aiSmokeEligible, _aiSmokeSkillsAvailable,
@@ -119,18 +120,24 @@ public sealed partial class Plugin
         {
             if (agent.IsSleeping() || agent.IsDeploymentPhase() || TacticalManager.IsSkillBusy()) return false;
             Actor? actor = agent.GetActor();
-            if (actor == null || !actor.IsInfantry() || actor.IsDying() || actor.IsMoving() ||
+            if (actor == null || actor.IsDying() || actor.IsMoving() ||
                 actor.IsTurnDone() || actor.Pointer == IntPtr.Zero) return false;
             IntPtr actorKey = actor.Pointer;
             if (_smokeActedThisTurn.Contains(actorKey)) return false;
+            Skill? mortar = FindUsableMortarSmoke(actor);
+            if (mortar != null) return TrySupportMortarAction(agent, actor, mortar);
+            if (!actor.IsInfantry()) return false;
             Tile? origin = actor.GetTile();
             if (origin == null || TileHasSmoke(origin)) return false;
             SuppressionState pressure = actor.GetSuppressionState();
             bool pinned = pressure == SuppressionState.PinnedDown;
             bool suppressed = pressure == SuppressionState.Suppressed;
             if (pinned && !RuntimeSettings.AllowSmokeWhilePinnedDown) return false;
+            if (!pinned && !suppressed && TryNearbySupportThreat(agent, origin, true, out int mx, out int mz) &&
+                HasAvailableSupportMortar(agent, origin, mx, mz)) return false;
             int[]? supportThreat = !pinned && !suppressed ? _supportSmokeThreat?.Invoke(agent) : null;
-            bool supportAdvance = supportThreat is { Length: 2 };
+            bool supportAdvance = supportThreat is { Length: 2 } &&
+                SmokeAiRules.IsNearbyThreat(supportThreat[0] - origin.GetX(), supportThreat[1] - origin.GetZ());
             bool advance = !pinned && !suppressed && origin.GetCoverMask() == 0 &&
                 (agent.GetNumThreatsFaced() > 0 || agent.GetFaction()?.HasKnownOpponent() == true);
             advance |= supportAdvance;
@@ -162,6 +169,8 @@ public sealed partial class Plugin
             int dx, dz;
             if (supportAdvance) { dx = supportThreat![0] - origin.GetX(); dz = supportThreat[1] - origin.GetZ(); }
             else if (!TryGetDetectedSmokeThreat(agent, actor, origin, pinned || suppressed, out dx, out dz)) return false;
+            if (!pinned && !suppressed && !SmokeAiRules.IsNearbyThreat(dx, dz)) return false;
+            if (supportAdvance && HasForwardSmoke(origin, dx, dz)) return false;
             Map? map = TacticalManager.Get()?.GetMap();
             if (map == null) return false;
             for (int reachIndex = 0; reachIndex < 2; reachIndex++)
@@ -207,6 +216,7 @@ public sealed partial class Plugin
     private static void BindSupportSmokeRequest()
     {
         _supportSmokeThreat = null;
+        _supportMortarSmokeThreat = null;
         try
         {
             foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
@@ -215,6 +225,10 @@ public sealed partial class Plugin
                     System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
                 if (method == null) continue;
                 _supportSmokeThreat = (Func<Agent, int[]?>)Delegate.CreateDelegate(typeof(Func<Agent, int[]>), method);
+                var mortarMethod = assembly.GetType("AIPerformance.Plugin", false)?.GetMethod("GetSupportMortarSmokeThreat",
+                    System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+                if (mortarMethod != null)
+                    _supportMortarSmokeThreat = (Func<Agent, int[]?>)Delegate.CreateDelegate(typeof(Func<Agent, int[]>), mortarMethod);
                 break;
             }
         }
@@ -254,10 +268,8 @@ public sealed partial class Plugin
             { attackerDistance = distance; ax = ex; az = ez; }
         }
         if (nearest == int.MaxValue) return false;
-        if (defensive && attackerDistance != int.MaxValue && attackerDistance <= nearest * 4)
-        { dx = ax; dz = az; }
-        else { dx = nx; dz = nz; }
-        return true;
+        return SmokeAiRules.TrySelectThreatBearing(defensive, attackerDistance != int.MaxValue,
+            ax, az, nx, nz, out dx, out dz);
     }
 }
 

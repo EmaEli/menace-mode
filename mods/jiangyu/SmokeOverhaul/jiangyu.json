@@ -1,6 +1,6 @@
 {
   "name": "SmokeOverhaul",
-  "version": "0.9.0",
+  "version": "0.10.0",
   "author": "Luca",
   "description": "Smoke rework: no native smoke stat buffs/debuffs; weighted shot-chance penalties only, with LOS, duration, mortar delivery and AI smoke options in MenaceModSettings (F9).",
   "depends": [

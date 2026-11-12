@@ -71,7 +71,7 @@ internal static class CombinedArmsAdvanceChecks
             return unit;
         }
         var infantry = Friendly(201, 10); var peer = Friendly(202, 14); var walker = Friendly(203, 12, true);
-        var enemy = new Actor { Pointer = (IntPtr)290, Tile = new(40, 20), Detected = true, RejectHiddenReads = true };
+        var enemy = new Actor { Pointer = (IntPtr)290, Tile = new(20, 20), Detected = true, RejectHiddenReads = true };
         enemy.Attacks.Add(new() { MaxRange = 40 }); faction.Opponents.Add(new() { Actor = enemy });
         Plugin.BeginAdvanceFixture(faction); Plugin.PublishGroupsFixture(faction);
         var move = (Move)infantry.Agent.Behaviors[1]; var tankMove = (Move)walker.Agent.Behaviors[1];
@@ -81,7 +81,7 @@ internal static class CombinedArmsAdvanceChecks
         infantry.Agent.Tiles[step] = stepScore;
         infantry.Agent.Tiles[onward] = new() { Tile = onward, APCost = 20, SafetyScore = 0 };
         move.TargetTile = stepScore;
-        tankMove.TargetTile = new() { Tile = new(25, 20), APCost = 20 };
+        tankMove.TargetTile = new() { Tile = new(15, 20), APCost = 20 };
         check(Plugin.GroupChoiceFixture(infantry.Agent, move).GetID() == "Idle", "exposed lead infantry stages for its real nearby support");
         check(Plugin.GroupChoiceFixture(walker.Agent, tankMove).GetID() == "Idle", "vehicle does not independently rush ahead of its infantry screen");
         var smoke = new Skill { Entity = infantry, Template = new() { m_ID = "active.throw_smoke_grenade", IsAttack = false } };
@@ -89,6 +89,7 @@ internal static class CombinedArmsAdvanceChecks
         check(Plugin.GetSupportSmokeThreat(infantry.Agent) is { Length: 2 }, "equipped affordable smoke is requested only with a feasible forward move");
         smoke.Cost = 100;
         check(Plugin.GetSupportSmokeThreat(infantry.Agent) == null, "no grenade request when its real cost leaves no movement AP");
+        check(Plugin.GetSupportMortarSmokeThreat(infantry.Agent) is [20, 20], "mortar support does not spend requesting infantry AP");
         smoke.Cost = 20;
         Plugin.GroupUsedFixture(smoke, step, false);
         check(Plugin.GroupChoiceFixture(infantry.Agent, move).GetID() == "Idle", "failed native Use does not certify fire/smoke support");

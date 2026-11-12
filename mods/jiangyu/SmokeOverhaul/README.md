@@ -1,4 +1,14 @@
-# Smoke Overhaul 0.9.0 — coordinated smoke test candidate
+# Smoke Overhaul 0.10.0 — mortar-first close-threat smoke test candidate
+
+**0.10.0:** with AIPerformance 1.14.0, coordinated advances prefer a mortar with an
+equipped, usable, affordable and legal smoke shot. It fires only during its own native
+activation; infantry grenades are the fallback. Preventive smoke requires a legitimately
+observed threat within **10 tiles of the protected squad**, including recent last-known
+contacts (up to two rounds), never live hidden coordinates. Native smoke execution also
+respects this policy; player/allied hand smoke is unaffected. Existing defensive smoke
+for suppressed/pinned infantry retains its probabilities and attacker-direction rule.
+An existing adjacent forward screen prevents duplicate proactive hand throws.
+Local checks/builds are not in-game acceptance. See issue #1.
 
 Smoke Overhaul makes smoke fully obstruct line of sight when it lies between units, while a unit standing in smoke receives half-tile aim exposure. It also extends smoke duration and gives smoke-delivery systems distinct tactical footprints.
 
@@ -8,6 +18,8 @@ The existing main-thread smoke executor validates ammo, AP and target legality; 
 at most once per actor turn. No equipment is granted. Successful smoke can allow a guarded
 forward step; this is concealment, not invulnerability. Native shots and emergency actions
 are not replaced by the request. Without AIPerformance, existing behavior is unchanged.
+
+**0.8.5:** defensive proactive smoke is thrown only toward a currently detected last attacker. If that direction cannot be confirmed, the unit skips the throw instead of guessing from the nearest enemy. Exposed flamethrowers retain their existing nearest-known-threat behavior.
 
 **0.8.4:** carries forward the fix disabling all native `effect.smoke` stat changes, not only Accuracy: no concealment, accuracy, defense, damage, suppression or vision buffs/debuffs. Uses native casts and supports the legacy scalar and 0.7.18 property-array layouts. Smoke tile effects and VFX are preserved. Only the configured shot-chance rule remains: -20 percentage points per intervening smoke tile and -10 per smoke-occupied shooter/target tile by default. Mortar spawn/cooldown discovery now also uses native casts. This is a scoped 0.7.18 test candidate, not whole-suite or gameplay acceptance.
 

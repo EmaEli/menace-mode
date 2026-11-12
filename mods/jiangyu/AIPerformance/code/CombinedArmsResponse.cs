@@ -33,6 +33,13 @@ public sealed partial class Plugin
     // Queried only by Smoke Overhaul's existing main-thread Agent.Execute hook.
     // This is a request, not a grenade grant or a second skill-execution owner.
     public static int[] GetSupportSmokeThreat(Agent agent)
+        => SupportSmokeThreat(agent, false);
+
+    // A mortar request must not require a grenade or movement AP on the requesting squad.
+    public static int[] GetSupportMortarSmokeThreat(Agent agent)
+        => SupportSmokeThreat(agent, true);
+
+    private static int[] SupportSmokeThreat(Agent agent, bool mortar)
     {
         if (_combinedArmsEnabled && _contactAdvanceEnabled && _offensivePlanningEnabled &&
             Environment.CurrentManagedThreadId == _contactAdvanceThread)
@@ -40,7 +47,7 @@ public sealed partial class Plugin
             try
             {
                 var manager = TacticalManager.Get(); var map = manager?.GetMap();
-                if (TryAdvanceGroup(agent, map, manager?.m_Round ?? 0, false, out var plan) &&
+                if (!mortar && TryAdvanceGroup(agent, map, manager?.m_Round ?? 0, false, out var plan) &&
                     !HasFeasibleSmokeAdvance(agent, plan)) return null;
             }
             catch { return null; } // Do not waste a grenade when the crossing cannot be checked.
@@ -63,7 +70,8 @@ public sealed partial class Plugin
             var manager = TacticalManager.Get(); var map = manager?.GetMap();
             if (CombinedArmsResponseRuntime.Threat(agent, _supportThreats, map, manager?.m_Round ?? 0) is not { } threat) return null;
             var current = agent.GetActor().GetTile(); var origin = map.GetTile(threat.X, threat.Z);
-            if (CombinedArmsRuntime.Distance2(current, threat.X, threat.Z) > threat.Range * threat.Range ||
+            if (current == null || origin == null || CombinedArmsRuntime.Distance2(current, threat.X, threat.Z) > 10 * 10 ||
+                CombinedArmsRuntime.Distance2(current, threat.X, threat.Z) > threat.Range * threat.Range ||
                 !origin.HasLineOfSightTo(current, Il2CppTactical.LineOfSightFlags.Default)) return null;
             return new[] { threat.X, threat.Z };
         }

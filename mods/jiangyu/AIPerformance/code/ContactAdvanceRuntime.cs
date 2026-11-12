@@ -141,7 +141,8 @@ internal static partial class ContactAdvanceRuntime
         if (!Ready(agent) || !agent.GetActor().IsInfantry() || CombinedArmsResponseRuntime.HasUsefulAction(agent) ||
             !TryAim(agent, memory, map, round, out var contact) || round - contact.SeenRound > 2 || contact.Range <= 0) return null;
         var current = agent.GetActor().GetTile(); var origin = map.GetTile(contact.X, contact.Z);
-        if (CombinedArmsRuntime.Distance2(current, contact.X, contact.Z) > contact.Range * contact.Range ||
+        if (current == null || origin == null || CombinedArmsRuntime.Distance2(current, contact.X, contact.Z) > 10 * 10 ||
+            CombinedArmsRuntime.Distance2(current, contact.X, contact.Z) > contact.Range * contact.Range ||
             !origin.HasLineOfSightTo(current, Il2CppTactical.LineOfSightFlags.Default)) return null;
         // Already in a usable firing lane: do not smoke our own shot. No requests solely for being far away.
         var target = DetectedTarget(agent, contact);

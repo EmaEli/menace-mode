@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.14.0 — 12 November 2026
+
+- Restrict preventive smoke requests to observed threats within ten tiles, retaining
+  recent last-known contact, threat range and exposure checks.
+- Expose optional mortar-first requests without requiring hand grenades or their AP on
+  requesting infantry; retain movement-AP feasibility for hand-smoke fallback.
+- Recognize accepted mortar smoke as smoke support for coordinated advance groups.
+- Add close/far/hidden/stale contact and mortar-versus-infantry AP regression checks.
+  Gameplay acceptance remains pending.
+
 ## 1.13.0 — 11 November 2026
 
 - Remove the native short-step travel preference only while marching toward a legitimate

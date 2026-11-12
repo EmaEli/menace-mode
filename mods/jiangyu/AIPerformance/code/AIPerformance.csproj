@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Version>1.13.0</Version>
+    <Version>1.14.0</Version>
     <AssemblyName>AIPerformance</AssemblyName>
     <RootNamespace>AIPerformance</RootNamespace>
     <ImplicitUsings>disable</ImplicitUsings>

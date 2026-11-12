@@ -8,6 +8,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="../../../../GameplaySuite/src/SmokeOverhaul/AiSmoke.cs" Link="AiSmoke.cs" />
+    <Compile Include="../../../../GameplaySuite/src/SmokeOverhaul/AiSmokeSupport.cs" Link="AiSmokeSupport.cs" />
     <Compile Include="../../../../GameplaySuite/src/SmokeOverhaul/SmokeAiRules.cs" Link="SmokeAiRules.cs" />
   </ItemGroup>
 </Project>

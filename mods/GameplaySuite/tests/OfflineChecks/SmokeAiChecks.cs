@@ -15,6 +15,17 @@ internal static class SmokeAiChecks
             check(Enumerable.Range(0, 100).Count(roll => roll < SmokeAiRules.Chance(pinned, suppressed)) == expected,
                 "strict 0..99 threshold is exactly 60/45/30, not >= off by one");
         }
+        check(SmokeAiRules.TrySelectThreatBearing(true, true, -4, 3, 1, -1, out int attackerX, out int attackerZ) &&
+            attackerX == -4 && attackerZ == 3, "defensive smoke follows the confirmed attacker even when a nearer enemy is elsewhere");
+        check(!SmokeAiRules.TrySelectThreatBearing(true, false, 0, 0, 1, -1, out _, out _),
+            "defensive smoke is skipped when no current attacker bearing is confirmed");
+        check(!SmokeAiRules.TrySelectThreatBearing(true, true, 0, 0, 1, -1, out _, out _),
+            "defensive smoke rejects a zero-length attacker bearing");
+        check(SmokeAiRules.TrySelectThreatBearing(false, false, 0, 0, 4, -2, out int nearestX, out int nearestZ) &&
+            nearestX == 4 && nearestZ == -2, "exposed-unit smoke follows a known nearest threat without requiring an attacker");
+        check(!SmokeAiRules.TrySelectThreatBearing(false, false, 0, 0, 0, 0, out _, out _),
+            "smoke is skipped when no nonzero threat bearing is known");
+
         int scenarios = 0;
         foreach (bool advance in new[] { false, true })
         for (int dx = -8; dx <= 8; dx++)

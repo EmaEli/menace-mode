@@ -73,7 +73,10 @@ internal static class CombinedArmsResponseChecks
         move = (Move)infantry.Agent.Behaviors[1]; move.TargetTile = exposed;
         move.m_Path.Add(new(12, 0, 10)); move.m_Path.Add(new(14, 0, 10));
         check(Plugin.OffensiveChoiceFixture(infantry.Agent, move).GetID() == "Idle", "unsafe native infantry advance is vetoed, not just denied extra utility");
-        check(Plugin.GetSupportSmokeThreat(infantry.Agent) is [25, 10], "blocked ordinary rifle infantry requests smoke toward remembered threat");
+        check(Plugin.GetSupportSmokeThreat(infantry.Agent) == null, "threat thirteen tiles away does not reveal infantry with premature smoke");
+        var previousTile = infantry.Tile; infantry.Tile = map.GetTile(15, 10);
+        check(Plugin.GetSupportSmokeThreat(infantry.Agent) is [25, 10], "blocked ordinary rifle infantry requests smoke at the ten-tile boundary");
+        infantry.Tile = previousTile;
         var smoke = map.GetTile(14, 10); Plugin.BindSmokeFixture(t => t.Pointer == smoke.Pointer);
         check(ReferenceEquals(Plugin.OffensiveChoiceFixture(infantry.Agent, move), move), "native move through smoke-covered route remains available");
         Plugin.OffensiveScoresFixture(infantry.Agent);

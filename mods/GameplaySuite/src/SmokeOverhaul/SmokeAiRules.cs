@@ -6,9 +6,32 @@ internal static class SmokeAiRules
     internal const int PinnedChance = 60;
     internal const int SuppressedChance = 45;
     internal const int FlamethrowerChance = 30;
+    internal const int PreventiveThreatRange = 10;
+
+    internal static bool IsNearbyThreat(int dx, int dz)
+        => (dx != 0 || dz != 0) && (long)dx * dx + (long)dz * dz <= PreventiveThreatRange * PreventiveThreatRange;
 
     internal static int Chance(bool pinned, bool suppressed, bool supportAdvance = false)
         => pinned ? PinnedChance : suppressed ? SuppressedChance : supportAdvance ? 100 : FlamethrowerChance;
+
+    internal static bool TrySelectThreatBearing(bool defensive, bool hasDetectedAttacker,
+        int attackerDx, int attackerDz, int nearestDx, int nearestDz, out int dx, out int dz)
+    {
+        dx = dz = 0;
+        if (defensive)
+        {
+            // Never substitute a different, merely nearer enemy when the actual attacker is unknown.
+            if (!hasDetectedAttacker || (attackerDx == 0 && attackerDz == 0)) return false;
+            dx = attackerDx;
+            dz = attackerDz;
+            return true;
+        }
+
+        if (nearestDx == 0 && nearestDz == 0) return false;
+        dx = nearestDx;
+        dz = nearestDz;
+        return true;
+    }
 
     internal static bool TryGetLocalOffset(int dx, int dz, bool advance, int reachIndex,
         int candidate, out int x, out int z)

@@ -164,13 +164,24 @@ internal static class ContactAdvanceChecks
             "cover in own firing range outranks safer cover outside range and reserves shot AP");
         check(f.Forward.UtilityByAttacksScore == 0, "projected lane never masquerades as an executed shot");
         var smoke = Plugin.GetSupportSmokeThreat(f.Unit.Agent);
-        check(smoke is { Length: 2 } && smoke[0] == 40, "ordinary unassigned infantry requests smoke inside enemy range but outside own");
+        check(smoke == null, "enemy weapon range alone does not justify preventive smoke thirty tiles away");
+        f.Enemy.Tile = new(20, 20); f.Gun.Skill.MaxRange = 5; Plugin.AdvanceSightFixture(f.Enemy, 9);
+        check(Plugin.GetSupportSmokeThreat(f.Unit.Agent) is [20, 20], "ordinary infantry requests smoke for a known threat exactly ten tiles away");
+        f.Enemy.Detected = false; int smokeReads = f.Enemy.PositionReads;
+        check(Plugin.GetSupportMortarSmokeThreat(f.Unit.Agent) is [20, 20] && f.Enemy.PositionReads == smokeReads,
+            "recent hidden contact uses only its observed tile and does not require an equipped grenade");
+        TacticalManager.Instance.m_Round += 3;
+        check(Plugin.GetSupportMortarSmokeThreat(f.Unit.Agent) == null, "stale contact cannot request preventive mortar smoke");
+        TacticalManager.Instance.m_Round -= 3; f.Enemy.Detected = true;
+        f.Enemy.Tile = new(21, 20); Plugin.AdvanceSightFixture(f.Enemy, 9);
+        check(Plugin.GetSupportSmokeThreat(f.Unit.Agent) == null, "eleven-tile contact cannot request preventive hand smoke");
+        f.Enemy.Tile = new(20, 20); Plugin.AdvanceSightFixture(f.Enemy, 9);
         f.Gun.Skill.MaxRange = 40;
         check(Plugin.GetSupportSmokeThreat(f.Unit.Agent) == null, "do not smoke a usable own firing lane");
         f.Gun.Skill.MaxRange = 10; f.Enemy.Tile = new(65, 20); Plugin.AdvanceSightFixture(f.Enemy, 9);
         check(Plugin.GetSupportSmokeThreat(f.Unit.Agent) == null, "do not waste smoke outside observed enemy weapon range");
-        f.Enemy.Tile = new(40, 20); Plugin.AdvanceSightFixture(f.Enemy, 9);
-        TacticalManager.Instance.Map.GetTile(40, 20).Sees = _ => false;
+        f.Enemy.Tile = new(20, 20); f.Gun.Skill.MaxRange = 5; Plugin.AdvanceSightFixture(f.Enemy, 9);
+        TacticalManager.Instance.Map.GetTile(20, 20).Sees = _ => false;
         check(Plugin.GetSupportSmokeThreat(f.Unit.Agent) == null, "covered approach does not request smoke merely because it is in range");
 
         f = new Fixture(); f.Enemy.Tile = new(40, 20); Plugin.AdvanceSightFixture(f.Enemy, 9);

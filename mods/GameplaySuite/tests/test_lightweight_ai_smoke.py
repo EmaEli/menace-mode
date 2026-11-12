@@ -58,7 +58,8 @@ class LightweightSmokeTests(unittest.TestCase):
         self.assertIn("Math.Min(opponents.Count, MaxSmokeThreatChecks)", threat)
         self.assertLess(threat.index("opponent.IsKnown()"), threat.index("enemy.GetTile()"))
         self.assertLess(threat.index("enemy.IsDetectedByFaction(faction.GetIndex())"), threat.index("enemy.GetTile()"))
-        self.assertIn("attackerDistance <= nearest * 4", threat)
+        self.assertIn("SmokeAiRules.TrySelectThreatBearing(", threat)
+        self.assertNotIn("attackerDistance <= nearest * 4", threat)
         self.assertIn("reachIndex < 2", AI)
         self.assertIn("candidate < 3", AI)
         for forbidden in ("FindPath(", "GetPath(", "GetActors(", "ForEachActor(", "GetDirection(", "IgnoreUsabilityCheck", "NoUsesConsumed"):

@@ -1,3 +1,14 @@
+## 0.10.0
+
+- Prefer equipped usable mortar smoke for coordinated advances, firing only during the
+  mortar's own activation; retain hand-grenade fallback when it is unavailable or fails.
+- Limit preventive smoke to known threats within 10 tiles of the protected squad. Recent
+  unseen contacts use observed tiles, not hidden live positions. Apply the policy to
+  native hand/mortar Use as well; preserve suppressed/pinned hand-smoke emergencies.
+- Prevent duplicate forward screens; keep bounded actor/target checks and debug OFF.
+- Add linked execution, 10/11-tile, last-known-contact, stale-contact and fallback checks.
+  Gameplay acceptance remains pending.
+
 ## 0.9.0
 
 - Answer optional AIPerformance 1.8.0 observed-threat smoke requests for ordinary
@@ -13,6 +24,12 @@
   production warnings/errors, 49 native contracts/12 hooks and 21 smoke-runtime checks.
   Installed 0.9.0/0.9.0.0/0.9.0.0 metadata and affected-only backup verified; settings,
   loader and all 1,445 protected files unchanged. Startup/gameplay acceptance pending.
+
+## 0.8.5
+
+- Defensive proactive smoke now requires a currently detected last attacker; it no longer falls back to the nearest enemy when that enemy may be in a different direction. If no reliable attacker bearing is available, the unit skips the throw.
+- Added production-rule checks for attacker priority, missing/zero attacker bearings, and the existing exposed-unit nearest-threat behavior.
+- All 196 GameplaySuite Python tests and 18,103 C# regression/artifact checks pass. The 130-file BuildKit archive and clean extracted-source Release build pass locally. Canonical Windows BuildOnly/install passed on MENACE 0.7.18+22828; 49 native metadata contracts and 12 hook signatures passed, with zero SmokeOverhaul build warnings/errors. In-game acceptance remains pending.
 
 ## 0.8.4
 

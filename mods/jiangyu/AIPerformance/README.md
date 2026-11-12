@@ -1,4 +1,11 @@
-# AI Performance 1.13.0
+# AI Performance 1.14.0
+
+**1.14.0 smoke refinement (#1):** preventive support requests require a known threat
+within 10 tiles, with the existing two-round freshness/range/LOS checks. A separate
+optional mortar request does not require the infantry to carry a grenade or reserve
+grenade AP. SmokeOverhaul 0.10.0 chooses the usable mortar first and owns execution;
+mortar smoke is recorded as smoke support, not covering fire. Local tests/builds do not
+prove native activation order or gameplay acceptance.
 
 ## Full-speed contact approach (#17, 0.7.18 test candidate)
 
