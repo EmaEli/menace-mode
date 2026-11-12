@@ -16,6 +16,7 @@ internal static class DynamicPerkTrees
     internal static void Apply(PromotionRecord record, UnitLeaderTemplate leader, List<UnityEngine.Object> pinned)
     {
         ValidateSnapshot(record);
+        if (leader == null) throw new ArgumentNullException(nameof(leader));
         if (record.PerkSchemaVersion == 0)
             throw new InvalidOperationException("Legacy promotion records use the shared generic tree.");
         var initial = Lookup(record.InitialPerkId);
@@ -34,10 +35,23 @@ internal static class DynamicPerkTrees
 
         var trees = new Il2CppReferenceArray<PerkTreeTemplate>(1);
         trees[0] = tree;
-        leader.InitialPerk = initial;
-        leader.PerkTrees = trees;
-        if (!Matches(record, leader))
-            throw new InvalidOperationException("Dynamic perk tree readback mismatch.");
+        var previousInitial = leader.InitialPerk;
+        var previousTrees = leader.PerkTrees;
+        try
+        {
+            leader.InitialPerk = initial;
+            leader.PerkTrees = trees;
+            string mismatch = ReadbackMismatch(record, leader);
+            if (mismatch != null)
+                throw new InvalidOperationException("Dynamic perk tree readback mismatch: " + mismatch);
+        }
+        catch
+        {
+            // VerifyOrApply also handles existing leaders: leave their old tree intact on failure.
+            leader.InitialPerk = previousInitial;
+            leader.PerkTrees = previousTrees;
+            throw;
+        }
     }
 
     /// <summary>Keeps an already bound identical tree; otherwise binds the saved snapshot.</summary>
@@ -54,21 +68,49 @@ internal static class DynamicPerkTrees
         else PerkGeneration.Validate(record);
     }
 
-    internal static bool Matches(PromotionRecord record, UnitLeaderTemplate leader)
+    internal static bool Matches(PromotionRecord record, UnitLeaderTemplate leader) =>
+        ReadbackMismatch(record, leader) == null;
+
+    internal static string ReadbackMismatch(PromotionRecord record, UnitLeaderTemplate leader)
     {
-        if (leader?.InitialPerk == null || leader.InitialPerk.GetID() != record.InitialPerkId ||
-            leader.PerkTrees == null || leader.PerkTrees.Length != 1 || leader.PerkTrees[0] == null)
-            return false;
-        var native = leader.PerkTrees[0].Perks;
-        if (native == null || native.Length != record.GeneratedPerks.Count) return false;
+        if (leader == null) return "leader is null";
+        string actualInitial = leader.InitialPerk?.GetID();
+        if (!string.Equals(actualInitial, record.InitialPerkId, StringComparison.Ordinal))
+            return $"initial perk expected '{record.InitialPerkId}', actual '{actualInitial ?? "<null>"}'";
+        var trees = leader.PerkTrees;
+        if (trees == null || trees.Length != 1)
+            return $"tree count expected 1, actual {trees?.Length.ToString() ?? "<null>"}";
+        if (trees[0] == null) return "tree[0] is null";
+        var native = trees[0].Perks;
+        if (native == null || native.Length != record.GeneratedPerks.Count)
+            return $"option count expected {record.GeneratedPerks.Count}, actual {native?.Length.ToString() ?? "<null>"}";
         for (int i = 0; i < native.Length; i++)
-            if (native[i]?.Skill == null || native[i].Skill.GetID() != record.GeneratedPerks[i].Id ||
-                native[i].Tier != record.GeneratedPerks[i].Tier)
-                return false;
-        return true;
+        {
+            var option = native[i];
+            var expected = record.GeneratedPerks[i];
+            string actualId = option?.Skill?.GetID();
+            if (!string.Equals(actualId, expected.Id, StringComparison.Ordinal))
+                return $"option[{i}] skill expected '{expected.Id}', actual '{actualId ?? "<null>"}'";
+            if (option.Tier != expected.Tier)
+                return $"option[{i}] '{expected.Id}' tier expected {expected.Tier}, actual {option.Tier}";
+        }
+        return null;
     }
 
-    private static PerkTemplate Lookup(string id) =>
-        DataTemplateLoader.Get<PerkTemplate>(id, false)
-        ?? throw new InvalidOperationException("Missing native perk template: " + id);
+    // A map entry is not enough: reject aliases/corrupted IDs before creating a new snapshot.
+    internal static bool IsAvailable(string id)
+    {
+        var perk = DataTemplateLoader.Get<PerkTemplate>(id, false);
+        return perk != null && string.Equals(perk.GetID(), id, StringComparison.Ordinal);
+    }
+
+    private static PerkTemplate Lookup(string id)
+    {
+        var perk = DataTemplateLoader.Get<PerkTemplate>(id, false)
+            ?? throw new InvalidOperationException("Missing native perk template: " + id);
+        string actual = perk.GetID();
+        if (!string.Equals(actual, id, StringComparison.Ordinal))
+            throw new InvalidOperationException($"Native perk lookup ID mismatch: requested '{id}', actual '{actual ?? "<null>"}'.");
+        return perk;
+    }
 }

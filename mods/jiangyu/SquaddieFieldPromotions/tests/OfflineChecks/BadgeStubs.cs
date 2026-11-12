@@ -1,6 +1,13 @@
 // Managed Unity simulation for the production badge algorithm, not rendering evidence.
 namespace Il2CppInterop.Runtime.InteropTypes.Arrays
 {
+    public class Il2CppReferenceArray<T>
+    {
+        private readonly T[] _values;
+        public Il2CppReferenceArray(int length) { _values = new T[length]; }
+        public int Length => _values.Length;
+        public T this[int index] { get => _values[index]; set => _values[index] = value; }
+    }
     public class Il2CppStructArray<T>
     {
         public readonly T[] Values;
@@ -14,6 +21,11 @@ namespace UnityEngine
     public enum TextureFormat { RGBA32 }
     public enum FilterMode { Bilinear }
     public class Object { public HideFlags hideFlags; }
+    public class ScriptableObject : Object
+    {
+        public string name;
+        public static T CreateInstance<T>() where T : ScriptableObject, new() => new();
+    }
     public struct Color32
     {
         public byte r, g, b, a;

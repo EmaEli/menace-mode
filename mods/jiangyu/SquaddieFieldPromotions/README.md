@@ -1,6 +1,12 @@
-# Squaddie Field Promotions 0.22.6
+# Squaddie Field Promotions 0.22.7
 
-> **0.22.6 compatibility candidate (#87):** restores the 0.7.18 native initialization contract
+> **0.22.7 perk safety candidate (#101):** remove obsolete new-generation IDs and correct
+> current native tier assignments for Hit the Deck, Sharpshooter, Grind Down and To Shreds.
+> New infantry/vehicle choices require exact native IDs; failed binding restores the previous
+> tree and reports the exact mismatch. Existing saved trees and purchased perks are unchanged.
+> Local/Windows validation and gameplay acceptance are recorded separately below/in the changelog.
+>
+> **0.22.6 compatibility baseline (#87):** restores the 0.7.18 native initialization contract
 > and updates infantry/vehicle B Team modifiers to the new property array. Templates were
 > rebuilt with Jiangyu 1.4.10. Local checks passed; Windows installation and gameplay are pending.
 > Existing promotion identities, portraits and voices are preserved.
@@ -223,7 +229,7 @@ The kit also ships the module's raw `runtime_assets/` (portraits, prebuilt John/
 voice bundle with its build receipt, voice routes); the installer stages them next to
 the compiled package because `jiangyu compile --clean` does not preserve them.
 
-## Acceptance test (0.22.6 test candidate; in-game checks pending)
+## Acceptance test (0.22.7 test candidate; in-game checks pending)
 
 First load a disposable copy of a campaign with existing promoted leaders. Confirm they
 remain present after load and SFP initializes without the native API or B Team field errors.
@@ -231,6 +237,10 @@ Try an infantry promotion and check the B Team deployment/Discipline modifiers.
 
 On a disposable save, retry an infantry promotion with a high-XP soldier: a missing optional
 perk such as `perk.payback` must no longer abort generation when enough other perks are available.
+Try a vehicle promotion too. New Hit the Deck/Sharpshooter infantry choices and Grind Down/To Shreds
+vehicle choices should be tier 2. Existing leaders must retain their saved tiers. If promotion
+fails again, retain the exact error: it now identifies the failed native field/option instead
+of only saying "readback mismatch". Do not bypass the failure gate or modify the saved snapshot.
 For a blocked redemption (for example, an existing dossier after disabling promotions), confirm
 exactly one High-Value Salvage appears in inventory and the dialog reports trade value 40.
 Successful promotion must grant only the leader, not salvage. Reopen the market to refresh inventory;

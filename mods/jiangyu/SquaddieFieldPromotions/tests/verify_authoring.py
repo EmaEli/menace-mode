@@ -12,13 +12,17 @@ PROGRESSION_KDL = (ROOT / 'templates' / 'generic-infantry-progression.kdl').read
 
 
 class AuthoringTests(unittest.TestCase):
-    def test_new_infantry_perks_use_runtime_availability(self):
+    def test_new_infantry_and_vehicle_perks_require_exact_native_ids(self):
         forge = (ROOT / 'code/LeaderForge.cs').read_text(encoding='utf-8')
-        self.assertIn('id => DataTemplateLoader.Get<PerkTemplate>(id, false) != null', forge)
+        vehicle = (ROOT / 'code/VehiclePromotionIdentity.cs').read_text(encoding='utf-8')
+        trees = (ROOT / 'code/DynamicPerkTrees.cs').read_text(encoding='utf-8')
+        self.assertIn('DynamicPerkTrees.IsAvailable', forge)
+        self.assertIn('VehiclePerkGeneration.Generate(record, mentor, DynamicPerkTrees.IsAvailable)', vehicle)
+        self.assertIn('string.Equals(perk.GetID(), id, StringComparison.Ordinal)', trees)
 
     def test_jiangyu_not_old_modpack(self):
         self.assertEqual(MANIFEST['name'], 'SquaddieFieldPromotions')
-        self.assertEqual(MANIFEST['version'], '0.22.6')
+        self.assertEqual(MANIFEST['version'], '0.22.7')
         compiled_manifest = json.loads((ROOT / 'compiled/jiangyu.json').read_text(encoding='utf-8'))
         self.assertEqual(compiled_manifest['version'], MANIFEST['version'])
         self.assertTrue(any(dep.startswith('Jiangyu ') for dep in MANIFEST['depends']))
@@ -508,7 +512,7 @@ class AuthoringTests(unittest.TestCase):
         self.assertIn('record.SourceCrewVehicleGuid', identity)
         self.assertIn('SourceCrewPilotName = sourceCommander', identity)
         self.assertIn('if (IsVehicleCrewPromotion) VehiclePerkGeneration.Validate(this)', record)
-        self.assertIn('VehiclePerkGeneration.Generate(record, mentor)', identity)
+        self.assertIn('VehiclePerkGeneration.Generate(record, mentor, DynamicPerkTrees.IsAvailable)', identity)
         self.assertIn('LegacyInitialPerkId = "perk.expert_pilot_vehicle"', perks)
         self.assertIn('InitialPerkId = PromotionProgression.VehicleInitialPerkId', perks)
         self.assertIn('LegacySchema = 2', perks)

@@ -18,16 +18,16 @@ internal static class VehiclePerkGeneration
     private static readonly string[][] Base =
     {
         new[] { "solid_grouping", "new_tricks", "tankbuster", "minimize_silhouette" },
-        new[] { "bags_belts", "zig_zag", "dash_walker", "fragmentation", "fervor", "scout" },
-        new[] { "critical_hits", "minimize_silhouette", "fortify", "vanguard", "call_out_target", "grind_down", "drive_by" },
+        new[] { "bags_belts", "zig_zag", "dash_walker", "fragmentation", "fervor", "scout", "grind_down" },
+        new[] { "critical_hits", "minimize_silhouette", "fortify", "vanguard", "call_out_target", "drive_by" },
         new[] { "steady_gun", "lucky_shot", "sharpshooter" },
     };
 
     private static readonly string[][] Advanced =
     {
         new[] { "lancer", "recycled_parts", "shepherd" },
-        new[] { "hotwire_vehicle", "take_aim_new", "unbreakable_vehicle", "quick_hands" },
-        new[] { "overload_vehicle", "to_shreds_vehicle", "fury", "finisher" },
+        new[] { "hotwire_vehicle", "take_aim_new", "unbreakable_vehicle", "quick_hands", "to_shreds_vehicle" },
+        new[] { "overload_vehicle", "fury", "finisher" },
         new[] { "berserk", "shooting_gallery", "divine_intervention" },
     };
 
@@ -39,16 +39,18 @@ internal static class VehiclePerkGeneration
             ["perk.bags_belts"] = 2, ["perk.zig_zag"] = 2, ["perk.dash_walker"] = 2,
             ["perk.fragmentation"] = 2, ["perk.fervor"] = 2, ["perk.hotwire_vehicle"] = 2,
             ["perk.take_aim_new"] = 2, ["perk.unbreakable_vehicle"] = 2, ["perk.quick_hands"] = 2,
-            ["perk.overload_vehicle"] = 3, ["perk.to_shreds_vehicle"] = 3, ["perk.fury"] = 3,
+            ["perk.overload_vehicle"] = 3, ["perk.to_shreds_vehicle"] = 2, ["perk.fury"] = 3,
             ["perk.finisher"] = 3, ["perk.vanguard"] = 3, ["perk.call_out_target"] = 3,
-            ["perk.grind_down"] = 3, ["perk.steady_gun"] = 4, ["perk.lucky_shot"] = 4,
+            ["perk.grind_down"] = 2, ["perk.steady_gun"] = 4, ["perk.lucky_shot"] = 4,
             ["perk.sharpshooter"] = 4, ["perk.divine_intervention"] = 4, ["perk.berserk"] = 4,
             ["perk.shooting_gallery"] = 4,
         };
 
-    internal static void Generate(PromotionRecord record, MentorSnapshot mentor)
+    internal static void Generate(PromotionRecord record, MentorSnapshot mentor, Func<string, bool> isAvailable = null)
     {
         if (record == null) throw new ArgumentNullException(nameof(record));
+        // Only filter new snapshots. Never rewrite an existing vehicle leader on load.
+        isAvailable ??= _ => true;
         int xp = record.SourceCrewXp;
         var random = new PerkGeneration.StableRandom(record.LeaderId + ":sfp-vehicle-perks-v1");
         int band = PerkGeneration.Band(xp);
@@ -64,8 +66,8 @@ internal static class VehiclePerkGeneration
                 3 => band >= 5 ? 2 : band >= 3 ? 1 : 0,
                 _ => band >= 6 ? 2 : band >= 4 ? 1 : 0,
             };
-            var premium = Advanced[tier - 1].Select(Id).Where(id => !used.Contains(id)).ToList();
-            var ordinary = Base[tier - 1].Select(Id).Where(id => !used.Contains(id)).ToList();
+            var premium = Advanced[tier - 1].Select(Id).Where(id => !used.Contains(id) && isAvailable(id)).ToList();
+            var ordinary = Base[tier - 1].Select(Id).Where(id => !used.Contains(id) && isAvailable(id)).ToList();
             random.Shuffle(premium);
             random.Shuffle(ordinary);
             foreach (string id in premium.Take(advancedCount))
@@ -88,7 +90,8 @@ internal static class VehiclePerkGeneration
         if (maxMentor > 0 && mentor != null)
         {
             var learned = mentor.LearnedPerkIds
-                .Where(id => MentorTiers.TryGetValue(id, out int tier) && tier <= maxMentorTier && id != InitialPerkId)
+                .Where(id => MentorTiers.TryGetValue(id, out int tier) && tier <= maxMentorTier &&
+                    id != InitialPerkId && isAvailable(id))
                 .OrderBy(id => id, StringComparer.Ordinal).ToList();
             random.Shuffle(learned);
             int inherited = 0;

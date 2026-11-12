@@ -68,7 +68,7 @@ internal sealed class LeaderForge
         };
         PromotionIdentity.Populate(record, soldier, service, sourceLeaderTemplateId);
         PerkGeneration.Generate(record, selection.UsesXp ? soldier.Xp : null, ReadMentor(state, soldier.Id, service),
-            id => DataTemplateLoader.Get<PerkTemplate>(id, false) != null);
+            DynamicPerkTrees.IsAvailable);
         record.Validate();
         return record;
     }

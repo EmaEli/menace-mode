@@ -1,6 +1,6 @@
 {
   "name": "SquaddieFieldPromotions",
-  "version": "0.22.6",
+  "version": "0.22.7",
   "author": "Luca / OpenAI",
   "description": "Promotes living squaddies or Veterancy-backed vehicle crew to persistent leaders with saved progression and rollback-safe source replacement. Gender-matched generic pilot portraits; generic infantry heads by default.",
   "depends": ["Jiangyu >= 1.4.8", "MenaceModSettings >= 0.6.1"]

@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.22.7 — audited perk pools and safe native readback (#101)
+
+- Remove obsolete Payback/Standby IDs from new infantry choices, without enabling the
+  Kubra-specific or unused replacements. Match current same-role native tiers for
+  Hit the Deck, Sharpshooter, Grind Down and To Shreds, including mentor options.
+- Require an exact native `GetID()` match for new infantry and vehicle candidates;
+  reject missing/aliased saved perk lookups before changing the leader.
+- Restore the previous native initial perk/tree if binding fails. Report the precise
+  initial-perk, tree/option count, option index, skill ID or tier discrepancy on failure.
+- Preserve all existing saved snapshots, legacy generic trees and purchased perks.
+  No progression schema changes, rerolls or automatic conversion of old tiers.
+- Add production tree-binding/rollback simulations, XP-band generation coverage and
+  native array/member contract checks. Gameplay acceptance remains pending; the
+  intermittent November 10 native failure has not yet been reproduced in-game.
+
 ## 0.22.6 — MENACE 0.7.18 compatibility (#87)
 
 - Match the new `Roster.AddHirableLeader(UnitLeaderTemplate, bool)` preflight signature,

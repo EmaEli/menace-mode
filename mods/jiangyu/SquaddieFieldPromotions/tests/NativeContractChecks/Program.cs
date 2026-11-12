@@ -70,6 +70,11 @@ Check(MemberType("PropertyChange", "AmountMult") == "Single", "multiplicative am
 Check(MemberType("ChangeProperty", "ValueProvider") == "IValueProvider", "value-provider override");
 Check(MemberType("ChangeProperty", "TooltipPlaceholderIndex") == "Int32", "tooltip override");
 Check(MemberType("ChangeProperty", "IncludePlusSign") == "Boolean", "tooltip sign");
+Check(MemberType("UnitLeaderTemplate", "InitialPerk") == "PerkTemplate", "initial perk binding");
+Check(MemberType("UnitLeaderTemplate", "PerkTrees") == "Il2CppReferenceArray<PerkTreeTemplate>", "leader perk-tree array");
+Check(MemberType("PerkTreeTemplate", "Perks") == "Il2CppReferenceArray<Perk>", "native perk option array");
+Check(MemberType("Perk", "Skill") == "PerkTemplate", "native option skill");
+Check(MemberType("Perk", "Tier") == "Int32", "native option tier");
 Console.WriteLine($"PASS: {checks} native metadata contracts; no native methods executed.");
 
 sealed class SignatureNames : ISignatureTypeProvider<string, object?>

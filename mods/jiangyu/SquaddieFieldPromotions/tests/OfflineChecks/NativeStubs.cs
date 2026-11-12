@@ -104,6 +104,11 @@ namespace Il2CppMenace.Strategy
         public string Id;
         public string GetID() => Id;
     }
+    public class Perk { public PerkTemplate Skill; public int Tier; }
+    public class PerkTreeTemplate : UnityEngine.ScriptableObject
+    {
+        public Il2CppInterop.Runtime.InteropTypes.Arrays.Il2CppReferenceArray<Perk> Perks;
+    }
     public class UnitLeaderTemplate
     {
         public UnityEngine.Sprite Slot, SlotInactive;
@@ -117,6 +122,13 @@ namespace Il2CppMenace.Strategy
         public UnitLeaderTemplate InfantryUnitTemplate;
         public UnityEngine.Sprite Badge, BadgeWhite, BadgeMini, BadgeDragged, BadgeUnitWindow, SlotBadge, BigBadge;
         public PerkTemplate InitialPerk;
+        private Il2CppInterop.Runtime.InteropTypes.Arrays.Il2CppReferenceArray<PerkTreeTemplate> _perkTrees;
+        public Action<UnitLeaderTemplate> AfterPerkTreesAssigned;
+        public Il2CppInterop.Runtime.InteropTypes.Arrays.Il2CppReferenceArray<PerkTreeTemplate> PerkTrees
+        {
+            get => _perkTrees;
+            set { _perkTrees = value; AfterPerkTreesAssigned?.Invoke(this); }
+        }
         public string Id;
         public string GetID() => Id;
         // Native v0.7.17 getters select the entity's text for infantry (ActorType == 0).

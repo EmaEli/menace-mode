@@ -23,6 +23,7 @@ if (args.Length == 2 && args[0] == "--voice-proposal")
     Console.WriteLine("PASS: " + checks + " private voice-proposal contract checks; no audio playback or installation.");
     return;
 }
+PerkRuntimeChecks.Run(Check);
 Candidate C(int id, int missions = 0, int? xp = null, bool assigned = false,
     string lastUnitTitle = "", string lastCommander = "", string rank = "", string sourceLeaderTemplateId = "",
     int gender = 0, int skinColor = 1) =>
@@ -378,9 +379,9 @@ for (int index = 0; index < 100; index++)
 {
     var filtered = PerkRecord(8000);
     PerkGeneration.Generate(filtered, 8000, new MentorSnapshot("squad_leader.lim", new[] { "perk.stubborn" }),
-        id => id != "perk.payback" && id != "perk.stubborn");
+        id => id != "perk.run_and_gun" && id != "perk.stubborn");
     Check(filtered.GeneratedPerks.Count == 16 &&
-        filtered.GeneratedPerks.All(perk => perk.Id != "perk.payback" && perk.Id != "perk.stubborn"),
+        filtered.GeneratedPerks.All(perk => perk.Id != "perk.run_and_gun" && perk.Id != "perk.stubborn"),
         "unavailable runtime perks excluded from new base, advanced and mentor choices " + index);
 }
 var unavailableTree = PerkRecord(8000);

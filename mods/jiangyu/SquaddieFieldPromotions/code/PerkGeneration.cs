@@ -40,24 +40,25 @@ internal static class PerkGeneration
     // Native perks observed at these tiers in extracted MENACE perk trees.
     private static readonly string[][] Base =
     {
-        new[] { "athletic", "scout", "solid_grouping", "new_tricks", "hit_the_deck", "buff" },
-        new[] { "bags_belts", "mobile_infantry", "share_the_load", "stubborn", "determined", "quick_hands", "zig_zag" },
+        new[] { "athletic", "scout", "solid_grouping", "new_tricks", "buff" },
+        new[] { "bags_belts", "mobile_infantry", "share_the_load", "stubborn", "determined", "quick_hands", "zig_zag", "hit_the_deck" },
         new[] { "steady_gun", "fortify", "tankbuster", "call_out_target", "pointfire", "grenadier" },
         new[] { "full_send", "team_spirit", "blaze_of_glory" },
     };
 
     private static readonly string[][] Advanced =
     {
-        new[] { "run_and_gun", "payback", "suppressive_fire", "trinketing" },
-        new[] { "resourceful", "return_of_serve", "scavenger", "standby" },
+        // Payback is now Kubra-specific; Standby is explicitly unused in the game catalog.
+        new[] { "run_and_gun", "suppressive_fire", "trinketing" },
+        new[] { "resourceful", "return_of_serve", "scavenger", "sharpshooter" },
         new[] { "counter_strike", "finisher", "disruptive_fire", "fragmentation", "jump_the_grenade" },
-        new[] { "critical_hits", "sharpshooter", "berserk", "firing_line" },
+        new[] { "critical_hits", "berserk", "firing_line" },
     };
 
     // Learned skills a mentor may pass on; unique, active command and scripted perks are excluded.
     internal static readonly IReadOnlyDictionary<string, int> MentorTiers = new Dictionary<string, int>(StringComparer.Ordinal)
     {
-        ["perk.athletic"] = 1, ["perk.scout"] = 1, ["perk.solid_grouping"] = 1, ["perk.hit_the_deck"] = 1,
+        ["perk.athletic"] = 1, ["perk.scout"] = 1, ["perk.solid_grouping"] = 1, ["perk.hit_the_deck"] = 2,
         ["perk.buff"] = 2, ["perk.bags_belts"] = 2, ["perk.mobile_infantry"] = 2, ["perk.stubborn"] = 2,
         ["perk.determined"] = 2, ["perk.quick_hands"] = 2, ["perk.fortify"] = 3, ["perk.firing_line"] = 4,
     };

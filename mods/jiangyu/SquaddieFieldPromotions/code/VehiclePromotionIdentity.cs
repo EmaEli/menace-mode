@@ -78,7 +78,7 @@ internal static class VehiclePromotionIdentity
         MentorSnapshot mentor = null;
         try { mentor = MentorPerks.ReadHiredLeader(state, candidate.PilotTemplateId); }
         catch { /* Mentor perks are optional; retain the curated vehicle pool. */ }
-        VehiclePerkGeneration.Generate(record, mentor);
+        VehiclePerkGeneration.Generate(record, mentor, DynamicPerkTrees.IsAvailable);
         record.Validate();
         return record;
     }
