@@ -31,6 +31,36 @@ Source candidate: SmokeOverhaul **0.10.0**, AIPerformance **1.14.0**.
 - Both production Release projects compile with zero warnings/errors against cached
   0.7.18 proxies. Windows build, deployment and gameplay are separate gates.
 
+## Canonical Windows test installation
+
+Source commit **7dbd735** pushed to dev; main was checked and is behind dev, with no
+source merge needed. These are test candidates, not public releases.
+
+- Small-file SCP round-trip matched SHA256 before staging. Work, SDK and temp stayed on
+  E:\MENACE-Work; verified 0.7.18+22828 native/proxy fingerprints matched local references.
+- Both standalone bundled-source ZIPs passed inventory verification, clean local builds,
+  canonical Windows BuildOnly and installation with private .NET SDK **10.0.113**.
+  Both production builds had zero warnings/errors. Native metadata contracts: smoke
+  **49 / 12 hooks**, AI **232**; linked checks: smoke **54**, AI **303 + 19,786**.
+- AIPerformance installed manifest/assembly/file **1.14.0 / 1.14.0.0 / 1.14.0.0**;
+  DLL SHA256 `509C45A2A076908E66CDD79694B1C75D2A7FF7BB7C253D7F0F4E5594CF3B56A6`.
+  Backup: `_MENACE_Backups/20261112-084236-43c865c1554c4fa09370fca11ade96b8`.
+  ZIP SHA256 `f2729b2739bdaf9bdee82e182df898bd702ea7894e16514357950fd60b1240d6`.
+- SmokeOverhaul installed manifest/assembly/file **0.10.0 / 0.10.0.0 / 0.10.0.0**;
+  DLL SHA256 `C685C6229EA8FD2B23FBBBF6E074C930BFDEF9466B6002701DEA876C68850CEE`.
+  Backup: `_MENACE_Backups/20261112-084303-24956ff0b3dc4c0d95e58ea3c59343db`.
+  ZIP SHA256 `75f30cbe867fdea56d568a4e81643c551a7f02dc4dc53f50efd1e14850fc773a`.
+- Each journal contains only its selected mod folder and absent legacy loose-DLL target;
+  original backups and live payload hashes were verified. All **1,462 protected files**
+  and **177 references** remained unchanged. Installed settings and loader were reused.
+  No saves, settings or unrelated mods were modified. Game stayed closed.
+- Full local suites: **210 Python tests**, **158 AI/map Python tests (8 skipped)** and
+  **18,306 offline C# assertions** passed. Each isolated kit also passed 18,011 offline
+  assertions; metadata/stand-in checks do not execute native gameplay.
+
+Startup, actual smoke selection/placement, performance and gameplay acceptance are
+**pending user testing**. Issue #1 remains open.
+
 ## Gameplay check
 
 Try an advance with a usable smoke mortar and infantry facing a known threat within ten

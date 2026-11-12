@@ -8,6 +8,9 @@
 - Prevent duplicate forward screens; keep bounded actor/target checks and debug OFF.
 - Add linked execution, 10/11-tile, last-known-contact, stale-contact and fallback checks.
   Gameplay acceptance remains pending.
+- Canonical Windows BuildOnly/install passed on 0.7.18 / SDK 10.0.113, zero production
+  warnings/errors. Installed 0.10.0 metadata, affected-only backup and payload hashes
+  verified; all 1,462 protected files and 177 references unchanged. Settings/loader reused.
 
 ## 0.9.0
 

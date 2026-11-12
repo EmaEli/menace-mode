@@ -9,6 +9,9 @@
 - Recognize accepted mortar smoke as smoke support for coordinated advance groups.
 - Add close/far/hidden/stale contact and mortar-versus-infantry AP regression checks.
   Gameplay acceptance remains pending.
+- Canonical Windows BuildOnly/install passed on 0.7.18 / SDK 10.0.113, zero production
+  warnings/errors. Installed 1.14.0 metadata, affected-only backup and payload hashes
+  verified; all 1,462 protected files and 177 references unchanged. Settings/loader reused.
 
 ## 1.13.0 — 11 November 2026
 
