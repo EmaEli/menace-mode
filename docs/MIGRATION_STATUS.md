@@ -99,7 +99,15 @@ The previous 0.2.0 template-only
 candidate passed canonical BuildOnly/install on MENACE 0.7.18+22828, with backup
 `_MENACE_Backups/20261105-180433-36f506b924eb46cb94bae4d0108f4b0d`; that is not 0.3.0 evidence.
 
-Experimental package (not included in the default Suite): **SquaddieFieldPromotions 0.22.1 failure-recovery candidate (#79); canonically installed 2026-10-25, gameplay pending**.
+Experimental package (not included in the default Suite): **SquaddieFieldPromotions 0.22.7 perk-safety candidate for MENACE 0.7.18 (#101); prior installed version 0.22.6**.
+The candidate removes two obsolete pool IDs, matches current same-role native tiers for four
+perks, checks exact native IDs for both promotion types and restores previous bindings on failure.
+Existing saved snapshots and legacy trees are preserved; detailed failures identify the actual
+native field/option mismatch. Local and clean extracted-source checks passed. Windows BuildOnly
+was blocked during pinned Jiangyu archive extraction (missing analyzer DLL); no installation
+was attempted. MENACE was subsequently running; installed SFP remains 0.22.6. Gameplay pending.
+The 0.22.6 baseline updated `AddHirableLeader` and B Team nested property arrays with Jiangyu 1.4.10.
+Historical compatibility evidence follows (not proof of 0.22.7 or gameplay acceptance).
 New infantry perk generation checks the current native catalog after 0.22.0 failed on unavailable
 `perk.payback`. Uncommitted redemptions grant one High-Value Salvage commodity (base trade value 40);
 successful promotions and existing saved perk snapshots are unchanged. Uncertain rollback/refund requires

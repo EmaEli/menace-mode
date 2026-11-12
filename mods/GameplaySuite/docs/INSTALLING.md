@@ -38,7 +38,7 @@ checked separately; MenaceModSettings retains assembly identity 1.0.0.0.
 ### Scoped v0.7.18 test candidate (#86 / #62)
 
 The catalog additionally permits standalone GarrisonableBuildings and the opt-in
-SquaddieFieldPromotions 0.22.6 candidate on **0.7.18+22828**, native SHA256 `494c9e21…`.
+SquaddieFieldPromotions 0.22.7 candidate on **0.7.18+22828**, native SHA256 `494c9e21…`.
 SFP requires `-Product Standalone -Modules SquaddieFieldPromotions -UseInstalledSettings`:
 its installed settings companion and pinned loader are verified, not replaced.
 Fresh MelonLoader proxies and native metadata contracts were checked. SFP's B Team

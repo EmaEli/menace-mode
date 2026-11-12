@@ -98,3 +98,39 @@ than one combined boolean. Preserve rollback and the existing readback gate.
 - Audit completed successfully against the fresh export. No game launch, gameplay
   source edits, build/install, save/settings edits or live runtime verification.
   Only isolated analysis scripts/config/cache were created on the PC.
+
+## Implementation follow-up — 0.22.7 candidate
+
+Source commit: `e43dde9ef909685370d103503df26f1b9ad0a3f5` on `dev` (#101).
+
+- Remove both obsolete IDs from new infantry pools, correct the four current
+  same-role tier differences and corresponding mentor tiers, and apply exact-ID
+  runtime availability checks to both infantry and vehicle generation.
+- Validate resolved IDs before mutation. If native binding fails, restore the
+  previous initial perk/tree and report the exact field/index/ID/tier discrepancy.
+- No saved-tree migrations, schema changes, rerolls or legacy generic-tree changes.
+- Re-running the fresh-export audit finds no missing IDs or same-role native-tier
+  discrepancies in the new-generation pools. Legacy differences remain intentional.
+- Local Release and clean extracted-source builds: zero warnings/errors.
+  Passed: 29 authoring tests, 22 SFP Python tests, 210 shared Python tests,
+  13,123 packaged C# behavior checks and 33 native metadata contracts.
+  Behavior checks simulate native APIs; they are not an in-game reproduction/fix proof.
+- Verified standalone/installed-settings BuildKit: 337 inventoried files;
+  ZIP SHA256 `42836d117254e73b191caa8085d3c659774e32e3c17c849babc05aa56399cf44`.
+
+### Windows deployment blocked — no live install
+
+- Preflight: game closed; all 166 local game/runtime DLL hashes matched the PC;
+  1,278 unrelated Mods/UserData files were snapshotted. Source inventory and transfer
+  hashes passed; the private SDK was the pinned 10.0.113.
+- Canonical Windows BuildOnly stopped during extraction of the pinned Jiangyu
+  archive: `toolchain/sdk/Jiangyu.Sdk.Analyzers.dll` could not be found.
+  The archive SHA256 matched the catalog and its directory contains the analyzer.
+  An antivirus quarantine was not established; no security settings were changed.
+- A subsequent read-only check found MENACE running, SFP still at **0.22.6**, and
+  only the extractor debug log changed among the protected files. No installation
+  or live DLL replacement was attempted. No saves were edited by this work.
+- Work/artifacts: `E:\MENACE-Work\Builds\SFP-0.22.7-AFyzzg`;
+  canonical log: `E:\MENACE-Work\Temp\MENACE-install.log`.
+  Close the game and resolve the extraction gate before retrying BuildOnly/install.
+  The November 10 intermittent native readback failure still needs an in-game retest.

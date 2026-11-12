@@ -4,7 +4,9 @@
 > current native tier assignments for Hit the Deck, Sharpshooter, Grind Down and To Shreds.
 > New infantry/vehicle choices require exact native IDs; failed binding restores the previous
 > tree and reports the exact mismatch. Existing saved trees and purchased perks are unchanged.
-> Local/Windows validation and gameplay acceptance are recorded separately below/in the changelog.
+> Local and clean-source checks passed. **Not installed:** Windows BuildOnly stopped on a
+> missing Jiangyu SDK analyzer during extraction; the game was subsequently found running.
+> Installed SFP remains 0.22.6. See the changelog for the checks and deployment blocker.
 >
 > **0.22.6 compatibility baseline (#87):** restores the 0.7.18 native initialization contract
 > and updates infantry/vehicle B Team modifiers to the new property array. Templates were

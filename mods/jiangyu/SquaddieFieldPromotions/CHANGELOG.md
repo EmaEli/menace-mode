@@ -14,6 +14,13 @@
 - Add production tree-binding/rollback simulations, XP-band generation coverage and
   native array/member contract checks. Gameplay acceptance remains pending; the
   intermittent November 10 native failure has not yet been reproduced in-game.
+- Local Release and clean extracted-source builds passed with zero warnings/errors;
+  29 authoring, 22 SFP Python, 210 shared Python, 13,123 packaged behavior and 33 native
+  metadata checks passed. The 337-file standalone BuildKit passed integrity checks.
+- Windows BuildOnly was blocked while extracting the hash-verified Jiangyu archive:
+  its analyzer DLL could not be found. No live installation was attempted; 0.22.6
+  remains installed. A subsequent check found MENACE running, so deployment stopped.
+  Antivirus quarantine has not been established; do not bypass security or copy DLLs manually.
 
 ## 0.22.6 — MENACE 0.7.18 compatibility (#87)
 
