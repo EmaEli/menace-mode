@@ -82,5 +82,21 @@ with the symptom, not proof of the precise branch for every captured actor.
   Both subsequent canonical runs passed extraction without installer changes,
   alternate extraction or security changes. The historical failure's cause remains
   unconfirmed; neither quarantine nor an installer defect was established.
-- Startup and native gameplay are not yet tested. Issue #102 stays open until the
-  player confirms useful closing/attacks in game; installation alone is not acceptance.
+- Post-install `Latest.log` was retrieved after a SHA256-matched SFTP probe and verified
+  against the PC copy: 4,797,689 bytes, SHA256
+  `af4271a25c530a8bccfd4857446db1cf1180121dba6bdb1299b0e0244a0e2778`. Retained locally
+  at `.tmp/bugs102-postinstall-Latest.log`.
+- The log confirms AIPerformance 1.14.1 loaded (`1 system`), with no AIPerformance
+  warning/error/exception entries. Contact-advance produced 108 march-choice records
+  over rounds 2–5: 107 selected a different tile, usually spending most or all of the
+  available AP budget; one retained its current tile with 96/100 AP. Round summaries
+  show contact counts 3, 9 and 11 in rounds 3–5 and faction-7 assignments 43, 43 and
+  40. This supports that the new long-approach selection is active, but the trace logs
+  choices, not confirmed native movement completion or attack execution.
+- The same session has 36 repeated WMR mortar warnings reporting `Structure` to `Actor`
+  invalid casts, plus a mortar tile-highlight IL2CPP class-pointer warning. These are
+  separate from AIPerformance and merit their own investigation; no AIPerformance
+  exception was logged. A TacticalRoundCheckpoint warning says its capture-only probe
+  is disabled on this unsupported native build.
+- Startup and native attack/assault outcome are not established from this log. Issue
+  #102 stays open until the player confirms useful closing and attacks in game.
