@@ -50,12 +50,20 @@ with the symptom, not proof of the precise branch for every captured actor.
   negative/overflow/sentinel reserve, native danger/mission costs, useful emergency/
   attack priority, hidden-coordinate guard and non-bug isolation.
 - 19,804 linked managed checks pass. Production Release build has zero warnings/errors.
+- 303 AI behavior and 232 native metadata contracts pass. Python: 210 GameplaySuite
+  tests pass; LargerMaps runs 158 tests with eight expected skips. These do not execute IL2CPP.
+- Source `d5d5115` is pushed on dev. The isolated canonical AI-only installed-companion
+  BuildKit passes 17,991 shared artifact checks; clean extracted-source rebuild and
+  the current verifier pass 18,011. Existing nullable warnings are in test fixtures,
+  not the production DLL build. Package inventory: 90 files, one module.
+- Candidate `.tmp/AIPerformance-1.14.1-bugs102-20261113.zip`, SHA256
+  `220a1521f60076b05edf5498bb5f2da06f1c33a6c2dffba597f02f46ec4a1dfb`.
 - All 177 current PC proxy/runtime reference hashes match local build inputs;
   reviewed native SHA256 is
   `494c9e212d411d898b3abafb4ad233f7a39a22648d713a86b9641d698b2d12e9`.
   Jiangyu 1.4.10 CLI archive matches the pinned catalog SHA256.
 - Windows BuildOnly/install and actual native gameplay are pending. MENACE is running;
   no live mod/settings/save files were changed. Last installed AI remains 1.14.0.
-- After local canonical packaging checks, resume only with the game closed and the
+- Local canonical packaging checks passed. Resume only with the game closed and the
   shared installer gates; never copy the DLL manually. Issue #102 stays open until
   the player confirms useful closing/attacks in game.
