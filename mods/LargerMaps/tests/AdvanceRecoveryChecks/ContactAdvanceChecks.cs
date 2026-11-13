@@ -45,6 +45,71 @@ internal static class ContactAdvanceChecks
         internal void Plan() => Plugin.OffensiveScoresFixture(Unit.Agent);
     }
 
+    private static void BugsApproach(Action<bool, string> check)
+    {
+        var f = new Fixture(); f.Faction.Kind = 7;
+        f.Unit.Infantry = false; f.Unit.Tags.Add(TagType.XENO);
+        f.Unit.Template.m_ID = "enemy.alien_01_small_spiderling";
+        f.Unit.Sight = (_, _, _) => true;
+        Plugin.BeginAdvanceFixture(f.Faction);
+        var step = f.Add(new(11, 20), 30, 0, 18);
+        f.Forward.APCost = 90; f.Plan();
+        var move = f.Unit.Agent.Behaviors.OfType<Move>().Single();
+        var candidates = new Il2CppSystem.Collections.Generic.List<TileScore> { step, f.Forward };
+        void Scale()
+        {
+            foreach (var score in candidates)
+            {
+                score.UtilityScoreScaled = score.UtilityScore; score.SafetyScoreScaled = 0;
+                score.DistanceToCurrentTile = score.APCost / 10f * 1.5f;
+            }
+        }
+        Scale();
+        check(move.GetHighestTileScoreScaled(candidates) == step, "bugs reproduce native one-tile travel preference with visible troops");
+        check(Plugin.MarchChoiceFixture(move, candidates) == f.Forward, "visible troops do not stop a bug's full affordable approach");
+
+        // In range after moving: equal lane utility used to choose the cheapest step.
+        f.Enemy.Tile = new(30, 20); Plugin.AdvanceSightFixture(f.Enemy, 7);
+        foreach (var score in f.Unit.Agent.Tiles.Values) score.MinimumUtilityAPCost = 1024;
+        f.Forward.APCost = 80; f.Plan(); Scale();
+        check(step.MinimumUtilityAPCost == 20 && f.Forward.MinimumUtilityAPCost == 20 &&
+            step.UtilityScore == f.Forward.UtilityScore, "bug attack lanes reserve actual attack AP with equal utility");
+        check(Plugin.MarchChoiceFixture(move, candidates) == f.Forward, "bugs break equal-merit attack-lane ties by forward progress while reserving attack AP");
+        object path = f.Forward.Path; float utility = f.Forward.UtilityScore;
+        check(f.Unit.AP == 100 && f.Forward.APCost == 80 && f.Forward.MinimumUtilityAPCost == 20 &&
+            f.Forward.Path == path && f.Forward.UtilityScore == utility, "bug approach leaves native path, scores and resources unchanged");
+        f.Forward.APCost = 81; Scale();
+        check(Plugin.MarchChoiceFixture(move, candidates) == step, "bug movement cannot spend reserved attack AP");
+        f.Forward.APCost = 80; Scale();
+        foreach (int invalid in new[] { -1, 1024, int.MaxValue })
+        {
+            f.Forward.MinimumUtilityAPCost = invalid;
+            check(Plugin.MarchChoiceFixture(move, candidates) == step, "invalid or unaffordable bug attack reserve fails closed");
+        }
+        f.Forward.MinimumUtilityAPCost = 20; f.Forward.SafetyScoreScaled = -1000;
+        check(Plugin.MarchChoiceFixture(move, candidates) == step, "bug charge retains native danger penalties");
+        f.Forward.SafetyScoreScaled = 0; f.Forward.DistanceScore = 100;
+        check(Plugin.MarchChoiceFixture(move, candidates) == step, "bug charge retains mission distance penalties");
+        f.Forward.DistanceScore = 0;
+        foreach (string id in new[] { "InflictDamage", "Confusion", "Flee" })
+        {
+            var action = new Behavior { ID = id, Score = 1, Owner = f.Unit.Agent };
+            f.Unit.Agent.Behaviors.Add(action);
+            check(Plugin.MarchChoiceFixture(move, candidates) == step, "bug charge preserves useful native " + id);
+            f.Unit.Agent.Behaviors.Remove(action);
+        }
+        f.Gun.Score = 10; f.Gun.m_Candidates.Add(new());
+        f.Gun.Skill.Template.m_ID = "active.alien_jump_attack";
+        check(Plugin.OffensiveChoiceFixture(f.Unit.Agent, move) == f.Gun, "bugs prefer a legal native jump assault over more movement");
+        f.Gun.Skill.Template.m_ID = "active.fire_alien_needle_spitter_stinger";
+        check(Plugin.OffensiveChoiceFixture(f.Unit.Agent, move) == f.Gun, "bugs prefer a legal ordinary attack over more movement");
+        f.Gun.Score = 0; f.Enemy.Detected = false; int reads = f.Enemy.PositionReads;
+        check(Plugin.MarchChoiceFixture(move, candidates) == f.Forward && f.Enemy.PositionReads == reads,
+            "bug approach uses last-known contact without hidden live-coordinate reads");
+        f.Faction.Kind = 9;
+        check(Plugin.MarchChoiceFixture(move, candidates) == step, "ranged humans do not inherit the bug-only attack-lane rush");
+    }
+
     internal static void Run(Action<bool, string> check)
     {
         var f = new Fixture(sleeping: true);
@@ -124,6 +189,7 @@ internal static class ContactAdvanceChecks
             for (int i = 0; i < 10; i++)
                 check(Plugin.MarchChoiceFixture(move, march) == f.Forward, kind + " repeated evaluations retain full-progress destination");
         }
+        BugsApproach(check);
         f = new Fixture(); // Keep subsequent fresh-score/lane checks independent of this path-ranking fixture.
         f.Plan();
         for (int i = 0; i < 31; i++)

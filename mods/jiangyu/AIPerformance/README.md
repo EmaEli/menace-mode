@@ -1,4 +1,12 @@
-# AI Performance 1.14.0
+# AI Performance 1.14.1
+
+**1.14.1 bugs approach (#102):** bugs keep closing on visible troops when no useful
+native attack or emergency action is available. Remove the short-step travel bias
+from existing affordable candidates, including positions reserving real attack AP;
+equal-quality destinations favor greater forward progress. Jump assaults and normal
+attacks still use native choice/execution. No extra AP, new paths or hidden tracking.
+Native danger and mission restrictions remain; full movement is not forced through
+obstacles or when a better legal attack exists. Gameplay verification is pending.
 
 **1.14.0 smoke refinement (#1):** preventive support requests require a known threat
 within 10 tiles, with the existing two-round freshness/range/LOS checks. A separate
@@ -15,7 +23,7 @@ While the unit cannot itself see an opponent, re-rank its existing native afford
 movement candidates without that short-step preference. Keep native safety and mission
 distance scoring; do not rewrite paths, movement costs, shot reserves or resources.
 
-As soon as any faction-detected opponent passes the unit's own native sight check
+For factions other than bugs, as soon as a detected opponent passes the unit's own sight check
 (vision, LOS and concealment), normal tactical positioning resumes. Useful shots and
 emergencies, explicit defense, deployment and morale/suppression guards still win.
 Hidden contacts remain last-known areas only. Existing opt-in diagnostics report the

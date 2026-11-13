@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.14.1 — 13 November 2026
+
+- Keep bugs closing toward legitimate contact even when they see enemy troops but
+  have no useful native action. Other factions retain their own-sight movement guard.
+- Allow affordable attack-reserving bug destinations and prefer greater forward
+  progress between equal-quality origins instead of defaulting to a one-tile step.
+- Preserve native attack/jump-assault priority, danger, mission restrictions, paths
+  and AP costs. No forced skills, free AP, hidden tracking or new pathfinding.
+- Regression reproduces the visible-contact failure and checks attack reserves,
+  normal/jump attack priority and safeguards. Gameplay acceptance is pending (#102).
+
 ## 1.14.0 — 12 November 2026
 
 - Restrict preventive smoke requests to observed threats within ten tiles, retaining
