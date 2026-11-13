@@ -62,8 +62,25 @@ with the symptom, not proof of the precise branch for every captured actor.
   reviewed native SHA256 is
   `494c9e212d411d898b3abafb4ad233f7a39a22648d713a86b9641d698b2d12e9`.
   Jiangyu 1.4.10 CLI archive matches the pinned catalog SHA256.
-- Windows BuildOnly/install and actual native gameplay are pending. MENACE is running;
-  no live mod/settings/save files were changed. Last installed AI remains 1.14.0.
-- Local canonical packaging checks passed. Resume only with the game closed and the
-  shared installer gates; never copy the DLL manually. Issue #102 stays open until
-  the player confirms useful closing/attacks in game.
+- Canonical Windows BuildOnly and AI-only installation passed with MENACE closed on
+  13 November: .NET 10.0.113, zero production warnings/errors, 232 native metadata,
+  303 behavior and 19,804 linked managed checks. Manifest/assembly/file versions
+  verified as 1.14.1/1.14.1.0/1.14.1.0. Installed DLL SHA256:
+  `ead1c6864c5cd3d96fb1b862301d3b5e4848a50f52f7fc238b850d6924f981b2`.
+- Verified original backup and installed hashes against the transaction journal:
+  `M:\SteamLibrary\steamapps\common\Menace\_MENACE_Backups\20261113-144041-9115b8845f1946c1b299f5cf1fa0ebaf`.
+  Only AIPerformance was replaced; settings/loader were reused. All 1,479 protected
+  unrelated Mods/UserData files and 177 compiler references remained unchanged.
+- Windows evidence and per-run logs:
+  `E:\MENACE-Work\Builds\Bugs102-ExtractFix-20261113`; full installer transcript:
+  `E:\MENACE-Work\Temp\MENACE-install.log`. Local build/install captures:
+  `.tmp/bugs102-windows-buildonly.log` and `.tmp/bugs102-windows-install.log`.
+- Earlier #34 extraction failure initially blocked deployment. On the user's request
+  to resolve and proceed, the same pinned CLI archive passed every ZIP-entry stream
+  read and standard PowerShell Expand-Archive in isolated staging. The analyzer was
+  present, SHA256 `1a3499a6b8c4cdc3f707783e1ce6efdd8a60ede8b77af880ba55fde680ba7ed0`.
+  Both subsequent canonical runs passed extraction without installer changes,
+  alternate extraction or security changes. The historical failure's cause remains
+  unconfirmed; neither quarantine nor an installer defect was established.
+- Startup and native gameplay are not yet tested. Issue #102 stays open until the
+  player confirms useful closing/attacks in game; installation alone is not acceptance.
